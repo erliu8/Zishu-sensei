@@ -1,0 +1,42 @@
+# Python缓存文件
+__pycache__/
+*.py[cod]
+*$py.class
+
+# 虚拟环境
+venv/
+env/
+ENV/
+
+# 模型文件(太大)
+models/base/
+
+# IDE设置
+.idea/
+.vscode/
+*.swp
+*.swo
+
+# 日志文件
+*.log
+data/logs/
+
+# 临时文件
+.DS_Store
+Thumbs.db
+.ipynb_checkpoints/
+
+# 分发/打包
+dist/
+build/
+*.egg-info/
+
+# 敏感信息
+.env
+config/secrets.json
+
+# 大型数据文件
+*.bin
+*.pt
+*.pth
+*.safetensors 
