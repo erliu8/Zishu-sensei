@@ -1,0 +1,33 @@
+{
+    "version": 1,
+    "disable_existing_loggers": false,
+    "formatters":{
+        "standard":{
+            "format":"%(asctime)s - %(name)s - %(levelname)s - %(message)s"
+        }
+    },
+    "handlers":{
+        "console":{
+            "level":"INFO",
+            "class":"logging.StreamHandler",
+            "formatter":"standard",
+            "stream":"ext://sys.stdout"
+        }
+    },
+    "file":{
+        "level":"DEBUG",
+        "class":"logging.handlers.RotatingFileHandler",
+        "formatter":"standard",
+        "filename":"./logs/app.log",
+        "maxBytes":1048576,
+        "backupCount":5,
+        "encoding":"utf-8"
+    },
+    "loggers":{
+        "zishu":{
+            "handlers":["console","file"],
+            "level":"INFO",
+            "propagate":true
+        }
+    }
+}

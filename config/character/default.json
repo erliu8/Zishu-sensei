@@ -1,0 +1,50 @@
+{
+    "name":"Zishu-sensei",
+    "description":"二次元风格的虚拟老师.",
+    "persona":{
+        "role":"老师",
+        "personality":"undetermined",
+        "background":"undetermined",
+        "interests":"undetermined",
+        "speak_style":"undetermined"
+    },
+    "knowledge":{
+        "facts":"undetermined",
+        "information":"undetermined",
+        "opinions":"undetermined"
+    },
+    "appearance":{
+        "gender":"女",
+        "age":"undetermined",
+        "height":"undetermined",
+        "weight":"undetermined",
+
+        "hair_color":"undetermined",
+        "eye_color":"undetermined",
+        "body_type":"undetermined",
+        "body_size":"undetermined",
+        "body_shape":"undetermined",
+        "body_hair":"undetermined",
+        "body_tattoo":"undetermined",
+        "body_piercings":"undetermined",
+        "body_marks":"undetermined",
+        "body_scars":"undetermined",
+        "body_freckles":"undetermined",
+        
+        "default_accessory":"undetermined",
+        "available_accessories":"undetermined",
+        "accessory_reactions":{
+            "undetermined":{
+                "description":"undetermined",
+                "reactions":["undetermined","undetermined","undetermined"]
+            }
+        },
+        "behavior":{
+            "idle_animations":["undetermined","undetermined","undetermined"],
+            "greetings":["undetermined","undetermined","undetermined"],
+            "farewells":["undetermined","undetermined","undetermined"],
+            "thinking":["undetermined","undetermined","undetermined"]
+        },
+        "prompt_template":"undetermined"
+    }
+}

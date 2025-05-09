@@ -1,0 +1,18 @@
+{
+    "app_name": "Zishu-sense",
+    "app_version": "1.0.0",
+    "app_description": "Zishu-sense is a chatbot that can chat with you.",
+    "app_author": "erliu",
+    "app_license": "MIT",
+    "language": "zh-CN",
+    "data_dir": "./data",
+    "models_dir": "./models",
+    "config_dir": "./config",
+    "logs_dir": "./data/logs",
+    "memory_dir": "./data/memory",
+    "assets_dir": "./assets",
+    "max_history_size": 10,
+    "default_character": "Zishu-sensei",
+    "default_mode":"desktop",
+    "debug": true
+}
