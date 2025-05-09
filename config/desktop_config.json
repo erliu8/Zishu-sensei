@@ -1,0 +1,41 @@
+{
+    "window":{
+        "always_on_top": true,
+        "transparency": 0.9,
+        "size": {
+        "width": 1000,
+        "height": 600
+    },
+    "position":"right_bottom",
+    "frameless":true,
+    "click_through":false
+    },
+    "animation":{
+        "fps":30,
+        "idle_interval":10,
+        "transition_time":0.5,
+        "enable_preview":true
+    },
+    "interaction":{
+        "drag_enabled":true,
+        "reactions_enabled":true,
+        "click_sensitivity":0.8,
+        "context_menu":true
+    },
+    "system":{
+        "enabled":true,
+        "tooltip":"Zishu-sense",
+        "menu_items":[
+            "open",
+            "settings",
+            "mute",
+            "separator",
+            "quit"
+        ]
+    },
+    "startup":{
+        "auto_start":false,
+        "start_minimized":false,
+        "greeting_on_startup":true
+    }
+}

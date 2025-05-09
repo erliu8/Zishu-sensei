@@ -1,0 +1,35 @@
+{
+    "training":{
+        "bath_size":4,
+        "micro_batch_size":1,
+        "epochs":3,
+        "learning_rate":2e-3,
+        "lr_scheduler":"cosine_with_restarts",
+        "weight_decay":0.01,
+        "warmup_steps":200,
+        "gradient_accumulation_steps":4,
+        "max_grad_norm":1.0,
+        "max_steps":-1,
+        "gradient_checkpointing":true,
+        "logging_steps":10,
+        "eval_steps":100,
+        "save_steps":500,
+        "save_total_limit":3
+        
+    },
+    "data":{
+        "train_file":"./data/train/train.json",
+        "validation_file":"./data/train/val.json",
+        "preprocessin":{
+            "max_length":2048,
+            "text_column":"text",
+            "add_eos_token":true
+        }
+    },
+    "lora_config":{
+        "bias":"none",
+        "task_type":"CAUSAL_LM",
+        "use_8bit_adam":true,
+        "use_peft":true        
+    }
+}
