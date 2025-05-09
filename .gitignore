@@ -36,10 +36,6 @@ env/
 data/
 models/
 *.log
-config/*.json
-!config/default.json
-!config/model_config.json
-!config/logging_config.json
 
 # OS specific
 .DS_Store
