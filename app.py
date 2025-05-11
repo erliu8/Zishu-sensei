@@ -1,3 +1,10 @@
+#!/usr/bin/env python
+# -*- coding: utf-8 -*-
+# @Time    : 2025/5/10 10:00
+# @Author  : erliu
+# @File    : app.py
+# @Software: PyCharm
+
 import os
 import sys
 import logging
@@ -5,12 +12,12 @@ import json
 import argparse
 from pathlib import Path
 
-#设置项目根目录
+# 设置项目根目录
 ROOT_DIR = Path(__file__).resolve().parent
 
 def load_config(config_name="default"):
     """加载配置文件"""
-    config_path = ROOT_DIR / "config" / f"{config_name}_config.json"
+    config_path = ROOT_DIR / "config" / f"{config_name}.json"  # 修改配置文件命名约定
     try:
         with open(config_path, "r", encoding="utf-8") as f:
             return json.load(f)
@@ -24,8 +31,9 @@ def setup_logging(config=None):
         logging.basicConfig(level=logging.INFO,
                             format="%(asctime)s - %(levelname)s - %(message)s")
     else:
-        #未来根据配置文件设置日志记录
+        # 未来根据配置文件设置日志记录
         pass
+    return logging.getLogger("zishu-sensei")  # 返回logger对象
 
 def parse_arg():
     """解析命令行参数"""
@@ -34,21 +42,20 @@ def parse_arg():
         "--mode",
         type=str,
         default="cli",
-        choices=["cli", "gui",'desktop','voice',"full"],
-        help="运行模式: cli(命令行),gui(图形界面)"
-        "desktop(紫舒),voice(语音助手),full(全功能)"
+        choices=["cli", "api", 'desktop', 'voice', "full"],  # 添加 api 选项
+        help="运行模式: cli(命令行), api(API服务), desktop(紫舒), voice(语音助手), full(全功能)"
     )
     parser.add_argument(
         "--port",
         type=int,
-        default="default",
+        default=8000,  # 修改为整数默认值
         help="API服务端口号（仅在api模式有效）"
     )
     parser.add_argument(
         "--accessory",
         type=str,
         default="ribbon",
-        choices=["ribbon","turtle","flower","none"],
+        choices=["ribbon", "turtle", "flower", "none"],
         help="紫舒头饰"
     )
     parser.add_argument(
@@ -59,59 +66,59 @@ def parse_arg():
     )
     return parser.parse_args()
 
-def run_cli_mode(config,logger):
+def run_cli_mode(config, logger):
     """运行命令行模式"""
     logger.info("启动命令行模式")
     print("命令行模式尚未实现")
 
-def run_api_mode(config,logger,port):
+def run_api_mode(config, logger, port):
     """运行API服务模式"""
     logger.info(f"启动API服务，端口号：{port}")
     print(f"API服务尚未实现")
 
-def run_desktop_mode(config,logger):
+def run_desktop_mode(config, logger, accessory):  # 添加 accessory 参数
     """运行桌面模式"""
-    logger.info("启动桌面模式")
+    logger.info(f"启动桌面模式，头饰：{accessory}")
     print("桌面模式尚未实现")
 
-def run_voice_mode(config,logger):
+def run_voice_mode(config, logger):
     """运行语音助手模式"""
     logger.info("启动语音助手模式")
     print("语音助手模式尚未实现")
     
-def run_full_mode(config,logger):
+def run_full_mode(config, logger):
     """运行全功能模式"""
     logger.info("启动全功能模式")
     print("全功能模式尚未实现")
     
 def main():
     """主函数"""
-    #解析命令行参数
+    # 解析命令行参数
     args = parse_arg()
     
-    #加载配置
+    # 加载配置
     config = load_config(args.config)
     
-    #设置日志
+    # 设置日志
     logger = setup_logging(config)
-    logger.info(f"Zishu-sensei v{config.get('version','1.0')}启动中...")
+    logger.info(f"Zishu-sensei v{config.get('version', '0.1.0')}启动中...")
     
-    #创建必要的目录
-    os.makedirs(config.get('data_dir','data'),exist_ok=True)
-    os.makedirs(config.get('log_dir','logs'),exist_ok=True)
+    # 创建必要的目录
+    os.makedirs(config.get('data_dir', './data'), exist_ok=True)
+    os.makedirs(config.get('logs_dir', './data/logs'), exist_ok=True)  # 修正日志目录字段名
     
-    #根据模式运行
+    # 根据模式运行
     try:
         if args.mode == "cli":
-            run_cli_mode(config,logger)
+            run_cli_mode(config, logger)
         elif args.mode == "api":
-            run_api_mode(config,logger,args.port)
+            run_api_mode(config, logger, args.port)
         elif args.mode == "desktop":
-            run_desktop_mode(config,logger,args.accessory)
+            run_desktop_mode(config, logger, args.accessory)  # 传递 accessory 参数
         elif args.mode == "voice":
-            run_voice_mode(config,logger)
+            run_voice_mode(config, logger)
         elif args.mode == "full":
-            run_full_mode(config,logger)
+            run_full_mode(config, logger)
         else:
             logger.error(f"无效的模式: {args.mode}")
             sys.exit(1)
@@ -126,8 +133,3 @@ def main():
     
 if __name__ == "__main__":
     main()
-    
-    
-    
-    
-    

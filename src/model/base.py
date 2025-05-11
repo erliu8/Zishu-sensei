@@ -168,3 +168,10 @@ class ModelManager:
             self._model = None
             torch.cuda.empty_cache() if torch.cuda.is_available() else None
             self.logger.info("基础模型已卸载")
+    
+    def load_model_async(self) -> str:
+        """异步加载模型,返回任务ID"""
+        from src.utils.thread_factory import get_thread_pool
+        thread_factory = get_thread_pool()
+        return thread_factory.submit_task(self.load_model)
+        
