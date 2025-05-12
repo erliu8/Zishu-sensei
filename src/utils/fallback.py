@@ -23,7 +23,7 @@ class CircuitBreaker:
         self.fallback_function = fallback_function
         self.logger = logging.getLogger(__name__)
         
-    def _call_(self,func):
+    def __call__(self,func):
         """装饰器,用于包装被调用函数,实现断路器功能"""
         @wraps(func)
         def wrapper(*args,**kwargs):

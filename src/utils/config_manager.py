@@ -89,7 +89,7 @@ class ConfigManager:
        """停止监视配置文件变化"""
        if self.watch_thread:
            self.stop_event.set()
-           self.watcher_thread.join(timeout=1)
+           self.watch_thread.join(timeout=1)
            
     def _watch_config_files(self,interval:int):
         """监视线程，检查配置文件变化"""
