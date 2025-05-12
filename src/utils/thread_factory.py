@@ -209,20 +209,19 @@ class ThreadFactory:
     #创建全局线程工厂实例    
     _thread_factory = None
 
-    def get_thread_factory()->ThreadFactory:
-        """获取全局线程工厂实例"""
-        global _thread_factory
-        if _thread_factory is None:
-            _thread_factory = ThreadFactory()
-        return _thread_factory
-    
-    def shutdown_thread_factory(wait:bool=True):
-        """关闭全局线程工厂实例"""
-        global _thread_factory
-        if _thread_factory:
-            _thread_factory.shutdown(wait=wait)
-            _thread_factory = None
-            
+def get_thread_factory()->ThreadFactory:
+    """获取全局线程工厂实例"""
+    global _thread_factory
+    if _thread_factory is None:
+        _thread_factory = ThreadFactory()
+    return _thread_factory
+
+def shutdown_thread_factory(wait:bool=True):
+    """关闭全局线程工厂实例"""
+    global _thread_factory
+    if _thread_factory:
+        _thread_factory.shutdown(wait=wait)
+        _thread_factory = None
     
             
         
