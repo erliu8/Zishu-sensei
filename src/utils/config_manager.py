@@ -7,10 +7,13 @@ import time
 import threading
 from typing import Dict,Any,Optional,Callable,List
 from pathlib import Path
+from jsonschema import validate
+from cryptography.fernet import Fernet
 
 class ConfigManager:
     """配置管理类,用于读取和存储配置信息,支持热重载配置"""
-    def __init__(self,config_dir:Path,default_config:str="default"):
+    def __init__(self,config_dir:Path,default_config:str="default",
+                 schema_dir:Optional[Path]=None):
         """
         Args:
             config_dir (Path): 配置文件路径
@@ -24,6 +27,8 @@ class ConfigManager:
         self.stop_event = threading.Event()
         self.watch_thread = None
         self.logger = logging.getLogger(__name__)
+        self.schema_dir = schema_dir
+        self.encryption_key = None
         
         #初始化配置
         self.load_all_configs()
@@ -71,6 +76,22 @@ class ConfigManager:
         if config_name not in self.callbacks:
             self.callbacks[config_name] = []
         self.callbacks[config_name].append(callback)
+    
+    def validate_config(self,config_name:str,config:Dict)->bool:
+        """验证配置文件是否符合schema"""
+        if not self.schema_dir:
+            return True
+        
+        schema_path = self.schema_dir / f"{config_name}_schema.json"
+        if not schema_path.exists():
+            self.logger.warning(f"未找到配置文件{config_name}的schema文件,跳过验证")
+            return True
+        
+        with open(schema_path,"r") as f:
+            schema = json.load(f)
+        
+        validate(instance=config,schema=schema)
+        return True
         
     def start_watch(self,interval:int=10):
         """开始监视配置文件变化"""

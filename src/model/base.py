@@ -171,7 +171,7 @@ class ModelManager:
     
     def load_model_async(self) -> str:
         """异步加载模型,返回任务ID"""
-        from src.utils.thread_factory import get_thread_pool
-        thread_factory = get_thread_pool()
+        from src.utils.thread_factory import get_thread_factory
+        thread_factory = get_thread_factory()
         return thread_factory.submit_task(self.load_model)
         
