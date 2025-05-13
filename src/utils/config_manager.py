@@ -92,6 +92,20 @@ class ConfigManager:
         
         validate(instance=config,schema=schema)
         return True
+    
+    def encrypt_config(self,value:str)->str:
+        """加密配置值"""
+        if not self.encryption_key:
+            self.encryption_key = Fernet.generate_key()
+        f = Fernet(self.encryption_key)
+        return f.encrypt(value.encode()).decode()
+    
+    def decrypt_config(self,value:str)->str:
+        """解密配置值"""
+        if not self.encryption_key:
+            raise RuntimeError("未设置加密密钥")
+        f = Fernet(self.encryption_key)
+        
         
     def start_watch(self,interval:int=10):
         """开始监视配置文件变化"""
