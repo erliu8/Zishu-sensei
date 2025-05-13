@@ -109,23 +109,6 @@ class PerformanceMonitor:
             "percent":disk.percent,
             "free":disk.free,
         }
-        
-        #GPU指标(如果有CUDA)
-        try:
-            import torch
-            if torch.cuda.is_available():
-                metrics["gpu"] = []
-                for i in range(torch.cuda.device_count()):
-                    metrics["gpu"].append({
-                        "name":torch.cuda.get_device_name(i),
-                        "memory_allocated":torch.cuda.memory_allocated(i),
-                        "memory_reserved":torch.cuda.memory_reserved(i),
-                        "utilization":torch.cuda.utilization(i) if hasattr(torch.cuda,"utilization") else None
-                    })
-        except (ImportError,Exception) as e:
-            metrics["gpu"] = {"error":str(e)}
-            
-        return metrics
     
     def record_response_time(self,module:str,operation:str,duration:float):
         """
@@ -150,6 +133,46 @@ class PerformanceMonitor:
         """获取性能监控数据"""
         return self.metrics
     
+    def get_gpu_metrics(self)->Dict[str,Any]:
+        """获取GPU性能监控数据"""
+        try:
+            import torch
+            if torch.cuda.is_available():
+                return{"error":"cuda未启用"}
+            metrics = []
+            for i in range(torch.cuda.device_count()):
+                metrics.append({
+                    "name":torch.cuda.get_device_name(i),
+                    "memory_allocated":torch.cuda.memory_allocated(i),
+                    "memory_reserved":torch.cuda.memory_reserved(i),
+                    "memory_cached":torch.cuda.memory_cached(i),
+                    "utilization":torch.cuda.utilization(i) if hasattr(torch.cuda,"utilization") else None,
+                    "temperature":torch.cuda.temperature(i) if hasattr(torch.cuda,"temperature") else None,
+                    "power_usage":torch.cuda.power_usage(i) if hasattr(torch.cuda,"power_usage") else None
+                })
+            return metrics
+        except (ImportError,Exception) as e:
+            return {"error":str(e)}
+    
+    def record_model_metrics(self,
+                             batch_size:int,
+                             inference_time:float,
+                             sequence_length:int,
+                             memory_usage:int,
+                             ):
+        """记录模型性能指标"""
+        record = {
+            "timestamp":time.time(),
+            "batch_size":batch_size,
+            "inference_time":inference_time,
+            "sequence_length":sequence_length,
+            "memory_usage":memory_usage,
+            "tokens_per_second":(batch_size*sequence_length)/inference_time if inference_time > 0 else 0
+        }
+        if "model_metrics" not in self.metrics:
+            self.metrics["model_metrics"] = []
+        self.metrics["model_metrics"].append(record)
+
     def get_summary(self)->Dict[str,Any]:
         """获取性能监控摘要"""
         summary = {}
