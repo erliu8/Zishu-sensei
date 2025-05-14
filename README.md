@@ -1,4 +1,4 @@
-# Zishu-sensei(紫舒老师)
+# Zishu-sensei(紫舒老师)开发中...
 
 基于Chinese-Mistral-7B模型的中文版Anime风格AI虚拟角色项目。本项目使用量化技术适配低硬件条件下的模型训练和部署。
 
