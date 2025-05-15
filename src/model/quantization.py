@@ -90,7 +90,7 @@ class QuantizationManager(ModelManager):
             )
             
             self.logger.info(f"量化模型加载完成，参数量：{self._get_model_size(self._model):2f}B")
-            self.looger.info(f"使用{self.quantization_bits}位量化,计算数据类型：{self._get_compute_dtype()}")
+            self.logger.info(f"使用{self.quantization_bits}位量化,计算数据类型：{self._get_compute_dtype()}")
             return self._model
         except Exception as e:
             self.logger.error(f"量化模型加载失败: {e}")

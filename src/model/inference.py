@@ -641,11 +641,175 @@ class InferenceEngine:
                       character_id:Optional[str]=None,
                       **kwargs)->str:
         """
+        基于消息历史生成聊天响应
         
-        
-        """
-
+        Args:
+            messages:消息历史 [{"role":"user/assistant/system","content":...."}]
+            model_id:模型ID
+            character_id:角色ID
+            **kwargs:其他参数
             
-           
+        Returns:
+            聊天响应
+        """
+        #根据角色ID获取系统提示
+        system_prompt = ""
+        if character_id:
+            system_prompt = self.prompt_manager.create_character_prompt(character_id)
+            
+        #格式化聊天历史
+        formatted_prompt = self._format_chat_prompt(messages,system_prompt,model_id)
+        
+        #生成响应
+        response = self.generate(
+            formatted_prompt,
+            model_id=model_id,
+            **kwargs
+        )
+        
+        return response
+    
+    def _format_chat_prompt(self,messages:List[Dict[str,str]],system_prompt:str,model_id:Optional[str]=None)->str:
+        """
+        格式化聊天提示
+        
+        Args:
+            messages:消息历史
+            system_prompt:系统提示
+            model_id:模型ID
+            
+        Returns:
+            格式化后的聊天提示
+        """
+        #获取模型架构信息，以选择适当的提示模板
+        model_arch = "default"
+        if model_id:
+            model_info = self.model_registry.get_model_info(model_id)
+            if model_info:
+                model_arch = model_info.architecture.lower()
+                
+        #根据模型架构选择不同的格式化方法
+        if "mistral" in model_arch:
+            return self._format_mistral_chat_prompt(messages,system_prompt)
+        elif "qwen" in model_arch:
+            return self._format_qwen_chat_prompt(messages,system_prompt)
+        elif "chatglm" in model_arch:
+            return self._format_chatglm_chat_prompt(messages,system_prompt)
+        else:
+            #默认格式化方法
+            return self._format_default_chat_prompt(messages,system_prompt)
+        
+    def _format_mistral_chat_prompt(self,messages,system_prompt):
+        """格式化Mistral模型聊天提示"""
+        formatted_prompt = ""
+        
+        if system_prompt:
+            formatted_prompt += f"<s>[INST] {system_prompt} [/INST]\n\n"
+            
+        for i,msg in enumerate(messages):
+            role = msg["role"]
+            content = msg["content"]
+            
+            if role == "user":
+                if i == 0 or messages[i-1]["role"] == "assistant":
+                    formatted_prompt += f"<s>[INST] {content} [/INST]"
+                else:
+                    formatted_prompt += f"[INST] {content} [/INST]"
+            elif role == "assistant":
+                formatted_prompt += f" {content}</s>"
+            #忽略system消息，因为已经在开头处理过
+            
+        #确保以用户消息结束并等待模型回复
+        if messages and messages[-1]["role"] == "user":
+            formatted_prompt += " "
+            
+        return formatted_prompt
+    
+    def _format_qwen_chat_prompt(self,messages,system_prompt):
+        """格式化Qwen模型聊天提示"""
+        formatted_prompt = ""
+        
+        if system_prompt:
+            formatted_prompt += f"<|im_start|>system\n{system_prompt}\n<|im_end|>\n"
+        
+        for msg in messages:
+            role = msg["role"]
+            content = msg["content"]
+            
+            if role == "user":
+                formatted_prompt += f"<|im_start|>user\n{content}\n<|im_end|>\n"
+            elif role == "assistant":
+                formatted_prompt += f"<|im_start|>assistant\n{content}\n<|im_end|>\n"
+            elif role == "system":
+                formatted_prompt += f"<|im_start|>system\n{content}\n<|im_end|>\n"
+                
+        #添加助手角色标识，准备生成
+        formatted_prompt += "<|im_start|>assistant\n"
+        
+        return formatted_prompt
+    
+    def _format_chatglm_chat_prompt(self,messages,system_prompt):
+        """格式化ChatGLM模型聊天提示"""
+        formatted_prompt = ""
+        if system_prompt:
+            formatted_prompt = system_prompt + "\n\n"
+            
+        for i,msg in enumerate(messages):
+            role = msg["role"]
+            content = msg["content"]
+            
+            if role == "user":
+                if i > 0:
+                    formatted_prompt += "\n\n"
+                formatted_prompt += f"问: {content}"
+            elif role == "assistant":
+                formatted_prompt += f"\n\n答: {content}"
+        #添加最后的“答：”提示
+        if messages and messages[-1]["role"] == "user":
+            formatted_prompt += "\n\n答："
+                
+        return formatted_prompt
+    
+    def _format_default_chat_prompt(self,messages,system_prompt):
+        """格式化默认模型聊天提示"""
+        formatted_prompt = ""
+        
+        if system_prompt:
+            formatted_prompt = system_prompt + "\n\n"
+            
+        for i,msg in enumerate(messages):
+            role = msg["role"]
+            content = msg["content"]
+            
+            if i >0:
+                formatted_prompt += "\n\n"
+                
+            if role == "system":
+                formatted_prompt += f"System: {content}"
+            elif role == "user":
+                formatted_prompt += f"User: {content}"
+            elif role == "assistant":
+                formatted_prompt += f"Assistant: {content}"
+        
+        #添加助手角色标识，准备生成
+        if messages and messages[-1]["role"] == "user":
+            formatted_prompt += "\n\nAssistant: "
+                
+        return formatted_prompt
+    
+#全局推理引擎实例
+_inference_engine = None
+
+def get_inference_engine()->InferenceEngine:
+    """获取推理引擎实例"""
+    global _inference_engine
+    
+    if _inference_engine is None:
+        from src.utils.config_manager import ConfigManager
+        config_dir = os.path.join(os.path.dirname(os.path.dirname(os.path.dirname(__file__))),"config")
+        config = ConfigManager(config_dir)
+        _inference_engine = InferenceEngine(config)
+        
+    return _inference_engine
 
 

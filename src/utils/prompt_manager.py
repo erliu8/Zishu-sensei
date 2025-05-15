@@ -411,14 +411,14 @@ class MultimodelPromptManager(PromptManager):
             return f"你是Zishu-sensei,一个二次元风格的虚拟老师。"
         
 #全局提示管理器实例
-__prompt_manager = None
+_prompt_manager = None
 
 def get_prompt_manager()->MultimodelPromptManager:
     """获取提示管理器实例"""
-    global __prompt_manager
-    if __prompt_manager is None:
-        __prompt_manager = MultimodelPromptManager()
-    return __prompt_manager
+    global _prompt_manager
+    if _prompt_manager is None:
+        _prompt_manager = MultimodelPromptManager()
+    return _prompt_manager
                     
         
                     
