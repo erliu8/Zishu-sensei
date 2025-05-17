@@ -1,26 +1,15 @@
 {
-    "model":{
-        "base_model":"hf1/chinese-mistral-7b-v0.1",
-        "mode_path":"./models/base",
-        "adapters_path":"./models/adapters",
-        "quantized_path":"./models/quantized",
-        "quantization":{
-            "enable":true,
-            "bits":4,
-            "compute_type":"float16"
-        }       
+    "base_model": {
+        "id": "chinese-mistral-7b-v0.1",
+        "path": "./models/base/chinese-mistral-7b-v0.1",
+        "tokenizer": "auto"
     },
-    "lora":{
-        "r":16,
-        "alpha":32,
-        "dropout":0.05,
-        "target_modules":["q_proj","v_proj","k_proj","o_proj"]
-    },
-    "inference":{
-        "max_new_tokens":256,
-        "top_p":0.9,
-        "top_k":40,
-        "temperature":0.7,
-        "repetition_penalty":1.1
+    "student_model": {
+        "id": "zishu-base",
+        "path": "./models/student/zishu-base",
+        "architecture": "llama-1.3b"
     }
+
+    
+
 }

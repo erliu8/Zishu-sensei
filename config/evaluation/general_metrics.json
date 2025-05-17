@@ -1,0 +1,138 @@
+{
+    "zishu_base": {
+        "name": "Zishu-Base-Model",
+        "model_path": "hfl/chinese-llama-2-1.3b",
+        "local_path": "./models/student/zishu-base",
+        "model_type": "llama",
+        "parameters": {
+            "size": "1.3B",
+            "hidden_dim": 2048,
+            "intermediate_dim": 5504,
+            "num_attention_heads": 16,
+            "num_hidden_layers": 24
+        }
+    },
+    "zishu_enhanced": {
+        "name": "Zishu-Enhanced-Model",
+        "base_model": "zishu_base",
+        "local_path": "./models/student/zishu-enhanced",
+        "model_type": "llama",
+        "additional_layers": {
+            "low_latency_adapter": {
+                "enable": true,
+                "size": 64
+            },
+            "cultural_knowledge_layer": {
+                "enable": true,
+                "size": 128
+            }
+        }
+    },
+    "zishu_complete": {
+        "name": "Zishu-Complete-Model",
+        "base_model": "zishu_enhanced",
+        "local_path": "./models/student/zishu-complete",
+        "model_type": "llama",
+        "additional_modules": {
+            "animation_generator": {
+                "enable": true,
+                "type": "sadtalker-lite"
+            },
+            "style_enhancer": {
+                "enable": true,
+                "type": "anime-style"
+            }
+        }
+    },
+    "common": {
+        "quantization": {
+            "enable": true,
+            "bits": 4,
+            "compute_type": "float16"
+        },
+        "optimization": {
+            "kv_cache": {
+                "enable": true,
+                "max_cache_size_mb": 512
+            },
+            "dynamic_batch": {
+                "enable": true,
+                "max_batch_size": 32
+            },
+            "attention_optimization": {
+                "flash_attention": true,
+                "xformers": false
+            },
+            "cpu_offload": {
+                "enable": false,
+                "layers_to_offload": []
+            }
+        },
+        "character_adaptation": {
+            "lora": {
+                "enable": true,
+                "r": 8,
+                "alpha": 16,
+                "dropout": 0.05,
+                "target_modules": ["q_proj", "v_proj"]
+            },
+            "persona_layers": [22, 23],
+            "emotion_layers": [20, 21]
+        },
+        "inference": {
+            "max_new_tokens": 256,
+            "top_p": 0.9,
+            "top_k": 40,
+            "temperature": 0.7,
+            "repetition_penalty": 1.1
+        }
+    },
+    "distillation": {
+        "response_distillation": {
+            "enable": true,
+            "alpha": 0.5,
+            "temperature": 2.0
+        },
+        "feature_distillation": {
+            "enable": true,
+            "beta": 0.5,
+            "layers_to_distill": [0, 6, 12, 18, 23]
+        },
+        "progressive_distillation": {
+            "enable": true,
+            "stages": [
+                {
+                    "name": "core_abilities",
+                    "source": "core_teachers",
+                    "loss_weights": {
+                        "kl_div": 0.5,
+                        "mse": 0.3,
+                        "cosine": 0.2
+                    }
+                },
+                {
+                    "name": "special_abilities",
+                    "source": "special_function_teachers",
+                    "loss_weights": {
+                        "task_specific": 0.6,
+                        "feature_matching": 0.4
+                    }
+                },
+                {
+                    "name": "visual_abilities",
+                    "source": "animation_teachers",
+                    "loss_weights": {
+                        "perceptual": 0.5,
+                        "style": 0.3,
+                        "content": 0.2
+                    }
+                }
+            ]
+        },
+        "teacher_filtering": {
+            "enable": true,
+            "min_agreement": 0.6,
+            "confidence_threshold": 0.7
+        }
+    }
+}
