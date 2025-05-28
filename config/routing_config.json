@@ -1,18 +1,25 @@
 {
-    "app_name": "Zishu-sense",
-    "app_version": "1.0.0",
-    "app_description": "Zishu-sense is a chatbot that can chat with you.",
-    "app_author": "erliu",
-    "app_license": "MIT",
-    "language": "zh-CN",
-    "data_dir": "./data",
-    "models_dir": "./models",
-    "config_dir": "./config",
-    "logs_dir": "./data/logs",
-    "memory_dir": "./data/memory",
-    "assets_dir": "./assets",
-    "max_history_size": 10,
-    "default_character": "Zishu-sensei",
-    "default_mode":"desktop",
-    "debug": true
+    "routing_strategy": "content_based",
+    "fallback_expert": "anime_culture",
+    "confidence_threshold": 0.7,
+    "context_window": 5,
+    "classfication":{
+        "model": "mini-classifier",
+        "cache_enabled": true
+    },
+    "experts_selection":{
+        "method": "high_confidence",
+        "tie_breaker": "priority"
+    },
+    "multi_expert_routing":{
+        "enabled": true,
+        "max_experts": 2,
+        "threshold_difference": 0.1,
+        "combination_strategy": "weighted_average"
+    },
+    "routing_prompt":"系统：请确定以下问题应该由哪个专家回答：{query}",
+    "explicit_routing":{
+        "enabled": true,
+        "trigger_pattern": "@[EXPERTS={experts_name}]"
+    }  
 }

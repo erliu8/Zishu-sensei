@@ -70,7 +70,7 @@ class PromptManager:
                         template_data = json.load(f)
                         
                         for template_id,template_str in template_data.items():
-                            self.model_templates[template_id] = PromptTemplate(template_str,template_id)
+                            self.templates[template_id] = PromptTemplate(template_str,template_id)
                         
                         self.logger.info(f"成功加载系统提示模板: {file_path}")
                 except Exception as e:

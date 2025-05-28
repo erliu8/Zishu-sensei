@@ -109,6 +109,8 @@ class PerformanceMonitor:
             "percent":disk.percent,
             "free":disk.free,
         }
+        
+        return metrics
     
     def record_response_time(self,module:str,operation:str,duration:float):
         """

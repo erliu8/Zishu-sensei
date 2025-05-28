@@ -24,12 +24,13 @@ from transformers import (
     get_scheduler
 )
 
+from peft import get_peft_model
 from transformers.trainer_utils import get_last_checkpoint
 from datasets import load_dataset,Dataset
 from torch.utils.data import DataLoader
 from tqdm import tqdm
 
-from .lora import LoraManager,get_peft_model
+from .lora import LoraManager
 from ..utils.performance import get_performance_monitor
 from ..utils.thread_factory import get_thread_factory
 from ..utils.config_manager import ConfigManager
@@ -62,7 +63,7 @@ class TrainingManager(LoraManager):
         
         try:
             with open(self.traning_config_path,"r",encoding="utf-8") as f:
-                self.traning_config = json.load(f)
+                self.training_config = json.load(f)
         except Exception as e:
             self.logger.error(f"加载训练配置文件失败: {e}")
             raise RuntimeError(f"加载训练配置文件失败: {e}")
@@ -94,7 +95,7 @@ class TrainingManager(LoraManager):
         
         #使用配置文件中的路径（如果未指定参数）
         data_path = data_path or data_config.get("train_file")
-        validation_path = validation_path or data_config.get("validation_file")
+        validation_path = validation_data_path or data_config.get("validation_file")
         
         #使用配置文件中的预处理参数（如果未指定参数）
         preprocess_config = data_config.get("preprocess",{})

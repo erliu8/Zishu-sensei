@@ -1,9 +1,9 @@
 {
     "training":{
-        "bath_size":4,
+        "batch_size":1,
         "micro_batch_size":1,
-        "epochs":3,
-        "learning_rate":2e-3,
+        "epochs":5,
+        "learning_rate":5e-5,
         "lr_scheduler":"cosine_with_restarts",
         "weight_decay":0.01,
         "warmup_steps":200,
@@ -20,15 +20,18 @@
     "data":{
         "train_file":"./data/train/train.json",
         "validation_file":"./data/train/val.json",
-        "preprocessin":{
-            "max_length":2048,
+        "preprocessing":{
+            "max_length":1024,
             "text_column":"text",
             "add_eos_token":true
         }
     },
     "lora_config":{
+        "r":16,
+        "lora_alpha":32,
         "bias":"none",
         "task_type":"CAUSAL_LM",
+        "target_modules":["q_proj", "k_proj", "v_proj", "o_proj"],
         "use_8bit_adam":true,
         "use_peft":true        
     }

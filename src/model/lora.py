@@ -54,6 +54,7 @@ class LoraManager(QuantizationManager):
         #当前适配器路径
         self.current_adapter = adapter_name
         self._peft_config = None
+        self._peft_model = None
         
         self.logger = logging.getLogger(__name__)
             
@@ -101,7 +102,7 @@ class LoraManager(QuantizationManager):
             
         return model
     
-    def get_peft_model(self,adapter_name:Optional[str]=None):
+    def load_peft_adapter(self,adapter_name:Optional[str]=None):
         """
         获取PEFT模型
         

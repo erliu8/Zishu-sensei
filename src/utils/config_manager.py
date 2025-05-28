@@ -105,7 +105,7 @@ class ConfigManager:
         if not self.encryption_key:
             raise RuntimeError("未设置加密密钥")
         f = Fernet(self.encryption_key)
-        
+        return f.decrypt(value.encode()).decode()
         
     def start_watch(self,interval:int=10):
         """开始监视配置文件变化"""
@@ -114,7 +114,7 @@ class ConfigManager:
         
         self.stop_event.clear()
         self.watch_thread = threading.Thread(
-            target=self._watch_thread,
+            target=self._watch_config_files,
             args=(interval,),
             daemon=True
         )

@@ -1,7 +1,7 @@
 #! /usr/bin/env python3
 # -*- coding: utf-8 -*-
 
-import os
+import os 
 import time
 import logging
 import threading
@@ -359,7 +359,7 @@ class InferenceEngine:
         with torch.no_grad():
             model.generate(**generation_kwargs)
             
-    @CircuitBreaker(failure_threshold=3,reset_timeout=0)
+    @CircuitBreaker(failure_threshold=3,recovery_timeout=0)
     def batch_generate(self,
                        prompts:List[str],
                        model_id:Optional[str]=None,

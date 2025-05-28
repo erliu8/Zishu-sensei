@@ -74,8 +74,52 @@ class FallbackChain:
         self.functions = functions
         self.logger = logger or logging.getLogger(__name__)
         
-    def execute(self,*args,**kwargs):
+    def execute(self, *args, **kwargs):
+        """执行降级链,依次尝试执行降级函数,直到成功"""
         last_exception = None
+        
+        for i,func in enumerate(self.functions):
+            try:
+                return func(*args,**kwargs)
+            except Exception as e:
+                last_exception = e
+                self.logger.warning(f"执行降级函数{i}失败: {str(e)}")
+        if last_exception:
+            raise last_exception
+    
+    def __call__(self,func):
+        """
+        装饰器,用于包装被调用函数,实现降级链功能,将原始函数作为首选方案，降级函数作为备选
+        
+        Args:
+            func (Callable): 被包装的函数
+            
+        Returns:
+            Callable: 包装后的函数
+        """
+        @wraps(func)
+        def wrapper(*args,**kwargs):
+            try:
+                #首先尝试原始函数
+                return func(*args,**kwargs)
+            except Exception as e:
+                self.logger.warning(f"原始函数{func.__name__}执行失败: {str(e)},尝试降级函数")
+
+                #尝试执行降级函数
+                for i,fallback_func in enumerate(self.functions):
+                    try:
+                        self.logger.info(f"尝试执行降级函数{i}: {fallback_func.__name__}")
+                        return fallback_func(*args,**kwargs)
+                    except Exception as e:
+                        self.logger.warning(f"降级函数{i}执行失败: {str(e)},继续尝试下一个")
+                        
+                #如果所有降级函数都执行失败,抛出原始异常
+                self.logger.error(f"所有降级函数执行失败,抛出原始异常: {str(e)}")
+                raise e
+        return wrapper
+
+    def execute(self,*args,**kwargs):
+        last_error = None
         
         for i,func in enumerate(self.functions):
             try:

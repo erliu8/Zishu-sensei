@@ -1,18 +1,48 @@
 {
-    "app_name": "Zishu-sense",
-    "app_version": "1.0.0",
-    "app_description": "Zishu-sense is a chatbot that can chat with you.",
-    "app_author": "erliu",
-    "app_license": "MIT",
-    "language": "zh-CN",
-    "data_dir": "./data",
-    "models_dir": "./models",
-    "config_dir": "./config",
-    "logs_dir": "./data/logs",
-    "memory_dir": "./data/memory",
-    "assets_dir": "./assets",
-    "max_history_size": 10,
-    "default_character": "Zishu-sensei",
-    "default_mode":"desktop",
-    "debug": true
+    "data_sources":{
+        "anime_dialogue": {
+            "path": "./data/raw/anime_dialogue",
+            "format": "json",
+            "enabled": true
+        },
+        "anime_wiki": {
+            "path": "./data/raw/anime_wiki",
+            "format": "json",
+            "enabled": false
+        },
+        "bilibili_comments": {
+            "path": "./data/raw/bilibili_comments",
+            "format": "json",
+            "enabled": false
+        }
+    },
+    "preprocessing":{
+        "tokenization":{
+            "truncation": true,
+            "max_length": 4096
+        },
+        "text_cleaning":{
+            "remove_urls": true,
+            "remove_emojis": false,
+            "normalize_spaces": true,
+            "preserve_emoji_emoticons": true,
+            "preserve_japanese_terms": true
+        },
+        "augmentation":{
+            "enabled": true,
+            "methods": ["back_translation", "synonym_replacement"]
+        }
+    },
+    "dataset_splitting":{
+        "train": 0.8,
+        "validation": 0.1,
+        "test": 0.1,
+        "seed": 42
+    },
+    "expert_specific_data":{
+        "anime_culture":["anime_analysis","character_studies"],
+        "anime_language":["anime_dialogue","character_quotes"],
+        "acg_knowledge":["anime_wiki","game_guides"],
+        "user_interaction":["bilibili_comments"]
+    }     
 }
