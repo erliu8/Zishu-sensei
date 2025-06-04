@@ -14,8 +14,10 @@
         "logging_steps":10,
         "eval_steps":100,
         "save_steps":500,
-        "save_total_limit":3
-        
+        "save_total_limit":3,
+        "use_accelerate":true,
+        "accelerate_config_path":"./config/accelerate_config.json",
+        "cpu_offload":true 
     },
     "data":{
         "train_file":"./data/train/train.json",

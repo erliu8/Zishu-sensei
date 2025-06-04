@@ -21,6 +21,11 @@
         "top_k": 40,
         "repetition_penalty": 1.1
     },
+    "attention":{
+        "use_efficient_attention":true,
+        "sdpa_enabled":true,
+        "backend":"auto"
+    },
     "experts_enabled": true,
     "lora_config": {
         "r": 16,

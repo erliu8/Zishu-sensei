@@ -24,6 +24,8 @@ from transformers import (
     get_scheduler
 )
 
+from accelerate import Accelerator
+from accelerate.utils import set_seed_for_device
 from peft import get_peft_model
 from transformers.trainer_utils import get_last_checkpoint
 from datasets import load_dataset,Dataset
@@ -199,10 +201,14 @@ class TrainingManager(LoraManager):
         #创建输出目录
         os.makedirs(output_dir,exist_ok=True)
         
+        #梯度检查点配置
+        gradient_checkpointing = train_config.get("gradient_checkpointing", True)
+        gradient_checkpointing_kwargs = train_config.get("gradient_checkpointing_kwargs", {"use_reentrant": False})
+        
         #设置训练参数
         training_args = TrainingArguments(
             output_dir=output_dir,
-            per_device_eval_batch_size=kwargs.get("batch_size",train_config.get("batch_size",4)),
+            per_device_train_batch_size=kwargs.get("batch_size",train_config.get("batch_size",4)),
             per_device_eval_batch_size=kwargs.get("batch_size",train_config.get("batch_size",4)),
             gradient_accumulation_steps=kwargs.get("gradient_accumulation_steps",train_config.get("gradient_accumulation_steps",4)),
             
@@ -220,17 +226,16 @@ class TrainingManager(LoraManager):
             save_strategy="steps",
             load_best_model_at_end=True if "validation" in kwargs else False,
             fp16=torch.cuda.is_available(),
-            gradient_checkpointing=train_config.get("gradient_checkpointing",True),
+            gradient_checkpointing=gradient_checkpointing,
+            gradient_checkpointing_kwargs=gradient_checkpointing_kwargs,
             report_to="tensorboard",
             remove_unused_columns=False,
             optim="adamw_torch",
-            **{
-                k:v for k,v in kwargs.items() if k not in [
-                    "batch_size","gradient_accumulation_steps","learning_rate","epochs",
-                    "weight_decay","max_grad_norm","lr_scheduler","warmup_steps",
-                    "save_steps","logging_steps","eval_steps","save_total_limit"
-                ]
-            }
+            **{k:v for k,v in kwargs.items() if k not in [
+                "batch_size","gradient_accumulation_steps","learning_rate","epochs",
+                "weight_decay","max_grad_norm","lr_scheduler","warmup_steps",
+                "save_steps","logging_steps","eval_steps","save_total_limit"
+            ]}
         )
         self.training_args = training_args
         self.logger.info(f"训练参数准备完成: {training_args}")
@@ -276,12 +281,18 @@ class TrainingManager(LoraManager):
         #准备训练参数
         training_args = self.prepare_training_args(**kwargs)
         
+        #检查是否启用Accelerate
+        train_config = self.traning_config.get("training", {})
+        use_accelerate = train_config.get("use_accelerate", False)
+        
         #检查是否存在检测点，以便恢复训练
         last_checkpoint = None
         if os.path.isdir(training_args.output_dir):
             last_checkpoint = get_last_checkpoint(training_args.output_dir)
-            if last_checkpoint is None:
-                self.logger.info("未找到检测点，将从{last_checkpoint}恢复训练")
+            if last_checkpoint is None and len(os.listdir(training_args.output_dir)) > 0:
+                self.logger.info(f"未找到检测点，但输出目录非空")
+            elif last_checkpoint is not None:
+                self.logger.info(f"找到检测点: {last_checkpoint}，将从此处恢复训练")
                 
         #准备模型
         #先获取基础模型
@@ -305,56 +316,222 @@ class TrainingManager(LoraManager):
             mlm=False
         )
         
-        #创建训练器
-        trainer = Trainer(
-            model=model,
-            args=training_args,
-            train_dataset=train_dataset,
-            eval_dataset=validation_dataset,
-            tokenizer=self.tokenizer,
-            data_collator=data_collator,
-        )
-        
-        #保存训练器
-        self.trainer = trainer
-        
-        #开始训练
-        self.logger.info("开始训练...,适配器名称: %s",adapter_name)
-        
-        try:
-            with self.performance_monitor:
-                train_result = trainer.train(resume_from_checkpoint=last_checkpoint)
+        if use_accelerate:
+            self.logger.info("使用Accelerate进行训练...")
             
-            #记录训练性能指标
-            metrics = train_result.metrics
-            trainer.log_metrics("train",metrics)
-            trainer.save_metrics("train",metrics)
+            #初始化Accelerator
+            accelerator = Accelerator(
+                gradient_accumulation_steps=training_args.gradient_accumulation_steps,
+                mixed_precision="fp16" if torch.cuda.is_available() else "no",
+                log_with="tensorboard",
+                project_dir=str(training_args.output_dir),
+                cpu_offload_model=train_config.get("cpu_offload", False)
+            )
             
-            #计算训练时间
+            if use_accelerate and accelerator:
+                accelerator.free_memory() #设置显存高效的内存管理
+                accelerator.set_hyperparameters(split_batches=True,dispatch_batches=False) #使用更激进的显存释放策略
+                accelerator.enable_auto_memory_management() #启用自动内存管理
+            
+            #设置随机种子
+            set_seed_for_device(42, accelerator.device)
+            
+            #创建优化器
+            no_decay = ["bias", "LayerNorm.weight"]
+            optimizer_grouped_parameters = [
+                {
+                    "params": [p for n, p in model.named_parameters() if not any(nd in n for nd in no_decay) and p.requires_grad],
+                    "weight_decay": training_args.weight_decay,
+                },
+                {
+                    "params": [p for n, p in model.named_parameters() if any(nd in n for nd in no_decay) and p.requires_grad],
+                    "weight_decay": 0.0,
+                },
+            ]
+            optimizer = torch.optim.AdamW(optimizer_grouped_parameters, lr=training_args.learning_rate)
+            
+            #创建学习率调度器
+            train_dataloader = DataLoader(
+                train_dataset,
+                batch_size=training_args.per_device_train_batch_size,
+                collate_fn=data_collator,
+                shuffle=True
+            )
+            
+            num_update_steps_per_epoch = len(train_dataloader) // training_args.gradient_accumulation_steps
+            max_train_steps = training_args.num_train_epochs * num_update_steps_per_epoch
+            
+            lr_scheduler = get_scheduler(
+                training_args.lr_scheduler_type,
+                optimizer=optimizer,
+                num_warmup_steps=training_args.warmup_steps,
+                num_training_steps=max_train_steps,
+            )
+            
+            #评估数据加载器
+            eval_dataloader = None
+            if validation_dataset is not None:
+                eval_dataloader = DataLoader(
+                    validation_dataset,
+                    batch_size=training_args.per_device_eval_batch_size,
+                    collate_fn=data_collator
+                )
+            
+            #准备所有组件
+            model, optimizer, train_dataloader, eval_dataloader, lr_scheduler = accelerator.prepare(
+                model, optimizer, train_dataloader, eval_dataloader, lr_scheduler
+            )
+            
+            #训练循环
+            progress_bar = tqdm(range(max_train_steps), disable=not accelerator.is_local_main_process)
+            completed_steps = 0
+            best_metric = None
+            best_model_checkpoint = None
+            
+            for epoch in range(int(training_args.num_train_epochs)):
+                model.train()
+                total_loss = 0
+                for step, batch in enumerate(train_dataloader):
+                    with accelerator.accumulate(model):
+                        outputs = model(**batch)
+                        loss = outputs.loss
+                        accelerator.backward(loss)
+                        
+                        if training_args.max_grad_norm > 0:
+                            accelerator.clip_grad_norm_(model.parameters(), training_args.max_grad_norm)
+                            
+                        optimizer.step()
+                        lr_scheduler.step()
+                        optimizer.zero_grad()
+                    
+                    #记录和输出
+                    if step % training_args.logging_steps == 0:
+                        progress_bar.update(1)
+                        completed_steps += 1
+                        accelerator.log({"train_loss": loss.item(), "lr": lr_scheduler.get_last_lr()[0]}, step=completed_steps)
+                        self.logger.info(f"Epoch: {epoch}, Step: {step}, Loss: {loss.item():.4f}, LR: {lr_scheduler.get_last_lr()[0]:.8f}")
+                    
+                    #保存模型
+                    if completed_steps % training_args.save_steps == 0:
+                        output_dir = f"{training_args.output_dir}/checkpoint-{completed_steps}"
+                        accelerator.wait_for_everyone()
+                        if accelerator.is_local_main_process:
+                            accelerator.save_state(output_dir)
+                            self.logger.info(f"保存模型检查点到 {output_dir}")
+                    
+                    #评估
+                    if eval_dataloader is not None and completed_steps % training_args.eval_steps == 0:
+                        model.eval()
+                        eval_loss = 0
+                        eval_steps = 0
+                        for eval_batch in eval_dataloader:
+                            with torch.no_grad():
+                                outputs = model(**eval_batch)
+                            eval_loss += outputs.loss.item()
+                            eval_steps += 1
+                        
+                        eval_loss = eval_loss / eval_steps
+                        accelerator.log({"eval_loss": eval_loss}, step=completed_steps)
+                        self.logger.info(f"Step: {completed_steps}, Evaluation Loss: {eval_loss:.4f}")
+                        
+                        #保存最佳模型
+                        if best_metric is None or eval_loss < best_metric:
+                            best_metric = eval_loss
+                            best_model_dir = f"{training_args.output_dir}/best_model"
+                            if accelerator.is_local_main_process:
+                                unwrapped_model = accelerator.unwrap_model(model)
+                                unwrapped_model.save_pretrained(
+                                    best_model_dir,
+                                    save_function=accelerator.save,
+                                    state_dict=accelerator.get_state_dict(model)
+                                )
+                                self.logger.info(f"保存最佳模型到 {best_model_dir}")
+                        
+                        model.train()
+            
+            #训练完成，保存最终模型
+            accelerator.wait_for_everyone()
+            if accelerator.is_local_main_process:
+                unwrapped_model = accelerator.unwrap_model(model)
+                unwrapped_model.save_pretrained(
+                    training_args.output_dir,
+                    save_function=accelerator.save,
+                    state_dict=accelerator.get_state_dict(model)
+                )
+                self.logger.info(f"保存最终模型到 {training_args.output_dir}")
+            
+            #记录训练时间和信息
             training_time = time.time() - start_time
             training_info = {
-                "adapter_name":adapter_name,
-                "training_time":training_time,
-                "epochs":training_args.num_train_epochs,
-                "steps":metrics.get("train_steps",0),
-                "samples":len(train_dataset),
-                "loss":metrics.get("train_loss",0),
-                "learning_rate":training_args.learning_rate
+                "adapter_name": adapter_name,
+                "training_time": training_time,
+                "epochs": training_args.num_train_epochs,
+                "steps": completed_steps,
+                "samples": len(train_dataset),
+                "best_eval_loss": best_metric if best_metric is not None else float('inf')
             }
             
             #保存训练信息
-            with open(os.path.join(training_args.output_dir,"training_info.json"),"w") as f:
-                json.dump(training_info,f,ensure_ascii=False,indent=2)
-                
-            #保存适配器
-            self.logger.info("训练完成，保存适配器: %s",adapter_name)
-            self.save_adapter(adapter_name,output_dir)
+            if accelerator.is_local_main_process:
+                with open(os.path.join(training_args.output_dir, "training_info.json"), "w") as f:
+                    json.dump(training_info, f, ensure_ascii=False, indent=2)
             
-            return str(output_dir)
+            return training_args.output_dir
         
-        except Exception as e:
-            self.logger.error("训练过程中发生错误: %s",e)
-            raise RuntimeError(f"训练过程中发生错误: {e}")
+        else:
+            #原有的Trainer代码保持不变
+            self.logger.info("使用Trainer进行训练...")
+            
+            #创建训练器
+            trainer = Trainer(
+                model=model,
+                args=training_args,
+                train_dataset=train_dataset,
+                eval_dataset=validation_dataset,
+                tokenizer=self.tokenizer,
+                data_collator=data_collator,
+            )
+            
+            #保存训练器
+            self.trainer = trainer
+            
+            #开始训练
+            self.logger.info(f"开始训练...,适配器名称: {adapter_name}")
+            
+            try:
+                with self.performance_monitor:
+                    train_result = trainer.train(resume_from_checkpoint=last_checkpoint)
+                
+                #记录训练性能指标
+                metrics = train_result.metrics
+                trainer.log_metrics("train",metrics)
+                trainer.save_metrics("train",metrics)
+                
+                #计算训练时间
+                training_time = time.time() - start_time
+                training_info = {
+                    "adapter_name": adapter_name,
+                    "training_time": training_time,
+                    "epochs": training_args.num_train_epochs,
+                    "steps": metrics.get("train_steps",0),
+                    "samples": len(train_dataset),
+                    "loss": metrics.get("train_loss",0),
+                    "learning_rate": training_args.learning_rate
+                }
+                
+                #保存训练信息
+                with open(os.path.join(training_args.output_dir,"training_info.json"),"w") as f:
+                    json.dump(training_info,f,ensure_ascii=False,indent=2)
+                    
+                #保存适配器
+                self.logger.info("训练完成，保存适配器: %s",adapter_name)
+                self.save_adapter(adapter_name,output_dir)
+                
+                return str(output_dir)
+            
+            except Exception as e:
+                self.logger.error("训练过程中发生错误: %s",e)
+                raise RuntimeError(f"训练过程中发生错误: {e}")
         
     def train_async(self,
                     adapter_name:str,
@@ -398,15 +575,64 @@ class TrainingManager(LoraManager):
         Returns:
             Dict[str,float]: 评估结果
         """
-        #未实现的评估指标
-        pass
+        #创建评估管理器，传入当前训练管理器实例
+        from .evaluation import EvaluationManager
+        evaluation_manager = EvaluationManager(self)
+        
+        #如果提供了适配器名称，激活该适配器
+        if adapter_name and hasattr(self.model,"set_adapter"):
+            self.model.set_adapter(adapter_name)
             
+        #如果未提供评估数据集，使用训练配置中的验证集
+        if eval_dataset is None and hasattr(self,"eval_dataset"):
+            eval_dataset = self.eval_dataset
+        
+        if eval_dataset is None:
+            self.logger.warning("未提供评估数据集,无法进行评估")
+            return {}
+        
+        #如果未提供评估指标，使用默认指标
+        if metrics is None:
+            metrics = evaluation_manager.eval_config.get("metrics",["accuracy"])
+            
+        results = {}
+        
+        #根据指定的评估指标执行相应的评估
+        for metric in metrics:
+            if metric == "perplexity":
+                metric_result = evaluation_manager.evaluate_perplexity(eval_dataset)
+            elif metric == "accuracy":
+                metric_result = evaluation_manager.evaluate_accuracy(eval_dataset)
+            elif metric == "character_consistency":
+                metric_result = evaluation_manager.evaluate_character_consistency(eval_dataset)
+            elif metric == "cultural_knowledge":
+                metric_result = evaluation_manager.evaluate_cultural_knowledge(eval_dataset)
+            else:
+                self.logger.warning(f"未实现的评估指标: {metric},跳过")
+                continue
+            
+            results[metric] = metric_result
+            
+        #记录评估结果
+        self.logger.info(f"评估结果:{results}")
+        
+        #如果是在训练过程中评估，记录到训练历史
+        if hasattr(self,"history"):
+            current_step = self.history.get("global_step",0)
+            if "eval_results" not in self.history:
+                self.history["eval_results"] = {}
+            self.history["eval_results"][current_step] = results
+        
+        return results
+        
+                    
             
        
         
         
             
             
+        
         
         
         

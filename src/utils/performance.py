@@ -4,12 +4,15 @@
 
 import time
 import logging
+import torch
 import threading
 import psutil
 import gc
 import os
 from functools import wraps
 from typing import Dict,Any,Optional,List,Callable,Tuple
+
+logger = logging.getLogger(__name__)
 
 class PerformanceMonitor:
     """性能监控类,用于监控系统资源使用情况和模型响应时间"""
@@ -229,6 +232,93 @@ class PerformanceMonitor:
             }
 
         return summary
+    def benchmark_attention_performance(model, seq_length=512, batch_size=4, num_runs=10):
+        """
+        测试模型注意力机制的性能
+        
+        Args:
+            model: 要测试的模型
+            seq_length: 序列长度
+            batch_size: 批量大小
+            num_runs: 运行次数
+        
+        Returns:
+            dict: 性能测试结果
+        """
+        if not torch.cuda.is_available():
+            logger.warning("无GPU可用，无法进行性能测试") 
+            return {"error": "No GPU available"}
+        
+        model.eval()
+
+        try:
+            # 生成随机输入数据
+            vocab_size = model.config.vocab_size
+            input_ids = torch.randint(0, vocab_size, (batch_size, seq_length)).cuda()
+            attention_mask = torch.ones_like(input_ids).cuda()
+            
+            # 预热
+            for _ in range(3):
+                with torch.no_grad():
+                    _ = model(input_ids, attention_mask=attention_mask)
+            
+            # 清空CUDA缓存
+            torch.cuda.empty_cache()
+            torch.cuda.synchronize()
+            
+            # 测量推理时间
+            start_event = torch.cuda.Event(enable_timing=True)
+            end_event = torch.cuda.Event(enable_timing=True)
+            
+            durations = []
+            memory_usage = []
+            
+            for _ in range(num_runs):
+                # 记录起始内存
+                start_mem = torch.cuda.memory_allocated()
+                
+                start_event.record()
+                with torch.no_grad():
+                    _ = model(input_ids, attention_mask=attention_mask)
+                end_event.record()
+                
+                # 等待CUDA操作完成
+                torch.cuda.synchronize()
+                
+                # 计算内存使用和时间
+                end_mem = torch.cuda.memory_allocated()
+                memory_usage.append(end_mem - start_mem)
+                durations.append(start_event.elapsed_time(end_event))
+            
+            # 计算和记录结果
+            avg_time = sum(durations) / len(durations)
+            avg_memory = sum(memory_usage) / len(memory_usage) / (1024 * 1024)  # MB
+            tokens_per_sec = batch_size * seq_length * 1000 / avg_time
+            
+            # 检查是否使用了SDPA
+            sdpa_used = False
+            for name, module in model.named_modules():
+                if hasattr(module, "attn_implementation"):
+                    if module.attn_implementation == "sdpa":
+                        sdpa_used = True
+                        break
+            
+            results = {
+                "avg_time_ms": avg_time,
+                "tokens_per_second": tokens_per_sec,
+                "avg_memory_mb": avg_memory,
+                "batch_size": batch_size,
+                "seq_length": seq_length,
+                "sdpa_used": sdpa_used
+            }
+            
+            logger.info(f"注意力性能测试结果: {results}")
+            return results
+            
+        except Exception as e:
+            logger.error(f"性能测试出错: {e}")
+            return {"error": str(e)}
+    
     def trigger_gc(self):
         """手动触发垃圾回收"""
         before = len(gc.get_objects())

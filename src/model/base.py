@@ -12,7 +12,9 @@ from pathlib import Path
 from typing import Dict, Any, Optional, Union, List
 
 import torch
-from transformers import AutoTokenizer, AutoModelForCausalLM, PreTrainedModel, PreTrainedTokenizer
+from transformers import AutoTokenizer, AutoModelForCausalLM, AutoConfig, PreTrainedModel, PreTrainedTokenizer
+
+from src.utils.attention_utils import check_sdpa_support, configure_sdpa_for_model, display_sdpa_performance_info
 
 class ModelManager:
     """基础模型管理类，负责模型加载、缓存和管理等操作"""
@@ -87,32 +89,125 @@ class ModelManager:
             self.logger.error(f"分词器加载失败: {e}")
             raise RuntimeError(f"分词器加载失败: {e}")
 
-    def load_model(self) -> PreTrainedModel:
-        """加载基础模型（未量化版本）"""
-        if self._model is not None:
-            return self._model
-        
+    def load_model(self):
+        """加载预训练模型"""
         model_path = self.get_model_path()
-        self.logger.info(f"加载基础模型: {model_path}")
+        
+        #获取高效注意力配置
+        attention_config = self.config.get("attention",{})
+        efficient_attn_enabled = self.config.get("use_efficient_attention", False)
+        self.logger.info(f"模型加载路径: {model_path}, 高效注意力: {efficient_attn_enabled}")
         
         try:
+            #检查SDPA支持情况
+            sdqa_info = None
+            if efficient_attn_enabled:
+                sdpa_info = check_sdpa_support()
+                if sdpa_info["sdpa_available"]:
+                    self.logger.info(f"检测到SDPA支持，最佳后端: {sdpa_info['best_backend']}")
+                else:
+                    self.logger.warning("未检测到SDPA支持，将使用默认注意力机制")
+            
+            #附加配置参数
+            model_kwargs = {}
+            
+            #根据配置选择适当的精度模型
+            dtype = None
+            if self.config.get("fp16",False) and torch.cuda.is_available():
+                dtype = torch.float16
+                self.logger.info("使用FP16精度")
+            elif self.config.get("bf16",False) and torch.cuda.is_available() and torch.cuda.is_bf16_supported():
+                dtype = torch.bfloat16
+                self.logger.info("使用BF16精度")
+                
+            if dtype:
+                model_kwargs["torch_dtype"] = dtype
+                
+            #添加注意力实现配置
+            if efficient_attn_enabled and sdpa_info and sdpa_info["sdpa_available"]:
+                model_kwargs["attn_implementation"] = "sdpa"
+                
+            #设置device_map
+            if torch.cuda.is_available():
+                device_map = {
+                    "model.embed_tokens":"cpu",
+                    "model.layers.0":"cuda",
+                    "model.layers.1":"cuda",
+                    "model.layers.2":"cuda",
+                    "model.layers.3":"cuda",
+                    "model.layers.30":"cuda",
+                    "model.layers.31":"cuda",
+                    "model.norm":"cpu",
+                    "lm_head":"cpu"
+                }
+                #根据模型大小动态调整device_map
+                if "7B" in model_path:
+                    gpu_layers = 2
+                elif "3B" in model_path or "1.3B" in model_path:
+                    gpu_layers = 6
+                
+                #构建最终的device_map
+                final_device_map = {}
+                total_layers = self._get_model_layer_count(model_path)
+                for i in range(total_layers):
+                    if i< gpu_layers // 2 or i >= total_layers - (gpu_layers // 2):
+                        final_device_map[f"model.layers.{i}"] = "cuda"
+                    else:
+                        final_device_map[f"model.layers.{i}"] = "cpu"
+                
+                #添加嵌入和输出层配置
+                final_device_map["model.embed_tokens"] = "cpu"
+                final_device_map["lm_head"] = "cpu"
+                final_device_map["model.norm"] = "cpu"
+                
+                model_kwargs["device_map"] = final_device_map
+            
+            #是否使用量化
+            if self.config.get("quantized",{}).get("enabled",False):
+                bits = self.config["quantization"]["bits"]
+                if bits == 4:
+                    model_kwargs["load_in_4bit"] = True
+                    self.logger.info(f"使用4位量化")
+                elif bits == 8:
+                    model_kwargs["load_in_8bit"] = True
+                    self.logger.info(f"使用8位量化")
+            
+            #加载模型配置和模型
+            model_config = AutoConfig.from_pretrained(model_path)
+            
+            self.logger.info(f"开始加载模型，参数: {model_kwargs}")
             self._model = AutoModelForCausalLM.from_pretrained(
                 model_path,
+                config=model_config,
                 trust_remote_code=True,
-                device_map=self.device,
-                torch_dtype=torch.float16 if self.device != "cpu" else torch.float32,
-                low_cpu_mem_usage=True,
+                **model_kwargs
             )
-            self.logger.info(f"基础模型加载成功，参数量：{self._get_model_size(self._model):.2f}B")
+            #如果启用了高效注意力，配置SDPA
+            if efficient_attn_enabled and sdpa_info and sdpa_info["sdpa_available"]:
+                self._model = configure_sdpa_for_model(self._model,attention_config)
+                display_sdpa_performance_info()
+                
+            self.logger.info(f"模型加载完成，大小: {self._get_model_size(self._model):.2f}B参数")
             return self._model
         except Exception as e:
-            self.logger.error(f"基础模型加载失败: {e}")
-            raise RuntimeError(f"基础模型加载失败: {e}")
+            self.logger.error(f"模型加载失败: {e}")
+            raise RuntimeError(f"模型加载失败: {e}")
+
         
     def _get_model_size(self, model: torch.nn.Module) -> float:
         """计算模型参数数量（单位：十亿）"""
         return sum(p.numel() for p in model.parameters()) / 1e9
     
+    def _get_model_layer_count(self, model_path):
+        """获取模型层数"""
+        config = AutoConfig.from_pretrained(model_path)
+        if hasattr(config,"num_hidden_layers"):
+            return config.num_hidden_layers
+        elif hasattr(config,"n_layer"):
+            return config.n_layer
+        else:
+            return 32
+
     def generate(self,
                 prompt: str,
                 max_new_tokens: int = 256,

@@ -26,5 +26,11 @@
         "similarity_threshold":0.6,
         "time_decay_factor":0.95,
         "context_boost_factor":1.2
+    },
+    "model_placement":{
+        "strategy":"layered",
+        "gpu_layer_ratio":0.2,
+        "priority_layers":["attention","mlp"],
+        "cpu_offload_modules":["embed_tokens","norm","lm_head"]
     }
 }
