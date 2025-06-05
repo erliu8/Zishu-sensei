@@ -17,7 +17,11 @@
         "save_total_limit":3,
         "use_accelerate":true,
         "accelerate_config_path":"./config/accelerate_config.json",
-        "cpu_offload":true 
+        "cpu_offload":true,
+        "dataloader_workers":4,
+        "async_prefetch":true,
+        "use_memory_map":true,
+        "memmap_dir":"./data/memmap"
     },
     "data":{
         "train_file":"./data/train/train.json",

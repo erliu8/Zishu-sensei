@@ -36,6 +36,7 @@ from .lora import LoraManager
 from ..utils.performance import get_performance_monitor
 from ..utils.thread_factory import get_thread_factory
 from ..utils.config_manager import ConfigManager
+from ..utils.efficient_dataloader import create_efficient_dataloader
 
 class TrainingManager(LoraManager):
     """
@@ -351,11 +352,15 @@ class TrainingManager(LoraManager):
             optimizer = torch.optim.AdamW(optimizer_grouped_parameters, lr=training_args.learning_rate)
             
             #创建学习率调度器
-            train_dataloader = DataLoader(
+            train_dataloader = create_efficient_dataloader(
                 train_dataset,
                 batch_size=training_args.per_device_train_batch_size,
+                num_workers=train_config.get("dataloader_workers",4), #从配置中获取
+                pin_memory=True, #启用内存固定
+                prefetch_factor=2, #预取因子
+                persistent_workers=True, #持久化工作线程
                 collate_fn=data_collator,
-                shuffle=True
+                use_async_prefetch=train_config.get("async_prefetch",True) #从配置中获取
             )
             
             num_update_steps_per_epoch = len(train_dataloader) // training_args.gradient_accumulation_steps
@@ -371,10 +376,16 @@ class TrainingManager(LoraManager):
             #评估数据加载器
             eval_dataloader = None
             if validation_dataset is not None:
-                eval_dataloader = DataLoader(
+                eval_dataloader = create_efficient_dataloader(
                     validation_dataset,
                     batch_size=training_args.per_device_eval_batch_size,
-                    collate_fn=data_collator
+                    shuffle=False,
+                    num_workers=train_config.get("dataloader_workers",4),
+                    pin_memory=True,
+                    prefetch_factor=2,
+                    persistent_workers=True,
+                    collate_fn=data_collator,
+                    use_async_prefetch=train_config.get("async_prefetch",True)
                 )
             
             #准备所有组件
