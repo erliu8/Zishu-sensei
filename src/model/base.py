@@ -65,7 +65,7 @@ class ModelManager:
     
     def get_model_path(self) -> str:
         """获取模型路径/ID"""
-        return self.config.get("model", {}).get("base_model", "")
+        return self.config.get("base_model", {}).get("path", "")
     
     def load_tokenizer(self) -> PreTrainedTokenizer:
         """加载分词器"""

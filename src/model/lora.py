@@ -21,10 +21,10 @@ from peft import (
 )
 
 from .base import ModelManager
-from .quantization import QuantizationManager
+from .quantization import AdvanceQuantizationManager
 
-class LoraManager(QuantizationManager):
-    """Lora管理类，负责Lora模微调与适配器管理"""
+class LoraManager(AdvanceQuantizationManager):
+    """Lora管理类，负责Lora模型微调与适配器管理"""
     
     def __init__(self,
                  config_path:Union[str,Path],

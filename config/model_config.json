@@ -11,8 +11,37 @@
     },
     "quantization": {
         "enabled": true,
-        "bits": 4,
-        "compute_dtype": "float16"
+        "active_method": "bnb",
+        "methods":{
+            "bnb":{
+                "enabled": true,
+                "bits": 4,
+                "compute_dtype": "float16",
+                "use_double_quant": true,
+                "quant_dtype": "nf4"
+            },
+            "gptq":{
+                "enabled": true,
+                "bits": 4,
+                "group_size": 128,
+                "use_triton": false
+            },
+            "awq":{
+                "enabled": true,
+                "bits": 4,
+                "group_size": 128,
+                "zero_point": true
+            },
+            "dynamic":{
+                "enabled": true,
+                "dtype": "qint8"
+            }
+        }
+    },
+    "calibration":{
+        "dataset_path":"./data/train/calibration.json",
+        "num_samples": 128,
+        "sequence_length": 1024
     },
     "inference": {
         "max_new_tokens": 512,
