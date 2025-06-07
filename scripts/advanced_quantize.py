@@ -41,31 +41,19 @@ def load_calibration_data(calibration_path:str,max_samples:int=128)->List[str]:
         with open(calibration_path,"r",encoding="utf-8") as f:
             data = json.load(f)
             
-        if isinstance(data,list):
-            #如果是直接的文本列表
-            calibration_texts = data[:max_samples]
-        elif isinstance(data,dict) and "data" in data:
-            #如果是包含data键的字典
-            calibration_texts = data["data"][:max_samples]
-        else:
-            #尝试提取文本字段
-            texts = []
-            for item in data[:max_samples]:
-                if isinstance(item,dict):
-                    #尝试找到可能包含文本的字段
-                    for field in ["text","content","input","instruction","prompt","query"]:
-                        if field in item:
-                            texts.append(item[field])
-                            break
-                elif isinstance(item,str):
-                    texts.append(item)
-            calibration_texts = texts
-            
-        if not calibration_texts:
+        # 确保返回字符串列表
+        texts = []
+        for item in data[:max_samples]:
+            if isinstance(item, dict) and "text" in item:
+                texts.append(item["text"])  # 提取text字段
+            elif isinstance(item, str):
+                texts.append(item)
+                
+        if not texts:
             raise ValueError("未找到有效的校准数据")
         
-        logger.info(f"加载了{len(calibration_texts)}个校准样本")
-        return calibration_texts
+        logger.info(f"加载了{len(texts)}个校准样本")
+        return texts
     
     except Exception as e:
         logger.error(f"加载校准数据失败: {str(e)}")
@@ -139,7 +127,7 @@ def quantize_gptq(
             
         #进行量化
         model = AutoGPTQForCausalLM.from_pretrained(
-            model,
+            model_path,
             quantize_config=quantize_config,
             trust_remote_code=True
         )
@@ -377,8 +365,10 @@ def verify_quantized_model(model_path:str, tokenizer, method:str)->None:
         else:
             # 其他量化方法保持原有逻辑
             if method == "gptq":
-                from auto_gptq import AutoGPTQForCausalLM
-                model = AutoGPTQForCausalLM.from_pretrained(model_path)
+                from auto_gptq import AutoGPTQForCausalLM, BaseQuantizeConfig
+                # 创建量化配置
+                quantize_config = BaseQuantizeConfig(bits=4, group_size=128)
+                model = AutoGPTQForCausalLM.from_pretrained(model_path, quantize_config=quantize_config)
             elif method == "awq":
                 from awq import AutoAWQForCausalLM
                 model = AutoAWQForCausalLM.from_pretrained(model_path)
@@ -456,11 +446,16 @@ def main():
     if args.calibration_file:
         calibration_path = args.calibration_file
     else:
-        calibration_path = calibration_config.get("file","data/calibration_data.json")
+        calibration_path = calibration_config.get("dataset_path","data/train/calibration.json")
         
     #加载校准数据(对于GPTQ和AWQ)
     if method in ["gptq","awq"]:
         calibration_data = load_calibration_data(calibration_path,args.max_samples)
+        # 添加调试信息
+        logger.info(f"校准数据类型: {type(calibration_data)}")
+        if calibration_data and len(calibration_data) > 0:
+            logger.info(f"第一个样本类型: {type(calibration_data[0])}")
+            logger.info(f"第一个样本: {str(calibration_data[0])[:100]}")  # 只显示前100个字符
     else:
         calibration_data = None
         
