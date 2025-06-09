@@ -1,0 +1,63 @@
+{
+    "name": "核心能力蒸馏",
+    "description": "将核心教师模型的知识蒸馏到基础学生模型",
+    "teachers": ["chinese_mistral", "qwen", "chatglm"],
+    "student": "zishu_base",
+    "training": {
+        "batch_size": 16,
+        "gradient_accumulation_steps": 4,
+        "epochs": 3,
+        "learning_rate": 2e-4,
+        "warmup_ratio": 0.03,
+        "weight_decay": 0.01,
+        "lr_scheduler": "cosine",
+        "save_steps": 1000,
+        "eval_steps": 500,
+        "logging_steps": 100,
+        "max_grad_norm": 1.0
+    },
+    "data": {
+        "train_path": "./data/distillation/core/train.json",
+        "eval_path": "./data/distillation/core/eval.json",
+        "max_seq_length": 512,
+        "preprocessing": {
+            "text_cleaning": true,
+            "deduplication": true,
+            "shuffle": true
+        }
+    },
+    "distillation": {
+        "temperature": 2.0,
+        "methods": {
+            "response_distillation": {
+                "enable": true,
+                "weight": 0.5
+            },
+            "feature_distillation": {
+                "enable": true,
+                "weight": 0.3,
+                "layers_mapping": {
+                    "student": [0, 6, 12, 18, 23],
+                    "chinese_mistral": [0, 8, 16, 24, 31],
+                    "qwen": [0, 8, 16, 24, 31],
+                    "chatglm": [0, 7, 14, 21, 27]
+                }
+            },
+            "logit_distillation": {
+                "enable": true,
+                "weight": 0.2
+            }
+        },
+        "teacher_weights": {
+            "chinese_mistral": 1.0,
+            "qwen": 0.8,
+            "chatglm": 0.7
+        }
+    },
+    "evaluation": {
+        "metrics": ["ppl", "accuracy", "bleu", "teacher_agreement"],
+        "generate_samples": true,
+        "num_samples": 50,
+        "save_predictions": true
+    }
+} 

@@ -1,0 +1,36 @@
+{
+    "vector_db":{
+        "type":"faiss",
+        "dimension":768,
+        "index_type":"Flat",
+        "similarity_metric":"cosine",
+        "db_path":"./data/memory/vector_db"
+    },
+    "embedding":{
+        "model":"shibing624/text2vec-base-chinese",
+        "batch_size":32,
+        "device":"auto",
+        "normalize":true
+    },
+    "memory_management":{
+        "importance_model":"rule_based",
+        "cleanup_interval":86400,
+        "retention_policy":{
+            "importance_weight":0.7,
+            "recency_weight":0.3,
+            "minimum_age_days":7
+        }
+    },
+    "retrieval":{
+        "top_k":5,
+        "similarity_threshold":0.6,
+        "time_decay_factor":0.95,
+        "context_boost_factor":1.2
+    },
+    "model_placement":{
+        "strategy":"layered",
+        "gpu_layer_ratio":0.2,
+        "priority_layers":["attention","mlp"],
+        "cpu_offload_modules":["embed_tokens","norm","lm_head"]
+    }
+}

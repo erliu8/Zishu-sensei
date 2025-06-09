@@ -1,0 +1,38 @@
+# 排除大型数据目录和模型
+models/
+output/
+venv/
+anime-offline-database/
+
+# 排除Python临时文件
+__pycache__/
+*.py[cod]
+*$py.class
+*.so
+.Python
+build/
+develop-eggs/
+dist/
+downloads/
+eggs/
+.eggs/
+lib/
+lib64/
+parts/
+sdist/
+var/
+wheels/
+*.egg-info/
+.installed.cfg
+*.egg
+
+# 日志和临时文件
+*.log
+*.tmp
+*.temp
+
+# IDE相关
+.idea/
+.vscode/
+*.swp
+*.swo

@@ -1,0 +1,70 @@
+{
+    "base_model": {
+        "id": "itpossible/Chinese-Mistral-7B-v0.1",
+        "path": "/root/autodl-tmp/zishu-sensei/models/base/Chinese-Mistral-7B-v0.1/itpossible/Chinese-Mistral-7B-v0___1",
+        "tokenizer": "auto",
+        "torch_dtype": "float16"
+    },
+    "student_model": {
+        "id": "zishu-base",
+        "path": "./models/student/zishu-base",
+        "architecture": "llama-1.3b"
+    },
+    "quantization": {
+        "enabled": true,
+        "active_method": "bnb",
+        "methods":{
+            "bnb":{
+                "enabled": true,
+                "bits": 4,
+                "compute_dtype": "float16",
+                "use_double_quant": true,
+                "quant_dtype": "nf4"
+            },
+            "gptq":{
+                "enabled": true,
+                "bits": 4,
+                "group_size": 128,
+                "use_triton": false
+            },
+            "awq":{
+                "enabled": true,
+                "bits": 4,
+                "group_size": 128,
+                "zero_point": true
+            },
+            "dynamic":{
+                "enabled": true,
+                "dtype": "qint8"
+            }
+        }
+    },
+    "calibration":{
+        "dataset_path":"./data/train/calibration.json",
+        "num_samples": 128,
+        "sequence_length": 1024
+    },
+    "inference": {
+        "max_new_tokens": 512,
+        "temperature": 0.7,
+        "top_p": 0.9,
+        "top_k": 40,
+        "repetition_penalty": 1.1
+    },
+    "attention":{
+        "use_efficient_attention":true,
+        "sdpa_enabled":true,
+        "backend":"auto"
+    },
+    "experts_enabled": true,
+    "lora_config": {
+        "r": 16,
+        "lora_alpha": 32,
+        "lora_dropout": 0.05,
+        "target_modules": ["q_proj", "v_proj", "k_proj", "o_proj"]
+    }
+}
+
+    
+
+

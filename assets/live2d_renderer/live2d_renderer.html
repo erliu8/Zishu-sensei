@@ -1,0 +1,147 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <meta charset="UTF-8">
+    <title>Live2D Renderer</title>
+    <style>
+        body {
+            margin: 0;
+            padding: 0;
+            overflow: hidden;
+            background-color: transparent;
+        }
+        #live2d-container {
+            position: absolute;
+            width: 100%;
+            height: 100%;
+        }
+    </style>
+    <!-- 引入Live2D Cubism Core库 -->
+    <script src="https://cubism.live2d.com/sdk-web/cubismcore/live2dcubismcore.min.js"></script>
+    <!-- 引入Pixi.js -->
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/pixi.js/6.5.2/browser/pixi.min.js"></script>
+    <!-- 引入Cubism SDK for Web -->
+    <script src="https://cdn.jsdelivr.net/npm/pixi-live2d-display/dist/index.min.js"></script>
+</head>
+<body>
+    <div id="live2d-container"></div>
+
+    <script>
+        // Live2D模型加载和渲染代码
+        let app;
+        let model;
+
+        async function loadLive2DModel(modelPath) {
+            if (!app) {
+                //创建PIXI应用
+                app = new PIXI.Application({
+                    view: document.getElementById("live2d-container"),
+                    autoStart: false,
+                    transparent: true,
+                    width: window.innerWidth,
+                    height: window.innerHeight
+                });
+
+                //窗口大小调整处理
+                window.addEventListener("resize",() => {
+                    app.renderer.resize(window.innerWidth,window.innerHeight);
+                    if(model) {
+                        model.scale.set(
+                            Math.min(window.innerWidth / model.width,window.innerHeight / model.height)
+                        );
+                        model.position.set(
+                            window.innerWidth / 2,
+                            window.innerHeight / 2
+                        );
+                    }
+                });
+            }
+
+            try {
+                //加载模型
+                model = await Live2DDisplay.loadModel(modelPath);
+
+                //设置模型位置和缩放
+                model.scale.set(
+                    Math.min(window.innerWidth / model.width,window.innerHeight / model.height)
+                );
+                model.position.set(
+                    window.innerWidth / 2,
+                    window.innerHeight / 2
+                );
+                model.anchor.set(0.5,0.5);
+
+                //添加到舞台
+                app.stage.addChild(model);
+
+                //添加交互
+                model.on("pointertap",() => {
+                    //点击模型时触发动作
+                    const hitAreas = model.internalModel.hitTest(event.data.global.x,event.data.global.y);
+                    if(hitAreas.includes("head")) {
+                        //点击头部时触发动作
+                        playRandomAnimation();
+                    }
+                });
+
+                //启用交互
+                model.interactive = true;
+
+                console.log("Live2D模型加载成功");
+            } catch (error) {
+                console.error("Live2D模型加载失败:",error);
+            }
+        }
+
+        function playRandomAnimation(animationName) {
+            //随机播放一个动画
+            if(model && model.internalModel.motionManager) {
+                const definitions = model.internalModel.motionManager.definitions;
+                const groups = Object.keys(definitions);
+
+                //查找动画并播放
+                for(const group of groups) {
+                    const index = definitions[group].findIndex(
+                        motion => motion.name === animationName
+                    );
+                    if(index !== -1) {
+                        model.internalModel.motionManager.startMotion(group,index);
+                        return;
+                    }
+                }
+                console.log("没有找到动画:",animationName);
+            }
+        }
+
+        function playAnimation() {
+            if(model && model.internalModel.motionManager) {
+                const animations = model.internalModel.motionManager.definitions;
+                const groups = Object.keys(definitions);
+
+                if(groups.length > 0) {
+                    //随机选择一个动作组
+                    const group = groups[Math.floor(Math.random() * groups.length)];
+                    const motions = definitions[group];
+
+                    if(motions.length > 0) {
+                        //随机选择一个动作
+                        const motion = motions[Math.floor(Math.random() * motions.length)];
+                        model.internalModel.motionManager.startMotion(group,motion.index);
+                    }
+                }
+            }
+        }
+
+        function changeAccessory(accessoryName) {
+            if(model && model.internalModel.coreModel) {
+                //根据配件名称找到对应参数并设置
+                //这需要根据实际模型参数进行调整
+                console.log(`更换配件:${accessoryName}`);
+            }
+        }
+
+        //加载模型
+        loadLive2DModel("./assets/live2d_models/zishu_sensei.model3.json");
+    </script>
+</body>
+</html>
