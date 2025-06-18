@@ -1,0 +1,25 @@
+weights:
+  角色表达: 0.35
+  语气一致性: 0.25
+  上下文理解: 0.25
+  性格契合度: 0.15
+performance_weight: 0.15
+character_traits:
+  primary:
+  - 安静
+  - 内向
+  - 可爱
+  - 害羞
+  secondary:
+  - 温柔
+  - 细腻
+  - 体贴
+  - 善良
+evaluation_scenarios:
+  daily_conversation: 0.3
+  emotional_support: 0.25
+  study_help: 0.25
+  personal_sharing: 0.2
+similarity_threshold: 0.7
+max_eval_tokens: 512
+batch_size: 1

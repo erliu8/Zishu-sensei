@@ -1,0 +1,32 @@
+weights:
+  术语理解: 0.25
+  文化知识: 0.25
+  角色表达: 0.3
+  创意写作: 0.2
+performance_weight: 0.1
+similarity_threshold: 0.7
+max_eval_tokens: 512
+batch_size: 1
+grade_thresholds:
+  S+: 0.95
+  S: 0.9
+  A+: 0.85
+  A: 0.8
+  A-: 0.75
+  B+: 0.7
+  B: 0.65
+  B-: 0.6
+  C+: 0.55
+  C: 0.5
+  C-: 0.45
+  D+: 0.4
+  D: 0.35
+  F: 0.0
+quick_mode:
+  reduce_samples: true
+  sample_ratio: 0.5
+  skip_visual: false
+performance_benchmarks:
+  inference_time_threshold: 5.0
+  memory_threshold_mb: 1000
+  min_stability_score: 0.9

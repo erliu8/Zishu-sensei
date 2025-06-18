@@ -1,0 +1,75 @@
+name: 功能增强蒸馏
+description: 将特殊功能教师模型的能力蒸馏到完整学生模型
+teachers:
+- sadtalker
+- animelcm
+base_student: zishu_enhanced
+target_student: zishu_complete
+training:
+  batch_size: 4
+  gradient_accumulation_steps: 16
+  epochs: 2
+  learning_rate: 5.0e-05
+  warmup_ratio: 0.1
+  weight_decay: 0.01
+  lr_scheduler: linear
+  save_steps: 200
+  eval_steps: 100
+  logging_steps: 20
+  max_grad_norm: 0.5
+data:
+  train_path: ./data/distillation/func/train.json
+  eval_path: ./data/distillation/func/eval.json
+  max_seq_length: 512
+  multimodal:
+    enable: true
+    image_path: ./data/distillation/func/images
+    video_path: ./data/distillation/func/videos
+    audio_path: ./data/distillation/func/audio
+  preprocessing:
+    text_cleaning: true
+    image_augmentation: true
+    shuffle: true
+  task_specific_data:
+    animation_tasks: ./data/distillation/func/animation_tasks.json
+    style_tasks: ./data/distillation/func/style_tasks.json
+distillation:
+  temperature: 1.0
+  methods:
+    module_distillation:
+      enable: true
+      weight: 0.7
+      modules:
+        animation_generator:
+          teacher: sadtalker
+          weight: 0.8
+          feature_weight: 0.4
+          output_weight: 0.6
+        style_enhancer:
+          teacher: animelcm
+          weight: 0.7
+          feature_weight: 0.5
+          output_weight: 0.5
+    perceptual_distillation:
+      enable: true
+      weight: 0.3
+      perceptual_networks:
+      - vgg
+      - clip
+  preserve_enhanced_knowledge:
+    enable: true
+    weight: 0.5
+    regularization: entropy
+  teacher_weights:
+    sadtalker: 0.6
+    animelcm: 0.6
+evaluation:
+  metrics:
+  - fid
+  - clip_score
+  - user_preference
+  - animation_quality
+  generate_samples: true
+  num_samples: 20
+  save_predictions: true
+  visual_comparison: true

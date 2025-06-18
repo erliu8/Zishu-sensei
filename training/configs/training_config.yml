@@ -1,0 +1,51 @@
+training:
+  batch_size: 8
+  micro_batch_size: 2
+  epochs: 3
+  learning_rate: 0.0002
+  lr_scheduler: cosine
+  weight_decay: 0.01
+  warmup_steps: 200
+  gradient_accumulation_steps: 4
+  max_grad_norm: 1.0
+  max_steps: -1
+  gradient_checkpointing: true
+  logging_steps: 5
+  eval_steps: 300
+  save_steps: 600
+  save_total_limit: 3
+  use_accelerate: true
+  accelerate_config_path: ./config/accelerate_config.json
+  cpu_offload: false
+  dataloader_workers: 8
+  async_prefetch: true
+  use_memory_map: true
+  memmap_dir: ./data/memmap
+  per_device_train_batch_size: 12
+  per_device_eval_batch_size: 12
+  fp16: true
+  resume_from_checkpoint: null
+data:
+  train_file: ./data/generated_dialogues/train.jsonl
+  validation_file: ./data/generated_dialogues/validation.jsonl
+  test_file: ./data/generated_dialogues/test.jsonl
+  preprocessing:
+    max_length: 512
+    text_column: instruction
+    output_column: output
+    add_eos_token: true
+lora_config:
+  r: 16
+  lora_alpha: 32
+  bias: none
+  task_type: CAUSAL_LM
+  target_modules:
+  - q_proj
+  - k_proj
+  - v_proj
+  - o_proj
+  - gate_proj
+  - up_proj
+  - down_proj
+  use_8bit_adam: true
+  use_peft: true

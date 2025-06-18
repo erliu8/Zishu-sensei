@@ -1,0 +1,29 @@
+speech_recognition:
+  engine: whisper
+  model: small
+  language: zh
+  sampling_rate: 16000
+  timeout: 5
+  energy_threshold: 300
+  phrase_threshold: 0.3
+  non_speaking_duration: 0.5
+  pause_threshold: 0.8
+speech_synthesis:
+  engine: edge_tts
+  voice: zh-CN-XiaoxiaoNeural
+  rate: 1.0
+  style: 0.5
+  volume: 1.0
+  pitch: 1.0
+  cache_enabled: true
+  cache_dir: ./data/speech/cache
+voice_activation:
+  enabled: true
+  wake_word: zishu
+  wake_word_sensitivity: 0.7
+  timeout_after_activation: 15
+audio:
+  input_device: null
+  output_device: null
+  noise_reduction: true
+  audio_feedback: true

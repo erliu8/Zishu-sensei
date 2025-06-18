@@ -4,32 +4,38 @@ import torch
 from modelscope import snapshot_download
 from transformers import AutoTokenizer, AutoModelForCausalLM
 
-qwen_model_id = "qwen/Qwen-7B"
-qwen_local_path = "/root/autodl-tmp/zishu-sensei/models/base//Qwen-7B"
+qwen_model_id = "qwen/Qwen2.5-7B-Instruct"
+qwen_local_path = "/root/autodl-tmp/zishu-sensei/models/base/Qwen2.5-7B-Instruct"
 os.makedirs(qwen_local_path, exist_ok=True)
-print(f"正在从ModelScope下载Qwen-7B到 {qwen_local_path}")
+print(f"正在从ModelScope下载Qwen2.5-7B-Instruct到 {qwen_local_path}")
 qwen_model_dir = snapshot_download(
     model_id=qwen_model_id,
     cache_dir=qwen_local_path,
     revision="master"
 )
-print(f"Qwen-7B模型已下载到: {qwen_model_dir}")
+print(f"Qwen2.5-7B-Instruct模型已下载到: {qwen_model_dir}")
 
-# 测试Qwen-7B模型加载
+# 测试Qwen2.5-7B-Instruct模型加载
 try:
-    # 添加 trust_remote_code=True 参数
     tokenizer = AutoTokenizer.from_pretrained(qwen_model_dir, trust_remote_code=True)
     model = AutoModelForCausalLM.from_pretrained(
         qwen_model_dir,
         torch_dtype=torch.float16,
         device_map="auto",
         low_cpu_mem_usage=True,
-        trust_remote_code=True  # 添加此参数
+        trust_remote_code=True
     )
-    print("Qwen-7B模型加载成功!")
-    text = "你好，请介绍一下你自己。"
+    print("Qwen2.5-7B-Instruct模型加载成功!")
+    
+    # 测试紫舒老师的角色扮演
+    messages = [
+        {"role": "system", "content": "你是紫舒，一位害羞、内向、温柔可爱的老师。"},
+        {"role": "user", "content": "你好，请介绍一下你自己。"}
+    ]
+    text = tokenizer.apply_chat_template(messages, tokenize=False, add_generation_prompt=True)
     inputs = tokenizer(text, return_tensors="pt").to(model.device)
-    outputs = model.generate(**inputs, max_new_tokens=100)
+    outputs = model.generate(**inputs, max_new_tokens=100, temperature=0.7, do_sample=True)
+    print("模型回复：")
     print(tokenizer.decode(outputs[0], skip_special_tokens=True))
 except Exception as e:
-    print(f"Qwen-7B模型加载失败: {e}")
+    print(f"Qwen2.5-7B-Instruct模型加载失败: {e}")

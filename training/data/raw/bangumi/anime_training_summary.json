@@ -1,0 +1,109 @@
+{
+  "total_anime": 22410,
+  "tiers": {
+    "top_tier": 200,
+    "high_quality": 500,
+    "good_quality": 1000,
+    "decent_quality": 2000,
+    "watchable": 3000
+  },
+  "top_10_recommendations": [
+    {
+      "name": "超时空机器人MEGURU",
+      "score": 10,
+      "year": "2014",
+      "tags": [
+        "TV",
+        "OVA",
+        "2014年"
+      ]
+    },
+    {
+      "name": "それいけ! ズッコケ三人組",
+      "score": 10,
+      "year": "2004",
+      "tags": [
+        "TV",
+        "子供向",
+        "日本"
+      ]
+    },
+    {
+      "name": "小狗亚斑",
+      "score": 10,
+      "year": "1981",
+      "tags": [
+        "1981",
+        "TVA",
+        "日本动画"
+      ]
+    },
+    {
+      "name": "SURVIVE",
+      "score": 10,
+      "year": "2014",
+      "tags": [
+        "空"
+      ]
+    },
+    {
+      "name": "圣刻-Beyond-",
+      "score": 10,
+      "year": "未知",
+      "tags": [
+        "空",
+        "未确定"
+      ]
+    },
+    {
+      "name": "少女编号 修罗",
+      "score": 10,
+      "year": "未知",
+      "tags": [
+        "坑",
+        "企划中止",
+        "未定档"
+      ]
+    },
+    {
+      "name": "京剧猫大电影",
+      "score": 10,
+      "year": "未知",
+      "tags": [
+        "京剧猫",
+        "璀璨星空",
+        "国漫"
+      ]
+    },
+    {
+      "name": "蓮如物語",
+      "score": 10,
+      "year": "1998",
+      "tags": [
+        "1988年四月番",
+        "剧场版",
+        "1988"
+      ]
+    },
+    {
+      "name": "战球小子",
+      "score": 10,
+      "year": "1986",
+      "tags": [
+        "1986",
+        "TV",
+        "日本"
+      ]
+    },
+    {
+      "name": "奇奇怪怪",
+      "score": 10,
+      "year": "2018",
+      "tags": [
+        "国产",
+        "无",
+        "WEB"
+      ]
+    }
+  ]
+}

@@ -1,0 +1,38 @@
+window:
+  always_on_top: true
+  transparency: 1.0
+  size:
+    width: 400
+    height: 500
+  position: right_bottom
+  frameless: true
+  click_through: true
+  background_color: transparent
+animation:
+  fps: 30
+  idle_interval: 5
+  transition_time: 0.3
+  enable_preview: true
+interaction:
+  drag_enabled: true
+  reactions_enabled: true
+  click_sensitivity: 0.8
+  context_menu: true
+  interaction_zones:
+  - head
+  - body
+  - ribbon
+system:
+  enabled: true
+  tooltip: Zishu-sensei
+  menu_items:
+  - chat
+  - change_accessory
+  - mute
+  - separator
+  - settings
+  - quit
+startup:
+  auto_start: false
+  start_minimized: false
+  greeting_on_startup: true

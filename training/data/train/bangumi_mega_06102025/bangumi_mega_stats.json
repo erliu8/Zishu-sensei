@@ -1,0 +1,19 @@
+{
+  "date_suffix": "mega_06102025",
+  "generated_at": "2025-06-10 14:04:11",
+  "total_anime": 6225,
+  "total_conversations": 211944,
+  "basic_conversations": 211650,
+  "recommendation_conversations": 294,
+  "train_size": 169555,
+  "validation_size": 21194,
+  "test_size": 21195,
+  "data_sources": [
+    "anime_top_tier.json",
+    "anime_high_quality.json",
+    "anime_good_quality.json",
+    "anime_decent_quality.json",
+    "anime_watchable.json",
+    "anime_complete_top5000.json"
+  ]
+}

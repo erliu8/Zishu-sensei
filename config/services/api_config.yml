@@ -1,0 +1,320 @@
+server:
+  host: 127.0.0.1
+  port: 8080
+  debug: false
+  workers: 1
+  timeout: 60
+security:
+  api_keys_enabled: true
+  # TODO: 生产环境部署时，将'*'替换为环境变量${CORS_ORIGINS}
+  allowed_origins: ['*']
+  jwt:
+    secret_key: ${JWT_SECRET}
+    algorithm: HS256
+    expire_minutes: 30
+  rate_limit:
+    enabled: true
+    requests: 100
+    interval: 60
+    period: 60
+  cors:
+    enabled: true
+    origins:
+    - '*' # TODO: 生产环境使用具体域名
+endpoints:
+  chat:
+    path: /api/chat
+    methods:
+    - POST
+    handler: chat
+  memory:
+    path: /api/memory
+    methods:
+    - GET
+    handler: memory
+  character:
+    path: /api/chat
+    methods: [GET,POST]
+    handler: chat
+  system:
+    path: /api/system
+    methods: [GET]
+    handler: system
+database:
+  url: ${DATABASE_URL}
+  pool_size: 10
+  max_overflow: 20
+  echo: false
+middleware:
+  logging:
+    enabled: true
+    level: INFO
+  validation:
+    enabled: true
+    strict_mode: false
+routing:
+  prefix: /api
+  version: v1
+  include_docs: true
+  docs_url: /docs
+  redoc_url: /redoc
+responses:
+  default_format: json
+  include_timestamp: true
+  include_request_id: true
+  error_details: true
+websocket:
+  enabled: true
+  path: /ws
+  max_connections: 1000
+  message_size: 1048576
+  timeout: 60
+providers:
+  openai:
+    api_key: your-openai-api-key
+    base_url: https://api.openai.com/v1
+    model: gpt-4-turbo-preview
+    enabled: false
+    cost_per_1k_tokens: 0.01
+    max_rpm: 500
+    max_tpm: 160000
+    priority: 9
+    description: OpenAI GPT-4，最高质量，适合高端对话生成
+  deepseek:
+    api_key: your-deepseek-api-key
+    base_url: https://api.deepseek.com/v1
+    model: deepseek-chat
+    enabled: false
+    cost_per_1k_tokens: 0.0014
+    max_rpm: 300
+    max_tpm: 1000000
+    priority: 7
+    description: DeepSeek模型，中文能力强，成本效益高，推荐用于大规模生成
+  qwen:
+    api_key: ${QWEN_API_KEY}
+    base_url: https://dashscope.aliyuncs.com/compatible-mode/v1
+    model: qwen-max
+    enabled: true
+    cost_per_1k_tokens: 0.004
+    max_rpm: 600
+    max_tpm: 600000
+    priority: 8
+    description: 通义千问Max，中文对话能力优秀，速度快
+  qwen_turbo:
+    api_key: ${QWEN_API_KEY}
+    base_url: https://dashscope.aliyuncs.com/compatible-mode/v1
+    model: qwen-turbo
+    enabled: true
+    cost_per_1k_tokens: 0.001
+    max_rpm: 1000
+    max_tpm: 1000000
+    priority: 6
+    description: 通义千问Turbo，性价比极高，适合大批量生成
+  zhipu:
+    api_key: your-zhipu-api-key
+    base_url: https://open.bigmodel.cn/api/paas/v4
+    model: glm-4
+    enabled: false
+    cost_per_1k_tokens: 0.001
+    max_rpm: 200
+    max_tpm: 500000
+    priority: 5
+    description: 智谱AI GLM-4，中文理解力强，价格便宜
+  moonshot:
+    api_key: your-moonshot-api-key
+    base_url: https://api.moonshot.cn/v1
+    model: moonshot-v1-32k
+    enabled: false
+    cost_per_1k_tokens: 0.024
+    max_rpm: 100
+    max_tpm: 100000
+    priority: 4
+    description: 月之暗面Kimi，长上下文，适合复杂对话
+  claude:
+    api_key: your-claude-api-key
+    base_url: https://api.anthropic.com
+    model: claude-3-sonnet-20240229
+    enabled: false
+    cost_per_1k_tokens: 0.003
+    max_rpm: 50
+    max_tpm: 40000
+    priority: 8
+    description: Claude-3 Sonnet，理解力强，对话自然
+  doubao:
+    api_key: your-doubao-api-key
+    base_url: https://ark.cn-beijing.volces.com/api/v3
+    model: doubao-pro-32k
+    enabled: false
+    cost_per_1k_tokens: 0.0008
+    max_rpm: 500
+    max_tpm: 800000
+    priority: 6
+    description: 字节豆包，性价比很高，中文效果好
+  local:
+    base_url: http://localhost:8080/v1
+    model: local-model
+    enabled: false
+    api_key: not-required
+    cost_per_1k_tokens: 0
+    max_rpm: 60
+    max_tpm: 100000
+    priority: 1
+    description: 本地部署模型，免费但质量可能不如商业API
+generation:
+  concurrent_requests: 10
+  retry_attempts: 5
+  timeout: 60
+  rate_limit_delay: 0.5
+  max_tokens_per_request: 2000
+  temperature_range:
+  - 0.7
+  - 0.9
+  quality_filters:
+    min_response_length: 20
+    max_response_length: 800
+    require_character_features: true
+    filter_repetitive_content: true
+    min_dialogue_turns: 3
+    max_dialogue_turns: 12
+    quality_threshold: 0.6
+  advanced_settings:
+    use_priority_routing: true
+    load_balancing: true
+    fallback_enabled: true
+    smart_retry: true
+    cost_optimization: true
+  batch_processing:
+    enabled: true
+    batch_size: 50
+    max_concurrent_batches: 3
+    progress_reporting: true
+dataset:
+  target_samples_per_character: 2500
+  character_types:
+  - name: 紫舒老师_害羞模式
+    personality: 我是紫舒老师，非常内向害羞，说话声音很小，容易脸红，但对学生很温柔
+    speech_patterns:
+    - 那个...
+    - 嗯...
+    - 对不起...
+    - 不好意思...
+    - 呜...
+    - '...'
+    - 轻声地说
+    scenarios:
+    - 初次见面
+    - 被学生关心
+    - 表达感谢
+    - 轻声交流
+    - 害羞表达
+    - 温柔互动
+    weight: 0.4
+  - name: 紫舒老师_温柔模式
+    personality: 我是紫舒老师，性格很温和，说话轻声细语，喜欢照顾学生但很内向
+    speech_patterns:
+    - 请
+    - 谢谢
+    - 没关系的呢
+    - 轻轻地
+    - 小声说
+    - 温柔地
+    scenarios:
+    - 照顾学生
+    - 温柔安慰
+    - 轻声对话
+    - 体贴关怀
+    - 温暖陪伴
+    weight: 0.3
+  - name: 紫舒老师_呆萌模式
+    personality: 我是紫舒老师，有点天然呆，反应慢半拍，很容易害羞，表情很可爱
+    speech_patterns:
+    - 诶？
+    - 啊？
+    - 嗯嗯
+    - 是这样吗
+    - 不太懂呢
+    - 呜呜
+    scenarios:
+    - 困惑时刻
+    - 向学生求助
+    - 呆萌反应
+    - 可爱误解
+    - 害羞求教
+    weight: 0.2
+  - name: 紫舒老师_安静模式
+    personality: 我是紫舒老师，平时很安静，不太主动说话，但很善良可爱，容易被关心感动
+    speech_patterns:
+    - 嗯
+    - 是的呢
+    - 谢谢你
+    - '...'
+    - 好的
+    - 轻点头
+    scenarios:
+    - 安静相处
+    - 被动交流
+    - 感动时刻
+    - 默默关心
+    - 温馨日常
+    weight: 0.1
+  complexity_distribution:
+    简单: 0.2
+    中等: 0.5
+    复杂: 0.2
+    高级: 0.1
+  preferred_turn_distribution:
+    3-4: 0.25
+    5-6: 0.35
+    7-8: 0.25
+    9-12: 0.15
+  scenario_categories:
+    害羞互动: 0.3
+    温柔日常: 0.25
+    内向表达: 0.2
+    可爱时刻: 0.15
+    安静相处: 0.1
+  scenario_balance: true
+  output_format: alpaca
+  quality_requirements:
+    min_quality_score: 0.6
+    character_consistency_check: true
+    scenario_relevance_check: true
+    dialogue_naturalness_check: true
+    zishu_identity_check: true
+cost_management:
+  daily_budget_usd: 50.0
+  weekly_budget_usd: 300.0
+  monthly_budget_usd: 1000.0
+  alert_threshold: 0.8
+  auto_stop_at_budget: false
+  cost_optimization_enabled: true
+  preferred_provider_order:
+  - qwen_turbo
+  - doubao
+  - deepseek
+  - zhipu
+  - qwen
+  - claude
+  - openai
+  - moonshot
+  budget_allocation:
+    high_quality_samples: 0.4
+    bulk_generation: 0.5
+    testing_validation: 0.1
+  cost_alerts:
+    email_notifications: false
+    console_warnings: true
+    detailed_reporting: true
+performance_monitoring:
+  track_api_response_times: true
+  track_success_rates: true
+  track_quality_scores: true
+  log_failed_requests: true
+  generate_reports: true
+  report_frequency: daily
+experimental_features:
+  adaptive_temperature: true
+  dynamic_model_selection: true
+  context_aware_generation: true
+  multi_turn_coherence_check: true
+  automatic_quality_improvement: true
