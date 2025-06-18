@@ -1,5 +1,5 @@
 # 排除大型数据目录和模型
-models/
+/models/
 output/
 venv/
 anime-offline-database/
