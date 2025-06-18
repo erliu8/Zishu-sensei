@@ -36,3 +36,9 @@ wheels/
 .vscode/
 *.swp
 *.swo
+
+# Large training data files (exceed GitHub 100MB limit)
+training/data/raw/bangumi/character.jsonlines
+training/data/raw/bangumi/episode.jsonlines
+training/data/raw/bangumi/dump-2025-06-03.210251Z.zip
+training/data/raw/bangumi/subject.jsonlines
