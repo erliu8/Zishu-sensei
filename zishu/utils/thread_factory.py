@@ -71,7 +71,6 @@ class ThreadFactory:
             str: 任务id
         """
         task = ThreadTask(func,*args,**kwargs)
-        future = self.executor.submit(task.execute)
         with self.lock:
             future = self.executor.submit(task.execute)
             self.tasks[task.id] = (task,future)
@@ -90,7 +89,7 @@ class ThreadFactory:
             任务状态信息或None(如果任务不存在)
         """
         with self.lock:
-            if task_id in self.tasks:
+            if task_id not in self.tasks:
                 return None
             task,future = self.tasks[task_id]
             return {
@@ -124,18 +123,14 @@ class ThreadFactory:
          
         try:   
             if timeout is not None:
-                future.result(timeout=timeout)
+                result = future.result(timeout=timeout)
             else:
-                future.result()
+                result = future.result()
             return task.result
         except Exception as e:
-            #异常已经被task.execute()捕获,这里不需要处理
-            pass
-        
-        if task.error:
-            raise task.error
-        
-        return task.result
+            if task.error:
+                raise Exception(task.error)
+            raise e
     
     def cancel_task(self,task_id:str)->bool:
         """
@@ -189,6 +184,7 @@ class ThreadFactory:
         if to_remove:
             self.logger.info(f"清理已完成任务,任务id: {','.join(to_remove)},清理数量: {len(to_remove)}")
         
+        return len(to_remove)
     def shutdown(self,wait:bool=True):
         """
         关闭线程池
@@ -205,9 +201,9 @@ class ThreadFactory:
     
     def __exit__(self,exc_type,exc_value,exc_tb):
         self.shutdown()
-    
-    #创建全局线程工厂实例    
-    _thread_factory = None
+
+#创建全局线程工厂实例    
+_thread_factory = None
 
 def get_thread_factory()->ThreadFactory:
     """获取全局线程工厂实例"""
