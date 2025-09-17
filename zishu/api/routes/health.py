@@ -345,7 +345,7 @@ async def deep_health_check(
     except Exception as e:
         logger.error(f"Deep health check failed: {str(e)}")
         raise HTTPException(status.HTTP_503_SERVICE_UNAVAILABLE, 
-                            error="health check failed"
+                            error="health check failed",
                             message=f"Deep health check failed: {str(e)}",
                             timestamp=datetime.now(timezone.utc).dict())
 
@@ -358,7 +358,7 @@ async def readiness_check(
     检查服务是否准备好处理请求
     """
     try:
-        检查关键组件是否就绪
+        #检查关键组件是否就绪
         ready = True
         issues = []
         

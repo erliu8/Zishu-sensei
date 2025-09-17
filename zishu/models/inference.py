@@ -26,7 +26,7 @@ from src.utils.fallback import CircuitBreaker
 from src.utils.prompt_manager import get_prompt_manager
 from src.utils.config_manager import ConfigManager
 
-
+#TODO: 利用C++加速引擎
 class CustomStoppingCriteria(StoppingCriteria):
     """自定义停止生成标准"""
     def __init__(self,stop_sequences:List[str],tokenizer):
