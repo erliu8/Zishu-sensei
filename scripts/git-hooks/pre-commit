@@ -1,0 +1,133 @@
+#!/bin/bash
+
+# Zishu-sensei Pre-commit Hook
+# This hook runs before each commit to ensure code quality
+
+set -e
+
+# Colors for output
+RED='\033[0;31m'
+GREEN='\033[0;32m'
+YELLOW='\033[1;33m'
+BLUE='\033[0;34m'
+NC='\033[0m' # No Color
+
+# Functions
+log_info() {
+    echo -e "${BLUE}[PRE-COMMIT]${NC} $1"
+}
+
+log_success() {
+    echo -e "${GREEN}[PRE-COMMIT]${NC} $1"
+}
+
+log_warning() {
+    echo -e "${YELLOW}[PRE-COMMIT]${NC} $1"
+}
+
+log_error() {
+    echo -e "${RED}[PRE-COMMIT]${NC} $1"
+}
+
+# Get list of Python files to be committed
+python_files=$(git diff --cached --name-only --diff-filter=ACM | grep -E "\.(py)$" || true)
+
+if [ -z "$python_files" ]; then
+    log_info "No Python files to check"
+    exit 0
+fi
+
+log_info "Running pre-commit checks on Python files..."
+echo "Files to check: $python_files"
+echo ""
+
+# Check if we're in a virtual environment or have the required tools
+check_tool() {
+    local tool=$1
+    if ! command -v "$tool" &> /dev/null; then
+        log_warning "$tool not found, skipping $tool check"
+        return 1
+    fi
+    return 0
+}
+
+# Run Black formatter check
+if check_tool black; then
+    log_info "Running Black formatter check..."
+    if ! black --check --diff $python_files; then
+        log_error "Code formatting issues found. Run 'black $python_files' to fix them."
+        exit 1
+    fi
+    log_success "Black formatter check passed"
+fi
+
+# Run isort import sorting check
+if check_tool isort; then
+    log_info "Running isort import sorting check..."
+    if ! isort --check-only --diff $python_files; then
+        log_error "Import sorting issues found. Run 'isort $python_files' to fix them."
+        exit 1
+    fi
+    log_success "isort check passed"
+fi
+
+# Run flake8 linting
+if check_tool flake8; then
+    log_info "Running flake8 linting..."
+    if ! flake8 $python_files; then
+        log_error "Linting issues found. Please fix them before committing."
+        exit 1
+    fi
+    log_success "flake8 linting passed"
+fi
+
+# Run mypy type checking
+if check_tool mypy; then
+    log_info "Running mypy type checking..."
+    if ! mypy $python_files; then
+        log_error "Type checking issues found. Please fix them before committing."
+        exit 1
+    fi
+    log_success "mypy type checking passed"
+fi
+
+# Run tests if test files are being committed
+test_files=$(echo "$python_files" | grep -E "test_.*\.py$|.*_test\.py$" || true)
+if [ -n "$test_files" ] && check_tool pytest; then
+    log_info "Running affected tests..."
+    if ! pytest $test_files -v; then
+        log_error "Tests failed. Please fix them before committing."
+        exit 1
+    fi
+    log_success "Tests passed"
+fi
+
+# Check for common issues
+log_info "Checking for common issues..."
+
+# Check for debugging statements
+debug_patterns="pdb\.set_trace|breakpoint\(\)|print\(.*\)|console\.log"
+if echo "$python_files" | xargs grep -n -E "$debug_patterns" 2>/dev/null; then
+    log_warning "Found debugging statements in your code. Please remove them before committing."
+    echo "If these are intentional, you can skip this hook with 'git commit --no-verify'"
+fi
+
+# Check for TODO/FIXME comments in new code
+todo_patterns="TODO|FIXME|XXX|HACK"
+new_todos=$(git diff --cached | grep -E "^\+.*($todo_patterns)" || true)
+if [ -n "$new_todos" ]; then
+    log_warning "Found new TODO/FIXME comments:"
+    echo "$new_todos"
+    echo "Consider creating GitHub issues for these items."
+fi
+
+# Check for secrets or sensitive information
+secret_patterns="password|secret|key|token|api_key"
+if git diff --cached | grep -i -E "^\+.*($secret_patterns).*=.*['\"].*['\"]" | grep -v -E "(test|example|dummy|fake|mock)" 2>/dev/null; then
+    log_error "Potential secrets detected in your commit!"
+    log_error "Please review and remove any sensitive information."
+    exit 1
+fi
+
+log_success "All pre-commit checks passed!"
+exit 0
