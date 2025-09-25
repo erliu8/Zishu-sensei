@@ -1,0 +1,128 @@
+version: '3.8'
+
+# Development environment overrides
+# Use with: docker-compose -f docker-compose.yml -f docker-compose.dev.yml up
+
+services:
+  # API service - development mode
+  api:
+    build:
+      context: ..
+      dockerfile: docker/Dockerfile.api
+      target: development  # Use development stage
+    environment:
+      - ZISHU_ENV=development
+      - ZISHU_DEBUG=true
+      - ZISHU_LOG_LEVEL=DEBUG
+      - ZISHU_RELOAD=true
+    volumes:
+      - ../zishu:/app/zishu:ro
+      - ../tests:/app/tests:ro
+      - ../requirements.txt:/app/requirements.txt:ro
+      - ../requirements-dev.txt:/app/requirements-dev.txt:ro
+    ports:
+      - "8000:8000"  # Expose API port directly for development
+    depends_on:
+      - postgres
+      - redis
+    command: >
+      sh -c "
+        pip install -r requirements-dev.txt &&
+        python -m uvicorn zishu.api.server:app --reload --host 0.0.0.0 --port 8000
+      "
+
+  # PostgreSQL - development configuration
+  postgres:
+    environment:
+      - POSTGRES_DB=zishu_dev
+      - POSTGRES_USER=zishu_dev
+      - POSTGRES_PASSWORD=dev_password
+    volumes:
+      - postgres_data_dev:/var/lib/postgresql/data
+    ports:
+      - "5432:5432"  # Expose PostgreSQL port for development tools
+
+  # Redis - development configuration
+  redis:
+    ports:
+      - "6379:6379"  # Expose Redis port for development tools
+    volumes:
+      - redis_data_dev:/data
+
+  # Jupyter Notebook for development and experimentation
+  jupyter:
+    build:
+      context: ..
+      dockerfile: docker/Dockerfile.jupyter
+    environment:
+      - JUPYTER_ENABLE_LAB=yes
+      - JUPYTER_TOKEN=dev-token
+    volumes:
+      - ../notebooks:/home/jovyan/notebooks
+      - ../zishu:/home/jovyan/zishu:ro
+      - ../data:/home/jovyan/data
+    ports:
+      - "8888:8888"
+    depends_on:
+      - postgres
+      - redis
+
+  # pgAdmin for database management
+  pgadmin:
+    image: dpage/pgadmin4:latest
+    environment:
+      - PGADMIN_DEFAULT_EMAIL=admin@zishu.dev
+      - PGADMIN_DEFAULT_PASSWORD=admin
+      - PGADMIN_CONFIG_SERVER_MODE=False
+    volumes:
+      - pgadmin_data:/var/lib/pgadmin
+    ports:
+      - "5050:80"
+    depends_on:
+      - postgres
+
+  # Redis Commander for Redis management
+  redis-commander:
+    image: rediscommander/redis-commander:latest
+    environment:
+      - REDIS_HOSTS=local:redis:6379
+    ports:
+      - "8081:8081"
+    depends_on:
+      - redis
+
+  # Mailhog for email testing
+  mailhog:
+    image: mailhog/mailhog:latest
+    ports:
+      - "1025:1025"  # SMTP port
+      - "8025:8025"  # Web UI port
+
+  # Remove production-only services in development
+  nginx:
+    profiles:
+      - production
+
+  prometheus:
+    profiles:
+      - monitoring
+
+  grafana:
+    profiles:
+      - monitoring
+
+  loki:
+    profiles:
+      - monitoring
+
+volumes:
+  postgres_data_dev:
+    driver: local
+  redis_data_dev:
+    driver: local
+  pgadmin_data:
+    driver: local
+
+networks:
+  default:
+    name: zishu-dev-network

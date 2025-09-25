@@ -1,0 +1,13 @@
+# Grafana dashboards configuration
+apiVersion: 1
+
+providers:
+  - name: 'zishu-dashboards'
+    orgId: 1
+    folder: 'Zishu'
+    type: file
+    disableDeletion: false
+    updateIntervalSeconds: 10
+    allowUiUpdates: true
+    options:
+      path: /etc/grafana/provisioning/dashboards/json

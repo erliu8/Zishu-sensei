@@ -1,0 +1,43 @@
+# Jupyter Notebook for Zishu-sensei Development
+FROM jupyter/scipy-notebook:latest
+
+USER root
+
+# Install system dependencies
+RUN apt-get update && apt-get install -y \
+    gcc \
+    g++ \
+    && rm -rf /var/lib/apt/lists/*
+
+USER jovyan
+
+# Set working directory
+WORKDIR /home/jovyan
+
+# Copy requirements
+COPY requirements.txt requirements-dev.txt ./
+
+# Install Python dependencies
+RUN pip install --no-cache-dir -r requirements.txt && \
+    pip install --no-cache-dir -r requirements-dev.txt
+
+# Install additional Jupyter extensions
+RUN pip install --no-cache-dir \
+    jupyterlab-git \
+    jupyterlab-lsp \
+    python-lsp-server[all] \
+    jupyterlab_code_formatter \
+    black \
+    isort
+
+# Create directories
+RUN mkdir -p notebooks data
+
+# Copy Jupyter configuration
+COPY docker/jupyter/jupyter_lab_config.py /home/jovyan/.jupyter/
+
+# Expose port
+EXPOSE 8888
+
+# Start Jupyter Lab
+CMD ["start.sh", "jupyter", "lab", "--ip=0.0.0.0", "--port=8888", "--no-browser", "--allow-root", "--NotebookApp.token=dev-token"]
