@@ -37,6 +37,9 @@ wheels/
 *.swp
 *.swo
 
+# Jupyter Notebook checkpoints
+.ipynb_checkpoints/
+
 # Large training data files (exceed GitHub 100MB limit)
 training/data/raw/bangumi/character.jsonlines
 training/data/raw/bangumi/episode.jsonlines

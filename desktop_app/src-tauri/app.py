@@ -1,10 +1,3 @@
-#!/usr/bin/env python
-# -*- coding: utf-8 -*-
-# @Time    : 2025/5/10 10:00
-# @Author  : erliu
-# @File    : app.py
-# @Software: PyCharm
-
 import os
 import sys
 import logging
