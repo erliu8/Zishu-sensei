@@ -626,7 +626,7 @@ async def maintenance_mode(
             status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
             detail=create_error_response(
                 error_type="MAINTENANCE_ERROR",
-                error_code="E014",
+                error_code="E014", #MAINTENANCE_ERROR
                 message=f"Failed to set maintenance mode: {str(e)}"
             ).dict()
         )
@@ -668,7 +668,7 @@ async def get_metrics(
             status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
             detail=create_error_response(
                 error_type="METRICS_ERROR",
-                error_code="E015",
+                error_code="E015", #METRICS_ERROR
                 message=f"Failed to get metrics: {str(e)}"
             ).dict()
         )

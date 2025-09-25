@@ -1,74 +1,127 @@
-(# 🤖 Zishu-sensei | 紫舒老师
+# Zishu-sensei 🌳
 
-> AI桌面助手 | 开源适配器社区平台（开发中...）
+An intelligent AI teaching assistant platform powered by advanced language models.
 
-## 🤖 紫舒是什么？
+## 🌟 Features
 
-紫舒是一个**AI桌面助手**，她不仅仅是一个聊天机器人，更是你的**数字化生活伙伴**。
+- **Multi-Model AI Integration**: OpenAI GPT, Anthropic Claude support
+- **Adaptive Learning**: Personalized teaching approaches
+- **Multi-Subject Support**: Mathematics, Science, Language Arts, and more
+- **Interactive Learning**: Real-time conversations with context
+- **Progress Tracking**: Comprehensive analytics and monitoring
 
-### **🎭 独特的AI角色**
-- **可爱的动漫形象**: Live2D角色，丰富的表情和动作
-- **温暖的陪伴体验**: 记住你的喜好，理解你的情感
+## 🚀 Quick Start
 
-### **🖥️ 强大的桌面助手**
-- **办公自动化**
-- **创意工具**
-- **学习伴侣**
-- **生活助理**
+### Prerequisites
+- Docker 20.10+
+- Docker Compose 2.0+
+- 4GB+ RAM
 
-### **🔧 开放的适配器生态**
-紫舒最特别的地方在于她的**无限扩展能力**。通过社区开发的适配器，她可以：
-- 学会新的技能和知识领域
-- 连接各种软件和服务
-- 适应不同用户的个性化需求
-- 与社区一起不断进化
+### Installation
 
-## 🎯 我们致力于解决什么？
+```bash
+# Clone repository
+git clone https://github.com/your-org/Zishu-sensei.git
+cd Zishu-sensei
 
-### **😰 现有AI助手的痛点**
-- **冰冷机械**: 缺乏情感连接，交互体验单调
-- **功能局限**: 只能聊天，无法深度参与你的数字生活
-- **封闭生态**: 功能固化，无法根据个人需求定制
-- **隐私担忧**: 数据上云，个人信息缺乏保护
+# Setup environment
+cp docker/env.template docker/.env
+# Edit docker/.env with your API keys
 
-### **💡 我们的解决方案**
+# Start platform
+make dev
+```
 
-#### **🌸 温暖的陪伴体验**
-让AI不再是冰冷的工具，而是有温度的伙伴。紫舒会记住你的生日，关心你的情绪，陪你度过孤独的时光。
+### Access Points
+- **API**: http://localhost:8000
+- **Docs**: http://localhost:8000/docs
+- **Jupyter**: http://localhost:8888
 
-#### **🚀 真正的生产力提升**
-不只是回答问题，而是直接帮你完成工作。从制作演示文稿到处理数据分析，从视频剪辑到代码编写，紫舒都能胜任。
+## 🛠️ Development
 
-#### **🔄 无限的扩展可能**
-通过开源适配器框架，任何人都可以为紫舒增加新功能。今天她是办公助手，明天可能是游戏攻略专家，后天又变成设计师助理。
+```bash
+# Development commands
+make dev          # Quick start
+make dev-api      # Run API server
+make test         # Run tests
+make lint         # Code linting
 
-#### **🔐 隐私和数据安全**
-本地运行，数据不出电脑。你的隐私完全由自己掌控，不必担心信息泄露。
+# Database
+make db-migrate   # Run migrations
+make db-reset     # Reset database
 
-### **🌍 构建开放的AI生态**
+# Docker
+make build        # Build images
+make start        # Start services
+make health       # Health checks
+```
 
-我们相信AI的未来不应该被少数大公司垄断，而应该是一个**人人可参与、人人可受益**的开放生态：
+## 📊 Architecture
 
-- **开发者**: 可以轻松创建和分享AI功能扩展
-- **创作者**: 可以设计角色形象和交互体验
-- **用户**: 可以自由组合功能，打造专属AI助手
-- **社区**: 共同推动AI技术的民主化进程
+```
+Web/Mobile Clients
+       ↓
+   API Gateway (FastAPI + Nginx)
+       ↓
+   Core Services
+   ├── Teaching Engine
+   ├── User Management
+   ├── Analytics Engine
+   └── Assessment Tools
+       ↓
+   AI Integration Layer
+   ├── OpenAI GPT
+   ├── Anthropic Claude
+   └── Custom Models
+       ↓
+   Data Layer
+   ├── PostgreSQL
+   └── Redis
+```
 
-### **💭 我们的愿景**
+## 🔧 Configuration
 
-让每个人都能拥有一个**理解自己、陪伴自己、帮助自己**的AI伙伴。
+Key environment variables in `docker/.env`:
 
-不是高高在上的人工智能，而是温暖贴心的数字朋友。
+```bash
+# AI Models
+OPENAI_API_KEY=your-key
+ANTHROPIC_API_KEY=your-key
+
+# Database
+POSTGRES_PASSWORD=your-password
+REDIS_PASSWORD=your-password
+
+# Security
+JWT_SECRET=your-jwt-secret
+ZISHU_SECRET_KEY=your-secret
+```
+
+## 📝 Documentation
+
+- [Deployment Guide](DEPLOYMENT.md)
+- [API Docs](http://localhost:8000/docs)
+- [Architecture](docs/architecture.md)
+- [Development](docs/development.md)
+
+## 🤝 Contributing
+
+1. Fork the repository
+2. Create feature branch
+3. Make changes
+4. Run tests: `make check`
+5. Submit pull request
+
+## 📞 Support
+
+- **Issues**: GitHub Issues
+- **Docs**: [docs/](docs/)
+- **Email**: support@zishu-sensei.com
+
+## 📄 License
+
+MIT License - see [LICENSE](LICENSE) file.
 
 ---
 
-<div align="center">
-
-**让AI更有温度，让生活更美好** ✨
-
-[📚 了解更多](docs/) • [💬 加入社区](https://community.zishu-sensei.com) • [🎮 立即体验](https://demo.zishu-sensei.com)
-
-Made with ❤️ by Zishu-sensei Community
-
-</div>
-
+**Zishu-sensei** - Empowering education through AI 🌳📚
