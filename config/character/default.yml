@@ -51,3 +51,121 @@ appearance:
       y: 0.5
     shadow_enabled: true
     shadow_opacity: 0.3
+
+# 情绪处理配置
+emotion:
+  # 基础情绪设置
+  personality_type: shy  # 性格类型：cheerful, shy, calm, energetic
+  interaction_style: casual  # 互动风格：formal, casual, friendly
+  emotion_stability: 0.7  # 情绪稳定性 (0.0-1.0)
+  
+  # 情绪分析配置
+  analyzer:
+    primary: rule_based  # 主要分析器：rule_based, ml_based
+    enable_memory: true  # 启用情绪记忆
+    memory_ttl: 3600  # 记忆保持时间（秒）
+    confidence_threshold: 0.3  # 情绪识别置信度阈值
+  
+  # 情绪转换配置
+  transition:
+    enable_smooth_transition: true  # 启用平滑转换
+    transition_speed: 0.5  # 转换速度 (0.0-1.0)
+    stability_factor: 0.8  # 稳定性因子
+  
+  # 响应生成配置
+  response:
+    enable_tone_modification: true  # 启用语调修改
+    intensity_threshold: 0.3  # 情绪强度阈值
+    style_variation: true  # 启用风格变化
+  
+  # 情绪关键词模式
+  patterns:
+    happy:
+      keywords: [开心, 高兴, 快乐, 愉快, 欣喜, 太棒了, 很好]
+      intensity_boost: 0.2
+    
+    sad:
+      keywords: [难过, 伤心, 悲伤, 沮丧, 失落, 不开心]
+      intensity_boost: 0.1
+    
+    angry:
+      keywords: [生气, 愤怒, 恼怒, 烦躁, 讨厌, 气死了]
+      intensity_boost: 0.3
+    
+    excited:
+      keywords: [兴奋, 激动, 振奋, 太好了, 棒极了]
+      intensity_boost: 0.4
+    
+    confused:
+      keywords: [困惑, 迷惑, 不解, 疑惑, 茫然, 不懂]
+      intensity_boost: 0.1
+    
+    surprised:
+      keywords: [惊讶, 意外, 震惊, 吃惊, 诧异, 天哪]
+      intensity_boost: 0.3
+    
+    calm:
+      keywords: [平静, 冷静, 淡定, 安静, 宁静, 放松]
+      intensity_boost: 0.0
+    
+    curious:
+      keywords: [好奇, 感兴趣, 想知道, 探索, 求知]
+      intensity_boost: 0.2
+  
+  # 角色特定的情绪响应
+  character_responses:
+    happy:
+      prefixes: [真是太好了~, 太棒了~, 我也很开心~]
+      suffixes: [呢~, ~, ！]
+      tone_words: [开心地, 愉快地, 高兴地]
+      voice_style: cheerful
+      animation: happy
+    
+    sad:
+      prefixes: [我理解你的感受, 别难过了, 会好起来的]
+      suffixes: [..., 。, 呢。]
+      tone_words: [温柔地, 关切地, 轻声地]
+      voice_style: gentle
+      animation: concerned
+    
+    angry:
+      prefixes: [冷静一下, 我理解你的愤怒, 深呼吸]
+      suffixes: [。, ！, ...]
+      tone_words: [冷静地, 理解地, 耐心地]
+      voice_style: calm
+      animation: understanding
+    
+    excited:
+      prefixes: [太激动了~, 真是令人兴奋~, 我也很兴奋~]
+      suffixes: [！！, ~, ！]
+      tone_words: [兴奋地, 激动地, 热情地]
+      voice_style: energetic
+      animation: excited
+    
+    confused:
+      prefixes: [让我想想, 这确实有点复杂, 我来解释一下]
+      suffixes: [呢, ？, 。]
+      tone_words: [思考着, 耐心地, 仔细地]
+      voice_style: thoughtful
+      animation: thinking
+    
+    surprised:
+      prefixes: [哇~, 真的吗？, 好意外~]
+      suffixes: [！, ~, ？！]
+      tone_words: [惊讶地, 意外地, 好奇地]
+      voice_style: surprised
+      animation: surprised
+    
+    calm:
+      prefixes: [嗯, 我明白了, 好的]
+      suffixes: [。, 呢, ...]
+      tone_words: [平静地, 淡然地, 从容地]
+      voice_style: calm
+      animation: peaceful
+    
+    curious:
+      prefixes: [真有趣~, 我也想知道, 让我查查]
+      suffixes: [呢~, ？, ~]
+      tone_words: [好奇地, 探索地, 感兴趣地]
+      voice_style: curious
+      animation: curious

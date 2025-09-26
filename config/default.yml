@@ -1,6 +1,6 @@
 app_name: Zishu-sense
 app_version: 1.0.0
-app_description: 中文二次元风格AI虚拟角色
+app_description: AI虚拟角色
 language: zh-CN
 paths:
   data_dir: ./data
