@@ -1,0 +1,262 @@
+# 多模态处理配置文件
+multimodal:
+  # 音频配置
+  audio:
+    enabled: true
+    supported_formats: ["wav", "mp3", "flac", "ogg"]
+    sample_rate: 16000
+    channels: 1
+    max_duration: 300.0  # 5分钟
+    max_size: 52428800  # 50MB
+    
+    # 语音识别配置
+    speech_recognition:
+      provider: "whisper"  # whisper, baidu, azure, google
+      language: "zh-CN"
+      model: "base"
+      
+    # 文本转语音配置
+    text_to_speech:
+      provider: "edge-tts"  # edge-tts, azure, baidu, google
+      default_voice: "sweet"
+      sample_rate: 22050
+      quality: "high"
+      speed: 1.0
+  
+  # 图像配置
+  image:
+    enabled: true
+    supported_formats: ["jpeg", "png", "webp", "gif"]
+    max_width: 2048
+    max_height: 2048
+    max_size: 10485760  # 10MB
+    
+    # 图像分析配置
+    analysis:
+      provider: "openai"  # openai, google, azure
+      model: "gpt-4-vision-preview"
+      max_tokens: 300
+      
+    # 情绪识别配置
+    emotion_detection:
+      provider: "local"  # local, azure, aws
+      confidence_threshold: 0.5
+  
+  # 动画配置
+  animation:
+    enabled: true
+    fps: 30
+    default_duration: 3.0
+    max_duration: 30.0
+    quality: "medium"  # low, medium, high, ultra
+    
+    # 动画生成配置
+    generation:
+      provider: "local"  # local, unity, blender
+      style: "anime"  # anime, realistic, cartoon
+      enable_lip_sync: true
+      enable_auto_blink: true
+      enable_micro_expressions: true
+  
+  # 缓存配置
+  cache:
+    enabled: true
+    strategy: "lru"  # lru, lfu, fifo, ttl, adaptive
+    level: "memory"  # memory, disk, hybrid, distributed
+    max_size: 10000
+    max_memory_mb: 1024
+    default_ttl: 3600  # 1小时
+    
+    # 高级配置
+    compression_enabled: true
+    compression_threshold: 1024  # 超过1KB压缩
+    encryption_enabled: false
+    
+    # 清理配置
+    cleanup_interval: 300  # 5分钟
+    max_idle_time: 1800   # 30分钟
+    
+    # 预热配置
+    preload_enabled: false
+    preload_patterns: []
+    
+    # 持久化配置
+    persistence_enabled: false
+    persistence_path: "cache_data"
+    
+    # 监控配置
+    metrics_enabled: true
+    slow_query_threshold: 1.0  # 秒
+    
+    # HTTP缓存配置
+    http_cache_enabled: true
+    cache_control_max_age: 300
+    etag_enabled: true
+    vary_headers: ["Accept", "Accept-Encoding", "Authorization"]
+  
+  # 异步处理配置
+  async_processing:
+    enabled: true
+    max_concurrent_tasks: 5
+    task_timeout: 60.0
+    queue_size: 100
+    
+    # 线程池配置
+    thread_pool:
+      min_workers: 2
+      max_workers: 10
+      thread_name_prefix: "multimodal-worker"
+  
+  # 错误处理配置
+  error_handling:
+    retry_attempts: 3
+    retry_delay: 1.0
+    exponential_backoff: true
+    fallback_enabled: true
+    
+    # 错误通知
+    notification:
+      enabled: false
+      webhook_url: ""
+      email: ""
+  
+  # 性能监控配置
+  monitoring:
+    enabled: true
+    collection_interval: 30  # 30秒
+    retention_hours: 24      # 24小时
+    max_data_points: 10000   # 最大数据点数
+    
+    # 系统监控配置
+    system_metrics_enabled: true
+    process_metrics_enabled: true
+    network_metrics_enabled: true
+    
+    # HTTP监控配置
+    http_metrics_enabled: true
+    slow_request_threshold: 1.0  # 秒
+    track_request_size: true
+    track_response_size: true
+    
+    # 告警配置
+    alerting_enabled: true
+    alert_thresholds:
+      cpu_usage_warning: 70.0
+      cpu_usage_critical: 90.0
+      memory_usage_warning: 80.0
+      memory_usage_critical: 95.0
+      disk_usage_warning: 85.0
+      disk_usage_critical: 95.0
+      response_time_warning: 2.0
+      response_time_critical: 5.0
+      error_rate_warning: 5.0
+      error_rate_critical: 10.0
+      processing_time_warning: 5.0  # 秒
+      processing_time_error: 10.0   # 秒
+    
+    # 健康检查配置
+    health_check_enabled: true
+    health_check_interval: 60  # 60秒
+    health_check_timeout: 5.0
+    
+    # 导出配置
+    export_enabled: false
+    export_format: "prometheus"  # prometheus, json, csv
+    export_path: "monitoring_data"
+    
+    # 通知配置
+    webhook_url: null
+    email_notifications: false
+    slack_webhook: null
+  
+  # 安全配置
+  security:
+    content_filter:
+      enabled: true
+      level: 0.7  # 0.0-1.0
+      block_inappropriate: true
+      
+    # 文件验证
+    file_validation:
+      enabled: true
+      scan_for_malware: false
+      check_file_headers: true
+      
+    # 访问控制
+    access_control:
+      rate_limiting: true
+      requests_per_minute: 60
+      max_file_size: 52428800  # 50MB
+  
+  # API集成配置
+  api_integration:
+    # OpenAI配置
+    openai:
+      api_key: "${OPENAI_API_KEY}"
+      base_url: "https://api.openai.com/v1"
+      model: "gpt-4-vision-preview"
+      timeout: 30
+      
+    # Azure配置
+    azure:
+      api_key: "${AZURE_API_KEY}"
+      endpoint: "${AZURE_ENDPOINT}"
+      api_version: "2023-12-01-preview"
+      
+    # 百度配置
+    baidu:
+      api_key: "${BAIDU_API_KEY}"
+      secret_key: "${BAIDU_SECRET_KEY}"
+      
+    # Google配置
+    google:
+      credentials_path: "${GOOGLE_CREDENTIALS_PATH}"
+      project_id: "${GOOGLE_PROJECT_ID}"
+  
+  # 本地模型配置
+  local_models:
+    # Whisper模型配置
+    whisper:
+      model_size: "base"  # tiny, base, small, medium, large
+      device: "auto"  # auto, cpu, cuda
+      compute_type: "float16"
+      
+    # 情绪识别模型
+    emotion_model:
+      model_path: "models/emotion_classifier.onnx"
+      labels_path: "models/emotion_labels.json"
+      
+    # TTS模型
+    tts_model:
+      model_path: "models/tts_model.pth"
+      config_path: "models/tts_config.json"
+      vocoder_path: "models/vocoder.pth"
+  
+  # 开发和调试配置
+  development:
+    debug_mode: false
+    mock_external_apis: false
+    save_debug_files: false
+    debug_output_dir: "debug_output"
+    
+    # 测试配置
+    testing:
+      enable_test_endpoints: false
+      test_data_dir: "test_data"
+      generate_test_reports: false
+  
+  # 日志配置
+  logging:
+    level: "INFO"  # DEBUG, INFO, WARNING, ERROR
+    format: "%(asctime)s - %(name)s - %(levelname)s - %(message)s"
+    file_logging: true
+    log_file: "logs/multimodal.log"
+    max_file_size: 10485760  # 10MB
+    backup_count: 5
+    
+    # 特定组件日志级别
+    components:
+      audio_processor: "INFO"
+      image_processor: "INFO"
+      animation_generator: "INFO"
+      cache_manager: "INFO"

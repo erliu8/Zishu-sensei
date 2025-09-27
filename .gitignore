@@ -3,6 +3,7 @@
 output/
 venv/
 anime-offline-database/
+adapters/
 
 # 排除Python临时文件
 __pycache__/

@@ -1,0 +1,47 @@
+# 监控中间件配置文件
+monitoring:
+  # 基本配置
+  enabled: true
+  collection_interval: 30  # 30秒
+  retention_hours: 24      # 24小时
+  max_data_points: 10000   # 最大数据点数
+  
+  # 系统监控配置
+  system_metrics_enabled: true
+  process_metrics_enabled: true
+  network_metrics_enabled: true
+  
+  # HTTP监控配置
+  http_metrics_enabled: true
+  slow_request_threshold: 1.0  # 秒
+  track_request_size: true
+  track_response_size: true
+  
+  # 告警配置
+  alerting_enabled: true
+  alert_thresholds:
+    cpu_usage_warning: 70.0
+    cpu_usage_critical: 90.0
+    memory_usage_warning: 80.0
+    memory_usage_critical: 95.0
+    disk_usage_warning: 85.0
+    disk_usage_critical: 95.0
+    response_time_warning: 2.0
+    response_time_critical: 5.0
+    error_rate_warning: 5.0
+    error_rate_critical: 10.0
+  
+  # 健康检查配置
+  health_check_enabled: true
+  health_check_interval: 60  # 60秒
+  health_check_timeout: 5.0
+  
+  # 导出配置
+  export_enabled: false
+  export_format: "prometheus"  # prometheus, json, csv
+  export_path: "monitoring_data"
+  
+  # 通知配置
+  webhook_url: null
+  email_notifications: false
+  slack_webhook: null

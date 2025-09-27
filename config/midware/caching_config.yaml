@@ -1,0 +1,36 @@
+# 缓存中间件配置文件
+caching:
+  # 基本配置
+  enabled: true
+  strategy: "lru"  # lru, lfu, fifo, ttl, adaptive
+  level: "memory"  # memory, disk, hybrid, distributed
+  max_size: 10000
+  max_memory_mb: 1024
+  default_ttl: 3600  # 1小时
+  
+  # 高级配置
+  compression_enabled: true
+  compression_threshold: 1024  # 超过1KB压缩
+  encryption_enabled: false
+  
+  # 清理配置
+  cleanup_interval: 300  # 5分钟
+  max_idle_time: 1800   # 30分钟
+  
+  # 预热配置
+  preload_enabled: false
+  preload_patterns: []
+  
+  # 持久化配置
+  persistence_enabled: false
+  persistence_path: "cache_data"
+  
+  # 监控配置
+  metrics_enabled: true
+  slow_query_threshold: 1.0  # 秒
+  
+  # HTTP缓存配置
+  http_cache_enabled: true
+  cache_control_max_age: 300
+  etag_enabled: true
+  vary_headers: ["Accept", "Accept-Encoding", "Authorization"]

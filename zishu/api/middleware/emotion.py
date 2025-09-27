@@ -9,6 +9,7 @@ import yaml
 import pathlib
 import time
 import asyncio
+from pathlib import Path
 from typing import Dict, List, Optional, Tuple, Any, Union, Callable, Set
 from dataclasses import dataclass, field
 from datetime import datetime, timedelta
@@ -1012,6 +1013,8 @@ def load_character_emotion_config(character_config_path: str = None) -> Dict:
     if character_config_path is None:
         character_config_path = "config/character/default.yml"
     
+    logger = get_logger()
+    
     try:
         config_path = Path(character_config_path)
         if not config_path.exists():
@@ -1069,6 +1072,7 @@ def initialize_emotion_middleware(config: Optional[Dict] = None, character_confi
         character_config_path: 角色配置文件路径（可选）
     """
     global _emotion_middleware
+    logger = get_logger()
     _emotion_middleware = EmotionMiddleware()
     
     # 首先加载角色配置文件中的情绪设置

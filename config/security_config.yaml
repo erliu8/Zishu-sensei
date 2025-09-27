@@ -1,0 +1,342 @@
+# Zishu-sensei 安全配置文件
+security:
+  # 基本安全配置
+  enabled: true
+  debug_mode: false
+  strict_mode: true
+  
+  # 认证配置
+  authentication:
+    # JWT配置
+    jwt:
+      secret_key: "${JWT_SECRET_KEY}"  # 环境变量
+      algorithm: "HS256"
+      expiry_hours: 24
+      refresh_enabled: true
+      refresh_expiry_days: 7
+    
+    # 密码策略
+    password_policy:
+      min_length: 12
+      require_uppercase: true
+      require_lowercase: true
+      require_numbers: true
+      require_special_chars: true
+      max_age_days: 90
+      history_count: 5  # 不能重复使用最近5个密码
+    
+    # 会话管理
+    session:
+      max_concurrent_sessions: 3
+      idle_timeout_minutes: 30
+      absolute_timeout_hours: 8
+      secure_cookies: true
+      same_site: "Strict"
+    
+    # 多因素认证
+    mfa:
+      enabled: true
+      required_for_admin: true
+      totp_enabled: true
+      backup_codes_count: 10
+  
+  # 授权配置
+  authorization:
+    # 角色和权限
+    roles:
+      admin:
+        permissions: ["admin", "model_access", "training_access", "adapter_manage", "read", "write", "execute", "delete"]
+        security_level: "top_secret"
+      developer:
+        permissions: ["model_access", "adapter_manage", "read", "write", "execute"]
+        security_level: "confidential"
+      analyst:
+        permissions: ["model_access", "read"]
+        security_level: "protected"
+      user:
+        permissions: ["read"]
+        security_level: "protected"
+    
+    # 权限继承
+    permission_inheritance: true
+    
+    # 临时权限提升
+    privilege_escalation:
+      enabled: false
+      max_duration_minutes: 60
+      approval_required: true
+  
+  # 速率限制配置
+  rate_limiting:
+    enabled: true
+    
+    # 全局限制
+    global:
+      requests_per_minute: 1000
+      requests_per_hour: 10000
+      requests_per_day: 100000
+    
+    # 认证限制
+    authentication:
+      attempts_per_minute: 5
+      attempts_per_hour: 20
+      lockout_duration_minutes: 15
+    
+    # API限制
+    api:
+      requests_per_minute: 100
+      burst_size: 200
+      
+    # 模型访问限制
+    model_access:
+      requests_per_minute: 50
+      requests_per_hour: 1000
+      concurrent_requests: 10
+  
+  # IP安全配置
+  ip_security:
+    # 白名单（如果配置，只允许白名单IP）
+    whitelist: []
+    
+    # 黑名单
+    blacklist: []
+    
+    # 地理位置限制
+    geo_restrictions:
+      enabled: false
+      allowed_countries: ["CN", "US", "JP", "KR"]
+      blocked_countries: []
+    
+    # 自动封禁
+    auto_ban:
+      enabled: true
+      failed_attempts_threshold: 10
+      time_window_minutes: 60
+      ban_duration_hours: 24
+  
+  # 加密配置
+  encryption:
+    # 数据加密
+    data_encryption:
+      algorithm: "AES-256-GCM"
+      key_rotation_days: 30
+      backup_keys_count: 3
+    
+    # 传输加密
+    transport_encryption:
+      tls_version: "1.3"
+      cipher_suites: ["TLS_AES_256_GCM_SHA384", "TLS_CHACHA20_POLY1305_SHA256"]
+      hsts_enabled: true
+      hsts_max_age: 31536000
+    
+    # 密钥管理
+    key_management:
+      provider: "local"  # local, hsm, cloud
+      key_derivation_iterations: 100000
+      salt_length: 32
+  
+  # 模型安全配置
+  model_security:
+    # 访问控制
+    access_control:
+      model_isolation: true
+      cross_model_access: false
+      model_versioning: true
+      
+    # 模型加密
+    model_encryption:
+      enabled: true
+      encryption_at_rest: true
+      encryption_in_transit: true
+      key_per_model: true
+    
+    # 推理安全
+    inference_security:
+      input_validation: true
+      output_filtering: true
+      request_signing: true
+      
+    # 模型完整性
+    integrity_check:
+      enabled: true
+      checksum_algorithm: "SHA-256"
+      signature_verification: true
+  
+  # 训练样本安全配置
+  training_security:
+    # 数据污染检测
+    poisoning_detection:
+      enabled: true
+      confidence_threshold: 0.7
+      pattern_matching: true
+      statistical_analysis: true
+      
+    # 数据清理
+    data_sanitization:
+      enabled: true
+      remove_pii: true
+      content_filtering: true
+      format_validation: true
+      
+    # 数据来源验证
+    source_verification:
+      enabled: true
+      signature_required: true
+      whitelist_sources: true
+      
+    # 训练过程监控
+    training_monitoring:
+      loss_anomaly_detection: true
+      gradient_analysis: true
+      model_behavior_tracking: true
+  
+  # 适配器安全配置
+  adapter_security:
+    # 隔离级别
+    isolation_levels:
+      default: "strict"  # strict, controlled, relaxed
+      
+    # 资源限制
+    resource_limits:
+      strict:
+        max_memory_mb: 512
+        max_cpu_time_seconds: 30
+        max_file_size_mb: 10
+        max_network_calls: 10
+      controlled:
+        max_memory_mb: 1024
+        max_cpu_time_seconds: 60
+        max_file_size_mb: 50
+        max_network_calls: 50
+      relaxed:
+        max_memory_mb: 2048
+        max_cpu_time_seconds: 120
+        max_file_size_mb: 100
+        max_network_calls: 100
+    
+    # 沙箱配置
+    sandbox:
+      enabled: true
+      container_runtime: "docker"
+      network_isolation: true
+      filesystem_isolation: true
+      
+    # 跨适配器调用
+    cross_adapter_calls:
+      enabled: false
+      whitelist_operations: ["get_status", "ping", "get_info", "validate_input"]
+      audit_all_calls: true
+  
+  # 审计和监控配置
+  auditing:
+    # 审计日志
+    audit_logging:
+      enabled: true
+      log_level: "INFO"
+      log_format: "json"
+      retention_days: 365
+      
+    # 监控事件
+    monitoring:
+      security_events: true
+      performance_metrics: true
+      resource_usage: true
+      error_tracking: true
+      
+    # 告警配置
+    alerting:
+      enabled: true
+      channels: ["email", "webhook", "slack"]
+      severity_levels: ["LOW", "MEDIUM", "HIGH", "CRITICAL"]
+      
+    # 合规性
+    compliance:
+      gdpr_enabled: true
+      hipaa_enabled: false
+      sox_enabled: false
+      
+  # 威胁检测配置
+  threat_detection:
+    # 实时检测
+    real_time:
+      enabled: true
+      sql_injection: true
+      xss_attacks: true
+      csrf_attacks: true
+      brute_force: true
+      
+    # 异常检测
+    anomaly_detection:
+      enabled: true
+      behavioral_analysis: true
+      statistical_analysis: true
+      machine_learning: false
+      
+    # 威胁情报
+    threat_intelligence:
+      enabled: false
+      feeds: []
+      update_interval_hours: 24
+  
+  # 应急响应配置
+  incident_response:
+    # 自动响应
+    auto_response:
+      enabled: true
+      block_suspicious_ips: true
+      disable_compromised_accounts: true
+      quarantine_infected_files: true
+      
+    # 通知配置
+    notifications:
+      immediate_threats: ["email", "sms", "webhook"]
+      security_incidents: ["email", "webhook"]
+      system_alerts: ["email"]
+      
+    # 恢复配置
+    recovery:
+      backup_enabled: true
+      backup_interval_hours: 6
+      restore_point_retention_days: 30
+  
+  # 开发和测试配置
+  development:
+    # 测试模式
+    test_mode: false
+    mock_external_services: false
+    
+    # 调试配置
+    debug_logging: false
+    security_bypass: false  # 永远不要在生产环境中启用
+    
+    # 性能测试
+    load_testing:
+      enabled: false
+      max_concurrent_users: 100
+      test_duration_minutes: 30
+  
+  # 集成配置
+  integrations:
+    # LDAP/AD集成
+    ldap:
+      enabled: false
+      server_url: ""
+      bind_dn: ""
+      search_base: ""
+      
+    # SAML集成
+    saml:
+      enabled: false
+      idp_url: ""
+      sp_entity_id: ""
+      
+    # OAuth集成
+    oauth:
+      enabled: false
+      providers: []
+      
+    # 安全工具集成
+    security_tools:
+      siem_enabled: false
+      vulnerability_scanner: false
+      penetration_testing: false
