@@ -411,7 +411,7 @@ async def main():
     except Exception as e:
         logger.error(f"演示过程中出现错误: {e}", exc_info=True)
     
-    logger.info("✅ 适配器管理器示例演示完成")
+    logger.info("适配器管理器示例演示完成")
 
 if __name__ == "__main__":
     asyncio.run(main())
