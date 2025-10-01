@@ -14,7 +14,7 @@ from typing import Dict, Any, Optional, Union, List
 import torch
 from transformers import AutoTokenizer, AutoModelForCausalLM, AutoConfig, PreTrainedModel, PreTrainedTokenizer
 
-from src.utils.attention_utils import check_sdpa_support, configure_sdpa_for_model, display_sdpa_performance_info
+from zishu.utils.attention_utils import check_sdpa_support, configure_sdpa_for_model, display_sdpa_performance_info
 
 class ModelManager:
     """基础模型管理类，负责模型加载、缓存和管理等操作"""

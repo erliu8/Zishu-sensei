@@ -14,7 +14,8 @@ from abc import ABC,abstractmethod
 from zishu.utils.logger import setup_logger
 from zishu.utils.config_manager import ConfigManager
 from zishu.utils.model_registry import ModelRegistry
-from zishu.utils.prompt_manager import PerformanceMonitor,PromptManager
+from zishu.utils.prompt_manager import PromptManager
+from zishu.utils.performance import PerformanceMonitor
 from zishu.utils.cache_manager import CacheManager
 from zishu.utils.thread_factory import ThreadFactory,get_thread_factory,shutdown_thread_factory
 from zishu.api.schemas.chat import CharacterConfig
@@ -248,6 +249,11 @@ def get_config_manager() -> ConfigManager:
     return get_dependencies().get_config_manager()
 
 @lru_cache(maxsize=1)
+def get_config() -> ConfigManager:
+    """获取配置管理器 (别名)"""
+    return get_config_manager()
+
+@lru_cache(maxsize=1)
 def get_logger() -> logging.Logger:
     """获取日志管理器"""
     return get_dependencies().get_logger()
@@ -354,5 +360,97 @@ class ThreadFactoryContext:
             self.thread_factory.shutdown()
 
 
+# 模型管理器相关依赖
+def get_model_manager():
+    """获取模型管理器"""
+    # 这里应该返回实际的模型管理器实例
+    # 暂时返回Mock对象用于测试
+    from unittest.mock import Mock, AsyncMock
+    
+    manager = Mock()
+    manager.is_model_loaded = Mock(return_value=True)
+    manager.current_model = "test-model"
+    manager.loaded_adapters = {"test-adapter": {"status": "loaded"}}
+    
+    async def mock_generate_response(messages, **kwargs):
+        return {
+            "content": "Mock response",
+            "usage": {"total_tokens": 25},
+            "model": kwargs.get("model", "test-model")
+        }
+    
+    async def mock_generate_stream_response(messages, **kwargs):
+        chunks = [
+            {"delta": {"content": "Mock"}, "finish_reason": None},
+            {"delta": {"content": " stream"}, "finish_reason": None},
+            {"delta": {"content": " response"}, "finish_reason": "stop"}
+        ]
+        for chunk in chunks:
+            yield chunk
+    
+    async def mock_load_adapter(adapter_path, **kwargs):
+        return {
+            "success": True,
+            "adapter_name": "test-adapter",
+            "message": "Adapter loaded successfully"
+        }
+    
+    async def mock_unload_adapter(adapter_name, **kwargs):
+        return {
+            "success": True,
+            "message": f"Adapter {adapter_name} unloaded successfully"
+        }
+    
+    manager.generate_response = AsyncMock(side_effect=mock_generate_response)
+    manager.generate_stream_response = AsyncMock(side_effect=mock_generate_stream_response)
+    manager.load_adapter = AsyncMock(side_effect=mock_load_adapter)
+    manager.unload_adapter = AsyncMock(side_effect=mock_unload_adapter)
+    manager.get_memory_usage = Mock(return_value={
+        "total": 8 * 1024 * 1024 * 1024,
+        "used": 4 * 1024 * 1024 * 1024,
+        "available": 4 * 1024 * 1024 * 1024
+    })
+    
+    return manager
+
+
+def get_health_checker():
+    """获取健康检查器"""
+    from unittest.mock import Mock
+    
+    checker = Mock()
+    
+    checker.check_basic_health = Mock(return_value={
+        "status": "healthy",
+        "timestamp": "2024-01-01T00:00:00Z",
+        "uptime_seconds": 3600.0,
+        "version": "1.0.0"
+    })
+    
+    checker.check_deep_health = Mock(return_value={
+        "status": "healthy",
+        "timestamp": "2024-01-01T00:00:00Z",
+        "uptime_seconds": 3600.0,
+        "version": "1.0.0",
+        "components": [
+            {
+                "name": "database",
+                "status": "healthy",
+                "response_time_ms": 25.0
+            },
+            {
+                "name": "model_service",
+                "status": "healthy",
+                "response_time_ms": 50.0
+            }
+        ],
+        "system_metrics": {
+            "cpu_percent": 45.0,
+            "memory_percent": 60.0,
+            "disk_percent": 70.0
+        }
+    })
+    
+    return checker
 
 

@@ -1,4 +1,4 @@
-from fastapi import APIRouter, Depends, HTTPException, status()
+from fastapi import APIRouter, Depends, HTTPException, status
 from typing import Dict, Any, List, Optional
 import asyncio
 import time
@@ -21,7 +21,7 @@ class HealthStatus(str, Enum):
     UNHEALTHY = "unhealthy"
     DEGRADED = "degraded"
     
-class CheckRessult(BaseModel):
+class CheckResult(BaseModel):
     name: str
     status: HealthStatus
     message: str
@@ -33,7 +33,7 @@ class DeepHealthResponse(BaseModel):
     status: HealthStatus
     timestamp: datetime
     uptime_seconds: float
-    checks: List[CheckRessult]
+    checks: List[CheckResult]
     summary: Dict[str, Any]
     
 class HealthChecker:
@@ -43,37 +43,37 @@ class HealthChecker:
     def __init__(self, timeout: float = 5.0):
         self.timeout = timeout
         
-    async def check(self)->CheckRessult:
+    async def check(self)->CheckResult:
         """执行健康检查"""
         start_time = time.time()
         try:
             result = await asyncio.wait_for(self._do_check(), 
                                             timeout=self.timeout)
             duration_ms = (time.time() - start_time) * 1000
-            return CheckRessult(
+            return CheckResult(
                 name=self.__class__.__name__.replace("Checker",""),
                 status=HealthStatus.HEALTHY,
                 message=result.get("message","OK"),
                 details=result.get("details"),
-                duration_ms=duration,
+                duration_ms=duration_ms,
                 timestamp=datetime.now(timezone.utc)
             )
         except asyncio.TimeoutError:
-            duration = (time.time() - start_time) * 1000
-            return CheckRessult(
+            duration_ms = (time.time() - start_time) * 1000
+            return CheckResult(
                 name=self.__class__.__name__.replace("Checker",""),
                 status=HealthStatus.UNHEALTHY,
                 message=f"Check timed out after {self.timeout}s",
-                duration_ms=duration,
+                duration_ms=duration_ms,
                 timestamp=datetime.now(timezone.utc)
             )
         except Exception as e:
-            duration = (time.time() - start_time) * 1000
-            return CheckRessult(
+            duration_ms = (time.time() - start_time) * 1000
+            return CheckResult(
                 name=self.__class__.__name__.replace("Checker",""),
                 status=HealthStatus.UNHEALTHY,
                 message=f"Check failed: {str(e)}",
-                duration_ms=duration,
+                duration_ms=duration_ms,
                 timestamp=datetime.now(timezone.utc)
             )
     
@@ -264,7 +264,7 @@ async def get_health_status(
     final_results = []
     for result in check_results:
         if isinstance(result,Exception):
-            final_results.append(CheckRessult(
+            final_results.append(CheckResult(
                 name="UnknownCheck",
                 status=HealthStatus.UNHEALTHY,
                 message=f"Check failed: {str(result)}",
@@ -309,10 +309,12 @@ async def health_check():
     健康检查端点
     用于负载均衡和监控系统
     """
-    return HealthResponse(
+    return DeepHealthResponse(
         status=HealthStatus.HEALTHY,
         timestamp=datetime.now(timezone.utc),
         uptime_seconds=get_uptime(),
+        checks=[],
+        summary={"message": "Basic health check"}
     )
 
 @router.get("/ping")
@@ -344,12 +346,16 @@ async def deep_health_check(
         return result
     except Exception as e:
         logger.error(f"Deep health check failed: {str(e)}")
-        raise HTTPException(status.HTTP_503_SERVICE_UNAVAILABLE, 
-                            error="health check failed",
-                            message=f"Deep health check failed: {str(e)}",
-                            timestamp=datetime.now(timezone.utc).dict())
+        raise HTTPException(
+            status_code=status.HTTP_503_SERVICE_UNAVAILABLE,
+            detail={
+                "error": "health check failed",
+                "message": f"Deep health check failed: {str(e)}",
+                "timestamp": datetime.now(timezone.utc).isoformat()
+            }
+        )
 
-@router.get("readiness")
+@router.get("/readiness")
 async def readiness_check(
     model_manager = Depends(get_model_manager)):
     """
@@ -374,22 +380,26 @@ async def readiness_check(
                 "timestamp": datetime.now(timezone.utc)
             }
         else:
-            raise HTTPException(status.HTTP_503_SERVICE_UNAVAILABLE,
-                                detail={
-                                    "ready": False,
-                                    "message": f"Service is not ready: {', '.join(issues)}",
-                                    "issues": issues,
-                                    "timestamp": datetime.now(timezone.utc)
-                                })
+            raise HTTPException(
+                status_code=status.HTTP_503_SERVICE_UNAVAILABLE,
+                detail={
+                    "ready": False,
+                    "message": f"Service is not ready: {', '.join(issues)}",
+                    "issues": issues,
+                    "timestamp": datetime.now(timezone.utc).isoformat()
+                }
+            )
     except Exception as e:
-        raise HTTPException(status.HTTP_503_SERVICE_UNAVAILABLE,
-                            detail={
-                                "ready": False,
-                                "message": f"Readiness check failed: {str(e)}",
-                                "timestamp": datetime.now(timezone.utc)
-                            })
+        raise HTTPException(
+            status_code=status.HTTP_503_SERVICE_UNAVAILABLE,
+            detail={
+                "ready": False,
+                "message": f"Readiness check failed: {str(e)}",
+                "timestamp": datetime.now(timezone.utc).isoformat()
+            }
+        )
         
-@router.get("liveness")
+@router.get("/liveness")
 async def liveness_check():
     """
     存活性检查

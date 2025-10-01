@@ -1,0 +1,58 @@
+# 测试依赖包
+# Test Dependencies for Zishu-sensei Project
+
+# 核心测试框架
+pytest>=7.0.0                    # 主要测试框架
+pytest-asyncio>=0.21.0           # 异步测试支持
+pytest-mock>=3.10.0              # Mock支持
+
+# 测试增强功能
+pytest-cov>=4.0.0                # 覆盖率测试
+pytest-xdist>=3.0.0              # 并行测试执行
+pytest-html>=3.1.0               # HTML测试报告
+pytest-json-report>=1.5.0        # JSON测试报告
+pytest-timeout>=2.1.0            # 测试超时控制
+
+# HTTP测试
+httpx>=0.24.0                    # 异步HTTP客户端（用于API测试）
+requests-mock>=1.10.0            # HTTP请求Mock
+responses>=0.23.0                # HTTP响应Mock
+
+# 测试数据生成
+factory-boy>=3.2.0               # 测试数据工厂
+faker>=18.0.0                    # 假数据生成
+
+# 测试环境管理
+pytest-env>=0.8.1                # 环境变量管理
+pytest-dotenv>=0.5.2             # .env文件支持
+
+# 内存和性能分析
+memory-profiler>=0.60.0          # 内存分析
+
+# 测试配置和参数化
+pytest-lazy-fixture>=0.6.3       # 延迟fixture
+
+# 日志和调试
+pytest-logging>=2015.11.4        # 日志测试
+
+# 兼容性测试
+pytest-randomly>=3.12.0          # 随机测试顺序
+pytest-rerunfailures>=11.1.0     # 失败重试
+
+# 特定框架测试支持
+pytest-fastapi>=0.1.0            # FastAPI测试支持
+
+# 测试数据和Mock
+freezegun>=1.2.0                 # 时间Mock
+
+# 代码覆盖率增强
+coverage[toml]>=7.0.0            # 覆盖率工具
+
+# 测试报告格式
+junit-xml>=1.9.0                 # JUnit XML报告
+
+# 开发和调试工具
+rich>=13.0.0                     # 美化输出
+
+# 测试配置管理
+python-dotenv>=1.0.0             # 环境变量管理

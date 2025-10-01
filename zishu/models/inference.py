@@ -19,12 +19,12 @@ from transformers import (
 )
 from peft import PeftModel
 
-from src.utils.model_registry import get_model_registry,ModelInfo
-from src.utils.cache_manager import ModelResponseCache
-from src.utils.performance import get_performance_monitor
-from src.utils.fallback import CircuitBreaker
-from src.utils.prompt_manager import get_prompt_manager
-from src.utils.config_manager import ConfigManager
+from zishu.utils.model_registry import get_model_registry,ModelInfo
+from zishu.utils.cache_manager import ModelResponseCache
+from zishu.utils.performance import get_performance_monitor
+from zishu.utils.fallback import CircuitBreaker
+from zishu.utils.prompt_manager import get_prompt_manager
+from zishu.utils.config_manager import ConfigManager
 
 #TODO: 利用C++加速引擎
 class CustomStoppingCriteria(StoppingCriteria):
@@ -805,8 +805,9 @@ def get_inference_engine()->InferenceEngine:
     global _inference_engine
     
     if _inference_engine is None:
-        from src.utils.config_manager import ConfigManager
-        config_dir = os.path.join(os.path.dirname(os.path.dirname(os.path.dirname(__file__))),"config")
+        from zishu.utils.config_manager import ConfigManager
+        from pathlib import Path
+        config_dir = Path(os.path.join(os.path.dirname(os.path.dirname(os.path.dirname(__file__))),"config"))
         config = ConfigManager(config_dir)
         _inference_engine = InferenceEngine(config)
         

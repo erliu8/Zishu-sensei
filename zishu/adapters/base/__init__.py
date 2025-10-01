@@ -1,5 +1,5 @@
 """
-紫舒老师适配器系统 - 基础模块
+适配器系统 - 基础模块
 =================================
 
 这个包提供了适配器系统的核心基础设施：
@@ -36,7 +36,7 @@ await registry.register_adapter("my_adapter", MyAdapter, config)
 
 # 版本信息
 __version__ = "1.0.0"
-__author__ = "紫舒老师适配器团队"
+__author__ = "紫舒老师团队"
 __email__ = "adapters@zishu.team"
 
 # ================================
@@ -90,14 +90,14 @@ from .exceptions import (
     AdapterValidationError,
     AdapterConfigurationError,
     AdapterTimeoutError,
-    AdapterDependencyError,
+    DependencyMissingError,
     ErrorCode,
     ExceptionSeverity,
     handle_adapter_exceptions
 )
 
 # 验证器系统
-from .validator import (
+from ..manager.validator import (
     AdapterValidator,
     ValidationResult,
     ValidationIssue,
@@ -120,8 +120,7 @@ from .validator import (
 from .metadata import (
     AdapterType,
     AdapterStatus,
-    SecurityLevel,
-    DependencyType
+    SecurityLevel
 )
 
 from .registry import (
@@ -205,7 +204,7 @@ __all__ = [
     "AdapterValidationError",
     "AdapterConfigurationError",
     "AdapterTimeoutError",
-    "AdapterDependencyError",
+    "DependencyMissingError",
     
     # 验证器类
     "AdapterValidator",

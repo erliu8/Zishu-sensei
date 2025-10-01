@@ -18,7 +18,7 @@ import logging
 
 # 第三方依赖
 try:
-    from pydantic import BaseModel, Field, validator, root_validator
+    from pydantic import BaseModel, Field, validator, model_validator
     from pydantic.types import StrictStr, PositiveInt
 except ImportError:
     raise ImportError("pydantic is required for metadata management. Install with: pip install pydantic")
@@ -192,16 +192,11 @@ class AdapterUsageStatistics(BaseModel):
     active_users: Set[str] = Field(default_factory=set, description="活跃用户列表")
     popular_features: Dict[str, int] = Field(default_factory=dict, description="功能使用频次")
     
-    @root_validator
-    def validate_execution_counts(cls, values):
-        total = values.get('total_executions', 0)
-        successful = values.get('successful_executions', 0)
-        failed = values.get('failed_executions', 0)
-        
-        if successful + failed != total:
-            values['total_executions'] = successful + failed
-        
-        return values
+    @model_validator(mode='after')
+    def validate_execution_counts(self):
+        if self.successful_executions + self.failed_executions != self.total_executions:
+            self.total_executions = self.successful_executions + self.failed_executions
+        return self
 
 
 class AdapterMetadata(BaseModel):
@@ -267,10 +262,12 @@ class AdapterMetadata(BaseModel):
             raise ValueError('adapter_id can only contain letters, numbers, underscores and hyphens')
         return v.strip()
     
-    @root_validator
+    @model_validator(mode='before')
+    @classmethod
     def update_timestamp(cls, values):
         """自动更新时间戳"""
-        values['updated_at'] = datetime.now(timezone.utc)
+        if isinstance(values, dict):
+            values['updated_at'] = datetime.now(timezone.utc)
         return values
     
     def get_hash(self) -> str:

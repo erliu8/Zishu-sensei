@@ -207,7 +207,7 @@ class CharacterConfigResponse(BaseModel):
     
     #配置信息
     last_updated: datetime = Field(default_factory=datetime.now, description="最后更新时间")
-    _internal_version: Optional[str] = Field(None, alias="version", description="内部版本号")
+    internal_version: Optional[str] = Field(None, alias="version", description="内部版本号")
 
 class EmotionResponse(BaseModel):
     """情绪响应"""
@@ -385,3 +385,34 @@ def create_success_response(
         request_id=request_id,
         processing_time=processing_time
     )
+
+# 添加测试需要的响应类
+class ChatResponse(BaseModel):
+    """聊天响应"""
+    id: str = Field(..., description="响应ID")
+    message: Any = Field(..., description="消息内容")
+    model: str = Field(..., description="使用的模型")
+    usage: Optional[Dict[str, int]] = Field(None, description="Token使用统计")
+    created: datetime = Field(..., description="创建时间")
+
+class ChatStreamResponse(BaseModel):
+    """流式聊天响应"""
+    id: str = Field(..., description="响应ID")
+    delta: Dict[str, Any] = Field(..., description="增量内容")
+    model: str = Field(..., description="使用的模型")
+    created: datetime = Field(..., description="创建时间")
+    finish_reason: Optional[str] = Field(None, description="完成原因")
+
+class ConversationSummary(BaseModel):
+    """对话摘要"""
+    id: str = Field(..., description="摘要ID")
+    summary: str = Field(..., description="摘要内容")
+    message_count: int = Field(..., description="消息数量")
+    created: datetime = Field(..., description="创建时间")
+
+class ChatHistory(BaseModel):
+    """聊天历史"""
+    session_id: str = Field(..., description="会话ID")
+    messages: List[Any] = Field(..., description="消息列表")
+    total_messages: int = Field(..., description="总消息数")
+    created: datetime = Field(..., description="创建时间")

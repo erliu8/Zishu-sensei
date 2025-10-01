@@ -19,18 +19,18 @@ import weakref
 from contextlib import asynccontextmanager
 
 # 本地模块导入
-from .adapter import BaseAdapter, ExecutionContext, ExecutionResult, HealthCheckResult
-from .metadata import (
+from ..base.adapter import BaseAdapter, ExecutionContext, ExecutionResult, HealthCheckResult
+from ..base.metadata import (
     AdapterMetadata, AdapterType, AdapterStatus, SecurityLevel,
     AdapterCapability, AdapterDependency, AdapterConfiguration,
     CapabilityCategory, MetadataManager, get_default_metadata_manager
 )
-from .exceptions import (
+from ..base.exceptions import (
     BaseAdapterException, AdapterValidationError, AdapterConfigurationError,
     AdapterLoadingError, SecurityViolationError, DependencyMissingError,
     ErrorCode, ExceptionSeverity, handle_adapter_exceptions
 )
-from .registry import AdapterRegistry, get_default_registry
+from ..base.registry import AdapterRegistry, get_default_registry
 
 # 配置日志
 logger = logging.getLogger(__name__)

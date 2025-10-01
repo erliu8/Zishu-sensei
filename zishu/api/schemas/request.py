@@ -19,7 +19,7 @@ class StreamOptions(BaseModel):
 #基础对话请求
 class ChatCompletionRequest(BaseModel):
     """对话完成请求(兼容OpenAI)"""
-    messages: List[Dict[str,str]] = Field(..., min_length=1, description="对话消息列表")
+    messages: List[Dict[str, str]] = Field(..., min_length=1, description="对话消息列表")
     model: Optional[str] = Field(default="zishu-base", description="模型ID")
     
     #生成参数
@@ -117,6 +117,19 @@ class EmotionChatRequest(BaseModel):
     animation_style: Optional[str] = Field(None, description="动画风格")
     
 #模型管理请求
+class ModelLoadRequest(BaseModel):
+    model_name: str = Field(..., description="模型名称")
+    model_path: Optional[str] = Field(None, description="模型路径")
+    
+    #加载选项
+    force_reload: Optional[bool] = Field(False, description="是否强制重新加载")
+    load_config: Optional[Dict[str, Any]] = Field(None, description="加载配置")
+    
+    #资源配置
+    device: Optional[str] = Field(default="auto", description="设备类型") #auto/cpu/cuda
+    torch_dtype: Optional[str] = Field(default="auto", description="torch数据类型") #auto/float16/bfloat16/float32
+    low_memory: Optional[bool] = Field(False, description="是否低内存模式")
+
 class ModelManagementRequest(BaseModel):
     adapter_name: str = Field(..., description="适配器ID")
     adapter_path: Optional[str] = Field(None, description="适配器路径") #如果不在默认路径
@@ -184,14 +197,14 @@ class VoiceGenerationRequest(BaseModel):
     pitch: Optional[float] = Field(default=1.0, ge=0.5, le=2.0, description="音调")
     
 class AnimationGenerationRequest(BaseModel):
-    emtion: EmotionType = Field(..., description="目标情绪")
-    duration: Optional[int] = Field(default=3.0, ge=0.5, le=30.0, description="动画持续时间(秒)")
+    emotion: EmotionType = Field(..., description="目标情绪")
+    duration: Optional[float] = Field(default=3.0, ge=0.5, le=30.0, description="动画持续时间(秒)")
     style: Optional[str] = Field(default="default", description="动画风格")
     intensity: Optional[float] = Field(default=0.5, ge=0.0, le=1.0, description="表现强度")
 
 #批量处理请求
 class BatchChatRequest(BaseModel):
-    requests: List[ChatCompletionRequest] = Field(...,min_length=1,max_length=10, description="批量请求列表")
+    requests: List[ChatCompletionRequest] = Field(..., min_length=1, max_length=10, description="批量请求列表")
     batch_id: Optional[str] = Field(None, description="批次ID")
     parallel_processing: Optional[bool] = Field(default=True, description="是否并行处理")
     

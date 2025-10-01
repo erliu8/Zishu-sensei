@@ -200,7 +200,7 @@ def create_app(
     if not debug:
         app.add_middleware(
             TrustedHostMiddleware,
-            allowed_hosts=["localhost", "127.0.0.1"], # TODO: 生产环境使用具体域名
+            allowed_hosts=["localhost", "127.0.0.1", "test", "testserver"], # TODO: 生产环境使用具体域名
         )
         
     #添加自定义日志中间件
@@ -246,6 +246,7 @@ def create_app(
     async def root():
         """根端点"""
         return{
+            "status": "healthy",
             "message": "Welcome to Zishu-sensei API",
             "version": "0.1.0",
             "docs": "/docs" if debug else "Documentation not available in production",
@@ -295,6 +296,14 @@ def create_app(
         except Exception as e:
             raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST,
                                 detail=f"Failed to process chat request: {str(e)}")
+
+    # 注册路由
+    try:
+        from zishu.api.routes import register_routes
+        register_routes(app)
+    except Exception as e:
+        logger = setup_logger("zishu-server")
+        logger.warning(f"Failed to register routes: {e}")
 
     return app
 

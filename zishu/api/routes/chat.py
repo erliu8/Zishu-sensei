@@ -2,13 +2,14 @@ import asyncio
 import json
 import time
 import uuid
-from typing import AsyncGenerator, List, Dict, Any, Optional, Union
+from typing import AsyncGenerator, List, Dict, Any, Optional, Union, Tuple
 from datetime import datetime
 
 from fastapi import APIRouter, Depends, HTTPException, Request, BackgroundTasks
 from fastapi.responses import StreamingResponse
 from pydantic import BaseModel, Field, ValidationError
 import logging
+from logging import Logger
 
 from zishu.api.dependencies import (
     get_logger, get_performance_monitor, get_thread_factory_from_deps,
@@ -17,6 +18,7 @@ from zishu.api.dependencies import (
 from zishu.api.schemas.chat import (
     Message, MessageRole, MessageType, EmotionType, CharacterConfig, ChatModel
 )
+from zishu.api.schemas.request import ChatCompletionRequest
 from zishu.models.inference import get_inference_engine
 from zishu.utils.cache_manager import ModelResponseCache
 
@@ -105,11 +107,11 @@ class HistoryResponse(BaseModel):
 class ChatSessionManager:
     """对话会话管理器"""
     def __init__(self):
-        self.sessions = Dict[str, List[Message]] = {}
+        self.sessions: Dict[str, List[Message]] = {}
         self.session_configs: Dict[str, Dict[str, Any]] = {}
         
         
-    async def get_or_create_session(self, sesion_id: Optional[str] = None) -> str:
+    async def get_or_create_session(self, session_id: Optional[str] = None) -> str:
         """获取或创建对话会话"""
         if not session_id:
             session_id = f"session_{uuid.uuid4().hex[:16]}"
@@ -131,9 +133,9 @@ class ChatSessionManager:
         self.sessions[session_id].append(message)
         self.session_configs[session_id]["last_activity"] = datetime.now()
         
-    #限制会话历史长度
-    if len(self.sessions[session_id]) > 100:
-        self.sessions[session_id] = self.sessions[session_id][-50:]
+        #限制会话历史长度
+        if len(self.sessions[session_id]) > 100:
+            self.sessions[session_id] = self.sessions[session_id][-50:]
         
     async def get_messages(self, session_id: str, limit: Optional[int] = None) -> List[Message]:
         """获取对话会话消息"""
@@ -168,7 +170,7 @@ class EmotionAnalyzer:
             # 可以扩展更多情绪关键词
         }
     
-    async def analyze_emotion(self, text: str) -> tuple[EmotionType, float]:
+    async def analyze_emotion(self, text: str) -> Tuple[EmotionType, float]:
         """分析情绪"""
         
         #TODO: 可替换为更复杂的情绪分析模型,结合角色配置和用户情绪，生成回复情绪
@@ -200,7 +202,7 @@ class EmotionAnalyzer:
         return emotion_map.get(user_emotion, EmotionType.NEUTRAL)
             
 #依赖函数
-async get_inference_engine_dep():
+async def get_inference_engine_dep():
     """获取推理引擎依赖"""
     try:
         return get_inference_engine()
@@ -236,7 +238,7 @@ router = APIRouter(
 @router.post("/completions", response_model=ChatCompletionResponse)
 async def chat_completions(request: ChatCompletionRequest,
                            background_tasks: BackgroundTasks,
-                           inference_engine: Depends(get_inference_engine_dep),
+                           inference_engine=Depends(get_inference_engine_dep),
                            session_manager: ChatSessionManager = Depends(get_session_manager),
                            response_cache: ModelResponseCache = Depends(get_response_cache),
                            logger: Logger = Depends(get_logger)):
@@ -259,9 +261,9 @@ async def chat_completions(request: ChatCompletionRequest,
             
         #cache检查
         cache_key = f"chat:{hash(str(messages))}:{request.model}:{request.character_id}"
-        cahced_response = await response_cache.get(cache_key)
+        cached_response = await response_cache.get(cache_key)
         
-        if cahced_response and not request.stream:
+        if cached_response and not request.stream:
             logger.info(f"Return cached response:session_id={session_id}")
             return json.loads(cached_response)
         
@@ -275,22 +277,23 @@ async def chat_completions(request: ChatCompletionRequest,
             )
             
         #非流式响应
+        start_time = time.time()
         response_text = await _generate_chat_response(
-            messages, request, session_id, inference_engine, logger)
+            messages, request, inference_engine, logger)
         
         #构建响应消息
         assistant_message = Message(
             role=MessageRole.ASSISTANT,
             content=response_text,
-            session_id=session_id
+            session_id=session_id,
             processing_time=time.time() - start_time
         )
         
         #保存到会话历史
         if messages:
-            user_message = messages(
+            user_message = Message(
                 role=MessageRole.USER,
-                content=messages[-1]["content", ""],
+                content=messages[-1].get("content", ""),
                 session_id=session_id
             )
             await session_manager.add_message(session_id, user_message)
@@ -325,10 +328,10 @@ async def chat_completions(request: ChatCompletionRequest,
         logger.error(f"Dialog processing failed: {str(e)}")
         raise HTTPException(status_code=500, detail="Dialog processing failed")
     
-@router.post("/stream", respose_class=StreamingResponse)
+@router.post("/stream", response_class=StreamingResponse)
 async def stream_chat(
     request: StreamChatRequest,
-    inference_engine: Depends(get_inference_engine_dep),
+    inference_engine=Depends(get_inference_engine_dep),
     session_manager: ChatSessionManager = Depends(get_session_manager),
     logger: logging.Logger = Depends(get_logger)):
     """
@@ -339,13 +342,13 @@ async def stream_chat(
         session_id = await session_manager.get_or_create_session(request.session_id)
         
         #构建消息历史
-        messages = request.context.copy() if request.context else []
-        messages.append({"role": "user", "content": request.messages})
+        context_messages = await session_manager.get_context_messages(session_id, 10)
+        messages = context_messages + [{"role": "user", "content": request.messages}]
         
         return StreamingResponse(
             _stream_chat_response_simple(
                 messages, request, session_id, 
-                inference_engine, logger, session_manager
+                inference_engine, session_manager, logger
                 ),
                 media_type="text/event-stream",
             )
@@ -357,10 +360,10 @@ async def stream_chat(
 @router.post("/emotion", response_model=EmotionResponse)
 async def emotion_chat(
     request: EmotionChatRequest,
-    inference_engine: Depends(get_inference_engine_dep),
+    inference_engine=Depends(get_inference_engine_dep),
     session_manager: ChatSessionManager = Depends(get_session_manager),
     emotion_analyzer: EmotionAnalyzer = Depends(get_emotion_analyzer),
-    session_manager: ChatSessionManager = Depends(get_session_manager),
+    character_config: CharacterConfig = Depends(get_character_config),
     logger: logging.Logger = Depends(get_logger)):
     """
     带情绪的对话接口
@@ -375,18 +378,18 @@ async def emotion_chat(
         user_emotion = request.current_emotion
         emotion_confidence = 1.0
         
-        if request.analyze_user_emotion:
-            user_emotion, emotion_confidence = await emotion_analyzer.analyze_emotion(request.message)
+        if request.analyze_emotion:
+            user_emotion, emotion_confidence = await emotion_analyzer.analyze_emotion(request.messages)
             
         #生成回应情绪
         response_emotion = await emotion_analyzer.generate_response_emotion(user_emotion, character_config)
         
         #构建带情绪的消息历史
         context_messages = await session_manager.get_context_messages(session_id, 5)
-        messages = context_messages + [{"role": "user", "content": request.message}]
+        messages = context_messages + [{"role": "user", "content": request.messages}]
         
         #生成回应(可以将情绪消息加入到生成参数中)
-        response_text = await session_manager.generate_response(
+        response_text = await _generate_emotion_response(
             messages, request, user_emotion, 
             response_emotion, inference_engine, logger)
         
@@ -396,18 +399,18 @@ async def emotion_chat(
             content=response_text,
             session_id=session_id,
             emotion=response_emotion,
-            emotion_intensity=request.emotion_intensity
-            process_time = time.time() - start_time
+            emotion_intensity=request.emotion_intensity,
+            processing_time = time.time() - start_time
         )
         
         #保存到会话历史
         user_message = Message(
             role=MessageRole.USER,
-            content=request.message,
+            content=request.messages,
             session_id=session_id,
             emotion=user_emotion,
-            emotion_intensity=emotion_confidence
-            process_time = time.time() - start_time
+            emotion_intensity=emotion_confidence,
+            processing_time=time.time() - start_time
         )
         
         await session_manager.add_message(session_id, user_message)
@@ -478,7 +481,7 @@ async def _generate_chat_response(
     messages: List[Dict[str, str]],
     request: ChatCompletionRequest,
     inference_engine,
-    logger: logging.Logger
+    logger: Logger
 ) -> str:
     """生成普通对话响应"""
     try:
@@ -505,7 +508,7 @@ async def _generate_emotion_response(
     user_emotion: EmotionType,
     response_emotion: EmotionType,
     inference_engine,
-    logger: logging.Logger
+    logger: Logger
 ) -> str:
     """生成带情绪的对话响应"""
     try:
@@ -533,12 +536,12 @@ async def _generate_emotion_response(
     
 async def _stream_chat_response_simple(
     messages: List[Dict[str, str]],
-    request: ChatCompletionRequest,
+    request: StreamChatRequest,
     session_id: str,
     inference_engine,
     session_manager: ChatSessionManager,
-    logger: logging.Logger
-) -> AsyncGenerator[StreamChunk, None]:
+    logger: Logger
+) -> AsyncGenerator[str, None]:
     """流式对话响应生成器"""
     try:
         #TODO: 目前目前的推理引擎不支持流式，这里提供框架结构，需要实现流式生成逻辑
@@ -546,31 +549,43 @@ async def _stream_chat_response_simple(
         chunk_id = f"chatcmpl-{uuid.uuid4().hex[:29]}"
         
         #模拟流式响应(实际应该调用推理引擎的流式接口)
+        # 创建临时request对象用于调用_generate_chat_response
+        temp_request = ChatCompletionRequest(
+            messages=[{"role": msg["role"], "content": msg["content"]} for msg in messages],
+            model=request.model,
+            character_id=request.character_id
+        )
         response_text = await _generate_chat_response(
-            messages, request, inference_engine, logger)
+            messages, temp_request, inference_engine, logger)
         
         for i, char in enumerate(response_text):
-            chunk = StreamChunk(
-                id=chunk_id,
-                model=request.model or "default",
-                choices=[{
+            chunk_data = {
+                "id": chunk_id,
+                "object": "chat.completion.chunk",
+                "created": int(time.time()),
+                "model": request.model or "default",
+                "choices": [{
                     "index": 0,
                     "delta": {"content": char},
                     "finish_reason": None if i < len(response_text) - 1 else "stop"
                 }]
-            )
-            yield f"data: {chunk.model_dump_json()}\n\n"
+            }
+            yield f"data: {json.dumps(chunk_data)}\n\n"
+            await asyncio.sleep(0.01)
             
         #发送结束块
-        final_chunk = StreamChunk(
-            id=chunk_id,
-            model=request.model or "default",
-            choices=[{
+        final_chunk_data = {
+            "id": chunk_id,
+            "object": "chat.completion.chunk",
+            "created": int(time.time()),
+            "model": request.model or "default",
+            "choices": [{
                 "index": 0,
                 "delta": {},
                 "finish_reason": "stop"
             }]
-    )
+        }
+        yield f"data: {json.dumps(final_chunk_data)}\n\n"
     except Exception as e:
         logger.error(f"Failed to stream chat response: {e}")
         error_chunk = {
@@ -586,22 +601,22 @@ async def _stream_chat_response(
     request: ChatCompletionRequest,
     session_id: str,
     inference_engine,
-    session_manager: ChatSessionManager,
-    logger: logging.Logger
-) -> AsyncGenerator[StreamChunk, None]:
-        """简化的流式对话响应生成器"""
-        try:
-            response_text = inference_engine.chat_generate(
-                messages=messages,
-                model_id=request.model_id,
-                character_id=request.character_id,
-            )
-            #逐字符流式输出
-            for char in response_text:
-                yield f"data: {json.dumps({'delta': {'content': char}})}\n\n"
-                await asyncio.sleep(0.01)
-                
-            yield f"data: {json.dumps({'done': True})}\n\n"
+    logger: Logger,
+    session_manager: ChatSessionManager
+) -> AsyncGenerator[str, None]:
+    """简化的流式对话响应生成器"""
+    try:
+        response_text = inference_engine.chat_generate(
+            messages=messages,
+            model_id=request.model,
+            character_id=request.character_id,
+        )
+        #逐字符流式输出
+        for char in response_text:
+            yield f"data: {json.dumps({'delta': {'content': char}})}\n\n"
+            await asyncio.sleep(0.01)
+            
+        yield f"data: {json.dumps({'done': True})}\n\n"
         
     except Exception as e:
         logger.error(f"Failed to simplified stream chat response: {e}")

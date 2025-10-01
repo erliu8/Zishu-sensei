@@ -26,8 +26,7 @@ from .exceptions import (
 )
 from .metadata import (
     AdapterMetadata, AdapterType, AdapterStatus, AdapterCapability,
-    SecurityLevel, PerformanceRequirement, ResourceRequirement,
-    MetadataManager
+    SecurityLevel, MetadataManager
 )
 
 # 配置日志

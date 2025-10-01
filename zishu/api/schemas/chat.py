@@ -1,7 +1,7 @@
 #! /usr/bin/env python3
 # -*- coding: utf-8 -*-
 
-from pydantic import BaseModel, Field, field_validator
+from pydantic import BaseModel, Field, field_validator, model_validator
 from typing import Optional, List, Any, Dict, Union, Literal
 from datetime import datetime
 from enum import Enum
@@ -12,6 +12,7 @@ class MessageRole(str, Enum):
     USER = "user"
     ASSISTANT = "assistant"
     SYSTEM = "system"
+    FUNCTION = "function"
 
 class MessageType(str, Enum):
     """消息类型枚举"""
@@ -54,18 +55,20 @@ class ChatModel(str, Enum):
     CASUAL = "casual"
     
 #支持基础情绪或自定义情绪字符串
-EmotionType = Union[EmotionType, str]
+EmotionValue = Union[EmotionType, str]
 
 class Message(BaseModel):
     """单条消息模型"""
     id: str = Field(default_factory=lambda: str(uuid.uuid4()), description="消息唯一ID")
     role: MessageRole = Field(..., description="消息角色")
-    content: str = Field(...,min_length=1,max_length=10000, description="消息内容")
+    content: Optional[str] = Field(None, max_length=10000, description="消息内容")
     message_type: MessageType = Field(default=MessageType.TEXT, description="消息类型")
+    name: Optional[str] = Field(None, description="消息发送者名称(用于函数调用等)")
+    function_call: Optional[Dict[str, Any]] = Field(None, description="函数调用信息")
     timestamp: datetime = Field(default_factory=datetime.now, description="消息时间戳")
     
     #角色情绪状态 -支持自定义
-    emotion: Optional[EmotionType] = Field(None, description="角色情绪状态")
+    emotion: Optional[EmotionValue] = Field(None, description="角色情绪状态")
     emotion_intensity: Optional[float] = Field(None, ge=0.0, le=1, description="情绪强度")
     
     #多媒体扩展
@@ -83,9 +86,18 @@ class Message(BaseModel):
     @field_validator("content")
     @classmethod
     def validate_content(cls, v):
-        if not v.strip():
-            raise ValueError("消息内容不能为空")
+        if v is None:
+            return v
+        # 仅做去空白处理；是否允许为空由模型级校验决定
         return v.strip()
+    
+    @model_validator(mode='after')
+    def validate_message(self):
+        """验证消息的完整性"""
+        # 如果没有function_call，则content不能为空
+        if not self.function_call and (not self.content or not self.content.strip()):
+            raise ValueError("消息内容不能为空")
+        return self
     
 class PersonalityType(str, Enum):
     """角色性格类型枚举"""
@@ -184,17 +196,17 @@ class CharacterConfig(BaseModel):
     creativity_level: float = Field(default=0.6, ge=0.0, le=1.0, description="创意程度 0-1")
     
     # 情绪配置
-    available_emotions: List[EmotionType] = Field(
-        default_factory=lambda: [e.value for e in EmotionType if isinstance(e, EmotionType)], 
+    available_emotions: List[EmotionValue] = Field(
+        default_factory=lambda: [e.value for e in EmotionType], 
         description="可用情绪列表"
     )
-    default_emotion: EmotionType = Field(default=EmotionType.NEUTRAL, description="默认情绪")
+    default_emotion: EmotionValue = Field(default="neutral", description="默认情绪")
     emotion_transitions: Dict[str, List[str]] = Field(default_factory=dict, description="情绪转换规则")
     emotion_stability: float = Field(default=0.7, ge=0.0, le=1.0, description="情绪稳定性")
     
     # 多媒体配置
     voice_styles: List[VoiceStyle] = Field(default_factory=list, description="可用语音风格")
-    default_voice: Optional[VoiceStyle] = Field(default=VoiceStyle.SWEET, description="默认语音风格")
+    default_voice: Optional[VoiceStyle] = Field(default="sweet", description="默认语音风格")
     animations: List[AnimationType] = Field(default_factory=list, description="可用动画表情")
     avatar_url: Optional[str] = Field(None, description="头像URL")
     
@@ -226,7 +238,7 @@ class CharacterConfig(BaseModel):
     
     # 运行时状态
     is_active: bool = Field(default=True, description="是否激活")
-    current_emotion: Optional[EmotionType] = Field(None, description="当前情绪状态")
+    current_emotion: Optional[EmotionValue] = Field(None, description="当前情绪状态")
     emotion_history: List[Dict[str, Any]] = Field(default_factory=list, description="情绪历史")
     
     # 扩展字段
@@ -259,7 +271,7 @@ class CharacterConfig(BaseModel):
 class CharacterState(BaseModel):
     """角色运行时状态模型"""
     character_id: str = Field(..., description="角色配置ID")
-    current_emotion: EmotionType = Field(default=EmotionType.NEUTRAL, description="当前情绪")
+    current_emotion: EmotionValue = Field(default="neutral", description="当前情绪")
     emotion_intensity: float = Field(default=0.5, ge=0.0, le=1.0, description="情绪强度")
     energy_level: float = Field(default=0.8, ge=0.0, le=1.0, description="精力水平")
     mood: Optional[str] = Field(None, description="当前心情描述")
@@ -281,8 +293,8 @@ class CharacterState(BaseModel):
 
 class EmotionTransition(BaseModel):
     """情绪转换模型"""
-    from_emotion: EmotionType = Field(..., description="源情绪")
-    to_emotion: EmotionType = Field(..., description="目标情绪")
+    from_emotion: EmotionValue = Field(..., description="源情绪")
+    to_emotion: EmotionValue = Field(..., description="目标情绪")
     trigger: str = Field(..., description="触发条件")
     probability: float = Field(default=1.0, ge=0.0, le=1.0, description="转换概率")
     duration: Optional[int] = Field(None, description="持续时间(秒)")
@@ -351,7 +363,7 @@ class UpdateCharacterRequest(BaseModel):
 
 class SetEmotionRequest(BaseModel):
     """设置情绪请求模型"""
-    emotion: EmotionType = Field(..., description="目标情绪")
+    emotion: EmotionValue = Field(..., description="目标情绪")
     intensity: Optional[float] = Field(0.7, ge=0.0, le=1.0, description="情绪强度")
     duration: Optional[int] = Field(None, ge=1, description="持续时间(秒)")
     reason: Optional[str] = Field(None, description="情绪变化原因")
@@ -361,14 +373,14 @@ class EmotionAnalysisRequest(BaseModel):
     """情绪分析请求模型"""
     text: str = Field(..., min_length=1, description="待分析文本")
     context: Optional[Dict[str, Any]] = Field(default_factory=dict, description="上下文信息")
-    current_emotion: Optional[EmotionType] = Field(None, description="当前情绪状态")
+    current_emotion: Optional[EmotionValue] = Field(None, description="当前情绪状态")
 
 class CharacterInteractionRequest(BaseModel):
     """角色交互请求模型"""
     character_id: str = Field(..., description="角色ID")
     message: str = Field(..., min_length=1, description="用户消息")
     context: Optional[Dict[str, Any]] = Field(default_factory=dict, description="交互上下文")
-    preferred_emotion: Optional[EmotionType] = Field(None, description="期望的回复情绪")
+    preferred_emotion: Optional[EmotionValue] = Field(None, description="期望的回复情绪")
     adapter_preferences: Optional[List[str]] = Field(None, description="偏好的适配器")
 
 class BatchCharacterOperation(BaseModel):
@@ -398,9 +410,9 @@ class CharacterListResponse(BaseModel):
 class EmotionResponse(BaseModel):
     """情绪响应模型"""
     success: bool = Field(..., description="操作是否成功")
-    current_emotion: EmotionType = Field(..., description="当前情绪")
+    current_emotion: EmotionValue = Field(..., description="当前情绪")
     emotion_intensity: float = Field(..., ge=0.0, le=1.0, description="情绪强度")
-    previous_emotion: Optional[EmotionType] = Field(None, description="之前的情绪")
+    previous_emotion: Optional[EmotionValue] = Field(None, description="之前的情绪")
     transition_reason: Optional[str] = Field(None, description="转换原因")
     suggested_responses: List[str] = Field(default_factory=list, description="建议回复")
     timestamp: datetime = Field(default_factory=datetime.now, description="响应时间")
@@ -409,10 +421,10 @@ class EmotionAnalysisResponse(BaseModel):
     """情绪分析响应模型"""
     success: bool = Field(..., description="分析是否成功")
     detected_emotions: List[Dict[str, Any]] = Field(..., description="检测到的情绪")
-    primary_emotion: EmotionType = Field(..., description="主要情绪")
+    primary_emotion: EmotionValue = Field(..., description="主要情绪")
     confidence: float = Field(..., ge=0.0, le=1.0, description="置信度")
     emotion_keywords: List[str] = Field(default_factory=list, description="情绪关键词")
-    suggested_response_emotion: Optional[EmotionType] = Field(None, description="建议的回复情绪")
+    suggested_response_emotion: Optional[EmotionValue] = Field(None, description="建议的回复情绪")
     analysis_details: Dict[str, Any] = Field(default_factory=dict, description="分析详情")
 
 class CharacterStateResponse(BaseModel):
@@ -434,7 +446,7 @@ class CharacterInteractionResponse(BaseModel):
     """角色交互响应模型"""
     success: bool = Field(..., description="交互是否成功")
     response: str = Field(..., description="角色回复")
-    emotion: EmotionType = Field(..., description="回复时的情绪")
+    emotion: EmotionValue = Field(..., description="回复时的情绪")
     voice_style: Optional[VoiceStyle] = Field(None, description="语音风格")
     animation: Optional[AnimationType] = Field(None, description="动画表情")
     

@@ -618,7 +618,8 @@ class AdapterRegistry:
         
         # 状态管理
         self.status = RegistryStatus.INITIALIZING
-        self._lock = asyncio.RLock()
+        # Python 3.8 兼容性：使用 asyncio.Lock
+        self._lock = asyncio.Lock()
         self._operation_semaphore = asyncio.Semaphore(max_concurrent_operations)
         
         # 健康监控
