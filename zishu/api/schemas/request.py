@@ -19,7 +19,7 @@ class StreamOptions(BaseModel):
 #基础对话请求
 class ChatCompletionRequest(BaseModel):
     """对话完成请求(兼容OpenAI)"""
-    messages: List[Dict[str, str]] = Field(..., min_length=1, description="对话消息列表")
+    messages: List[Union[Dict[str, Any], Message]] = Field(..., min_length=1, description="对话消息列表")
     model: Optional[str] = Field(default="zishu-base", description="模型ID")
     
     #生成参数
@@ -43,6 +43,10 @@ class ChatCompletionRequest(BaseModel):
     session_id: Optional[str] = Field(None, description="会话ID")
     adapter: Optional[str] = Field(None, description="适配器ID")
     chat_mode: Optional[str] = Field(default=ChatModel.NORMAL, description="对话模式")
+    
+    #函数调用支持
+    functions: Optional[List[Dict[str, Any]]] = Field(None, description="可用函数列表")
+    function_call: Optional[Union[str, Dict[str, str]]] = Field(None, description="函数调用控制")
     
     #多模态支持
     enable_multimodal: bool = Field(default=False, description="是否启用多模态")

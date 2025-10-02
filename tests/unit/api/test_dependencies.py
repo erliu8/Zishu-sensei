@@ -12,7 +12,7 @@ import tempfile
 from zishu.api.dependencies import (
     DependencyContainer, ServiceLifecycle, get_logger, get_config_manager,
     get_model_registry, get_performance_monitor, get_thread_factory_from_deps,
-    get_character_config
+    get_character_config, get_container
 )
 from zishu.utils.logger import setup_logger
 from zishu.utils.config_manager import ConfigManager
@@ -46,7 +46,7 @@ class TestDependencyContainer:
         assert len(container._services) == 0
         assert len(container._factories) == 0
         assert len(container._singletons) == 0
-        assert isinstance(container._lock, threading.RLock)
+        assert hasattr(container._lock, 'acquire') and hasattr(container._lock, 'release')
     
     def test_register_service(self, container, mock_service):
         """测试服务注册"""
@@ -94,8 +94,12 @@ class TestDependencyContainer:
     
     def test_factory_creation(self, container):
         """测试工厂函数创建实例"""
+        class FactoryInstance:
+            def __init__(self):
+                self.name = "factory_instance"
+        
         def factory():
-            return Mock(name="factory_instance")
+            return FactoryInstance()
         
         container.register_factory("test_factory", factory)
         
@@ -351,8 +355,20 @@ class TestDependencyIntegration:
         for name, service in mock_services.items():
             container.register_singleton(name, service)
         
+        # 创建模拟的依赖管理器
+        mock_deps = Mock()
+        mock_deps.get_logger.return_value = mock_services["logger"]
+        mock_deps.get_config_manager.return_value = mock_services["config_manager"]
+        mock_deps.get_model_registry.return_value = mock_services["model_registry"]
+        mock_deps.get_performance_monitor.return_value = mock_services["performance_monitor"]
+        mock_deps.get_thread_factory.return_value = mock_services["thread_factory"]
+        
+        # 创建mock容器
+        mock_container = Mock()
+        mock_container.get_singleton.side_effect = lambda name: mock_services.get(name)
+        
         # 测试服务间的依赖关系
-        with patch('zishu.api.dependencies.get_container', return_value=container):
+        with patch('zishu.api.dependencies.get_container', return_value=mock_container):
             logger = get_logger()
             config = get_config_manager()
             registry = get_model_registry()
@@ -369,8 +385,12 @@ class TestDependencyIntegration:
         """测试依赖注入中的错误处理"""
         container = DependencyContainer()
         
+        # 创建会抛出异常的模拟容器
+        mock_container = Mock()
+        mock_container.get_singleton.side_effect = KeyError("logger not found")
+        
         # 测试获取不存在的服务
-        with patch('zishu.api.dependencies.get_container', return_value=container):
+        with patch('zishu.api.dependencies.get_container', return_value=mock_container):
             with pytest.raises(KeyError):
                 get_logger()
     

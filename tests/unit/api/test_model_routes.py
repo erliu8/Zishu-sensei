@@ -120,7 +120,9 @@ class TestValidationFunctions:
     async def test_get_adapter_file_info_existing_file(self):
         """测试获取存在文件的信息"""
         with tempfile.NamedTemporaryFile(delete=False) as tmp_file:
-            tmp_file.write(b"test content")
+            # 写入足够大的内容确保size_mb > 0
+            content = b"test content " * 100000  # 约1.2MB
+            tmp_file.write(content)
             tmp_file.flush()
             
             try:

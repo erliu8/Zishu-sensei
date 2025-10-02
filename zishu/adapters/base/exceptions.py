@@ -791,6 +791,23 @@ class ServiceUnavailableError(BaseAdapterException):
         )
 
 
+class AdapterDependencyError(BaseAdapterException):
+    """适配器依赖错误"""
+    def __init__(self, message: str, dependency_name: Optional[str] = None, adapter_id: Optional[str] = None, **kwargs):
+        context = kwargs.get('context', {})
+        if dependency_name:
+            context['dependency_name'] = dependency_name
+        kwargs['context'] = context
+        
+        super().__init__(
+            message,
+            error_code=ErrorCode.DEPENDENCY_MISSING,
+            severity=ExceptionSeverity.HIGH,
+            adapter_id=adapter_id,
+            **kwargs
+        )
+
+
 # ================================
 # 适配器组合异常
 # ================================
@@ -1164,6 +1181,7 @@ __all__ = [
     'APIUnavailableError',
     'DependencyMissingError',
     'ServiceUnavailableError',
+    'AdapterDependencyError',
     
     # 组合异常
     'AdapterCompositionError',

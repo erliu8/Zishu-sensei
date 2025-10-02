@@ -1,0 +1,7 @@
+<?xml version="1.0" encoding="utf-8"?><testsuites><testsuite name="pytest" errors="1" failures="0" skipped="0" tests="1" time="87.228" timestamp="2025-10-02T13:38:51.101930+08:00" hostname="autodl-container-ad7f4090ce-4bcd3160"><testcase classname="" name="unit.api.test_server_middleware" time="0.000"><error message="collection failure">tests/unit/api/test_server_middleware.py:21: in &lt;module&gt;
+    from zishu.api.middleware.cors import setup_cors
+zishu/api/middleware/__init__.py:17: in &lt;module&gt;
+    from .logging import (
+zishu/api/middleware/logging.py:238: in &lt;module&gt;
+    app: FastAPI,
+E   NameError: name 'FastAPI' is not defined</error></testcase></testsuite></testsuites>

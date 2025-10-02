@@ -32,8 +32,10 @@ from zishu.api.schemas.adapter import (
 from zishu.api.schemas.responses import (
     ErrorResponse, ApiResponse, ChatCompletionResponse,
     StreamChunk, EmotionResponse, ModelListResponse, SystemMetrics,
-    HealthResponse, ModelStatus, ChatResponse, ChatStreamResponse,
-    ConversationSummary, ChatHistory
+    HealthResponse, ModelStatus, SystemInfo, ChatResponse, ChatStreamResponse,
+    ConversationSummary, ChatHistory, BaseResponse, PaginationParams,
+    APIVersion, FilterParams, SortOrder, ComponentHealth,
+    HealthCheckResponse, DeepHealthCheckResponse
 )
 from zishu.api.schemas.chat import (
     Message, CharacterResponse, CharacterListResponse, 
@@ -760,15 +762,15 @@ class TestSchemaValidation:
         )
         
         # 序列化为字典
-        message_dict = message.dict()
+        message_dict = message.model_dump()
         assert isinstance(message_dict["timestamp"], datetime)
         
         # 序列化为JSON
-        message_json = message.json()
+        message_json = message.model_dump_json()
         assert isinstance(message_json, str)
         
         # 反序列化
-        parsed_message = Message.parse_raw(message_json)
+        parsed_message = Message.model_validate_json(message_json)
         assert parsed_message.timestamp == timestamp
     
     def test_model_copy_and_update(self):
@@ -780,7 +782,7 @@ class TestSchemaValidation:
         )
         
         # 复制并更新
-        updated = original.copy(update={"content": "Updated content"})
+        updated = original.model_copy(update={"content": "Updated content"})
         
         assert original.content == "Original content"
         assert updated.content == "Updated content"
@@ -841,7 +843,7 @@ class TestSchemaPerformance:
         # 测试JSON序列化性能
         start_time = time.time()
         for _ in range(100):
-            json_str = request.json()
+            json_str = request.model_dump_json()
         end_time = time.time()
         
         total_time = end_time - start_time

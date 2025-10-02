@@ -7,7 +7,7 @@ from fastapi import FastAPI, Request, HTTPException, Depends
 from fastapi.responses import JSONResponse
 from fastapi.middleware.cors import CORSMiddleware
 from pydantic import BaseModel
-from typing import Dict, Any, Optional
+from typing import Dict, Any, Optional, List
 import asyncio
 import uvicorn
 
@@ -38,7 +38,7 @@ class EmotionAnalysisResponse(BaseModel):
     intensity: float
     confidence: float
     context: Optional[str] = None
-    triggers: list[str] = []
+    triggers: List[str] = []
 
 
 class ChatRequest(BaseModel):
@@ -360,7 +360,7 @@ async def get_user_emotion_history(
 
 @app.post("/emotion/batch/analyze")
 async def batch_analyze_emotions(
-    requests: list[EmotionAnalysisRequest],
+    requests: List[EmotionAnalysisRequest],
     middleware: EmotionMiddleware = Depends(get_emotion_middleware_dependency)
 ):
     """批量情绪分析"""

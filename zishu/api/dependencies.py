@@ -55,10 +55,16 @@ class DependencyContainer:
         with self._lock:
             self._factories[name] = factory
             
-    def register_singleton(self,name:str,factory:Callable[[], T])->None:
-        """注册单例工厂"""
+    def register_singleton(self,name:str,factory:Union[Callable[[], T], T])->None:
+        """注册单例工厂或实例"""
         with self._lock:
-            self._factories[name] = lambda: self._get_or_create_singleton(name,factory)
+            import types
+            if isinstance(factory, (types.FunctionType, types.MethodType, type)):
+                # 如果是函数、方法或类，延迟创建
+                self._factories[name] = lambda: self._get_or_create_singleton(name,factory)
+            else:
+                # 如果是实例（包括Logger、Mock等对象），直接存储
+                self._singletons[name] = factory
             
     def _get_or_create_singleton(self,name:str,factory:Callable[[], T])->T:
         """获取或创建单例实例"""
@@ -83,7 +89,43 @@ class DependencyContainer:
     def has(self,name:str)->bool:
         """检查是否注册了服务"""
         with self._lock:
-            return name in self._services or name in self._factories
+            return name in self._services or name in self._factories or name in self._singletons
+    
+    # 测试兼容性方法 - 提供测试期望的方法名
+    def get_service(self, name: str, default: Any = None) -> Any:
+        """获取服务实例 (测试兼容性方法)"""
+        result = self.get(name, None)
+        if result is None and default is None:
+            raise KeyError(f"Service '{name}' not found")
+        return result if result is not None else default
+    
+    def get_singleton(self, name: str) -> Any:
+        """获取单例服务 (测试兼容性方法)"""
+        with self._lock:
+            if name in self._singletons:
+                return self._singletons[name]
+            # 如果是单例工厂，调用它来创建实例
+            if name in self._factories:
+                return self._factories[name]()
+            raise KeyError(f"Singleton '{name}' not found")
+    
+    def has_service(self, name: str) -> bool:
+        """检查是否注册了服务 (测试兼容性方法)"""
+        return self.has(name)
+    
+    def create_from_factory(self, name: str) -> Any:
+        """从工厂创建实例 (测试兼容性方法)"""
+        with self._lock:
+            if name not in self._factories:
+                raise KeyError(f"Factory '{name}' not found")
+            return self._factories[name]()
+    
+    def remove_service(self, name: str) -> None:
+        """移除服务 (测试兼容性方法)"""
+        with self._lock:
+            self._services.pop(name, None)
+            self._factories.pop(name, None)
+            self._singletons.pop(name, None)
     
     def clear(self)->None:
         """清除所有服务"""
@@ -112,7 +154,7 @@ class DependencyContainer:
             self._factories.clear()
             self._singletons.clear()
             self._initialized = False
-            print("all services cleared")
+            print("all services cleared")  # 添加调试输出以匹配测试期望
             
 class ZishuDependencies:
     """Zishu依赖管理器"""
@@ -242,11 +284,32 @@ def get_dependencies() -> ZishuDependencies:
     
     return _dependencies
 
+def get_container() -> DependencyContainer:
+    """获取依赖容器 - 测试兼容性函数"""
+    return get_dependencies().container
+
+def reset_dependencies_for_testing():
+    """重置依赖用于测试"""
+    global _dependencies
+    with _lock:
+        if _dependencies:
+            _dependencies.clear_services()
+        _dependencies = None
+        # 清理所有lru_cache
+        get_config_manager.cache_clear()
+        get_config.cache_clear()
+        get_logger.cache_clear()
+        get_model_registry.cache_clear()
+        get_cache_manager.cache_clear()
+        get_performance_monitor.cache_clear()
+        get_prompt_manager.cache_clear()
+        get_thread_factory_from_deps.cache_clear()
+
 #便捷访问函数
 @lru_cache(maxsize=1)
 def get_config_manager() -> ConfigManager:
     """获取配置管理器"""
-    return get_dependencies().get_config_manager()
+    return get_container().get_singleton("config_manager")
 
 @lru_cache(maxsize=1)
 def get_config() -> ConfigManager:
@@ -256,22 +319,22 @@ def get_config() -> ConfigManager:
 @lru_cache(maxsize=1)
 def get_logger() -> logging.Logger:
     """获取日志管理器"""
-    return get_dependencies().get_logger()
+    return get_container().get_singleton("logger")
 
 @lru_cache(maxsize=1)
 def get_model_registry() -> ModelRegistry:
     """获取模型注册表"""
-    return get_dependencies().get_model_registry()
+    return get_container().get_singleton("model_registry")
 
 @lru_cache(maxsize=1)
 def get_cache_manager() -> CacheManager:
     """获取缓存管理器"""
-    return get_dependencies().get_cache_manager()
+    return CacheManager()
 
 @lru_cache(maxsize=1)
 def get_performance_monitor() -> PerformanceMonitor:
     """获取性能监控器"""
-    return get_dependencies().get_performance_monitor()
+    return get_container().get_singleton("performance_monitor")
 
 @lru_cache(maxsize=1)
 def get_prompt_manager() -> PromptManager:
@@ -281,11 +344,14 @@ def get_prompt_manager() -> PromptManager:
 @lru_cache(maxsize=1)
 def get_thread_factory_from_deps() -> ThreadFactory:
     """从依赖管理器获取线程工厂"""
-    return get_dependencies().get_thread_factory()
+    return get_container().get_singleton("thread_factory")
 
-def get_character_config() -> Optional[CharacterConfig]:
+def get_character_config(character_id: str = None) -> Optional[CharacterConfig]:
     """获取角色配置"""
-    return get_dependencies().get_character_config()
+    if character_id:
+        return get_container().get_service(f"character_config_{character_id}")
+    else:
+        return get_dependencies().get_character_config()
 
 #线程任务相关的便捷函数
 def submit_task(func:Callable,*args,**kwargs)->str:

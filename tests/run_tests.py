@@ -10,6 +10,7 @@ import argparse
 import subprocess
 from pathlib import Path
 from typing import List, Optional
+from datetime import datetime
 
 
 class TestRunner:
@@ -18,6 +19,87 @@ class TestRunner:
     def __init__(self, project_root: Path):
         self.project_root = project_root
         self.tests_dir = project_root / "tests"
+        self.timestamp = datetime.now().strftime("%Y%m%d_%H%M%S")
+        self.reports_dir = project_root / "tests" / "reports" / self.timestamp
+        self._ensure_reports_dir()
+    
+    def _ensure_reports_dir(self):
+        """确保报告目录存在"""
+        self.reports_dir.mkdir(parents=True, exist_ok=True)
+        (self.reports_dir / "html").mkdir(exist_ok=True)
+        (self.reports_dir / "json").mkdir(exist_ok=True)
+        (self.reports_dir / "junit").mkdir(exist_ok=True)
+        (self.reports_dir / "coverage" / "html").mkdir(parents=True, exist_ok=True)
+        (self.reports_dir / "coverage" / "xml").mkdir(parents=True, exist_ok=True)
+        (self.tests_dir / "logs").mkdir(exist_ok=True)
+    
+    def _add_report_options(self, cmd: List[str], coverage: bool = True, html_report: bool = True) -> List[str]:
+        """添加报告选项到命令中"""
+        if coverage:
+            cmd.extend([
+                "--cov=zishu",
+                "--cov-report=term-missing",
+                f"--cov-report=html:{self.reports_dir}/coverage/html",
+                f"--cov-report=xml:{self.reports_dir}/coverage/coverage.xml"
+            ])
+        
+        if html_report:
+            cmd.extend([
+                f"--html={self.reports_dir}/html/report.html",
+                "--self-contained-html",
+                "--json-report",
+                f"--json-report-file={self.reports_dir}/json/report.json",
+                f"--junitxml={self.reports_dir}/junit/junit.xml"
+            ])
+        
+        # 添加日志文件
+        cmd.extend([
+            f"--log-file={self.tests_dir}/logs/pytest_{self.timestamp}.log",
+            "--log-file-level=DEBUG"
+        ])
+        
+        return cmd
+    
+    def _create_latest_link(self):
+        """创建最新报告的软链接"""
+        latest_link = self.project_root / "reports" / "latest"
+        if latest_link.exists() or latest_link.is_symlink():
+            latest_link.unlink()
+        latest_link.symlink_to(self.timestamp, target_is_directory=True)
+        return latest_link
+    
+    def _print_report_summary(self):
+        """打印报告摘要"""
+        print(f"\n📊 报告已生成到: {self.reports_dir}")
+        
+        latest_link = self._create_latest_link()
+        print(f"🔗 最新报告链接: {latest_link}")
+        
+        print("\n📋 生成的报告文件:")
+        
+        html_report = self.reports_dir / "html" / "report.html"
+        if html_report.exists():
+            print(f"  📄 HTML报告: {html_report}")
+        
+        json_report = self.reports_dir / "json" / "report.json"
+        if json_report.exists():
+            print(f"  📄 JSON报告: {json_report}")
+        
+        junit_report = self.reports_dir / "junit" / "junit.xml"
+        if junit_report.exists():
+            print(f"  📄 JUnit XML: {junit_report}")
+        
+        coverage_html = self.reports_dir / "coverage" / "html" / "index.html"
+        if coverage_html.exists():
+            print(f"  📄 覆盖率HTML: {coverage_html}")
+        
+        coverage_xml = self.reports_dir / "coverage" / "coverage.xml"
+        if coverage_xml.exists():
+            print(f"  📄 覆盖率XML: {coverage_xml}")
+        
+        log_file = self.tests_dir / "logs" / f"pytest_{self.timestamp}.log"
+        if log_file.exists():
+            print(f"  📄 测试日志: {log_file}")
         
     def run_unit_tests(self, verbose: bool = False, coverage: bool = True) -> int:
         """运行单元测试"""
@@ -26,13 +108,13 @@ class TestRunner:
         if verbose:
             cmd.append("-v")
         
-        if coverage:
-            cmd.extend(["--cov=zishu", "--cov-report=term-missing"])
-        
+        cmd = self._add_report_options(cmd, coverage)
         cmd.append(str(self.tests_dir / "unit"))
         
         print("🧪 运行单元测试...")
-        return subprocess.call(cmd, cwd=self.project_root)
+        result = subprocess.call(cmd, cwd=self.project_root)
+        self._print_report_summary()
+        return result
     
     def run_integration_tests(self, verbose: bool = False) -> int:
         """运行集成测试"""
@@ -65,13 +147,13 @@ class TestRunner:
         if verbose:
             cmd.append("-v")
         
-        if coverage:
-            cmd.extend(["--cov=zishu.api", "--cov-report=term-missing"])
-        
+        cmd = self._add_report_options(cmd, coverage)
         cmd.append(str(self.tests_dir / "unit" / "api"))
         
         print("🌐 运行API测试...")
-        return subprocess.call(cmd, cwd=self.project_root)
+        result = subprocess.call(cmd, cwd=self.project_root)
+        self._print_report_summary()
+        return result
     
     def run_core_tests(self, verbose: bool = False, coverage: bool = True) -> int:
         """运行核心功能测试"""
@@ -80,13 +162,13 @@ class TestRunner:
         if verbose:
             cmd.append("-v")
         
-        if coverage:
-            cmd.extend(["--cov=zishu.core", "--cov-report=term-missing"])
-        
+        cmd = self._add_report_options(cmd, coverage)
         cmd.append(str(self.tests_dir / "unit" / "core"))
         
         print("⚙️ 运行核心功能测试...")
-        return subprocess.call(cmd, cwd=self.project_root)
+        result = subprocess.call(cmd, cwd=self.project_root)
+        self._print_report_summary()
+        return result
     
     def run_all_tests(self, verbose: bool = False, coverage: bool = True, fast_only: bool = False) -> int:
         """运行所有测试"""
@@ -95,21 +177,16 @@ class TestRunner:
         if verbose:
             cmd.append("-v")
         
-        if coverage:
-            cmd.extend([
-                "--cov=zishu",
-                "--cov-report=term-missing",
-                "--cov-report=html:htmlcov",
-                "--cov-report=xml"
-            ])
-        
         if fast_only:
             cmd.append("--fast-only")
         
+        cmd = self._add_report_options(cmd, coverage)
         cmd.append(str(self.tests_dir))
         
         print("🚀 运行所有测试...")
-        return subprocess.call(cmd, cwd=self.project_root)
+        result = subprocess.call(cmd, cwd=self.project_root)
+        self._print_report_summary()
+        return result
     
     def run_smoke_tests(self, verbose: bool = False) -> int:
         """运行冒烟测试"""
@@ -199,7 +276,8 @@ class TestRunner:
             self.project_root / "htmlcov",
             self.project_root / ".pytest_cache",
             self.tests_dir / "logs",
-            self.project_root / "test_reports"
+            self.project_root / "test_reports",
+            self.project_root / "reports"
         ]
         
         print("🧹 清理测试文件...")
@@ -307,6 +385,14 @@ def main():
     # 设置环境
     setup_parser = subparsers.add_parser("setup", help="设置测试环境")
     
+    # 带完整报告的测试
+    report_parser = subparsers.add_parser("report", help="运行测试并生成完整报告")
+    report_parser.add_argument("test_type", nargs="?", default="all", 
+                              choices=["all", "unit", "integration", "api", "core"],
+                              help="测试类型 (默认: all)")
+    report_parser.add_argument("-v", "--verbose", action="store_true", help="详细输出")
+    report_parser.add_argument("--no-cov", action="store_true", help="不生成覆盖率报告")
+    
     # 解析参数
     args = parser.parse_args()
     
@@ -361,6 +447,19 @@ def main():
     elif args.command == "setup":
         runner.setup_test_environment()
         return 0
+    
+    elif args.command == "report":
+        # 运行带完整报告的测试
+        if args.test_type == "all":
+            return runner.run_all_tests(args.verbose, not args.no_cov)
+        elif args.test_type == "unit":
+            return runner.run_unit_tests(args.verbose, not args.no_cov)
+        elif args.test_type == "integration":
+            return runner.run_integration_tests(args.verbose)
+        elif args.test_type == "api":
+            return runner.run_api_tests(args.verbose, not args.no_cov)
+        elif args.test_type == "core":
+            return runner.run_core_tests(args.verbose, not args.no_cov)
     
     else:
         parser.print_help()

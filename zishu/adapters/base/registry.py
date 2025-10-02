@@ -56,6 +56,7 @@ class AdapterRegistrationStatus(str, Enum):
     PAUSED = "paused"                   # 已暂停
     STOPPING = "stopping"               # 停止中
     STOPPED = "stopped"                 # 已停止
+    FAILED = "failed"                   # 失败状态
     ERROR = "error"                     # 错误状态
     UNREGISTERING = "unregistering"     # 卸载中
 
@@ -82,6 +83,7 @@ class AdapterRegistration:
     adapter_id: str
     adapter_class: Type[BaseAdapter]
     config: Dict[str, Any]
+    name: Optional[str] = None
     instance: Optional[BaseAdapter] = None
     status: AdapterRegistrationStatus = AdapterRegistrationStatus.REGISTERED
     registration_time: datetime = field(default_factory=lambda: datetime.now(timezone.utc))
@@ -99,6 +101,7 @@ class AdapterRegistration:
         """转换为字典格式"""
         return {
             "adapter_id": self.adapter_id,
+            "name": self.name,
             "adapter_class": self.adapter_class.__name__ if self.adapter_class else None,
             "config": self._safe_config_repr(),
             "status": self.status.value,
@@ -261,22 +264,27 @@ class EventBus:
         self._lock = threading.RLock()
         self.logger = logging.getLogger(f"{__name__}.EventBus")
     
+    @property
+    def lock(self) -> threading.RLock:
+        """获取锁"""
+        return self._lock
+    
     def subscribe(self, event_type: EventType, listener: Callable[[RegistryEvent], None]):
         """订阅事件"""
-        with self._lock:
+        with self.lock:
             self._listeners[event_type].append(listener)
             self.logger.debug(f"Subscribed to event type: {event_type.value}")
     
     def unsubscribe(self, event_type: EventType, listener: Callable):
         """取消订阅"""
-        with self._lock:
+        with self.lock:
             if listener in self._listeners[event_type]:
                 self._listeners[event_type].remove(listener)
                 self.logger.debug(f"Unsubscribed from event type: {event_type.value}")
     
     def emit(self, event: RegistryEvent):
         """发布事件"""
-        with self._lock:
+        with self.lock:
             self._event_history.append(event)
             listeners = self._listeners.get(event.event_type, []).copy()
         
@@ -297,9 +305,13 @@ class EventBus:
             except Exception as e:
                 self.logger.error(f"Error in event listener for {event.event_type.value}: {e}")
     
+    def publish(self, event: RegistryEvent):
+        """发布事件（emit的别名）"""
+        self.emit(event)
+    
     def get_recent_events(self, limit: int = 50, event_type: Optional[EventType] = None) -> List[RegistryEvent]:
         """获取最近的事件"""
-        with self._lock:
+        with self.lock:
             events = list(self._event_history)
             
             if event_type:
@@ -324,7 +336,14 @@ class HealthMonitor:
         self._task: Optional[asyncio.Task] = None
         self.logger = logging.getLogger(f"{__name__}.HealthMonitor")
         self._health_cache: Dict[str, Tuple[HealthCheckResult, datetime]] = {}
-        self._lock = asyncio.Lock()
+        self._lock: Optional[asyncio.Lock] = None
+    
+    @property
+    def lock(self) -> asyncio.Lock:
+        """延迟初始化锁"""
+        if self._lock is None:
+            self._lock = asyncio.Lock()
+        return self._lock
     
     async def start(self):
         """启动健康监控"""
@@ -380,7 +399,7 @@ class HealthMonitor:
             registration.health_status = health_result.status
             registration.last_health_check = datetime.now(timezone.utc)
             
-            async with self._lock:
+            async with self.lock:
                 self._health_cache[registration.adapter_id] = (health_result, registration.last_health_check)
             
             # 如果健康状态发生变化，发布事件
@@ -437,7 +456,7 @@ class HealthMonitor:
     
     async def get_health_summary(self) -> Dict[str, Any]:
         """获取健康状态摘要"""
-        async with self._lock:
+        async with self.lock:
             healthy_count = 0
             unhealthy_count = 0
             unknown_count = 0
@@ -527,10 +546,15 @@ class PerformanceMonitor:
         self.logger = logging.getLogger(f"{__name__}.PerformanceMonitor")
         self._metrics: Dict[str, deque] = defaultdict(lambda: deque(maxlen=1000))
         self._lock = threading.RLock()
+    
+    @property
+    def lock(self) -> threading.RLock:
+        """获取锁"""
+        return self._lock
         
     def record_operation(self, adapter_id: str, operation: str, duration: float, success: bool):
         """记录操作性能"""
-        with self._lock:
+        with self.lock:
             metric_key = f"{adapter_id}.{operation}"
             self._metrics[metric_key].append({
                 "timestamp": datetime.now(timezone.utc),
@@ -540,7 +564,7 @@ class PerformanceMonitor:
     
     def get_adapter_metrics(self, adapter_id: str) -> Dict[str, Any]:
         """获取适配器性能指标"""
-        with self._lock:
+        with self.lock:
             metrics = {}
             for key, values in self._metrics.items():
                 if key.startswith(f"{adapter_id}."):
@@ -561,7 +585,7 @@ class PerformanceMonitor:
     
     def get_system_metrics(self) -> Dict[str, Any]:
         """获取系统性能指标"""
-        with self._lock:
+        with self.lock:
             total_operations = sum(len(values) for values in self._metrics.values())
             adapter_count = len(set(key.split(".", 1)[0] for key in self._metrics.keys()))
             
@@ -618,8 +642,8 @@ class AdapterRegistry:
         
         # 状态管理
         self.status = RegistryStatus.INITIALIZING
-        # Python 3.8 兼容性：使用 asyncio.Lock
-        self._lock = asyncio.Lock()
+        # Python 3.8 兼容性：使用延迟初始化的 asyncio.Lock
+        self._lock: Optional[asyncio.Lock] = None
         self._operation_semaphore = asyncio.Semaphore(max_concurrent_operations)
         
         # 健康监控
@@ -629,6 +653,13 @@ class AdapterRegistry:
             self.health_monitor.check_interval = health_check_interval
         
         # 配置选项
+        self._config = {
+            "enable_health_monitoring": enable_health_monitoring,
+            "health_check_interval": health_check_interval,
+            "max_concurrent_operations": max_concurrent_operations,
+            "enable_auto_recovery": enable_auto_recovery,
+            "enable_security": enable_security
+        }
         self.enable_auto_recovery = enable_auto_recovery
         self.enable_security = enable_security
         
@@ -644,9 +675,16 @@ class AdapterRegistry:
         self.logger = logging.getLogger(__name__)
         self.logger.info("Adapter registry initialized")
     
+    @property
+    def lock(self) -> asyncio.Lock:
+        """延迟初始化锁"""
+        if self._lock is None:
+            self._lock = asyncio.Lock()
+        return self._lock
+    
     async def start(self):
         """启动注册中心"""
-        async with self._lock:
+        async with self.lock:
             if self.status != RegistryStatus.INITIALIZING:
                 self.logger.warning(f"Registry already started or in invalid state: {self.status}")
                 return
@@ -669,7 +707,7 @@ class AdapterRegistry:
     
     async def stop(self):
         """停止注册中心"""
-        async with self._lock:
+        async with self.lock:
             if self.status not in [RegistryStatus.RUNNING, RegistryStatus.PAUSED]:
                 return
             
@@ -736,7 +774,7 @@ class AdapterRegistry:
         start_time = time.time()
         
         async with self._operation_semaphore:
-            async with self._lock:
+            async with self.lock:
                 # 检查适配器是否已存在
                 if adapter_id in self._registrations:
                     raise AdapterAlreadyExistsError(adapter_id)
@@ -764,11 +802,33 @@ class AdapterRegistry:
                         tags=tags or set()
                     )
                     
-                    # 创建适配器实例进行验证
-                    temp_instance = adapter_class(adapter_config)
-                    
-                    # 加载元数据
-                    metadata = temp_instance._load_metadata()
+                    # 检查是否为抽象类
+                    import inspect
+                    if inspect.isabstract(adapter_class):
+                        # 对于抽象类，创建最小的元数据验证
+                        metadata = None
+                        if hasattr(adapter_class, '_load_metadata'):
+                            # 尝试从类属性获取静态元数据
+                            try:
+                                # 创建一个空的适配器配置用于元数据加载
+                                temp_config = adapter_config.copy()
+                                temp_config.setdefault('adapter_id', adapter_id)
+                                temp_config.setdefault('name', adapter_id)
+                                temp_config.setdefault('version', '1.0.0')
+                                
+                                # 如果是抽象类，跳过实例创建
+                                self.logger.warning(f"Skipping instance creation for abstract class {adapter_class.__name__}")
+                                metadata = None
+                                
+                            except Exception as e:
+                                self.logger.warning(f"Failed to load metadata from abstract class {adapter_class.__name__}: {e}")
+                                metadata = None
+                    else:
+                        # 创建适配器实例进行验证（仅对具体类）
+                        temp_instance = adapter_class(adapter_config)
+                        
+                        # 加载元数据
+                        metadata = temp_instance._load_metadata()
                     if metadata:
                         registration.metadata = metadata.dict() if hasattr(metadata, 'dict') else metadata.__dict__
                         
@@ -875,7 +935,7 @@ class AdapterRegistry:
         start_time = time.time()
         
         async with self._operation_semaphore:
-            async with self._lock:
+            async with self.lock:
                 if adapter_id not in self._registrations:
                     raise AdapterNotFoundError(adapter_id)
                 
@@ -959,7 +1019,7 @@ class AdapterRegistry:
         start_time = time.time()
         
         async with self._operation_semaphore:
-            async with self._lock:
+            async with self.lock:
                 if adapter_id not in self._registrations:
                     raise AdapterNotFoundError(adapter_id)
                 
@@ -1072,7 +1132,7 @@ class AdapterRegistry:
         start_time = time.time()
         
         async with self._operation_semaphore:
-            async with self._lock:
+            async with self.lock:
                 if adapter_id not in self._registrations:
                     raise AdapterNotFoundError(adapter_id)
                 
@@ -1168,6 +1228,10 @@ class AdapterRegistry:
         if adapter_id in self._registrations:
             return self._registrations[adapter_id].instance
         return None
+    
+    def has_adapter(self, adapter_id: str) -> bool:
+        """检查是否存在指定的适配器"""
+        return adapter_id in self._registrations
     
     def get_registration(self, adapter_id: str) -> Optional[AdapterRegistration]:
         """获取适配器注册信息"""
@@ -1322,6 +1386,283 @@ class AdapterRegistry:
     def get_adapter_performance(self, adapter_id: str) -> Dict[str, Any]:
         """获取适配器性能指标"""
         return self.performance_monitor.get_adapter_metrics(adapter_id)
+    
+    async def get_adapter_info(self, adapter_id: str) -> Dict[str, Any]:
+        """
+        获取适配器详细信息
+        
+        Args:
+            adapter_id: 适配器ID
+            
+        Returns:
+            包含适配器信息的字典
+            
+        Raises:
+            AdapterNotFoundError: 适配器不存在
+        """
+        registration = self.get_registration(adapter_id)
+        if not registration:
+            raise AdapterNotFoundError(f"Adapter {adapter_id} not found")
+        
+        adapter = self.get_adapter(adapter_id)
+        
+        info = {
+            "id": adapter_id,
+            "name": registration.name,
+            "version": registration.version,
+            "status": registration.status.value,
+            "adapter_type": registration.adapter_type.value if registration.adapter_type else None,
+            "created_at": registration.created_at.isoformat() if registration.created_at else None,
+            "last_updated": registration.last_updated.isoformat() if registration.last_updated else None,
+            "dependencies": list(registration.dependencies),
+            "tags": list(registration.tags),
+            "metadata": registration.metadata or {}
+        }
+        
+        # 添加运行时信息
+        if adapter:
+            info["instance_id"] = id(adapter)
+            info["is_initialized"] = getattr(adapter, '_initialized', False)
+        
+        # 添加性能指标
+        try:
+            performance_metrics = self.get_adapter_performance(adapter_id)
+            info["performance"] = performance_metrics
+        except Exception:
+            info["performance"] = {}
+        
+        return info
+    
+    async def health_check_adapter(self, adapter_id: str) -> HealthCheckResult:
+        """
+        对指定适配器执行健康检查
+        
+        Args:
+            adapter_id: 适配器ID
+            
+        Returns:
+            健康检查结果
+            
+        Raises:
+            AdapterNotFoundError: 适配器不存在
+        """
+        registration = self.get_registration(adapter_id)
+        if not registration:
+            raise AdapterNotFoundError(f"Adapter {adapter_id} not found")
+        
+        adapter = self.get_adapter(adapter_id)
+        if not adapter:
+            return HealthCheckResult(
+                is_healthy=False,
+                status="not_running",
+                message=f"Adapter {adapter_id} is not running",
+                timestamp=datetime.now(timezone.utc)
+            )
+        
+        try:
+            # 调用适配器的健康检查方法
+            if hasattr(adapter, 'health_check'):
+                result = await adapter.health_check()
+                if isinstance(result, HealthCheckResult):
+                    return result
+                else:
+                    # 如果返回的不是HealthCheckResult，创建一个
+                    return HealthCheckResult(
+                        is_healthy=bool(result),
+                        status="healthy" if result else "unhealthy",
+                        timestamp=datetime.now(timezone.utc)
+                    )
+            else:
+                # 如果适配器没有健康检查方法，检查基本状态
+                is_healthy = (
+                    registration.status == AdapterRegistrationStatus.RUNNING and
+                    getattr(adapter, '_initialized', False)
+                )
+                return HealthCheckResult(
+                    is_healthy=is_healthy,
+                    status="healthy" if is_healthy else "unhealthy",
+                    message="Basic status check",
+                    timestamp=datetime.now(timezone.utc)
+                )
+        
+        except Exception as e:
+            self.logger.error(f"Health check failed for adapter {adapter_id}: {e}")
+            return HealthCheckResult(
+                is_healthy=False,
+                status="error",
+                message=f"Health check error: {str(e)}",
+                timestamp=datetime.now(timezone.utc)
+            )
+    
+    async def execute_adapter(
+        self, 
+        adapter_id: str, 
+        input_data: Any, 
+        context: Optional[ExecutionContext] = None
+    ) -> ExecutionResult:
+        """
+        执行指定适配器
+        
+        Args:
+            adapter_id: 适配器ID
+            input_data: 输入数据
+            context: 执行上下文
+            
+        Returns:
+            执行结果
+            
+        Raises:
+            AdapterNotFoundError: 适配器不存在
+            AdapterLoadingError: 适配器未运行
+        """
+        registration = self.get_registration(adapter_id)
+        if not registration:
+            raise AdapterNotFoundError(f"Adapter {adapter_id} not found")
+        
+        adapter = self.get_adapter(adapter_id)
+        if not adapter:
+            raise AdapterLoadingError(f"Adapter {adapter_id} is not running")
+        
+        # 检查适配器状态
+        if registration.status != AdapterRegistrationStatus.RUNNING:
+            raise AdapterLoadingError(f"Adapter {adapter_id} is not in running state")
+        
+        # 创建默认执行上下文
+        if context is None:
+            context = ExecutionContext()
+        
+        start_time = time.time()
+        
+        try:
+            # 记录操作开始
+            self.performance_monitor.record_operation(
+                adapter_id, "execute", 0, True  # 临时记录，稍后更新
+            )
+            
+            # 执行适配器
+            if hasattr(adapter, 'execute'):
+                result = await adapter.execute(input_data, context)
+            elif hasattr(adapter, 'process'):
+                result = await adapter.process(input_data, context)
+            elif hasattr(adapter, '__call__'):
+                result = await adapter(input_data, context)
+            else:
+                raise AdapterLoadingError(f"Adapter {adapter_id} has no execute method")
+            
+            # 确保返回ExecutionResult
+            if not isinstance(result, ExecutionResult):
+                result = ExecutionResult(
+                    status="success",
+                    output=result,
+                    adapter_id=adapter_id,
+                    execution_time=time.time() - start_time,
+                    context=context
+                )
+            
+            # 记录成功操作
+            duration = time.time() - start_time
+            self.performance_monitor.record_operation(
+                adapter_id, "execute", duration, True
+            )
+            
+            return result
+            
+        except Exception as e:
+            # 记录失败操作
+            duration = time.time() - start_time
+            self.performance_monitor.record_operation(
+                adapter_id, "execute", duration, False
+            )
+            
+            self.logger.error(f"Execution failed for adapter {adapter_id}: {e}")
+            
+            return ExecutionResult(
+                status="error",
+                output=None,
+                error=str(e),
+                adapter_id=adapter_id,
+                execution_time=duration,
+                context=context
+            )
+    
+    async def get_statistics(self) -> Dict[str, Any]:
+        """
+        获取注册中心统计信息
+        
+        Returns:
+            包含统计信息的字典
+        """
+        # 基本统计
+        total_adapters = len(self._registrations)
+        running_adapters = sum(
+            1 for reg in self._registrations.values() 
+            if reg.status == AdapterRegistrationStatus.RUNNING
+        )
+        stopped_adapters = sum(
+            1 for reg in self._registrations.values() 
+            if reg.status == AdapterRegistrationStatus.STOPPED
+        )
+        failed_adapters = sum(
+            1 for reg in self._registrations.values() 
+            if reg.status == AdapterRegistrationStatus.FAILED
+        )
+        
+        # 按类型统计
+        type_stats = {}
+        for reg in self._registrations.values():
+            if reg.adapter_type:
+                type_name = reg.adapter_type.value
+                type_stats[type_name] = type_stats.get(type_name, 0) + 1
+        
+        # 依赖关系统计
+        dependency_stats = {
+            "total_dependencies": sum(len(reg.dependencies) for reg in self._registrations.values()),
+            "adapters_with_dependencies": sum(
+                1 for reg in self._registrations.values() 
+                if reg.dependencies
+            ),
+            "circular_dependencies": len(self._dependency_graph.has_circular_dependency())
+        }
+        
+        # 性能统计
+        performance_stats = self.get_performance_summary()
+        
+        # 健康状态统计
+        health_stats = {"healthy": 0, "unhealthy": 0, "unknown": 0}
+        if self.health_monitor:
+            try:
+                health_summary = await self.get_health_summary()
+                for adapter_health in health_summary.get("adapters", {}).values():
+                    if adapter_health.get("is_healthy"):
+                        health_stats["healthy"] += 1
+                    else:
+                        health_stats["unhealthy"] += 1
+            except Exception:
+                health_stats["unknown"] = total_adapters
+        else:
+            health_stats["unknown"] = total_adapters
+        
+        # 事件统计
+        event_stats = {}
+        if hasattr(self.event_bus, '_event_history'):
+            recent_events = self.event_bus.get_recent_events(limit=1000)
+            for event in recent_events:
+                event_type = event.event_type.value
+                event_stats[event_type] = event_stats.get(event_type, 0) + 1
+        
+        return {
+            "total_adapters": total_adapters,
+            "running_adapters": running_adapters,
+            "stopped_adapters": stopped_adapters,
+            "failed_adapters": failed_adapters,
+            "registry_status": self.status.value,
+            "adapter_types": type_stats,
+            "dependencies": dependency_stats,
+            "health": health_stats,
+            "performance": performance_stats,
+            "events": event_stats,
+            "uptime": (datetime.now(timezone.utc) - self._start_time).total_seconds() if hasattr(self, '_start_time') else 0
+        }
     
     # ================================
     # 上下文管理器支持

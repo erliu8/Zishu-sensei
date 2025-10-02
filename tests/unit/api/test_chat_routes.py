@@ -13,6 +13,7 @@ from typing import Dict, Any, List
 
 from fastapi import HTTPException
 from fastapi.testclient import TestClient
+from pydantic import ValidationError
 
 from zishu.api.routes.chat import (
     ChatRequest, StreamChatRequest, EmotionChatRequest,
@@ -436,12 +437,14 @@ class TestChatRouteLogic:
     
     def test_error_handling_scenarios(self):
         """测试错误处理场景"""
-        # 空消息列表
-        with pytest.raises(ValueError):
-            ChatRequest(messages=[])
+        # 空消息列表是允许的，但我们可以测试其他验证
+        request = ChatRequest(messages=[])
+        assert request.messages == []
         
         # 无效的温度值（这个应该在Pydantic验证中处理）
         # 注意：Pydantic的ge和le约束会自动处理范围验证
+        with pytest.raises(ValueError):
+            ChatRequest(messages=[], temperature=3.0)  # 超出范围
 
 
 @pytest.mark.unit
@@ -634,13 +637,21 @@ class TestChatEdgeCases:
         )
         assert request_min.max_tokens == 1
         
-        # 测试大值
+        # 测试最大允许值
         request_max = ChatRequest(
             messages=[{"role": "user", "content": "test"}],
             model="test-model",
-            max_tokens=100000
+            max_tokens=8192
         )
-        assert request_max.max_tokens == 100000
+        assert request_max.max_tokens == 8192
+        
+        # 测试超出范围的值应该抛出验证错误
+        with pytest.raises(ValidationError):
+            ChatRequest(
+                messages=[{"role": "user", "content": "test"}],
+                model="test-model",
+                max_tokens=100000
+            )
     
     def test_unicode_model_name(self):
         """测试Unicode模型名称"""

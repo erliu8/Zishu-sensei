@@ -1,5 +1,5 @@
 from typing import Dict, Any, List, Optional, Union, Literal, Tuple
-from pydantic import BaseModel, Field, validator, root_validator
+from pydantic import BaseModel, Field, field_validator, model_validator
 from enum import Enum
 import json
 from datetime import datetime
@@ -129,14 +129,13 @@ class WindowOperation(BaseModel):
     position: Optional[Dict[str, int]] = Field(None, description="新位置{x,y}")
     size: Optional[Dict[str, int]] = Field(None, description="新大小{width,height}")
     
-    @validator("operation")
-    def validate_operation_params(cls, v, values):
-        if v in ['focus', 'close', 'minimize', 'maximize'] and not any([
-            values.get('window_id') or values.get('window_title') or values.get('process_name')
+    @model_validator(mode='after')
+    def validate_operation_params(self):
+        if self.operation in ['focus', 'close', 'minimize', 'maximize'] and not any([
+            self.window_id, self.window_title, self.process_name
         ]):
             raise ValueError("需要指定窗口ID、标题或进程名称")
-        
-        return v
+        return self
     
 class WindowOperationResponse(BaseModel):
     """窗口操作响应"""
@@ -186,13 +185,12 @@ class FileOperation(BaseModel):
     overwrite: bool = Field(False, description="是否覆盖现有文件")
     create_directories: bool = Field(True, description="是否自动创建目录")
     
-    @validator('target_path')
-    def validate_target_path(cls, v, values):
-        operation = values.get('operation')
-        if operation in [FileOperationType.MOVE, FileOperationType.COPY, FileOperationType.RENAME]:
-            if not v:
-                raise ValueError(f"{operation} 操作需要指定目标路径")
-        return v
+    @model_validator(mode='after')
+    def validate_target_path(self):
+        if self.operation in [FileOperationType.MOVE, FileOperationType.COPY, FileOperationType.RENAME]:
+            if not self.target_path:
+                raise ValueError(f"{self.operation} 操作需要指定目标路径")
+        return self
 
 class FileSearchCriteria(BaseModel):
     """文件搜索条件"""
@@ -263,12 +261,11 @@ class ApplicationOperation(BaseModel):
     timeout: int = Field(30, description="操作超时时间(秒)")
     force: bool = Field(False, description="是否强制执行")
     
-    @validator('app_identifier')
-    def validate_app_identifier(cls, v, values):
-        operation = values.get('operation')
-        if operation in ['stop', 'restart', 'kill', 'suspend', 'resume'] and not v:
-            raise ValueError(f"{operation} 操作需要指定应用程序标识")
-        return v
+    @model_validator(mode='after')
+    def validate_app_identifier(self):
+        if self.operation in ['stop', 'restart', 'kill', 'suspend', 'resume'] and not self.app_identifier:
+            raise ValueError(f"{self.operation} 操作需要指定应用程序标识")
+        return self
 
 class ApplicationOperationResponse(BaseModel):
     """应用程序操作响应"""
@@ -339,11 +336,11 @@ class ScreenCaptureRequest(BaseModel):
     include_cursor: bool = Field(True, description="是否包含鼠标光标")
     save_path: Optional[str] = Field(None, description="保存路径")
     
-    @validator('region')
-    def validate_region(cls, v, values):
-        if values.get('capture_type') == ScreenCaptureType.REGION and not v:
+    @model_validator(mode='after')
+    def validate_region(self):
+        if self.capture_type == ScreenCaptureType.REGION and not self.region:
             raise ValueError("区域捕获需要指定捕获区域")
-        return v
+        return self
 
 class ScreenCaptureResponse(BaseModel):
     """屏幕捕获响应"""
@@ -384,11 +381,11 @@ class KeyboardAction(BaseModel):
     modifiers: List[Literal["ctrl", "alt", "shift", "cmd", "win"]] = Field([], description="修饰键")
     delay: float = Field(0.05, description="按键间延迟(秒)")
     
-    @validator('text')
-    def validate_text_input(cls, v, values):
-        if values.get('action_type') == 'type' and not v:
+    @model_validator(mode='after')
+    def validate_text_input(self):
+        if self.action_type == 'type' and not self.text:
             raise ValueError("文本输入操作需要指定输入内容")
-        return v
+        return self
 
 class AutomationSequence(BaseModel):
     """自动化操作序列"""

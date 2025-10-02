@@ -46,6 +46,7 @@ class EmotionType(str, Enum):
     TIRED = "tired"
     SICK = "sick"
     DEPRESSED = "depressed"
+    EMPATHETIC = "empathetic"
     
 class ChatModel(str, Enum):
     """对话模式"""
@@ -77,7 +78,7 @@ class Message(BaseModel):
     avatar: Optional[str] = Field(None, description="头像表情")
     
     #扩展字段
-    metadata: Optional[Dict[str, Any]] = Field(default_factory=dict, description="元数据")
+    metadata: Optional[Dict[str, Any]] = Field(None, description="元数据")
     tokens: Optional[int] = Field(None, description="token数量")
     processing_time: Optional[float] = Field(None, description="处理时间(秒)")
     
@@ -94,7 +95,10 @@ class Message(BaseModel):
     @model_validator(mode='after')
     def validate_message(self):
         """验证消息的完整性"""
-        # 如果没有function_call，则content不能为空
+        # 对于FUNCTION角色，如果有name字段，允许空内容
+        if self.role == MessageRole.FUNCTION and self.name:
+            return self
+        # 对于其他角色，如果没有function_call，则content不能为空
         if not self.function_call and (not self.content or not self.content.strip()):
             raise ValueError("消息内容不能为空")
         return self
@@ -385,7 +389,7 @@ class CharacterInteractionRequest(BaseModel):
 
 class BatchCharacterOperation(BaseModel):
     """批量角色操作请求模型"""
-    character_ids: List[str] = Field(..., min_items=1, description="角色ID列表")
+    character_ids: List[str] = Field(..., min_length=1, description="角色ID列表")
     operation: Literal["activate", "deactivate", "delete", "export"] = Field(..., description="操作类型")
     parameters: Optional[Dict[str, Any]] = Field(default_factory=dict, description="操作参数")
 

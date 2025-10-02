@@ -92,10 +92,12 @@ class HealthCheckResult:
     """健康检查结果"""
     is_healthy: bool
     status: str  # healthy, degraded, unhealthy, unknown
+    message: Optional[str] = None
     checks: Dict[str, bool] = field(default_factory=dict)
     metrics: Dict[str, Any] = field(default_factory=dict)
     issues: List[str] = field(default_factory=list)
     recommendations: List[str] = field(default_factory=list)
+    timestamp: datetime = field(default_factory=lambda: datetime.now(timezone.utc))
     last_check_time: datetime = field(default_factory=lambda: datetime.now(timezone.utc))
 
 

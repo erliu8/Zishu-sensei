@@ -2,6 +2,7 @@ from pydantic import BaseModel, Field, field_validator
 from typing import Optional, List, Any, Dict, Union, Literal, TYPE_CHECKING
 from datetime import datetime
 from enum import Enum
+import uuid
 
 if TYPE_CHECKING:
     from typing import ForwardRef
@@ -22,6 +23,40 @@ class ResponseStatus(str, Enum):
     ERROR = "error"
     PARTIAL = "partial"
     PROCESSING = "processing"
+
+class SortOrder(str, Enum):
+    """排序顺序枚举"""
+    ASC = "asc"
+    DESC = "desc"
+
+# 通用参数类
+class PaginationParams(BaseModel):
+    """分页参数"""
+    page: int = Field(1, ge=1, description="页码，从1开始")
+    size: int = Field(20, ge=1, le=100, description="每页大小，1-100")
+    sort_by: Optional[str] = Field(None, description="排序字段")
+    sort_order: SortOrder = Field(SortOrder.ASC, description="排序顺序")
+
+class FilterParams(BaseModel):
+    """过滤参数"""
+    filters: Optional[Dict[str, Any]] = Field(None, description="过滤条件")
+    search: Optional[str] = Field(None, description="搜索关键词")
+    date_from: Optional[datetime] = Field(None, description="开始日期")
+    date_to: Optional[datetime] = Field(None, description="结束日期")
+
+class APIVersion(BaseModel):
+    """API版本信息"""
+    version: str = Field(..., description="版本号")
+    build: Optional[str] = Field(None, description="构建号")
+    commit_hash: Optional[str] = Field(None, description="提交哈希")
+    release_date: Optional[datetime] = Field(None, description="发布日期")
+
+class BaseResponse(BaseModel):
+    """基础响应模型"""
+    success: bool = Field(..., description="操作是否成功")
+    message: Optional[str] = Field(None, description="响应消息")
+    timestamp: datetime = Field(default_factory=lambda: datetime.now(), description="响应时间戳")
+    request_id: str = Field(default_factory=lambda: str(uuid.uuid4()), description="请求ID")
 
 #基础响应模型
 class UsageInfo(BaseModel):
@@ -115,20 +150,60 @@ class EmotionResponse(BaseModel):
 #健康检查响应
 class ModelStatus(BaseModel):
     """模型状态"""
-    name: str = Field(..., description="模型名称")
-    status: Literal["loaded", "unloaded", "error"] = Field(..., description="模型状态")
-    memory_usage: Optional[float] = Field(None, description="内存使用(MB)")
-    load_time: Optional[float] = Field(None, description="加载时间(秒)")
-    last_used: Optional[datetime] = Field(None, description="最后使用时间")
+    status: Literal["healthy", "unhealthy", "degraded"] = Field(..., description="模型状态")
+    loaded_adapters: List[str] = Field(default_factory=list, description="已加载的适配器列表")
+    total_memory_usage: Optional[int] = Field(None, description="总内存使用(字节)")
+    available_memory: Optional[int] = Field(None, description="可用内存(字节)")
+    gpu_info: Optional[Dict[str, Dict[str, Any]]] = Field(None, description="GPU信息")
+    last_updated: Optional[datetime] = Field(None, description="最后更新时间")
+
+class SystemInfo(BaseModel):
+    """系统信息"""
+    cpu_usage: float = Field(..., description="CPU使用率百分比")
+    memory_usage: float = Field(..., description="内存使用率百分比")
+    disk_usage: float = Field(..., description="磁盘使用率百分比")
+    gpu_usage: Optional[Dict[str, float]] = Field(None, description="GPU使用率")
+    temperature: Optional[Dict[str, float]] = Field(None, description="温度信息")
+    uptime_seconds: float = Field(..., description="系统运行时间(秒)")
+    timestamp: datetime = Field(..., description="时间戳")
     
+class ComponentHealth(BaseModel):
+    """组件健康状态"""
+    name: str = Field(..., description="组件名称")
+    status: Literal["healthy", "unhealthy", "degraded"] = Field(..., description="组件状态")
+    message: str = Field(..., description="状态消息")
+    response_time_ms: Optional[float] = Field(None, description="响应时间(毫秒)")
+    last_check: datetime = Field(..., description="最后检查时间")
+    details: Optional[Dict[str, Any]] = Field(None, description="详细信息")
+    error: Optional[str] = Field(None, description="错误信息")
+
 class SystemMetrics(BaseModel):
     """系统指标"""
-    cpu_usage: float = Field(..., description="CPU使用率")
-    memory_usage: float = Field(..., description="内存使用率")
-    gpu_usage: float = Field(None, description="GPU使用率")
-    disk_usage: float = Field(..., description="磁盘使用率")
-    uptime: float = Field(..., description="系统运行时间(秒)")
+    cpu_percent: float = Field(..., description="CPU使用率百分比")
+    memory_percent: float = Field(..., description="内存使用率百分比")
+    disk_percent: float = Field(..., description="磁盘使用率百分比")
+    network_io: Optional[Dict[str, int]] = Field(None, description="网络IO统计")
+    process_count: Optional[int] = Field(None, description="进程数量")
+    load_average: Optional[List[float]] = Field(None, description="系统负载平均值")
+    timestamp: datetime = Field(..., description="指标时间戳")
     
+class HealthCheckResponse(BaseModel):
+    """基础健康检查响应"""
+    status: Literal["healthy", "unhealthy", "degraded"] = Field(..., description="整体状态")
+    timestamp: datetime = Field(..., description="检查时间")
+    uptime_seconds: float = Field(..., description="系统运行时间(秒)")
+    version: str = Field(..., description="系统版本")
+
+class DeepHealthCheckResponse(BaseModel):
+    """深度健康检查响应"""
+    status: Literal["healthy", "unhealthy", "degraded"] = Field(..., description="整体状态")
+    timestamp: datetime = Field(..., description="检查时间")
+    uptime_seconds: float = Field(..., description="系统运行时间(秒)")
+    version: str = Field(..., description="系统版本")
+    components: List[ComponentHealth] = Field(..., description="组件健康状态列表")
+    system_metrics: Optional[SystemMetrics] = Field(None, description="系统指标")
+    summary: Dict[str, Any] = Field(..., description="健康状态摘要")
+
 class HealthResponse(BaseModel):
     """健康检查响应"""
     status: Literal["healthy", "unhealthy", "degraded"] = Field(..., description="整体状态")
@@ -311,19 +386,16 @@ class ErrorDetail(BaseModel):
     details: Optional[str] = Field(None, description="错误详情")
     field: Optional[str] = Field(None, description="相关字段")
     
-class ErrorResponse(BaseModel):
+class ErrorResponse(BaseResponse):
     """错误响应"""
+    success: bool = Field(default=False, description="操作是否成功")
+    error_code: Optional[str] = Field(None, description="错误代码")
+    error_details: Optional[Dict[str, Any]] = Field(None, description="错误详情")
+    
+    # 向后兼容字段
     error: bool = Field(default=True, description="是否错误")
-    error_type: str = Field(..., description="错误类型")
-    error_code: str = Field(..., description="错误代码")
-    message: str = Field(..., description="错误消息")
-    
-    #详细错误信息
+    error_type: Optional[str] = Field(None, description="错误类型")
     details: List[ErrorDetail] = Field(default_factory=list, description="错误详情")
-    
-    #追踪信息
-    request_id: Optional[str] = Field(None, description="请求ID")
-    timestamp: datetime = Field(default_factory=datetime.now, description="错误时间")
     
     #帮助信息
     suggestions: Optional[List[str]] = Field(None, description="解决建议")
@@ -405,14 +477,22 @@ class ChatStreamResponse(BaseModel):
 
 class ConversationSummary(BaseModel):
     """对话摘要"""
-    id: str = Field(..., description="摘要ID")
+    id: str = Field(default_factory=lambda: str(__import__('uuid').uuid4()), description="摘要ID")
+    conversation_id: str = Field(..., description="对话ID")
+    title: str = Field(..., description="对话标题")
     summary: str = Field(..., description="摘要内容")
     message_count: int = Field(..., description="消息数量")
-    created: datetime = Field(..., description="创建时间")
+    created_at: datetime = Field(..., description="创建时间")
+    last_message_at: datetime = Field(..., description="最后消息时间")
+    created: datetime = Field(default_factory=__import__('datetime').datetime.now, description="创建时间")
 
 class ChatHistory(BaseModel):
     """聊天历史"""
-    session_id: str = Field(..., description="会话ID")
+    session_id: str = Field(default_factory=lambda: str(__import__('uuid').uuid4()), description="会话ID")
+    conversation_id: str = Field(..., description="对话ID")
     messages: List[Any] = Field(..., description="消息列表")
-    total_messages: int = Field(..., description="总消息数")
-    created: datetime = Field(..., description="创建时间")
+    total_messages: int = Field(default=0, description="总消息数")
+    created_at: datetime = Field(..., description="创建时间")
+    updated_at: datetime = Field(..., description="更新时间")
+    title: str = Field(..., description="对话标题")
+    created: datetime = Field(default_factory=__import__('datetime').datetime.now, description="创建时间")

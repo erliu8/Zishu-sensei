@@ -12,6 +12,7 @@ import sys
 from pathlib import Path
 from unittest.mock import Mock, AsyncMock, patch
 from typing import Dict, Any, List, Optional
+import torch
 
 # 添加项目根目录到Python路径
 project_root = Path(__file__).parent.parent
@@ -49,14 +50,6 @@ def pytest_collection_modifyitems(config, items):
 # ============================================================================
 # 全局Fixtures
 # ============================================================================
-
-@pytest.fixture(scope="session")
-def event_loop():
-    """创建事件循环"""
-    loop = asyncio.new_event_loop()
-    yield loop
-    loop.close()
-
 
 @pytest.fixture(scope="session")
 def test_config():
@@ -101,16 +94,43 @@ def mock_logger():
 # ============================================================================
 
 @pytest.fixture
-def mock_model_manager():
-    """模拟模型管理器"""
-    manager = Mock()
+async def test_client():
+    """测试客户端"""
+    from fastapi.testclient import TestClient
+    from zishu.api.main import create_app
     
-    # 基本属性
-    manager.is_model_loaded.return_value = True
+    app = create_app()
+    with TestClient(app) as client:
+        yield client
+
+
+@pytest.fixture
+async def adapter_registry():
+    """适配器注册表"""
+    from unittest.mock import Mock
+    
+    registry = Mock()
+    registry.register_adapter = AsyncMock(return_value=True)
+    registry.unregister_adapter = AsyncMock(return_value=True)
+    registry.get_adapter = Mock(return_value=None)
+    registry.list_adapters = Mock(return_value=[])
+    registry.has_adapter = Mock(return_value=False)
+    registry.execute_adapter = AsyncMock(return_value={"result": "success"})
+    registry.health_check_adapter = AsyncMock(return_value={"status": "healthy"})
+    
+    return registry
+
+
+@pytest.fixture
+async def mock_model_manager():
+    """模拟模型管理器"""
+    from unittest.mock import Mock, AsyncMock
+    
+    manager = Mock()
+    manager.is_model_loaded = Mock(return_value=True)
     manager.current_model = "test-model"
     manager.loaded_adapters = {"test-adapter": {"status": "loaded"}}
     
-    # 异步方法
     async def mock_generate_response(messages, **kwargs):
         return {
             "content": "Mock response",
@@ -127,31 +147,12 @@ def mock_model_manager():
         for chunk in chunks:
             yield chunk
     
-    async def mock_load_adapter(adapter_path, **kwargs):
-        return {
-            "success": True,
-            "adapter_name": "test-adapter",
-            "message": "Adapter loaded successfully"
-        }
-    
-    async def mock_unload_adapter(adapter_name, **kwargs):
-        return {
-            "success": True,
-            "message": f"Adapter {adapter_name} unloaded successfully"
-        }
-    
     manager.generate_response = AsyncMock(side_effect=mock_generate_response)
     manager.generate_stream_response = AsyncMock(side_effect=mock_generate_stream_response)
-    manager.load_adapter = AsyncMock(side_effect=mock_load_adapter)
-    manager.unload_adapter = AsyncMock(side_effect=mock_unload_adapter)
-    manager.get_memory_usage = Mock(return_value={
-        "total": 8 * 1024 * 1024 * 1024,
-        "used": 4 * 1024 * 1024 * 1024,
-        "available": 4 * 1024 * 1024 * 1024
-    })
+    manager.load_adapter = AsyncMock(return_value={"success": True})
+    manager.unload_adapter = AsyncMock(return_value={"success": True})
     
     return manager
-
 
 @pytest.fixture
 def mock_health_checker():
@@ -264,6 +265,189 @@ def mock_adapter():
     adapter.generate = AsyncMock(side_effect=mock_generate)
     
     return adapter
+
+
+@pytest.fixture
+def base_adapter_config():
+    """基础适配器配置"""
+    from zishu.adapters.base.metadata import AdapterType
+    return {
+        "adapter_id": "test-adapter",
+        "name": "Test Base Adapter",
+        "version": "1.0.0",
+        "adapter_type": AdapterType.SOFT.value,
+        "description": "测试基础适配器",
+        "author": "test_author",
+        "created_at": "2024-01-01T00:00:00Z",
+        "parameters": {
+            "learning_rate": 0.001,
+            "batch_size": 8,
+            "max_length": 512,
+        },
+        "requirements": {
+            "torch": ">=2.0.0",
+            "transformers": ">=4.30.0",
+        }
+    }
+
+
+@pytest.fixture
+def mock_base_adapter(base_adapter_config):
+    """模拟基础适配器，包含所有必需的抽象方法实现"""
+    from zishu.adapters.base.adapter import BaseAdapter, ExecutionContext, HealthCheckResult
+    from zishu.adapters.base.metadata import AdapterMetadata, AdapterCapability, AdapterType
+    from unittest.mock import AsyncMock, Mock
+    
+    # 创建一个具体的BaseAdapter实现类用于测试
+    class MockBaseAdapter(BaseAdapter):
+        def _load_metadata(self):
+            return AdapterMetadata(
+                id=self.adapter_id,
+                name=self.name,
+                version=self.version,
+                adapter_type=AdapterType.SOFT,
+                description="Mock adapter for testing",
+                author="test_system",
+                created_at="2024-01-01T00:00:00Z"
+            )
+        
+        async def _initialize_impl(self):
+            return True
+        
+        async def _process_impl(self, input_data, context: ExecutionContext):
+            return {"processed": True, "input": input_data}
+        
+        def _get_capabilities_impl(self):
+            return [AdapterCapability.TEXT_GENERATION]
+        
+        async def _health_check_impl(self):
+            return HealthCheckResult(
+                is_healthy=True,
+                status="healthy",
+                checks={"mock_check": True}
+            )
+        
+        async def _cleanup_impl(self):
+            pass
+    
+    # 创建实例
+    adapter = MockBaseAdapter(base_adapter_config)
+    return adapter
+
+
+@pytest.fixture
+def adapter_manager():
+    """适配器管理器"""
+    from unittest.mock import AsyncMock, Mock
+    
+    manager = Mock()
+    manager.load_adapter = AsyncMock(return_value=True)
+    manager.unload_adapter = AsyncMock(return_value=True)
+    manager.switch_adapter = AsyncMock(return_value=True)
+    manager.list_adapters = AsyncMock(return_value=[])
+    manager.get_adapter_info = AsyncMock(return_value={})
+    manager.validate_adapter_config = AsyncMock(return_value=True)
+    manager.batch_load_adapters = AsyncMock(return_value=True)
+    manager.memory_usage_tracking = Mock(return_value={"used": 0, "total": 1000})
+    manager.integrate_with_model = AsyncMock(return_value=True)
+    
+    return manager
+
+
+@pytest.fixture
+def mock_model():
+    """模拟AI模型"""
+    model = Mock()
+    model.generate = AsyncMock(return_value=torch.tensor([[1, 2, 3, 4, 5]]))
+    model.config = Mock()
+    model.config.vocab_size = 50000
+    model.device = torch.device("cpu")
+    model.eval = Mock()
+    model.to = Mock(return_value=model)
+    model.load = AsyncMock(return_value=True)
+    model.unload = AsyncMock(return_value=True)
+    return model
+
+
+@pytest.fixture
+def mock_tokenizer():
+    """模拟分词器"""
+    tokenizer = Mock()
+    tokenizer.encode = Mock(return_value=[1, 2, 3, 4, 5])
+    tokenizer.decode = Mock(return_value="Mock response")
+    tokenizer.vocab_size = 50000
+    tokenizer.pad_token_id = 0
+    tokenizer.eos_token_id = 2
+    tokenizer.bos_token_id = 1
+    return tokenizer
+
+
+@pytest.fixture
+def sample_lora_weights(temp_dir):
+    """示例LoRA权重文件"""
+    weights_file = temp_dir / "sample_lora.bin"
+    
+    # 创建一个模拟的权重文件
+    dummy_weights = {
+        "lora_A": torch.randn(128, 64),
+        "lora_B": torch.randn(64, 128),
+        "scaling": torch.tensor(0.5)
+    }
+    torch.save(dummy_weights, weights_file)
+    return weights_file
+
+
+@pytest.fixture
+def sample_adapter_config():
+    """示例适配器配置"""
+    from zishu.adapters.base.metadata import AdapterType
+    return {
+        "adapter_id": "test_adapter",
+        "name": "Test Adapter",
+        "version": "1.0.0",
+        "adapter_type": AdapterType.LORA.value,
+        "description": "测试适配器配置",
+        "author": "test_author",
+        "created_at": "2024-01-01T00:00:00Z",
+        "parameters": {
+            "learning_rate": 0.001,
+            "batch_size": 8,
+            "max_length": 512,
+            "rank": 8,
+            "alpha": 32,
+            "dropout": 0.05,
+            "target_modules": ["q_proj", "v_proj"]
+        },
+        "requirements": {
+            "torch": ">=2.0.0",
+            "transformers": ">=4.30.0"
+        }
+    }
+
+
+@pytest.fixture  
+def mock_adapter_class():
+    """模拟适配器类"""
+    class MockAdapter:
+        def __init__(self, config):
+            self.config = config
+            self.name = config.get("adapter_name", "mock_adapter")
+            self.loaded = False
+        
+        async def load(self):
+            self.loaded = True
+            return True
+            
+        async def unload(self):
+            self.loaded = False
+            return True
+            
+        async def process(self, input_data, context):
+            return f"Mock response for: {input_data}"
+    
+    return MockAdapter
+
+
 
 
 @pytest.fixture
@@ -455,6 +639,7 @@ def performance_config():
 def system_monitor():
     """系统监控器"""
     import psutil
+    import time
     
     class SystemMonitor:
         def __init__(self):
@@ -488,13 +673,88 @@ def system_monitor():
                 "elapsed_seconds": elapsed
             }
     
-    import time
     return SystemMonitor()
 
 
 # ============================================================================
 # 清理Fixtures
 # ============================================================================
+
+@pytest.fixture
+def performance_monitor():
+    """性能监控器fixture"""
+    from unittest.mock import Mock
+    
+    monitor = Mock()
+    monitor.start = Mock()
+    monitor.stop = Mock(return_value={"duration": 0.5, "memory_mb": 100, "memory_used": 50 * 1024 * 1024})
+    monitor.get_stats = Mock(return_value={
+        "cpu_percent": 25.0,
+        "memory_mb": 150.0,
+        "duration": 0.3
+    })
+    return monitor
+
+@pytest.fixture
+def mock_inference_engine():
+    """模拟推理引擎"""
+    from unittest.mock import Mock, AsyncMock
+    
+    engine = Mock()
+    engine.testing_mode = True
+    
+    # 模拟同步方法
+    engine.generate_response = Mock(return_value={
+        "content": "Test response",
+        "usage": {"total_tokens": 25},
+        "model": "test-model"
+    })
+    
+    # 模拟异步方法
+    async def mock_generate_async(messages, **kwargs):
+        return {
+            "content": "Test async response",
+            "usage": {"total_tokens": 30},
+            "model": kwargs.get("model", "test-model")
+        }
+    
+    async def mock_generate_stream(messages, **kwargs):
+        chunks = [
+            {"delta": {"content": "Test"}, "finish_reason": None},
+            {"delta": {"content": " stream"}, "finish_reason": None},
+            {"delta": {"content": " response"}, "finish_reason": "stop"}
+        ]
+        for chunk in chunks:
+            yield chunk
+    
+    engine.generate_response_async = AsyncMock(side_effect=mock_generate_async)
+    engine.generate_stream_response = AsyncMock(side_effect=mock_generate_stream)
+    
+    return engine
+
+@pytest.fixture(autouse=True)
+def setup_test_environment():
+    """设置测试环境"""
+    # 重置依赖注入系统
+    from zishu.api.dependencies import reset_dependencies_for_testing
+    reset_dependencies_for_testing()
+    
+    # 重置推理引擎
+    try:
+        from zishu.models.inference import reset_inference_engine
+        reset_inference_engine()
+    except ImportError:
+        pass  # 如果模块不存在则忽略
+    
+    yield
+    
+    # 测试后清理
+    reset_dependencies_for_testing()
+    try:
+        from zishu.models.inference import reset_inference_engine
+        reset_inference_engine()
+    except ImportError:
+        pass
 
 @pytest.fixture(autouse=True)
 def cleanup_after_test():

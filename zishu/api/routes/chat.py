@@ -7,7 +7,7 @@ from datetime import datetime
 
 from fastapi import APIRouter, Depends, HTTPException, Request, BackgroundTasks
 from fastapi.responses import StreamingResponse
-from pydantic import BaseModel, Field, ValidationError
+from pydantic import BaseModel, Field, ValidationError, field_validator
 import logging
 from logging import Logger
 
@@ -31,13 +31,29 @@ class ChatRequest(BaseModel):
     model: Optional[str] = Field(None, description="模型ID")
     adapter: Optional[str] = Field(None, description="适配器ID")
     character_id: Optional[str] = Field(None, description="角色ID")
-    max_tokens: Optional[int] = Field(None, description="最大token数量")
+    max_tokens: Optional[int] = Field(None, ge=1, le=8192, description="最大token数量")
     temperature: Optional[float] = Field(0.7, ge=0.0, le=2.0, description="温度参数")
     top_p: Optional[float] = Field(0.9, ge=0.0, le=1.0, description="top-p采样参数")
     stop: Optional[Union[str,List[str]]] = Field(None, description="停止生成条件")
     stream: bool = Field(False, description="是否流式生成")
     user: Optional[str] = Field(None, description="用户ID")
     session_id: Optional[str] = Field(None, description="会话ID")
+    
+    @field_validator('messages')
+    @classmethod
+    def validate_messages(cls, v):
+        """验证消息格式和角色"""
+        valid_roles = {"user", "assistant", "system", "function"}
+        for msg in v:
+            if not isinstance(msg, dict):
+                raise ValueError("消息必须是字典格式")
+            if "role" not in msg:
+                raise ValueError("消息必须包含role字段")
+            if "content" not in msg:
+                raise ValueError("消息必须包含content字段")
+            if msg["role"] not in valid_roles:
+                raise ValueError(f"无效的消息角色: {msg['role']}, 有效角色: {valid_roles}")
+        return v
     
 class StreamChatRequest(BaseModel):
     """流式聊天请求"""
@@ -236,7 +252,7 @@ router = APIRouter(
 )
 
 @router.post("/completions", response_model=ChatCompletionResponse)
-async def chat_completions(request: ChatCompletionRequest,
+async def chat_completions(request: ChatRequest,
                            background_tasks: BackgroundTasks,
                            inference_engine=Depends(get_inference_engine_dep),
                            session_manager: ChatSessionManager = Depends(get_session_manager),
@@ -252,7 +268,14 @@ async def chat_completions(request: ChatCompletionRequest,
         
         #构建完整的消息历史, TODO: 可从记忆适配器获取消息
         if request.messages:
-            messages = request.messages.copy()
+            # 转换为标准格式
+            messages = []
+            for msg in request.messages:
+                if isinstance(msg, dict):
+                    messages.append(msg)
+                else:
+                    # 如果是字符串，假设是用户消息
+                    messages.append({"role": "user", "content": str(msg)})
             
         else:
             #从会话历史获取消息
@@ -261,11 +284,13 @@ async def chat_completions(request: ChatCompletionRequest,
             
         #cache检查
         cache_key = f"chat:{hash(str(messages))}:{request.model}:{request.character_id}"
-        cached_response = await response_cache.get(cache_key)
-        
-        if cached_response and not request.stream:
-            logger.info(f"Return cached response:session_id={session_id}")
-            return json.loads(cached_response)
+        try:
+            cached_response = response_cache.get(cache_key)
+            if cached_response and not request.stream:
+                logger.info(f"Return cached response:session_id={session_id}")
+                return json.loads(cached_response)
+        except Exception as cache_error:
+            logger.warning(f"缓存检查失败: {cache_error}")
         
         #生成响应
         if request.stream:
@@ -315,8 +340,11 @@ async def chat_completions(request: ChatCompletionRequest,
         )
         
         #cache响应
-        background_tasks.add_task(
-            response_cache.set, cache_key, response.model_dump_json())
+        try:
+            background_tasks.add_task(
+                response_cache.set, cache_key, response.model_dump_json())
+        except Exception as cache_error:
+            logger.warning(f"缓存设置失败: {cache_error}")
         
         logger.info(f"Chat completion response:session_id={session_id} time={time.time() - start_time:.2f}s")
         return response

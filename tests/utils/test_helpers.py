@@ -10,7 +10,7 @@ import uuid
 import tempfile
 import shutil
 from pathlib import Path
-from typing import Dict, Any, List, Optional, Union, Callable, Awaitable
+from typing import Dict, Any, List, Optional, Union, Callable, Awaitable, Tuple
 from datetime import datetime, timezone
 from unittest.mock import Mock, AsyncMock, MagicMock
 from contextlib import asynccontextmanager, contextmanager
@@ -266,7 +266,7 @@ class PerformanceTimer:
         self.measurements.append(elapsed)
         return elapsed
     
-    def measure(self, func: Callable, *args, **kwargs) -> tuple[Any, float]:
+    def measure(self, func: Callable, *args, **kwargs) -> Tuple[Any, float]:
         """测量函数执行时间"""
         self.start()
         

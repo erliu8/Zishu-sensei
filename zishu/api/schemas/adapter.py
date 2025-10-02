@@ -55,8 +55,8 @@ class AdapterCapability(BaseModel):
     description: Optional[str] = Field(None, description="能力描述")
     parameters: Dict[str, Any] = Field(default_factory=dict, description="能力参数")
     
-    class Config:
-        schema_extra = {
+    model_config = {
+        "json_schema_extra": {
             "example": {
                 "name": "text_generation",
                 "version": "1.0.0",
@@ -67,6 +67,7 @@ class AdapterCapability(BaseModel):
                 }
             }
         }
+    }
 
 
 class AdapterResourceRequirements(BaseModel):
@@ -104,8 +105,8 @@ class AdapterCompatibility(BaseModel):
     python_version: Optional[str] = Field(None, description="Python版本要求")
     cuda_version: Optional[str] = Field(None, description="CUDA版本要求")
     
-    class Config:
-        schema_extra = {
+    model_config = {
+        "json_schema_extra": {
             "example": {
                 "base_models": ["llama2-7b", "llama2-13b"],
                 "model_architectures": ["LlamaForCausalLM"],
@@ -118,6 +119,7 @@ class AdapterCompatibility(BaseModel):
                 "cuda_version": ">=11.8"
             }
         }
+    }
 
 
 class AdapterMetadata(BaseModel):
@@ -160,11 +162,12 @@ class AdapterMetadata(BaseModel):
             raise ValueError('更新时间不能早于创建时间')
         return v
     
-    class Config:
-        use_enum_values = True
-        json_encoders = {
+    model_config = {
+        "use_enum_values": True,
+        "json_encoders": {
             datetime: lambda v: v.isoformat()
         }
+    }
 
 
 # 特定适配器类型的配置模型
@@ -177,8 +180,9 @@ class SoftAdapterConfig(BaseModel):
     temperature: float = Field(0.7, ge=0.0, le=2.0, description="生成温度")
     top_p: float = Field(0.9, ge=0.0, le=1.0, description="Top-p采样")
     
-    class Config:
-        use_enum_values = True
+    model_config = {
+        "use_enum_values": True
+    }
 
 
 class HardAdapterConfig(BaseModel):
@@ -189,8 +193,9 @@ class HardAdapterConfig(BaseModel):
     compilation_flags: List[str] = Field(default_factory=list, description="编译标志")
     runtime_args: Dict[str, Any] = Field(default_factory=dict, description="运行时参数")
     
-    class Config:
-        use_enum_values = True
+    model_config = {
+        "use_enum_values": True
+    }
 
 
 class IntelligentAdapterConfig(BaseModel):
@@ -201,8 +206,9 @@ class IntelligentAdapterConfig(BaseModel):
     adaptation_rules: List[Dict[str, Any]] = Field(default_factory=list, description="适配规则")
     learning_enabled: bool = Field(True, description="是否启用学习")
     
-    class Config:
-        use_enum_values = True
+    model_config = {
+        "use_enum_values": True
+    }
 
 
 class AdapterConfig(BaseModel):
@@ -292,35 +298,35 @@ class AdapterConfig(BaseModel):
         
         return values
     
-    class Config:
-        use_enum_values = True
+    model_config = {
+        "use_enum_values": True
+    }
 
 
 class AdapterInfo(BaseModel):
     """适配器信息（用于API响应）"""
-    metadata: AdapterMetadata = Field(..., description="适配器元数据")
-    config: AdapterConfig = Field(..., description="适配器配置")
+    # 基本信息
+    name: str = Field(..., description="适配器名称")
+    path: Optional[str] = Field(None, description="适配器路径")
+    size: Optional[int] = Field(None, description="适配器大小(字节)")
+    version: Optional[str] = Field(None, description="适配器版本")
+    description: Optional[str] = Field(None, description="适配器描述")
     
     # 运行时状态
-    status: AdapterStatus = Field(AdapterStatus.UNLOADED, description="当前状态")
-    load_time: Optional[PositiveFloat] = Field(None, description="加载时间(秒)")
-    last_used: Optional[datetime] = Field(None, description="最后使用时间")
+    status: str = Field("unloaded", description="当前状态")
+    load_time: Optional[datetime] = Field(None, description="加载时间")
+    memory_usage: Optional[int] = Field(None, description="内存使用(字节)")
     
-    # 性能指标
-    memory_usage_mb: Optional[PositiveFloat] = Field(None, description="内存使用(MB)")
-    gpu_memory_usage_mb: Optional[PositiveFloat] = Field(None, description="GPU内存使用(MB)")
-    inference_count: int = Field(0, description="推理次数")
-    error_count: int = Field(0, description="错误次数")
+    # 配置信息
+    config: Dict[str, Any] = Field(default_factory=dict, description="适配器配置")
     
-    # 路径信息
-    adapter_path: Optional[str] = Field(None, description="适配器路径")
-    
-    class Config:
-        use_enum_values = True
-        json_encoders = {
+    model_config = {
+        "use_enum_values": True,
+        "json_encoders": {
             datetime: lambda v: v.isoformat(),
             Path: lambda v: str(v)
         }
+    }
 
 
 class AdapterValidationResult(BaseModel):
@@ -374,10 +380,11 @@ class AdapterOperation(BaseModel):
     # 操作结果
     result: Optional[Dict[str, Any]] = Field(None, description="操作结果")
     
-    class Config:
-        json_encoders = {
+    model_config = {
+        "json_encoders": {
             datetime: lambda v: v.isoformat()
         }
+    }
 
 
 # LoRA特定配置
@@ -534,16 +541,35 @@ def get_adapter_config_class(adapter_type: AdapterType):
 # 适配器管理相关的请求和响应模型
 class AdapterLoadRequest(BaseModel):
     """适配器加载请求"""
-    adapter_id: str = Field(..., description="适配器ID")
+    adapter_path: str = Field(..., description="适配器路径")
+    adapter_name: str = Field(..., description="适配器名称")
+    adapter_id: Optional[str] = Field(None, description="适配器ID")
     config_override: Optional[Dict[str, Any]] = Field(None, description="配置覆盖")
     force_reload: bool = Field(False, description="是否强制重新加载")
+    async_load: bool = Field(False, description="是否异步加载")
     timeout: Optional[PositiveInt] = Field(30, description="超时时间(秒)")
+    
+    @field_validator('adapter_path')
+    @classmethod
+    def validate_adapter_path(cls, v):
+        if not v or not v.strip():
+            raise ValueError('适配器路径不能为空')
+        return v
+    
+    @field_validator('adapter_name')
+    @classmethod
+    def validate_adapter_name(cls, v):
+        if not v or not v.strip():
+            raise ValueError('适配器名称不能为空')
+        return v
     
     
 class AdapterUnloadRequest(BaseModel):
     """适配器卸载请求"""
-    adapter_id: str = Field(..., description="适配器ID")
+    adapter_name: str = Field(..., description="适配器名称")
+    adapter_id: Optional[str] = Field(None, description="适配器ID")
     force: bool = Field(False, description="是否强制卸载")
+    cleanup_memory: bool = Field(True, description="是否清理内存")
     save_state: bool = Field(True, description="是否保存状态")
     
 
@@ -551,8 +577,17 @@ class AdapterSwitchRequest(BaseModel):
     """适配器切换请求"""
     from_adapter_id: Optional[str] = Field(None, description="源适配器ID")
     to_adapter_id: str = Field(..., description="目标适配器ID")
+    unload_previous: bool = Field(True, description="是否卸载之前的适配器")
+    config: Optional[Dict[str, Any]] = Field(None, description="配置")
     config_override: Optional[Dict[str, Any]] = Field(None, description="配置覆盖")
     timeout: Optional[PositiveInt] = Field(30, description="超时时间(秒)")
+    
+    @model_validator(mode='after')
+    def validate_different_adapters(self):
+        """验证源适配器和目标适配器不能相同"""
+        if self.from_adapter_id and self.from_adapter_id == self.to_adapter_id:
+            raise ValueError("源适配器和目标适配器不能相同")
+        return self
 
 
 class AdapterListRequest(BaseModel):
@@ -654,16 +689,17 @@ class AdapterMonitoringData(BaseModel):
     health_score: float = Field(100.0, description="健康评分", ge=0.0, le=100.0)
     alerts: List[str] = Field(default_factory=list, description="告警信息")
     
-    class Config:
-        json_encoders = {
+    model_config = {
+        "json_encoders": {
             datetime: lambda v: v.isoformat()
         }
+    }
 
 
 class AdapterBatchOperationRequest(BaseModel):
     """适配器批量操作请求"""
     operation_type: str = Field(..., description="操作类型")
-    adapter_ids: List[str] = Field(..., description="适配器ID列表", min_items=1)
+    adapter_ids: List[str] = Field(..., description="适配器ID列表", min_length=1)
     config_override: Optional[Dict[str, Any]] = Field(None, description="配置覆盖")
     parallel: bool = Field(True, description="是否并行执行")
     timeout: Optional[PositiveInt] = Field(60, description="超时时间(秒)")
@@ -693,10 +729,11 @@ class AdapterBatchOperationResponse(BaseModel):
     completed_at: Optional[datetime] = Field(None, description="完成时间")
     execution_time: Optional[PositiveFloat] = Field(None, description="执行时间(秒)")
     
-    class Config:
-        json_encoders = {
+    model_config = {
+        "json_encoders": {
             datetime: lambda v: v.isoformat()
         }
+    }
 
 
 # 配置和元数据管理工具函数
@@ -809,7 +846,7 @@ def merge_adapter_configs(
 ) -> AdapterConfig:
     """合并适配器配置"""
     # 创建基础配置的副本
-    merged_config = base_config.copy(deep=True)
+    merged_config = base_config.model_copy(deep=True)
     
     # 合并覆盖配置
     for key, value in override_config.items():

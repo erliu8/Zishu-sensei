@@ -18,7 +18,7 @@ import logging
 
 # 第三方依赖
 try:
-    from pydantic import BaseModel, Field, validator, model_validator
+    from pydantic import BaseModel, Field, field_validator, model_validator
     from pydantic.types import StrictStr, PositiveInt
 except ImportError:
     raise ImportError("pydantic is required for metadata management. Install with: pip install pydantic")
@@ -38,6 +38,7 @@ class AdapterType(str, Enum):
     SOFT = "soft"                    # 软适配器：基于提示词工程和RAG
     HARD = "hard"                    # 硬适配器：系统级操作
     INTELLIGENT = "intelligent"      # 智能硬适配器：智能代码生成
+    LORA = "lora"                    # LoRA适配器：低秩适应
 
 
 class AdapterStatus(str, Enum):
@@ -101,7 +102,8 @@ class AdapterDependency(BaseModel):
     optional: bool = Field(False, description="是否可选")
     description: Optional[str] = Field(None, description="依赖描述")
     
-    @validator('version')
+    @field_validator('version')
+    @classmethod
     def validate_version(cls, v):
         if v and not isinstance(v, str):
             raise ValueError('Version must be a string')
@@ -118,7 +120,8 @@ class AdapterConfiguration(BaseModel):
     validation_rules: Optional[Dict[str, Any]] = Field(None, description="验证规则")
     sensitive: bool = Field(False, description="是否敏感信息")
     
-    @validator('type')
+    @field_validator('type')
+    @classmethod
     def validate_type(cls, v):
         allowed_types = {'string', 'int', 'float', 'bool', 'dict', 'list', 'json'}
         if v not in allowed_types:
@@ -147,7 +150,8 @@ class AdapterVersion(BaseModel):
     compatibility: Optional[List[str]] = Field(None, description="兼容的系统版本")
     deprecated: bool = Field(False, description="是否已废弃")
     
-    @validator('version')
+    @field_validator('version')
+    @classmethod
     def validate_version_format(cls, v):
         # 简单的语义版本验证
         parts = v.split('.')
@@ -175,7 +179,8 @@ class AdapterPerformanceMetrics(BaseModel):
     cpu_usage_percent: float = Field(0.0, description="CPU使用率(%)", ge=0.0, le=100.0)
     last_updated: datetime = Field(default_factory=lambda: datetime.now(timezone.utc))
     
-    @validator('success_rate', 'error_rate')
+    @field_validator('success_rate', 'error_rate')
+    @classmethod
     def validate_rates(cls, v):
         if not 0.0 <= v <= 1.0:
             raise ValueError('Rate must be between 0.0 and 1.0')
@@ -252,7 +257,8 @@ class AdapterMetadata(BaseModel):
             set: lambda v: list(v)
         }
     
-    @validator('adapter_id')
+    @field_validator('adapter_id')
+    @classmethod
     def validate_adapter_id(cls, v):
         if not v or len(v.strip()) == 0:
             raise ValueError('adapter_id cannot be empty')
