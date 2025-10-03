@@ -3,7 +3,7 @@
 output/
 venv/
 anime-offline-database/
-adapters/
+/adapters/
 # 但包含测试文件
 !tests/unit/adapters/
 
