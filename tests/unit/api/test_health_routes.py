@@ -244,14 +244,14 @@ class TestAdapterChecker:
     async def test_adapter_check_without_status(self):
         """测试无状态方法的适配器检查"""
         mock_model_manager = Mock()
-        # 没有get_adapter_status方法
+        # 确保没有get_adapter_status方法
+        del mock_model_manager.get_adapter_status
         
         checker = AdapterChecker(mock_model_manager)
         result = await checker.check()
         
-        assert result.status == HealthStatus.HEALTHY
-        assert result.message == "Adapter is not initialized"
-        assert result.details["status"] == "not initialized"
+        assert result.status == HealthStatus.UNHEALTHY
+        assert "Adapter is not initialized" in result.message
     
     @pytest.mark.asyncio
     async def test_adapter_check_failure(self):

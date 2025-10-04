@@ -151,15 +151,11 @@ class AdapterChecker(HealthChecker):
                     "details": adapter_status
                 }
             else:
-                return {
-                    "message": "Adapter is not initialized",
-                    "details": {"status": "not initialized"}
-                }
+                # 抛出异常以触发UNHEALTHY状态
+                raise Exception("Adapter is not initialized")
         except Exception as e:
-            return {
-                "message": f"Adapter check failed: {str(e)}",
-                "details": {"error": str(e)}
-            }
+            # 重新抛出异常，让基类处理为UNHEALTHY状态
+            raise Exception(f"Adapter check failed: {str(e)}")
             
 class SystemChecker(HealthChecker):
     """系统健康检查"""
@@ -214,10 +210,8 @@ class SystemChecker(HealthChecker):
                 "details": details
             }
         except Exception as e:
-            return {
-                "message": f"System check failed: {str(e)}",
-                "details": {"error": str(e)}
-            }
+            # 重新抛出异常，让基类处理为UNHEALTHY状态
+            raise Exception(f"System check failed: {str(e)}")
             
 #启动时间记录
 _startup_time = time.time()

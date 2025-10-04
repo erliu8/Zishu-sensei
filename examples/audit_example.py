@@ -11,22 +11,17 @@ from pathlib import Path
 # 添加项目路径
 sys.path.insert(0, str(Path(__file__).parent.parent))
 
-from zishu.adapters.security.audit import (
+from zishu.adapters.core.security import (
     # 核心类
     AuditLogger, AuditConfig, FileAuditStorage,
     AuditEvent, AuditEventType, AuditLevel, AuditSeverity,
-    
-    # 功能类
-    AuditMiddleware, SecurityAuditor, AuditAnalyzer,
-    AuditConfigManager,
     
     # 装饰器
     audit_operation, audit_adapter_operation,
     
     # 工具函数
     initialize_audit_system, shutdown_audit_system,
-    create_audit_report, create_example_config_file,
-    setup_audit_system_from_config
+    get_audit_logger
 )
 
 class ExampleAdapter:

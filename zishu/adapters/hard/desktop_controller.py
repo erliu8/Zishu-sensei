@@ -70,6 +70,7 @@ from ..base.metadata import (
 
 # 安全审计模块（可选）
 try:
+    from ..core.security import SecurityManager
     from ..security.audit import audit_adapter_operation
     AUDIT_AVAILABLE = True
 except ImportError:

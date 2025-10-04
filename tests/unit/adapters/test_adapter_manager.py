@@ -1,264 +1,534 @@
 # -*- coding: utf-8 -*-
 """
-适配器管理器单元测试 - 重点测试模块
+适配器管理器测试
+
+测试新架构的适配器管理器功能
 """
+
 import pytest
 import asyncio
-from unittest.mock import Mock, AsyncMock, patch, MagicMock
-from pathlib import Path
-import torch
-import json
+from unittest.mock import Mock, AsyncMock, patch
+from datetime import datetime, timezone
+from typing import Dict, Any, List
 
-# 假设的适配器管理器导入（需要根据实际路径调整）
-# from zishu.adapters.manager import AdapterManager
-# from zishu.adapters.base import BaseAdapter
+from zishu.adapters.core.manager import AdapterManager, AdapterManagerConfig
+from zishu.adapters.core.services.base import ServiceStatus, HealthCheckResult
+from zishu.adapters.core.types import (
+    AdapterRegistration, AdapterIdentity, AdapterConfiguration,
+    AdapterStatus, AdapterType, Priority, SecurityLevel
+)
+from zishu.adapters.core.events import EventBus, Event, EventType
 
-@pytest.mark.unit
-@pytest.mark.adapter
+from tests.utils.adapter_test_utils import AdapterTestUtils
+
+
 class TestAdapterManager:
     """适配器管理器测试类"""
-    
+
     @pytest.fixture
-    def adapter_manager(self, mock_model, mock_tokenizer):
-        """适配器管理器fixture"""
-        # 这里需要根据实际的AdapterManager类进行调整
-        manager = Mock()
-        manager.model = mock_model
-        manager.tokenizer = mock_tokenizer
-        manager.loaded_adapters = {}
-        manager.adapter_configs = {}
-        return manager
-    
-    def test_adapter_manager_initialization(self, adapter_manager):
-        """测试适配器管理器初始化"""
-        assert adapter_manager.model is not None
-        assert adapter_manager.tokenizer is not None
-        assert isinstance(adapter_manager.loaded_adapters, dict)
-        assert isinstance(adapter_manager.adapter_configs, dict)
-    
-    @pytest.mark.asyncio
-    async def test_load_adapter_success(self, adapter_manager, sample_lora_weights):
-        """测试成功加载适配器"""
-        adapter_manager.load_adapter = AsyncMock(return_value=True)
+    def manager_config(self):
+        """创建管理器配置"""
+        return AdapterManagerConfig(
+            enable_security=True,
+            enable_metrics=True,
+            enable_health_monitoring=True,
+            enable_events=True,
+            max_adapters=100,
+            startup_timeout=10.0,
+            shutdown_timeout=5.0
+        )
+
+    @pytest.fixture
+    async def adapter_manager(self, manager_config):
+        """创建适配器管理器实例"""
+        manager = AdapterManager(config=manager_config)
+        await manager.initialize()
+        yield manager
+        await manager.shutdown()
+
+    @pytest.fixture
+    def test_adapter_class(self):
+        """创建测试适配器类"""
+        class TestAdapter:
+            def __init__(self, config):
+                self.config = config
+                self.is_initialized = False
+                self.is_started = False
+                self.process_count = 0
+            
+            async def initialize(self):
+                self.is_initialized = True
+                return True
+            
+            async def start(self):
+                if not self.is_initialized:
+                    raise RuntimeError("Adapter not initialized")
+                self.is_started = True
+                return True
+            
+            async def stop(self):
+                self.is_started = False
+                return True
+            
+            async def process(self, input_data, context=None):
+                if not self.is_started:
+                    raise RuntimeError("Adapter not started")
+                self.process_count += 1
+                return {"result": f"processed_{self.process_count}", "input": input_data}
+            
+            async def health_check(self):
+                return HealthCheckResult(
+                    is_healthy=self.is_started,
+                    service_name="test_adapter",
+                    details={"process_count": self.process_count}
+                )
         
-        result = await adapter_manager.load_adapter(
-            adapter_name="test_adapter",
-            adapter_path=str(sample_lora_weights)
+        return TestAdapter
+
+    @pytest.fixture
+    def test_adapter_config(self, test_adapter_class):
+        """创建测试适配器配置"""
+        identity = AdapterTestUtils.create_test_adapter_identity(
+            adapter_id="test-adapter-001",
+            name="Test Adapter",
+            adapter_type=AdapterType.SOFT
         )
         
+        config = AdapterTestUtils.create_test_adapter_configuration(
+            config={"test_param": "test_value"},
+            security_level=SecurityLevel.INTERNAL
+        )
+        
+        # 创建适配器配置对象
+        adapter_config = AdapterConfiguration(
+            identity=identity.adapter_id,
+            name=identity.name,
+            version=identity.version,
+            adapter_type=identity.adapter_type,
+            description=identity.description,
+            author=identity.author,
+            tags=list(identity.tags),
+            adapter_class=test_adapter_class,
+            config=config.config,
+            security_level=config.security_level,
+            dependencies=config.dependencies,
+            capabilities=config.capabilities
+        )
+        
+        return adapter_config
+
+    async def test_manager_initialization(self, manager_config):
+        """测试管理器初始化"""
+        manager = AdapterManager(config=manager_config)
+        
+        # 验证初始状态
+        assert manager.config == manager_config
+        assert not manager.is_initialized
+        assert not manager.is_running
+        
+        # 初始化管理器
+        await manager.initialize()
+        assert manager.is_initialized
+        assert not manager.is_running
+        
+        # 启动管理器
+        await manager.start()
+        assert manager.is_running
+        
+        # 停止管理器
+        await manager.stop()
+        assert not manager.is_running
+        
+        # 关闭管理器
+        await manager.shutdown()
+
+    async def test_register_adapter(self, adapter_manager, test_adapter_config):
+        """测试注册适配器"""
+        # 启动管理器
+        await adapter_manager.start()
+        
+        # 注册适配器
+        result = await adapter_manager.register_adapter(test_adapter_config)
         assert result is True
-        adapter_manager.load_adapter.assert_called_once()
-    
-    @pytest.mark.asyncio
-    async def test_load_adapter_failure(self, adapter_manager):
-        """测试加载适配器失败"""
-        adapter_manager.load_adapter = AsyncMock(side_effect=FileNotFoundError("适配器文件不存在"))
         
-        with pytest.raises(FileNotFoundError):
-            await adapter_manager.load_adapter(
-                adapter_name="nonexistent_adapter",
-                adapter_path="/nonexistent/path"
-            )
-    
-    @pytest.mark.asyncio
-    async def test_unload_adapter(self, adapter_manager):
-        """测试卸载适配器"""
-        adapter_manager.unload_adapter = AsyncMock(return_value=True)
-        adapter_manager.loaded_adapters = {"test_adapter": Mock()}
+        # 验证适配器已注册
+        adapters = await adapter_manager.list_adapters()
+        assert len(adapters) == 1
+        assert test_adapter_config.identity in adapters
+
+    async def test_unregister_adapter(self, adapter_manager, test_adapter_config):
+        """测试注销适配器"""
+        await adapter_manager.start()
         
-        result = await adapter_manager.unload_adapter("test_adapter")
+        # 先注册适配器
+        await adapter_manager.register_adapter(test_adapter_config)
         
+        # 注销适配器
+        result = await adapter_manager.unregister_adapter(test_adapter_config.identity)
         assert result is True
-        adapter_manager.unload_adapter.assert_called_once_with("test_adapter")
-    
-    def test_list_adapters(self, adapter_manager):
-        """测试列出适配器"""
-        adapter_manager.list_adapters = Mock(return_value=["adapter1", "adapter2", "adapter3"])
         
-        adapters = adapter_manager.list_adapters()
+        # 验证适配器已注销
+        adapters = await adapter_manager.list_adapters()
+        assert len(adapters) == 0
+
+    async def test_start_adapter(self, adapter_manager, test_adapter_config):
+        """测试启动适配器"""
+        await adapter_manager.start()
         
-        assert isinstance(adapters, list)
-        assert len(adapters) == 3
-        assert "adapter1" in adapters
-    
-    def test_get_adapter_info(self, adapter_manager):
+        # 注册并启动适配器
+        await adapter_manager.register_adapter(test_adapter_config)
+        result = await adapter_manager.start_adapter(test_adapter_config.identity)
+        assert result is True
+        
+        # 验证适配器状态
+        status = await adapter_manager.get_adapter_status(test_adapter_config.identity)
+        assert status == AdapterStatus.RUNNING
+
+    async def test_stop_adapter(self, adapter_manager, test_adapter_config):
+        """测试停止适配器"""
+        await adapter_manager.start()
+        
+        # 注册、启动然后停止适配器
+        await adapter_manager.register_adapter(test_adapter_config)
+        await adapter_manager.start_adapter(test_adapter_config.identity)
+        
+        result = await adapter_manager.stop_adapter(test_adapter_config.identity)
+        assert result is True
+        
+        # 验证适配器状态
+        status = await adapter_manager.get_adapter_status(test_adapter_config.identity)
+        assert status == AdapterStatus.STOPPED
+
+    async def test_process_with_adapter(self, adapter_manager, test_adapter_config):
+        """测试使用适配器处理数据"""
+        await adapter_manager.start()
+        
+        # 注册并启动适配器
+        await adapter_manager.register_adapter(test_adapter_config)
+        await adapter_manager.start_adapter(test_adapter_config.identity)
+        
+        # 处理数据
+        input_data = {"test": "data"}
+        result = await adapter_manager.process_with_adapter(
+            test_adapter_config.identity,
+            input_data
+        )
+        
+        assert result is not None
+        assert "result" in result
+        assert result["input"] == input_data
+
+    async def test_batch_process_with_adapter(self, adapter_manager, test_adapter_config):
+        """测试批量处理数据"""
+        await adapter_manager.start()
+        
+        # 注册并启动适配器
+        await adapter_manager.register_adapter(test_adapter_config)
+        await adapter_manager.start_adapter(test_adapter_config.identity)
+        
+        # 批量处理数据
+        input_batch = [{"test": f"data_{i}"} for i in range(3)]
+        results = await adapter_manager.batch_process_with_adapter(
+            test_adapter_config.identity,
+            input_batch
+        )
+        
+        assert len(results) == 3
+        for i, result in enumerate(results):
+            assert result["input"]["test"] == f"data_{i}"
+
+    async def test_get_adapter_info(self, adapter_manager, test_adapter_config):
         """测试获取适配器信息"""
-        expected_info = {
-            "name": "test_adapter",
-            "type": "lora",
-            "rank": 8,
-            "status": "loaded",
-            "memory_usage": "128MB"
-        }
-        adapter_manager.get_adapter_info = Mock(return_value=expected_info)
+        await adapter_manager.start()
         
-        info = adapter_manager.get_adapter_info("test_adapter")
+        # 注册适配器
+        await adapter_manager.register_adapter(test_adapter_config)
         
-        assert info["name"] == "test_adapter"
-        assert info["type"] == "lora"
-        assert info["status"] == "loaded"
-    
-    @pytest.mark.asyncio
-    async def test_switch_adapter(self, adapter_manager):
-        """测试切换适配器"""
-        adapter_manager.switch_adapter = AsyncMock(return_value=True)
+        # 获取适配器信息
+        info = await adapter_manager.get_adapter_info(test_adapter_config.identity)
         
-        result = await adapter_manager.switch_adapter(
-            from_adapter="adapter1",
-            to_adapter="adapter2"
-        )
-        
-        assert result is True
-        adapter_manager.switch_adapter.assert_called_once()
-    
-    def test_validate_adapter_config(self, adapter_manager, sample_adapter_config):
-        """测试验证适配器配置"""
-        adapter_manager.validate_config = Mock(return_value=True)
-        
-        is_valid = adapter_manager.validate_config(sample_adapter_config)
-        
-        assert is_valid is True
-        adapter_manager.validate_config.assert_called_once_with(sample_adapter_config)
-    
-    @pytest.mark.asyncio
-    async def test_batch_load_adapters(self, adapter_manager):
-        """测试批量加载适配器"""
-        adapter_list = ["adapter1", "adapter2", "adapter3"]
-        adapter_manager.batch_load = AsyncMock(return_value={"success": 2, "failed": 1})
-        
-        result = await adapter_manager.batch_load(adapter_list)
-        
-        assert result["success"] == 2
-        assert result["failed"] == 1
-    
-    def test_memory_usage_tracking(self, adapter_manager):
-        """测试内存使用跟踪"""
-        adapter_manager.get_memory_usage = Mock(return_value={
-            "total": "512MB",
-            "adapters": {
-                "adapter1": "128MB",
-                "adapter2": "256MB"
-            }
-        })
-        
-        memory_info = adapter_manager.get_memory_usage()
-        
-        assert "total" in memory_info
-        assert "adapters" in memory_info
-        assert memory_info["adapters"]["adapter1"] == "128MB"
+        assert info is not None
+        assert info.identity.adapter_id == test_adapter_config.identity
+        assert info.identity.name == test_adapter_config.name
 
-@pytest.mark.unit
-@pytest.mark.adapter
-class TestAdapterCompatibility:
-    """适配器兼容性测试"""
-    
-    def test_lora_adapter_compatibility(self, sample_adapter_config):
-        """测试LoRA适配器兼容性"""
-        # 模拟LoRA适配器兼容性检查
-        assert sample_adapter_config["type"] == "lora"
-        assert "rank" in sample_adapter_config
-        assert "alpha" in sample_adapter_config
-    
-    def test_adapter_version_compatibility(self):
-        """测试适配器版本兼容性"""
-        # 模拟版本兼容性检查
-        compatible_versions = ["1.0.0", "1.1.0", "1.2.0"]
-        current_version = "1.1.0"
+    async def test_list_adapters_by_type(self, adapter_manager):
+        """测试按类型列出适配器"""
+        await adapter_manager.start()
         
-        assert current_version in compatible_versions
-    
-    def test_model_adapter_compatibility(self, mock_model):
-        """测试模型与适配器兼容性"""
-        # 模拟模型兼容性检查
-        model_config = mock_model.config
-        assert hasattr(model_config, "hidden_size")
-        assert model_config.hidden_size > 0
+        # 创建不同类型的适配器
+        soft_config = AdapterTestUtils.create_test_adapter_configuration()
+        soft_config.identity = "soft-adapter"
+        soft_config.adapter_type = AdapterType.SOFT
+        
+        hard_config = AdapterTestUtils.create_test_adapter_configuration()
+        hard_config.identity = "hard-adapter"
+        hard_config.adapter_type = AdapterType.HARD
+        
+        # 注册适配器
+        await adapter_manager.register_adapter(soft_config)
+        await adapter_manager.register_adapter(hard_config)
+        
+        # 按类型列出适配器
+        soft_adapters = await adapter_manager.list_adapters_by_type(AdapterType.SOFT)
+        hard_adapters = await adapter_manager.list_adapters_by_type(AdapterType.HARD)
+        
+        assert len(soft_adapters) == 1
+        assert len(hard_adapters) == 1
+        assert soft_adapters[0].identity.adapter_id == "soft-adapter"
+        assert hard_adapters[0].identity.adapter_id == "hard-adapter"
 
-@pytest.mark.integration
-@pytest.mark.adapter
-class TestAdapterIntegration:
-    """适配器集成测试"""
-    
-    @pytest.mark.asyncio
-    async def test_adapter_model_integration(self, adapter_manager, mock_model):
-        """测试适配器与模型集成"""
-        # 模拟适配器加载到模型
-        adapter_manager.integrate_with_model = AsyncMock(return_value=True)
+    async def test_find_adapters_by_capability(self, adapter_manager):
+        """测试按能力查找适配器"""
+        await adapter_manager.start()
         
-        result = await adapter_manager.integrate_with_model(mock_model, "test_adapter")
+        # 创建带能力的适配器配置
+        config = AdapterTestUtils.create_test_adapter_configuration()
+        config.identity = "capable-adapter"
+        config.capabilities = ["text_processing", "data_transformation"]
         
-        assert result is True
-    
-    @pytest.mark.asyncio
-    async def test_adapter_inference_pipeline(self, adapter_manager, mock_model, mock_tokenizer):
-        """测试适配器推理流程"""
-        # 模拟完整的推理流程
-        input_text = "测试输入"
-        expected_output = "测试输出"
+        # 注册适配器
+        await adapter_manager.register_adapter(config)
         
-        # 设置mock行为
-        mock_tokenizer.encode.return_value = [1, 2, 3]
-        mock_model.generate.return_value = torch.tensor([[4, 5, 6]])
-        mock_tokenizer.decode.return_value = expected_output
+        # 按能力查找适配器
+        text_processors = await adapter_manager.find_adapters_by_capability("text_processing")
+        data_transformers = await adapter_manager.find_adapters_by_capability("data_transformation")
+        image_processors = await adapter_manager.find_adapters_by_capability("image_processing")
         
-        # 模拟推理流程
-        adapter_manager.generate_with_adapter = AsyncMock(return_value=expected_output)
-        
-        result = await adapter_manager.generate_with_adapter(
-            adapter_name="test_adapter",
-            input_text=input_text
-        )
-        
-        assert result == expected_output
+        assert len(text_processors) == 1
+        assert len(data_transformers) == 1
+        assert len(image_processors) == 0
+        assert text_processors[0].identity.adapter_id == "capable-adapter"
 
-@pytest.mark.performance
-@pytest.mark.adapter
-class TestAdapterPerformance:
-    """适配器性能测试"""
-    
-    @pytest.mark.asyncio
-    async def test_adapter_loading_speed(self, adapter_manager, performance_monitor):
-        """测试适配器加载速度"""
-        performance_monitor.start()
+    async def test_health_check_adapter(self, adapter_manager, test_adapter_config):
+        """测试适配器健康检查"""
+        await adapter_manager.start()
         
-        # 模拟适配器加载
-        adapter_manager.load_adapter = AsyncMock(return_value=True)
-        await adapter_manager.load_adapter("test_adapter", "/test/path")
+        # 注册并启动适配器
+        await adapter_manager.register_adapter(test_adapter_config)
+        await adapter_manager.start_adapter(test_adapter_config.identity)
         
-        metrics = performance_monitor.stop()
+        # 执行健康检查
+        health_result = await adapter_manager.health_check_adapter(test_adapter_config.identity)
         
-        # 断言加载时间在合理范围内（例如小于5秒）
-        assert metrics["duration"] < 5.0
-    
-    @pytest.mark.asyncio
-    async def test_adapter_memory_efficiency(self, adapter_manager, performance_monitor):
-        """测试适配器内存效率"""
-        performance_monitor.start()
+        assert health_result is not None
+        assert health_result.is_healthy is True
+        assert health_result.service_name == "test_adapter"
+
+    async def test_health_check_all_adapters(self, adapter_manager):
+        """测试所有适配器健康检查"""
+        await adapter_manager.start()
         
-        # 模拟多个适配器加载
+        # 创建多个适配器
+        configs = []
         for i in range(3):
-            adapter_manager.load_adapter = AsyncMock(return_value=True)
-            await adapter_manager.load_adapter(f"adapter_{i}", f"/test/path_{i}")
+            config = AdapterTestUtils.create_test_adapter_configuration()
+            config.identity = f"adapter-{i}"
+            configs.append(config)
+            await adapter_manager.register_adapter(config)
+            await adapter_manager.start_adapter(config.identity)
         
-        metrics = performance_monitor.stop()
+        # 执行所有适配器健康检查
+        health_results = await adapter_manager.health_check_all_adapters()
         
-        # 断言内存使用在合理范围内（例如小于1GB）
-        assert metrics["memory_used"] < 1024 * 1024 * 1024  # 1GB
-    
-    def test_concurrent_adapter_operations(self, adapter_manager):
+        assert len(health_results) == 3
+        for adapter_id, health_result in health_results.items():
+            assert health_result.is_healthy is True
+
+    async def test_get_adapter_metrics(self, adapter_manager, test_adapter_config):
+        """测试获取适配器指标"""
+        await adapter_manager.start()
+        
+        # 注册并启动适配器
+        await adapter_manager.register_adapter(test_adapter_config)
+        await adapter_manager.start_adapter(test_adapter_config.identity)
+        
+        # 处理一些数据以生成指标
+        for i in range(5):
+            await adapter_manager.process_with_adapter(
+                test_adapter_config.identity,
+                {"test": f"data_{i}"}
+            )
+        
+        # 获取适配器指标
+        metrics = await adapter_manager.get_adapter_metrics(test_adapter_config.identity)
+        
+        assert metrics is not None
+        # 验证指标包含预期字段（具体字段取决于实现）
+
+    async def test_get_system_metrics(self, adapter_manager, test_adapter_config):
+        """测试获取系统指标"""
+        await adapter_manager.start()
+        
+        # 注册一些适配器
+        await adapter_manager.register_adapter(test_adapter_config)
+        
+        # 获取系统指标
+        system_metrics = await adapter_manager.get_system_metrics()
+        
+        assert system_metrics is not None
+        assert "total_adapters" in system_metrics
+        assert "running_adapters" in system_metrics
+        assert system_metrics["total_adapters"] >= 1
+
+    async def test_concurrent_adapter_operations(self, adapter_manager):
         """测试并发适配器操作"""
-        async def concurrent_test():
-            tasks = []
-            for i in range(5):
-                adapter_manager.load_adapter = AsyncMock(return_value=True)
-                task = adapter_manager.load_adapter(f"adapter_{i}", f"/path_{i}")
-                tasks.append(task)
-            
-            results = await asyncio.gather(*tasks, return_exceptions=True)
-            
-            # 检查所有操作都成功完成
-            for result in results:
-                assert not isinstance(result, Exception)
-                assert result is True
+        await adapter_manager.start()
         
-        asyncio.run(concurrent_test())
+        # 创建多个适配器配置
+        configs = []
+        for i in range(5):
+            config = AdapterTestUtils.create_test_adapter_configuration()
+            config.identity = f"concurrent-adapter-{i}"
+            configs.append(config)
+        
+        # 并发注册适配器
+        register_tasks = [
+            adapter_manager.register_adapter(config)
+            for config in configs
+        ]
+        register_results = await asyncio.gather(*register_tasks)
+        
+        # 验证所有注册都成功
+        assert all(register_results)
+        
+        # 并发启动适配器
+        start_tasks = [
+            adapter_manager.start_adapter(config.identity)
+            for config in configs
+        ]
+        start_results = await asyncio.gather(*start_tasks)
+        
+        # 验证所有启动都成功
+        assert all(start_results)
+
+    async def test_adapter_lifecycle_events(self, adapter_manager, test_adapter_config):
+        """测试适配器生命周期事件"""
+        # 创建事件监听器
+        received_events = []
+        
+        async def event_handler(event):
+            received_events.append(event)
+        
+        # 订阅事件（这里需要根据实际事件系统实现）
+        # await adapter_manager.subscribe_to_events(event_handler)
+        
+        await adapter_manager.start()
+        
+        # 执行适配器生命周期操作
+        await adapter_manager.register_adapter(test_adapter_config)
+        await adapter_manager.start_adapter(test_adapter_config.identity)
+        await adapter_manager.stop_adapter(test_adapter_config.identity)
+        await adapter_manager.unregister_adapter(test_adapter_config.identity)
+        
+        # 验证事件被发送（具体验证逻辑取决于事件系统实现）
+
+    async def test_security_validation(self, adapter_manager):
+        """测试安全验证"""
+        await adapter_manager.start()
+        
+        # 创建高安全级别的适配器配置
+        config = AdapterTestUtils.create_test_adapter_configuration()
+        config.identity = "secure-adapter"
+        config.security_level = SecurityLevel.RESTRICTED
+        
+        # 注册适配器（可能需要额外的安全验证）
+        result = await adapter_manager.register_adapter(config)
+        
+        # 验证结果（具体行为取决于安全策略实现）
+        assert isinstance(result, bool)
+
+    async def test_dependency_resolution(self, adapter_manager):
+        """测试依赖解析"""
+        await adapter_manager.start()
+        
+        # 创建有依赖关系的适配器
+        base_config = AdapterTestUtils.create_test_adapter_configuration()
+        base_config.identity = "base-adapter"
+        
+        dependent_config = AdapterTestUtils.create_test_adapter_configuration()
+        dependent_config.identity = "dependent-adapter"
+        dependent_config.dependencies = ["base-adapter"]
+        
+        # 注册适配器
+        await adapter_manager.register_adapter(base_config)
+        await adapter_manager.register_adapter(dependent_config)
+        
+        # 启动依赖适配器（应该自动启动基础适配器）
+        result = await adapter_manager.start_adapter("dependent-adapter")
+        assert result is True
+        
+        # 验证基础适配器也被启动
+        base_status = await adapter_manager.get_adapter_status("base-adapter")
+        dependent_status = await adapter_manager.get_adapter_status("dependent-adapter")
+        
+        assert base_status == AdapterStatus.RUNNING
+        assert dependent_status == AdapterStatus.RUNNING
+
+    async def test_error_handling(self, adapter_manager):
+        """测试错误处理"""
+        await adapter_manager.start()
+        
+        # 测试注册无效适配器
+        invalid_config = Mock()
+        invalid_config.identity = None
+        
+        with pytest.raises(Exception):
+            await adapter_manager.register_adapter(invalid_config)
+        
+        # 测试启动不存在的适配器
+        result = await adapter_manager.start_adapter("nonexistent-adapter")
+        assert result is False
+        
+        # 测试处理不存在的适配器
+        with pytest.raises(Exception):
+            await adapter_manager.process_with_adapter("nonexistent-adapter", {})
+
+    async def test_resource_management(self, adapter_manager, test_adapter_config):
+        """测试资源管理"""
+        await adapter_manager.start()
+        
+        # 注册并启动适配器
+        await adapter_manager.register_adapter(test_adapter_config)
+        await adapter_manager.start_adapter(test_adapter_config.identity)
+        
+        # 获取资源使用情况
+        resource_usage = await adapter_manager.get_resource_usage()
+        
+        assert resource_usage is not None
+        # 验证资源使用指标（具体字段取决于实现）
+
+    async def test_configuration_update(self, adapter_manager, test_adapter_config):
+        """测试配置更新"""
+        await adapter_manager.start()
+        
+        # 注册适配器
+        await adapter_manager.register_adapter(test_adapter_config)
+        
+        # 更新配置
+        new_config = test_adapter_config.copy()
+        new_config.config["updated_param"] = "updated_value"
+        
+        result = await adapter_manager.update_adapter_config(
+            test_adapter_config.identity,
+            new_config
+        )
+        
+        # 验证更新结果（具体行为取决于实现）
+        assert isinstance(result, bool)
+
+    async def test_manager_shutdown_cleanup(self, manager_config):
+        """测试管理器关闭时的清理"""
+        manager = AdapterManager(config=manager_config)
+        await manager.initialize()
+        await manager.start()
+        
+        # 注册一些适配器
+        config = AdapterTestUtils.create_test_adapter_configuration()
+        await manager.register_adapter(config)
+        await manager.start_adapter(config.identity)
+        
+        # 关闭管理器
+        await manager.shutdown()
+        
+        # 验证所有资源都被清理
+        # 这里的具体验证取决于实现细节

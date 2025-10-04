@@ -24,8 +24,13 @@ from .interfaces import (
 )
 
 from .backends import MemoryStorageBackend, FileStorageBackend
+from .backends.sqlite import SQLiteStorageBackend
+from .backends.postgresql import PostgreSQLStorageBackend
+from .backends.redis import RedisStorageBackend
+from .backends.mongodb import MongoDBStorageBackend
 from .adapter_storage import AdapterStorage
 from .manager import StorageManager, get_storage_manager, initialize_storage, shutdown_storage
+from .factory import StorageFactory, StorageConfig, StorageManager as StorageManagerNew
 
 __all__ = [
     # 接口
@@ -47,8 +52,15 @@ __all__ = [
     # 实现类
     'MemoryStorageBackend',
     'FileStorageBackend',
+    'SQLiteStorageBackend',
+    'PostgreSQLStorageBackend',
+    'RedisStorageBackend',
+    'MongoDBStorageBackend',
     'AdapterStorage',
     'StorageManager',
+    'StorageManagerNew',
+    'StorageFactory',
+    'StorageConfig',
     'get_storage_manager',
     
     # 工具函数

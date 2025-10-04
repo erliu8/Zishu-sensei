@@ -19,18 +19,6 @@ from pathlib import Path
 class TestInferenceEngine:
     """推理引擎测试类"""
     
-    @pytest.fixture
-    def mock_inference_engine(self, mock_model, mock_tokenizer):
-        """模拟推理引擎"""
-        engine = Mock()
-        engine.model = mock_model
-        engine.tokenizer = mock_tokenizer
-        engine.device = torch.device("cpu")
-        engine.max_length = 512
-        engine.temperature = 0.7
-        engine.top_p = 0.9
-        engine.is_loaded = False
-        return engine
     
     @pytest.fixture
     def sample_generation_config(self):

@@ -47,6 +47,7 @@ class EmotionType(str, Enum):
     SICK = "sick"
     DEPRESSED = "depressed"
     EMPATHETIC = "empathetic"
+    CHEERFUL = "cheerful"  
     
 class ChatModel(str, Enum):
     """对话模式"""

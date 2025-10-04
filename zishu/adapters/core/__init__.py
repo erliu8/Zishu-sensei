@@ -33,6 +33,9 @@ from .types import (
     ValidationResult, ServiceMetrics
 )
 
+# 安全模块
+from .security import SecurityManager, SecurityServiceConfig
+
 __all__ = [
     # 管理器
     'AdapterManager',
@@ -69,5 +72,9 @@ __all__ = [
     'LifecycleState',
     'HealthCheckResult',
     'ValidationResult',
-    'ServiceMetrics'
+    'ServiceMetrics',
+    
+    # 安全模块
+    'SecurityManager',
+    'SecurityServiceConfig'
 ]

@@ -16,12 +16,14 @@ from .services.registry_service import AdapterRegistryService
 from .services.validation_service import AdapterValidationService
 from .services.health_service import AdapterHealthService
 from .services.event_service import AdapterEventService
+from .services.metrics_service import AdapterMetricsService, AdapterMetricsServiceConfig
 from .events import EventBus
 from .types import (
     AdapterConfiguration, AdapterRegistration, AdapterIdentity,
     AdapterStatus, LifecycleState, EventType, Event, Priority
 )
 from ..base.adapter import BaseAdapter
+from .security import SecurityManager, SecurityServiceConfig
 
 logger = logging.getLogger(__name__)
 
@@ -38,6 +40,9 @@ class AdapterManagerConfig:
         enable_auto_recovery: bool = True,
         enable_validation: bool = True,
         enable_metrics: bool = True,
+        enable_security: bool = True,
+        security_config: Optional[SecurityServiceConfig] = None,
+        metrics_config: Optional[AdapterMetricsServiceConfig] = None,
         **kwargs
     ):
         self.max_adapters = max_adapters
@@ -47,6 +52,9 @@ class AdapterManagerConfig:
         self.enable_auto_recovery = enable_auto_recovery
         self.enable_validation = enable_validation
         self.enable_metrics = enable_metrics
+        self.enable_security = enable_security
+        self.security_config = security_config
+        self.metrics_config = metrics_config or AdapterMetricsServiceConfig()
         self.extra_config = kwargs
 
 
@@ -81,6 +89,13 @@ class AdapterManager:
         self._orchestrator = AdapterServiceOrchestrator(orchestrator_config)
         self._services: Dict[str, AsyncService] = {}
         self._adapters: Dict[str, BaseAdapter] = {}
+        
+        # 安全管理器
+        self._security_manager: Optional[SecurityManager] = None
+        if self.config.enable_security:
+            self._security_manager = SecurityManager(
+                config=self.config.security_config
+            )
         
         # 状态管理
         self._status = ServiceStatus.CREATED
@@ -118,6 +133,16 @@ class AdapterManager:
     def event_service(self) -> AdapterEventService:
         """获取事件服务"""
         return self._services.get("events")
+    
+    @property
+    def metrics_service(self) -> Optional[AdapterMetricsService]:
+        """获取指标服务"""
+        return self._services.get("metrics")
+    
+    @property
+    def security_manager(self) -> Optional[SecurityManager]:
+        """获取安全管理器"""
+        return self._security_manager
     
     async def initialize(self) -> None:
         """初始化管理器"""
@@ -161,11 +186,22 @@ class AdapterManager:
                     })
                 )
                 
+                # 创建指标服务（如果启用）
+                metrics_service = None
+                if self.config.enable_metrics:
+                    metrics_service = AdapterMetricsService(
+                        event_bus=event_bus,
+                        config=self.config.metrics_config.__dict__
+                    )
+                
                 # 注册服务到协调器
                 self._orchestrator.register_service(event_service)
                 self._orchestrator.register_service(registry_service)
                 self._orchestrator.register_service(validation_service)
                 self._orchestrator.register_service(health_service)
+                
+                if metrics_service:
+                    self._orchestrator.register_service(metrics_service)
                 
                 # 设置服务依赖关系
                 self._orchestrator.add_dependency("adapter_registry", "adapter_events")
@@ -173,16 +209,30 @@ class AdapterManager:
                 self._orchestrator.add_dependency("adapter_health", "adapter_registry")
                 self._orchestrator.add_dependency("adapter_health", "adapter_events")
                 
+                if metrics_service:
+                    self._orchestrator.add_dependency("adapter_metrics", "adapter_events")
+                    self._orchestrator.add_dependency("adapter_metrics", "adapter_registry")
+                
                 # 存储服务引用
-                self._services = {
+                services_dict = {
                     "events": event_service,
                     "registry": registry_service,
                     "validation": validation_service,
                     "health": health_service
                 }
                 
+                if metrics_service:
+                    services_dict["metrics"] = metrics_service
+                
+                self._services = services_dict
+                
                 # 初始化协调器
                 await self._orchestrator.initialize()
+                
+                # 初始化安全管理器
+                if self._security_manager:
+                    await self._security_manager.initialize()
+                    logger.info("Security manager initialized")
                 
                 self._status = ServiceStatus.READY
                 self._initialized = True
@@ -238,6 +288,11 @@ class AdapterManager:
                 
                 # 停止所有服务
                 await self._orchestrator.stop_all()
+                
+                # 关闭安全管理器
+                if self._security_manager:
+                    await self._security_manager.shutdown()
+                    logger.info("Security manager shutdown")
                 
                 self._adapters.clear()
                 self._services.clear()
@@ -496,11 +551,62 @@ class AdapterManager:
                 adapter_metrics = await self.health_service.get_system_metrics()
                 metrics.update(adapter_metrics)
             
+            # 收集指标服务的指标
+            if self.metrics_service:
+                metrics_summary = await self.metrics_service.get_system_metrics_summary()
+                metrics['metrics_service'] = metrics_summary
+            
             return metrics
             
         except Exception as e:
             logger.error(f"Failed to get system metrics: {e}")
             return {'error': str(e)}
+    
+    # ================================
+    # 指标管理方法
+    # ================================
+    
+    async def get_adapter_metrics(self, adapter_id: str, 
+                                 start_time: Optional[datetime] = None,
+                                 end_time: Optional[datetime] = None) -> Dict[str, Any]:
+        """获取适配器指标"""
+        if not self.is_running:
+            raise RuntimeError("AdapterManager must be running")
+        
+        if not self.metrics_service:
+            logger.warning("Metrics service not available")
+            return {}
+        
+        return await self.metrics_service.get_adapter_metrics(adapter_id, start_time, end_time)
+    
+    async def export_metrics(self, format: str = "prometheus") -> Optional[str]:
+        """导出指标"""
+        if not self.is_running:
+            raise RuntimeError("AdapterManager must be running")
+        
+        if not self.metrics_service:
+            logger.warning("Metrics service not available")
+            return None
+        
+        return await self.metrics_service.export_metrics(format)
+    
+    async def get_metrics_dashboard_data(self, dashboard_name: str) -> Optional[Dict[str, Any]]:
+        """获取指标仪表板数据"""
+        if not self.is_running:
+            raise RuntimeError("AdapterManager must be running")
+        
+        if not self.metrics_service:
+            logger.warning("Metrics service not available")
+            return None
+        
+        return await self.metrics_service.get_dashboard_data(dashboard_name)
+    
+    def get_tracked_adapters(self) -> List[str]:
+        """获取被跟踪的适配器列表"""
+        if not self.metrics_service:
+            return []
+        
+        return self.metrics_service.get_tracked_adapters()
     
     # 内部方法
     
@@ -513,3 +619,126 @@ class AdapterManager:
     
     def __repr__(self) -> str:
         return f"<AdapterManager(status='{self._status}', services={len(self._services)}, adapters={len(self._adapters)})>"
+    
+    # ================================
+    # 安全管理方法
+    # ================================
+    
+    async def authenticate_user(
+        self,
+        user_id: str,
+        credentials: Dict[str, Any],
+        context: Optional[Dict[str, Any]] = None
+    ) -> bool:
+        """用户认证"""
+        if not self._security_manager:
+            logger.warning("Security manager not enabled")
+            return True  # 如果未启用安全，默认允许
+        
+        return await self._security_manager.authenticate_user(user_id, credentials, context)
+    
+    async def create_security_session(
+        self,
+        user_id: str,
+        permissions: List[str],
+        **kwargs
+    ) -> Optional[str]:
+        """创建安全会话"""
+        if not self._security_manager:
+            logger.warning("Security manager not enabled")
+            return None
+        
+        return await self._security_manager.create_security_session(user_id, permissions, **kwargs)
+    
+    async def check_permission(
+        self,
+        session_id: str,
+        resource: str,
+        action: str,
+        adapter_id: Optional[str] = None
+    ) -> bool:
+        """检查权限"""
+        if not self._security_manager:
+            logger.warning("Security manager not enabled")
+            return True  # 如果未启用安全，默认允许
+        
+        return await self._security_manager.check_permission(session_id, resource, action, adapter_id)
+    
+    async def analyze_code_security(
+        self,
+        code: str,
+        context: Optional[Dict[str, Any]] = None
+    ) -> Optional[Dict[str, Any]]:
+        """分析代码安全性"""
+        if not self._security_manager:
+            logger.warning("Security manager not enabled")
+            return None
+        
+        return await self._security_manager.analyze_code_security(code, context)
+    
+    async def get_security_status(self) -> Dict[str, Any]:
+        """获取安全状态"""
+        if not self._security_manager:
+            return {
+                'enabled': False,
+                'message': 'Security manager not enabled'
+            }
+        
+        status = await self._security_manager.get_security_status()
+        status['enabled'] = True
+        return status
+    
+    async def get_active_security_sessions(self) -> List[Dict[str, Any]]:
+        """获取活跃安全会话"""
+        if not self._security_manager:
+            return []
+        
+        return await self._security_manager.get_active_sessions()
+    
+    async def get_security_alerts(self, limit: int = 50) -> List[Dict[str, Any]]:
+        """获取安全警报"""
+        if not self._security_manager:
+            return []
+        
+        return await self._security_manager.get_security_alerts(limit)
+    
+    async def emergency_lockdown(self, reason: str) -> None:
+        """紧急安全锁定"""
+        if not self._security_manager:
+            logger.warning("Security manager not enabled, cannot perform emergency lockdown")
+            return
+        
+        logger.critical(f"Emergency lockdown requested: {reason}")
+        await self._security_manager.emergency_lockdown(reason)
+    
+    async def lift_emergency_lockdown(self) -> None:
+        """解除紧急锁定"""
+        if not self._security_manager:
+            logger.warning("Security manager not enabled")
+            return
+        
+        await self._security_manager.lift_emergency_lockdown()
+    
+    def configure_security_rate_limiting(self, requests_per_minute: int) -> None:
+        """配置安全速率限制"""
+        if not self._security_manager:
+            logger.warning("Security manager not enabled")
+            return
+        
+        self._security_manager.configure_rate_limiting(requests_per_minute)
+    
+    def add_blocked_ip(self, ip_address: str) -> None:
+        """添加阻止的IP地址"""
+        if not self._security_manager:
+            logger.warning("Security manager not enabled")
+            return
+        
+        self._security_manager.add_blocked_ip(ip_address)
+    
+    def remove_blocked_ip(self, ip_address: str) -> None:
+        """移除阻止的IP地址"""
+        if not self._security_manager:
+            logger.warning("Security manager not enabled")
+            return
+        
+        self._security_manager.remove_blocked_ip(ip_address)

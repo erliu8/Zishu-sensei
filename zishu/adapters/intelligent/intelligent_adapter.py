@@ -33,6 +33,7 @@ from ..base.metadata import (
     AdapterMetadata, AdapterCapability, CapabilityCategory, AdapterType,
     AdapterStatus, SecurityLevel
 )
+from ..core.security import SecurityManager
 from ..security.audit import get_audit_logger, AuditEventType, AuditLevel, audit_operation
 from .safe_executor import SafeCodeExecutor, ExecutionResult, ExecutionEnvironment, SecurityLevel as ExecSecurityLevel
 from .code_generator import IntelligentCodeGenerator, CodeGenerationRequest, GenerationResult

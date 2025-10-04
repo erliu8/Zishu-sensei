@@ -61,6 +61,7 @@ from ..base.exceptions import (
     ErrorCode, ExceptionSeverity, handle_adapter_exceptions
 )
 from ..base.metadata import AdapterMetadata, AdapterCapability, CapabilityCategory
+from ..core.security import SecurityManager
 from ..security.audit import get_audit_logger, AuditEventType, AuditLevel, audit_operation
 
 # 配置日志

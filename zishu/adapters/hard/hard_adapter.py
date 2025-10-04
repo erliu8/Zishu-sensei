@@ -68,8 +68,11 @@ from ..base.metadata import (
 
 # 安全模块（可选导入）
 try:
-    from ..security.sandbox import SandboxManager, SandboxConfig
-    from ..security.permissions import PermissionManager, PermissionContext
+    from ..core.security import (
+        EnhancedSandboxManager, SandboxConfiguration,
+        EnhancedPermissionManager, AccessRequest,
+        SecurityManager
+    )
     from ..security.audit import AuditLogger, AuditEvent
     SECURITY_AVAILABLE = True
 except ImportError:

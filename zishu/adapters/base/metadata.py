@@ -5,6 +5,7 @@
 import json
 import hashlib
 import asyncio
+import os
 from datetime import datetime, timezone
 from pathlib import Path
 from typing import Any, Dict, List, Optional, Set, Union, Callable, Tuple
@@ -15,6 +16,83 @@ import threading
 import weakref
 from collections import defaultdict
 import logging
+
+
+class SetEncoder(json.JSONEncoder):
+    """自定义JSON编码器，正确处理集合类型和datetime对象"""
+    def default(self, obj):
+        if isinstance(obj, set):
+            return list(obj)
+        elif isinstance(obj, datetime):
+            return obj.isoformat()
+        return super().default(obj)
+
+
+def convert_lists_to_sets(data):
+    """递归地将特定字段的列表转换为集合，并处理datetime字符串"""
+    import ast
+    from dateutil import parser as date_parser
+    
+    def parse_set_string(value):
+        """解析字符串表示的集合"""
+        if isinstance(value, str):
+            # 处理 'set()' 形式
+            if value == 'set()':
+                return set()
+            # 处理 "{'item1', 'item2'}" 形式
+            elif value.startswith('{') and value.endswith('}'):
+                try:
+                    # 使用 ast.literal_eval 安全解析
+                    parsed = ast.literal_eval(value)
+                    if isinstance(parsed, set):
+                        return parsed
+                    elif isinstance(parsed, (list, tuple)):
+                        return set(parsed)
+                except (ValueError, SyntaxError):
+                    pass
+        return value
+    
+    def parse_datetime_string(value):
+        """解析ISO格式的datetime字符串"""
+        if isinstance(value, str):
+            try:
+                # 尝试使用标准库解析ISO格式的datetime字符串
+                return datetime.fromisoformat(value.replace('Z', '+00:00'))
+            except (ValueError, TypeError):
+                try:
+                    # 备用方案：使用dateutil
+                    return date_parser.isoparse(value)
+                except:
+                    pass
+        return value
+    
+    if isinstance(data, dict):
+        # 需要转换为集合的字段
+        set_fields = {'tags', 'keywords', 'required_roles', 'active_users'}
+        # 需要转换为datetime的字段
+        datetime_fields = {'created_at', 'updated_at', 'last_accessed', 'last_used', 'timestamp'}
+        
+        result = {}
+        for key, value in data.items():
+            if key in set_fields:
+                if isinstance(value, list):
+                    result[key] = set(value)
+                elif isinstance(value, str):
+                    result[key] = parse_set_string(value)
+                else:
+                    result[key] = value
+            elif key in datetime_fields and isinstance(value, str):
+                result[key] = parse_datetime_string(value)
+            elif isinstance(value, (dict, list)):
+                result[key] = convert_lists_to_sets(value)
+            else:
+                result[key] = value
+        return result
+    elif isinstance(data, list):
+        return [convert_lists_to_sets(item) for item in data]
+    else:
+        return data
+
 
 # 第三方依赖
 try:
@@ -284,14 +362,14 @@ class AdapterMetadata(BaseModel):
             'name': self.name,
             'description': self.description,
             'adapter_type': self.adapter_type,
-            'version': self.version.dict(),
-            'capabilities': [cap.dict() for cap in self.capabilities],
-            'dependencies': [dep.dict() for dep in self.dependencies],
-            'configuration': [conf.dict() for conf in self.configuration],
-            'permissions': self.permissions.dict()
+            'version': self.version.model_dump(),
+            'capabilities': [cap.model_dump() for cap in self.capabilities],
+            'dependencies': [dep.model_dump() for dep in self.dependencies],
+            'configuration': [conf.model_dump() for conf in self.configuration],
+            'permissions': self.permissions.model_dump()
         }
         
-        hash_str = json.dumps(hash_data, sort_keys=True, default=str)
+        hash_str = json.dumps(hash_data, sort_keys=True, cls=SetEncoder)
         return hashlib.sha256(hash_str.encode()).hexdigest()
     
     def is_compatible_with(self, other_adapter_id: str, version: str) -> bool:
@@ -480,14 +558,16 @@ class FileSystemMetadataStorage(MetadataStorage):
         async with self._lock:
             try:
                 file_path = self._get_metadata_file(metadata.adapter_id)
-                data = metadata.dict()
+                data = metadata.model_dump()
                 
                 # 确保目录存在
                 file_path.parent.mkdir(parents=True, exist_ok=True)
                 
-                # 写入文件
+                # 写入文件 - 使用flush确保数据写入磁盘
                 with open(file_path, 'w', encoding='utf-8') as f:
-                    json.dump(data, f, indent=2, ensure_ascii=False, default=str)
+                    json.dump(data, f, indent=2, ensure_ascii=False, cls=SetEncoder)
+                    f.flush()  # 确保数据写入磁盘
+                    os.fsync(f.fileno())  # 强制同步到磁盘
                 
                 self.logger.debug(f"Saved metadata for adapter {metadata.adapter_id}")
                 return True
@@ -512,10 +592,20 @@ class FileSystemMetadataStorage(MetadataStorage):
             with open(file_path, 'r', encoding='utf-8') as f:
                 data = json.load(f)
             
-            metadata = AdapterMetadata.parse_obj(data)
+            # 转换列表为集合
+            data = convert_lists_to_sets(data)
+            metadata = AdapterMetadata.model_validate(data)
             self.logger.debug(f"Loaded metadata for adapter {adapter_id}")
             return metadata
             
+        except json.JSONDecodeError as e:
+            self.logger.warning(f"Corrupted metadata file for {adapter_id}: {e}. Removing corrupted file.")
+            # 删除损坏的文件
+            try:
+                file_path.unlink()
+            except Exception as unlink_error:
+                self.logger.error(f"Failed to remove corrupted file {file_path}: {unlink_error}")
+            return None
         except Exception as e:
             self.logger.error(f"Failed to load metadata for {adapter_id}: {e}")
             raise
@@ -703,7 +793,7 @@ class FileSystemMetadataStorage(MetadataStorage):
                 if metadata:
                     backup_file = backup_dir / f"{adapter_id}.json"
                     with open(backup_file, 'w', encoding='utf-8') as f:
-                        json.dump(metadata.dict(), f, indent=2, ensure_ascii=False, default=str)
+                        json.dump(metadata.model_dump(), f, indent=2, ensure_ascii=False, cls=SetEncoder)
                     
                     backup_info["adapters"].append(adapter_id)
                     backup_info["adapter_count"] += 1
@@ -711,7 +801,7 @@ class FileSystemMetadataStorage(MetadataStorage):
             # 保存备份信息
             info_file = backup_dir / "backup_info.json"
             with open(info_file, 'w', encoding='utf-8') as f:
-                json.dump(backup_info, f, indent=2, ensure_ascii=False)
+                json.dump(backup_info, f, indent=2, ensure_ascii=False, cls=SetEncoder)
             
             self.logger.info(f"Backup completed: {backup_info['adapter_count']} adapters backed up to {backup_path}")
             return True
@@ -740,7 +830,7 @@ class FileSystemMetadataStorage(MetadataStorage):
                         with open(backup_file, 'r', encoding='utf-8') as f:
                             data = json.load(f)
                         
-                        metadata = AdapterMetadata.parse_obj(data)
+                        metadata = AdapterMetadata.model_validate(data)
                         if await self.save(metadata):
                             restored_count += 1
                 
@@ -754,7 +844,7 @@ class FileSystemMetadataStorage(MetadataStorage):
                         with open(backup_file, 'r', encoding='utf-8') as f:
                             data = json.load(f)
                         
-                        metadata = AdapterMetadata.parse_obj(data)
+                        metadata = AdapterMetadata.model_validate(data)
                         if await self.save(metadata):
                             restored_count += 1
                     except Exception as e:
@@ -840,7 +930,7 @@ class MetadataCache:
             
             # 缓存数据
             self._cache[adapter_id] = {
-                "data": metadata.dict(),
+                "data": metadata.model_dump(),
                 "cached_at": datetime.now(timezone.utc)
             }
             self._access_times[adapter_id] = datetime.now(timezone.utc)
@@ -1225,8 +1315,8 @@ class MetadataManager:
         return {
             "adapter_id": adapter_id,
             "status": metadata.status,
-            "usage_statistics": metadata.usage_statistics.dict(),
-            "performance_metrics": metadata.performance_metrics.dict(),
+            "usage_statistics": metadata.usage_statistics.model_dump(),
+            "performance_metrics": metadata.performance_metrics.model_dump(),
             "last_accessed": metadata.last_accessed,
             "uptime_days": (datetime.now(timezone.utc) - metadata.created_at).days if metadata.created_at else 0
         }
@@ -1242,7 +1332,7 @@ class MetadataManager:
         
         try:
             # Pydantic模型验证
-            metadata.dict()
+            metadata.model_dump()
         except Exception as e:
             errors.append(f"Model validation failed: {str(e)}")
         

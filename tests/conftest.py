@@ -270,12 +270,12 @@ def mock_adapter():
 @pytest.fixture
 def base_adapter_config():
     """基础适配器配置"""
-    from zishu.adapters.base.metadata import AdapterType
     return {
         "adapter_id": "test-adapter",
-        "name": "Test Base Adapter",
+        "name": "test_base_adapter",  # 修改为测试期望的名称
         "version": "1.0.0",
-        "adapter_type": AdapterType.SOFT.value,
+        "type": "base",  # 使用type字段，符合测试期望
+        "adapter_type": "soft",  # 保留adapter_type用于其他地方
         "description": "测试基础适配器",
         "author": "test_author",
         "created_at": "2024-01-01T00:00:00Z",
@@ -297,18 +297,23 @@ def mock_base_adapter(base_adapter_config):
     from zishu.adapters.base.adapter import BaseAdapter, ExecutionContext, HealthCheckResult
     from zishu.adapters.base.metadata import AdapterMetadata, AdapterCapability, AdapterType
     from unittest.mock import AsyncMock, Mock
+    from datetime import datetime
     
     # 创建一个具体的BaseAdapter实现类用于测试
     class MockBaseAdapter(BaseAdapter):
         def _load_metadata(self):
+            from zishu.adapters.base.metadata import AdapterVersion
             return AdapterMetadata(
-                id=self.adapter_id,
+                adapter_id=self.adapter_id,
                 name=self.name,
-                version=self.version,
+                version=AdapterVersion(
+                    version=self.version,
+                    release_date=datetime.now(),
+                    changelog="Mock adapter for testing"
+                ),
                 adapter_type=AdapterType.SOFT,
                 description="Mock adapter for testing",
-                author="test_system",
-                created_at="2024-01-01T00:00:00Z"
+                author="test_system"
             )
         
         async def _initialize_impl(self):
@@ -400,29 +405,130 @@ def sample_lora_weights(temp_dir):
 @pytest.fixture
 def sample_adapter_config():
     """示例适配器配置"""
-    from zishu.adapters.base.metadata import AdapterType
     return {
         "adapter_id": "test_adapter",
         "name": "Test Adapter",
         "version": "1.0.0",
-        "adapter_type": AdapterType.LORA.value,
+        "type": "lora",  # 使用type而不是adapter_type
         "description": "测试适配器配置",
         "author": "test_author",
         "created_at": "2024-01-01T00:00:00Z",
-        "parameters": {
-            "learning_rate": 0.001,
-            "batch_size": 8,
-            "max_length": 512,
-            "rank": 8,
-            "alpha": 32,
-            "dropout": 0.05,
-            "target_modules": ["q_proj", "v_proj"]
-        },
+        # 将parameters中的字段提升到顶层
+        "learning_rate": 0.001,
+        "batch_size": 8,
+        "max_length": 512,
+        "rank": 8,
+        "alpha": 32,
+        "dropout": 0.05,
+        "target_modules": ["q_proj", "v_proj"],
         "requirements": {
             "torch": ">=2.0.0",
             "transformers": ">=4.30.0"
         }
     }
+
+
+@pytest.fixture
+def mock_model():
+    """模拟模型对象"""
+    from unittest.mock import Mock
+    import torch
+    
+    model = Mock()
+    model.config = Mock()
+    model.config.hidden_size = 768
+    model.config.num_attention_heads = 12
+    model.config.num_hidden_layers = 12
+    model.config.vocab_size = 50257
+    model.config.max_position_embeddings = 2048
+    model.device = torch.device("cpu")
+    model.dtype = torch.float32
+    
+    # 模拟模型方法
+    def mock_forward(*args, **kwargs):
+        # 返回模拟的输出
+        batch_size = 1
+        seq_len = 10
+        hidden_size = model.config.hidden_size
+        return Mock(
+            last_hidden_state=torch.randn(batch_size, seq_len, hidden_size),
+            logits=torch.randn(batch_size, seq_len, model.config.vocab_size)
+        )
+    
+    model.forward = mock_forward
+    model.__call__ = mock_forward
+    
+    return model
+
+
+@pytest.fixture  
+def mock_tokenizer():
+    """模拟分词器对象"""
+    from unittest.mock import Mock
+    
+    tokenizer = Mock()
+    tokenizer.vocab_size = 50257
+    tokenizer.pad_token_id = 0
+    tokenizer.eos_token_id = 2
+    tokenizer.bos_token_id = 1
+    tokenizer.unk_token_id = 3
+    tokenizer.model_max_length = 2048
+    
+    # 模拟编码方法
+    def mock_encode(text, **kwargs):
+        # 简单模拟：返回文本长度对应的token ids
+        return list(range(len(text.split())))
+    
+    def mock_decode(token_ids, **kwargs):
+        # 简单模拟：返回token数量对应的文本
+        return " ".join([f"token_{i}" for i in token_ids])
+    
+    def mock_batch_encode_plus(texts, **kwargs):
+        return {
+            'input_ids': [[1, 2, 3, 4, 0] for _ in texts],
+            'attention_mask': [[1, 1, 1, 1, 0] for _ in texts]
+        }
+    
+    tokenizer.encode = mock_encode
+    tokenizer.decode = mock_decode
+    tokenizer.batch_encode_plus = mock_batch_encode_plus
+    tokenizer.__call__ = mock_batch_encode_plus
+    
+    return tokenizer
+
+
+@pytest.fixture
+def mock_adapter():
+    """模拟适配器对象"""
+    from unittest.mock import Mock
+    
+    adapter = Mock()
+    adapter.name = "test_adapter"
+    adapter.adapter_type = "lora"
+    adapter.is_loaded = False
+    adapter.config = {
+        "rank": 8,
+        "alpha": 32,
+        "dropout": 0.05
+    }
+    
+    # 模拟适配器方法
+    async def mock_load():
+        adapter.is_loaded = True
+        return True
+    
+    async def mock_unload():
+        adapter.is_loaded = False
+        return True
+    
+    async def mock_apply(model):
+        return model
+    
+    adapter.load = mock_load
+    adapter.unload = mock_unload
+    adapter.apply = mock_apply
+    
+    return adapter
 
 
 @pytest.fixture  
@@ -699,9 +805,15 @@ def performance_monitor():
 def mock_inference_engine():
     """模拟推理引擎"""
     from unittest.mock import Mock, AsyncMock
+    import torch
     
     engine = Mock()
     engine.testing_mode = True
+    engine.device = torch.device("cpu")  # 返回实际的torch.device对象
+    engine.max_length = 512
+    engine.temperature = 0.7
+    engine.top_p = 0.9
+    engine.is_loaded = False
     
     # 模拟同步方法
     engine.generate_response = Mock(return_value={
@@ -731,6 +843,19 @@ def mock_inference_engine():
     engine.generate_stream_response = AsyncMock(side_effect=mock_generate_stream)
     
     return engine
+
+@pytest.fixture
+def mock_adapter_manager():
+    """模拟适配器管理器"""
+    from unittest.mock import Mock, AsyncMock
+    
+    manager = Mock()
+    manager.load_adapter = AsyncMock(return_value=True)
+    manager.unload_adapter = AsyncMock(return_value=True)
+    manager.list_adapters = Mock(return_value=[])
+    manager.get_adapter_info = Mock(return_value={"name": "test_adapter", "status": "loaded"})
+    
+    return manager
 
 @pytest.fixture(autouse=True)
 def setup_test_environment():
@@ -831,3 +956,34 @@ def pytest_addoption(parser):
         default=False,
         help="运行性能测试"
     )
+
+
+# ================================
+# 适配器注册表相关Fixtures
+# ================================
+
+@pytest.fixture
+def mock_registry():
+    """模拟适配器注册表"""
+    from unittest.mock import Mock
+    
+    class MockRegistry:
+        def __init__(self):
+            self.event_bus = Mock()
+            self.event_bus.emit = Mock()
+            self._call_count = 0
+        
+        def list_adapters(self):
+            """同步方法，返回空列表"""
+            self._call_count += 1
+            return []
+    
+    return MockRegistry()
+
+
+@pytest.fixture
+def health_monitor(mock_registry):
+    """健康监控器fixture（兼容性实现）"""
+    from zishu.adapters.base import HealthMonitor
+    monitor = HealthMonitor(registry=mock_registry)
+    return monitor

@@ -26,8 +26,8 @@ from zishu.adapters.security.sandbox import (
     execute_python_code, get_sandbox_manager
 )
 
-from zishu.adapters.security.audit import initialize_audit_system, shutdown_audit_system
-from zishu.adapters.security.permissions import Permission, Role
+from zishu.adapters.core.security import get_audit_logger
+from zishu.adapters.core.security import EnhancedPermissionManager, AccessRequest
 
 
 class SandboxDemo:
