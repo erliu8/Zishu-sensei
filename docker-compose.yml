@@ -207,10 +207,7 @@ services:
 
 networks:
   zishu-network:
-    driver: bridge
-    ipam:
-      config:
-        - subnet: 172.20.0.0/16
+    driver: host
 
 volumes:
   postgres_data:

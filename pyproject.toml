@@ -39,6 +39,19 @@ dependencies = [
     "pyyaml>=6.0.1",
     "python-dotenv>=1.0.0",
     "starlette==0.35.1",
+    # 数据库相关依赖
+    "sqlalchemy>=2.0.0",
+    "asyncpg>=0.29.0",
+    "psycopg2-binary>=2.9.0",
+    "alembic>=1.13.0",
+    # 安全相关依赖
+    "werkzeug>=3.0.0",
+    "python-jose[cryptography]>=3.3.0",
+    "passlib[bcrypt]>=1.7.4",
+    "bcrypt>=4.0.0",
+    # 验证和工具
+    "email-validator>=2.1.0",
+    "python-dateutil>=2.8.0",
 ]
 
 [project.optional-dependencies]
