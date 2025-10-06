@@ -207,7 +207,7 @@ services:
 
 networks:
   zishu-network:
-    driver: host
+    driver: bridge
 
 volumes:
   postgres_data:
