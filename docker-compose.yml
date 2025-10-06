@@ -10,10 +10,12 @@ services:
     ports:
       - "8000:8000"
     environment:
-      - ENVIRONMENT=development
-      - LOG_LEVEL=INFO
-      - MODEL_PATH=/app/models
-      - CACHE_DIR=/app/cache
+      - ENVIRONMENT=production
+      - LOG_LEVEL=${ZISHU_LOG_LEVEL:-INFO}
+      - MODEL_PATH=${MODEL_PATH:-/app/models}
+      - CACHE_DIR=${CACHE_DIR:-/app/cache}
+      - DATABASE_URL=${DATABASE_URL}
+      - REDIS_URL=${REDIS_URL}
     volumes:
       - ./models:/app/models:ro
       - ./config:/app/config:ro
@@ -78,7 +80,7 @@ services:
       - PGDATA=/var/lib/postgresql/data/pgdata
     volumes:
       - ./data/postgres:/var/lib/postgresql/data
-      - ./docker/postgres/init.sql:/docker-entrypoint-initdb.d/init.sql:ro
+      - ./docker/postgres/01-init-db.sql:/docker-entrypoint-initdb.d/01-init-db.sql:ro
     networks:
       - zishu-network
     restart: unless-stopped
