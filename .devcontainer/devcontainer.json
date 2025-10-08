@@ -1,0 +1,16 @@
+{
+    "name": "Zishu-sensei Development Container",
+    "image": "zishu-sensei-zishu-api:latest",
+    "workspaceFolder": "/app",
+    "mounts": [
+        "source=${localWorkspaceFolder},target=/app,type=bind"
+    ],
+    "containerEnv": {
+        "PYTHONPATH": "/app"
+    },
+    "forwardPorts": [
+        8000,
+        8888
+    ],
+    "remoteUser": "root"
+}

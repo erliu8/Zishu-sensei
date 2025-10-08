@@ -12,7 +12,7 @@
 
 from .interfaces import (
     IStorageBackend,
-    IAdapterStorage, 
+    IAdapterStorage,
     StorageBackendType,
     StorageQuery,
     StorageResult,
@@ -20,7 +20,7 @@ from .interfaces import (
     StorageException,
     NotFoundError,
     DuplicateError,
-    ValidationError
+    ValidationError,
 )
 
 from .backends import MemoryStorageBackend, FileStorageBackend
@@ -29,58 +29,52 @@ from .backends.postgresql import PostgreSQLStorageBackend
 from .backends.redis import RedisStorageBackend
 from .backends.mongodb import MongoDBStorageBackend
 from .adapter_storage import AdapterStorage
-from .manager import StorageManager, get_storage_manager, initialize_storage, shutdown_storage
+from .manager import (
+    StorageManager,
+    get_storage_manager,
+    initialize_storage,
+    shutdown_storage,
+)
 from .factory import StorageFactory, StorageConfig, StorageManager as StorageManagerNew
 
 __all__ = [
     # 接口
-    'IStorageBackend',
-    'IAdapterStorage',
-    
+    "IStorageBackend",
+    "IAdapterStorage",
     # 类型和枚举
-    'StorageBackendType',
-    'StorageQuery',
-    'StorageResult', 
-    'StorageTransaction',
-    
+    "StorageBackendType",
+    "StorageQuery",
+    "StorageResult",
+    "StorageTransaction",
     # 异常
-    'StorageException',
-    'NotFoundError',
-    'DuplicateError',
-    'ValidationError',
-    
+    "StorageException",
+    "NotFoundError",
+    "DuplicateError",
+    "ValidationError",
     # 实现类
-    'MemoryStorageBackend',
-    'FileStorageBackend',
-    'SQLiteStorageBackend',
-    'PostgreSQLStorageBackend',
-    'RedisStorageBackend',
-    'MongoDBStorageBackend',
-    'AdapterStorage',
-    'StorageManager',
-    'StorageManagerNew',
-    'StorageFactory',
-    'StorageConfig',
-    'get_storage_manager',
-    
+    "MemoryStorageBackend",
+    "FileStorageBackend",
+    "SQLiteStorageBackend",
+    "PostgreSQLStorageBackend",
+    "RedisStorageBackend",
+    "MongoDBStorageBackend",
+    "AdapterStorage",
+    "StorageManager",
+    "StorageManagerNew",
+    "StorageFactory",
+    "StorageConfig",
+    "get_storage_manager",
     # 工具函数
-    'initialize_storage',
-    'shutdown_storage',
-    'create_default_storage_config',
-    'cleanup_storage',
+    "initialize_storage",
+    "shutdown_storage",
+    "create_default_storage_config",
+    "cleanup_storage",
 ]
 
 
 def create_default_storage_config():
     """创建默认存储配置"""
     return {
-        'backends': {
-            'memory': {
-                'type': 'memory',
-                'config': {}
-            }
-        },
-        'default_backend': 'memory'
+        "backends": {"memory": {"type": "memory", "config": {}}},
+        "default_backend": "memory",
     }
-
-

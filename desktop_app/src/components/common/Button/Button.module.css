@@ -1,0 +1,92 @@
+/* 按钮组件样式 */
+
+.button {
+    /* 基础样式已在 Tailwind 中定义 */
+}
+
+/* 自定义动画 */
+@keyframes pulse-ring {
+    0% {
+        transform: scale(0.8);
+        opacity: 1;
+    }
+
+    100% {
+        transform: scale(1.2);
+        opacity: 0;
+    }
+}
+
+.pulse-ring {
+    animation: pulse-ring 1.5s cubic-bezier(0.215, 0.61, 0.355, 1) infinite;
+}
+
+/* 加载动画 */
+@keyframes spin {
+    from {
+        transform: rotate(0deg);
+    }
+
+    to {
+        transform: rotate(360deg);
+    }
+}
+
+.loading-spinner {
+    animation: spin 1s linear infinite;
+}
+
+/* 按钮组合样式 */
+.button-group {
+    display: inline-flex;
+    border-radius: 0.375rem;
+    overflow: hidden;
+}
+
+.button-group .button:not(:first-child) {
+    border-left: none;
+    border-top-left-radius: 0;
+    border-bottom-left-radius: 0;
+}
+
+.button-group .button:not(:last-child) {
+    border-top-right-radius: 0;
+    border-bottom-right-radius: 0;
+}
+
+/* 响应式断点 */
+@media (max-width: 640px) {
+    .button-responsive {
+        width: 100%;
+        justify-content: center;
+    }
+}
+
+/* 高对比度模式支持 */
+@media (prefers-contrast: high) {
+    .button {
+        border-width: 2px;
+    }
+}
+
+/* 减少动画偏好支持 */
+@media (prefers-reduced-motion: reduce) {
+    .button {
+        transition: none;
+    }
+
+    .loading-spinner {
+        animation: none;
+    }
+
+    .pulse-ring {
+        animation: none;
+    }
+}
+
+/* 深色模式特定样式 */
+@media (prefers-color-scheme: dark) {
+    .button-ghost {
+        background-color: transparent;
+    }
+}

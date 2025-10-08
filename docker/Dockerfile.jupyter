@@ -1,43 +1,67 @@
-# Jupyter Notebook for Zishu-sensei Development
-FROM jupyter/scipy-notebook:latest
+# Jupyter Lab 开发环境
+FROM jupyter/scipy-notebook:python-3.11
 
 USER root
 
-# Install system dependencies
+# 安装系统依赖
 RUN apt-get update && apt-get install -y \
-    gcc \
-    g++ \
+    build-essential \
+    curl \
+    git \
+    vim \
+    htop \
     && rm -rf /var/lib/apt/lists/*
 
+# 切换到jovyan用户
 USER jovyan
 
-# Set working directory
-WORKDIR /home/jovyan
+# 设置工作目录
+WORKDIR /app
 
-# Copy requirements
-COPY requirements.txt requirements-dev.txt ./
+# 复制requirements文件
+COPY requirements.txt /app/
+COPY training/requirements.txt /app/training-requirements.txt
 
-# Install Python dependencies
+# 配置pip使用国内镜像源
+RUN pip config set global.index-url https://pypi.tuna.tsinghua.edu.cn/simple && \
+    pip config set global.trusted-host pypi.tuna.tsinghua.edu.cn
+
+# 安装Python依赖
 RUN pip install --no-cache-dir -r requirements.txt && \
-    pip install --no-cache-dir -r requirements-dev.txt
+    pip install --no-cache-dir -r training-requirements.txt
 
-# Install additional Jupyter extensions
+# 安装Jupyter扩展
 RUN pip install --no-cache-dir \
     jupyterlab-git \
     jupyterlab-lsp \
     python-lsp-server[all] \
-    jupyterlab_code_formatter \
+    jupyterlab-code-formatter \
     black \
     isort
 
-# Create directories
-RUN mkdir -p notebooks data
+# 安装额外的数据科学工具
+RUN pip install --no-cache-dir \
+    plotly \
+    seaborn \
+    scikit-learn \
+    transformers \
+    datasets \
+    accelerate \
+    wandb \
+    tensorboard
 
-# Copy Jupyter configuration
+# 配置Jupyter Lab
+RUN jupyter lab --generate-config
+
+# 复制Jupyter配置
 COPY docker/jupyter/jupyter_lab_config.py /home/jovyan/.jupyter/
 
-# Expose port
+# 设置环境变量
+ENV PYTHONPATH=/app/workspace
+ENV JUPYTER_ENABLE_LAB=yes
+
+# 暴露端口
 EXPOSE 8888
 
-# Start Jupyter Lab
-CMD ["start.sh", "jupyter", "lab", "--ip=0.0.0.0", "--port=8888", "--no-browser", "--allow-root", "--NotebookApp.token=dev-token"]
+# 启动命令
+CMD ["start-notebook.sh", "--NotebookApp.token='dev-token'", "--NotebookApp.password=''", "--NotebookApp.allow_root=True"]

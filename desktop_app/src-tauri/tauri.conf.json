@@ -1,0 +1,376 @@
+{
+    "$schema": "../node_modules/@tauri-apps/cli/schema.json",
+    "build": {
+        "beforeBuildCommand": "npm run build",
+        "beforeDevCommand": "npm run dev",
+        "devPath": "http://localhost:1420",
+        "distDir": "../dist",
+        "withGlobalTauri": false
+    },
+    "package": {
+        "productName": "Zishu Sensei",
+        "version": "1.0.0"
+    },
+    "tauri": {
+        "allowlist": {
+            "all": false,
+            "shell": {
+                "all": false,
+                "open": true,
+                "scope": [
+                    {
+                        "name": "open-url",
+                        "cmd": "open",
+                        "args": [
+                            {
+                                "validator": "^https?://"
+                            }
+                        ]
+                    }
+                ]
+            },
+            "window": {
+                "all": false,
+                "close": true,
+                "hide": true,
+                "show": true,
+                "maximize": true,
+                "minimize": true,
+                "unmaximize": true,
+                "unminimize": true,
+                "startDragging": true,
+                "print": false,
+                "setResizable": true,
+                "setTitle": true,
+                "setMaximizable": true,
+                "setMinimizable": true,
+                "setClosable": true,
+                "setDecorations": true,
+                "setAlwaysOnTop": true,
+                "setContentProtected": false,
+                "setSize": true,
+                "setMinSize": true,
+                "setMaxSize": true,
+                "setPosition": true,
+                "setFullscreen": false,
+                "setFocus": true,
+                "setIcon": true,
+                "setSkipTaskbar": true,
+                "setCursorGrab": false,
+                "setCursorVisible": true,
+                "setCursorIcon": true,
+                "setCursorPosition": false,
+                "setIgnoreCursorEvents": false,
+                "create": true,
+                "center": true
+            },
+            "app": {
+                "all": false,
+                "show": true,
+                "hide": true
+            },
+            "path": {
+                "all": true
+            },
+            "fs": {
+                "all": false,
+                "readFile": true,
+                "writeFile": true,
+                "readDir": true,
+                "copyFile": true,
+                "createDir": true,
+                "removeDir": true,
+                "removeFile": true,
+                "renameFile": true,
+                "exists": true,
+                "scope": [
+                    "$APPCONFIG",
+                    "$APPDATA",
+                    "$APPLOCALDATA",
+                    "$APPCACHE",
+                    "$APPLOG",
+                    "$DOCUMENT",
+                    "$DOWNLOAD",
+                    "$DESKTOP",
+                    "$PICTURE",
+                    "$VIDEO",
+                    "$AUDIO",
+                    "$HOME/zishu-sensei/**",
+                    "$TEMP/zishu-sensei/**"
+                ]
+            },
+            "dialog": {
+                "all": false,
+                "ask": true,
+                "confirm": true,
+                "message": true,
+                "open": true,
+                "save": true
+            },
+            "notification": {
+                "all": true
+            },
+            "globalShortcut": {
+                "all": true
+            },
+            "os": {
+                "all": true
+            },
+            "http": {
+                "all": false,
+                "request": true,
+                "scope": [
+                    "https://api.zishu.dev/**",
+                    "https://market.zishu.dev/**",
+                    "https://update.zishu.dev/**",
+                    "https://cdn.zishu.dev/**",
+                    "https://live2d.zishu.dev/**"
+                ]
+            },
+            "process": {
+                "all": false,
+                "relaunch": true,
+                "exit": true
+            },
+            "clipboard": {
+                "all": false,
+                "readText": true,
+                "writeText": true
+            }
+        },
+        "bundle": {
+            "active": true,
+            "targets": "all",
+            "identifier": "dev.zishu.sensei",
+            "icon": [
+                "icons/32x32.png",
+                "icons/128x128.png",
+                "icons/128x128@2x.png",
+                "icons/icon.icns",
+                "icons/icon.ico"
+            ],
+            "resources": [
+                "assets/**/*",
+                "live2d/**/*"
+            ],
+            "externalBin": [],
+            "copyright": "© 2024 Zishu Team. All rights reserved.",
+            "category": "Productivity",
+            "shortDescription": "智能桌面宠物AI助手",
+            "longDescription": "Zishu Sensei 是一个基于 Tauri + React + Live2D 技术栈开发的智能桌面宠物应用。它提供可爱的 Live2D 角色展示、智能对话交互、右击设置菜单、适配器管理、主题切换和系统托盘等功能，让您的桌面工作更加有趣和高效。",
+            "deb": {
+                "depends": [
+                    "libwebkit2gtk-4.0-37",
+                    "libgtk-3-0",
+                    "libayatana-appindicator3-1"
+                ],
+                "section": "utils",
+                "priority": "optional",
+                "changelog": "See https://github.com/zishu-team/zishu-sensei/releases"
+            },
+            "macOS": {
+                "frameworks": [],
+                "minimumSystemVersion": "10.13",
+                "exceptionDomain": "localhost",
+                "signingIdentity": null,
+                "providerShortName": null,
+                "entitlements": "entitlements.plist"
+            },
+            "windows": {
+                "certificateThumbprint": null,
+                "digestAlgorithm": "sha256",
+                "timestampUrl": "",
+                "tsp": false,
+                "wix": {
+                    "language": [
+                        "zh-CN",
+                        "en-US"
+                    ],
+                    "template": "wix/main.wxs",
+                    "fragmentPaths": [
+                        "wix/fragment.wxs"
+                    ],
+                    "componentGroupRefs": [
+                        "Live2DModels",
+                        "Assets"
+                    ],
+                    "componentRefs": [
+                        "myapp.exe"
+                    ],
+                    "featureGroupRefs": [],
+                    "featureRefs": [],
+                    "mergeRefs": [],
+                    "skipWebviewInstall": false,
+                    "license": "LICENSE",
+                    "enableElevatedUpdateTask": false,
+                    "bannerPath": "wix/banner.bmp",
+                    "dialogImagePath": "wix/dialog.bmp"
+                },
+                "nsis": {
+                    "template": "nsis/installer.nsi",
+                    "license": "LICENSE",
+                    "headerImage": "nsis/header.bmp",
+                    "sidebarImage": "nsis/sidebar.bmp",
+                    "installerIcon": "icons/icon.ico",
+                    "installMode": "currentUser",
+                    "languages": [
+                        "SimpChinese",
+                        "English"
+                    ],
+                    "displayLanguageSelector": true,
+                    "customLanguageFiles": {
+                        "SimpChinese": "nsis/languages/SimpChinese.nsh",
+                        "English": "nsis/languages/English.nsh"
+                    }
+                }
+            }
+        },
+        "security": {
+            "csp": "default-src 'self' data: blob: 'unsafe-inline' 'unsafe-eval'; connect-src 'self' https://api.zishu.dev https://market.zishu.dev https://update.zishu.dev https://cdn.zishu.dev https://live2d.zishu.dev ws://localhost:* wss://localhost:*; img-src 'self' data: blob: https://cdn.zishu.dev https://live2d.zishu.dev; media-src 'self' data: blob: https://cdn.zishu.dev; font-src 'self' data: https://fonts.googleapis.com https://fonts.gstatic.com; style-src 'self' 'unsafe-inline' https://fonts.googleapis.com; script-src 'self' 'unsafe-inline' 'unsafe-eval'",
+            "devCsp": "default-src 'self' data: blob: 'unsafe-inline' 'unsafe-eval'; connect-src 'self' http://localhost:* ws://localhost:* wss://localhost:*; img-src 'self' data: blob: http://localhost:*; media-src 'self' data: blob: http://localhost:*; font-src 'self' data: http://localhost:*; style-src 'self' 'unsafe-inline' http://localhost:*; script-src 'self' 'unsafe-inline' 'unsafe-eval' http://localhost:*",
+            "freezePrototype": false,
+            "dangerousDisableAssetCspModification": false
+        },
+        "windows": [
+            {
+                "fullscreen": false,
+                "resizable": true,
+                "title": "Zishu Sensei",
+                "width": 400,
+                "height": 600,
+                "minWidth": 300,
+                "minHeight": 400,
+                "maxWidth": 800,
+                "maxHeight": 1200,
+                "center": true,
+                "x": null,
+                "y": null,
+                "alwaysOnTop": true,
+                "visible": true,
+                "decorations": false,
+                "transparent": true,
+                "maximized": false,
+                "theme": "Auto",
+                "titleBarStyle": "Transparent",
+                "hiddenTitle": true,
+                "acceptFirstMouse": true,
+                "tabbingIdentifier": null,
+                "additionalBrowserArgs": "--disable-features=msWebOOUI,msPdfOOUI,msSmartScreenProtection --disable-web-security --allow-running-insecure-content",
+                "shadow": true,
+                "windowEffects": {
+                    "effects": [
+                        "blur",
+                        "vibrancy"
+                    ],
+                    "state": "active",
+                    "radius": 8.0
+                },
+                "label": "main",
+                "url": "index.html",
+                "fileDropEnabled": true,
+                "skipTaskbar": false,
+                "closable": true,
+                "minimizable": true,
+                "maximizable": false,
+                "focus": true,
+                "contentProtected": false,
+                "cursorGrabbed": false,
+                "userAgent": "Zishu-Sensei/1.0.0 (Desktop Pet Application)"
+            }
+        ],
+        "systemTray": {
+            "iconPath": "icons/tray-icon.png",
+            "iconAsTemplate": true,
+            "menuOnLeftClick": false,
+            "title": "Zishu Sensei"
+        },
+        "updater": {
+            "active": true,
+            "endpoints": [
+                "https://update.zishu.dev/{{target}}/{{arch}}/{{current_version}}"
+            ],
+            "dialog": true,
+            "pubkey": "dW50cnVzdGVkIGNvbW1lbnQ6IG1pbmlzaWduIHB1YmxpYyBrZXk6IDhEQzY4M0VGNzFFNzMzNDUKUldSWTRKaVFwK2pnWnhqWWJQVGd6dGF0VUxHVGhOUFRGQkJTNVdBPT0K"
+        },
+        "cli": {
+            "description": "Zishu Sensei - 智能桌面宠物AI助手",
+            "longDescription": "一个基于 Tauri + React + Live2D 的智能桌面宠物应用，提供可爱的角色展示和智能对话交互功能。",
+            "beforeHelp": "🐾 欢迎使用 Zishu Sensei！",
+            "afterHelp": "更多信息请访问: https://zishu.dev",
+            "args": [
+                {
+                    "name": "config",
+                    "short": "c",
+                    "takesValue": true,
+                    "description": "指定配置文件路径"
+                },
+                {
+                    "name": "character",
+                    "takesValue": true,
+                    "description": "指定启动时的角色"
+                },
+                {
+                    "name": "theme",
+                    "takesValue": true,
+                    "description": "指定启动时的主题"
+                },
+                {
+                    "name": "debug",
+                    "short": "d",
+                    "description": "启用调试模式"
+                },
+                {
+                    "name": "minimized",
+                    "short": "m",
+                    "description": "最小化启动"
+                },
+                {
+                    "name": "no-tray",
+                    "description": "禁用系统托盘"
+                }
+            ],
+            "subcommands": {
+                "reset": {
+                    "description": "重置应用配置到默认值",
+                    "args": [
+                        {
+                            "name": "confirm",
+                            "short": "y",
+                            "description": "跳过确认提示"
+                        }
+                    ]
+                },
+                "export": {
+                    "description": "导出应用配置",
+                    "args": [
+                        {
+                            "name": "output",
+                            "short": "o",
+                            "takesValue": true,
+                            "description": "输出文件路径"
+                        }
+                    ]
+                },
+                "import": {
+                    "description": "导入应用配置",
+                    "args": [
+                        {
+                            "name": "input",
+                            "short": "i",
+                            "takesValue": true,
+                            "required": true,
+                            "description": "配置文件路径"
+                        }
+                    ]
+                }
+            }
+        }
+    },
+    "plugins": {
+        "updater": {
+            "endpoints": [
+                "https://update.zishu.dev/{{target}}/{{arch}}/{{current_version}}"
+            ]
+        }
+    }
+}

@@ -1,0 +1,56 @@
+[flake8]
+# 最大行长度（与 Black 保持一致）
+max-line-length = 88
+
+# 要检查的文件路径
+include = zishu/
+
+# 排除的目录和文件
+exclude = 
+    .git,
+    __pycache__,
+    .pytest_cache,
+    .mypy_cache,
+    .tox,
+    .venv,
+    venv,
+    build,
+    dist,
+    *.egg-info,
+    migrations/,
+    docs/
+
+# 忽略的错误码
+# 这些错误大多不影响代码运行，主要是代码风格相关
+ignore = 
+    E203,E265,W503,
+    F401,F811,
+    W292,W291,W293,
+    C901,
+    E501,E402,E722,
+    F841,
+    E712,E711,
+    F405,F403,
+    W605
+
+# 每个文件的最大复杂度
+max-complexity = 15
+
+# 启用的检查插件
+select = E,W,F,C
+
+# 统计信息显示
+statistics = True
+count = True
+show-source = True
+
+# 输出格式
+format = %(path)s:%(row)d:%(col)d: %(code)s %(text)s
+
+# 每行最大字符数的宽容度
+extend-ignore = 
+    E203,
+    W503
+
+# 文档字符串检查
+docstring-convention = google

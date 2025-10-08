@@ -15,11 +15,11 @@ def setup_cors(
     allow_methods: Optional[List[str]] = None,
     allow_headers: Optional[List[str]] = None,
     expose_headers: Optional[List[str]] = None,
-    max_age: int = 600
+    max_age: int = 600,
 ) -> None:
     """
     设置CORS中间件
-    
+
     Args:
         app: FastAPI应用实例
         allow_origins: 允许的源列表
@@ -36,10 +36,10 @@ def setup_cors(
             "http://localhost:8080",
             "http://127.0.0.1:8080",
         ]
-    
+
     if allow_methods is None:
         allow_methods = ["GET", "POST", "PUT", "DELETE", "OPTIONS", "HEAD", "PATCH"]
-    
+
     if allow_headers is None:
         allow_headers = [
             "Accept",
@@ -54,7 +54,7 @@ def setup_cors(
             "Cache-Control",
             "Pragma",
         ]
-    
+
     if expose_headers is None:
         expose_headers = [
             "X-Request-ID",
@@ -62,7 +62,7 @@ def setup_cors(
             "X-Rate-Limit-Remaining",
             "X-Rate-Limit-Reset",
         ]
-    
+
     app.add_middleware(
         CORSMiddleware,
         allow_origins=allow_origins,

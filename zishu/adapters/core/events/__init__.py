@@ -9,9 +9,9 @@ from .handlers import EventHandler, AsyncEventHandler
 from .filters import EventFilter, EventFilterChain
 
 __all__ = [
-    'EventBus',
-    'EventHandler',
-    'AsyncEventHandler', 
-    'EventFilter',
-    'EventFilterChain'
+    "EventBus",
+    "EventHandler",
+    "AsyncEventHandler",
+    "EventFilter",
+    "EventFilterChain",
 ]

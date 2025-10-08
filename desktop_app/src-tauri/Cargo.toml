@@ -1,0 +1,244 @@
+[package]
+name = "zishu-sensei"
+version = "1.0.0"
+description = "🐾 Zishu-sensei 智能桌面宠物应用 - 基于 Tauri + React + Live2D 的可爱AI助手"
+authors = ["Zishu Team <team@zishu.dev>"]
+license = "MIT"
+repository = "https://github.com/zishu-team/zishu-sensei"
+edition = "2021"
+rust-version = "1.70"
+
+# See more keys and their definitions at https://doc.rust-lang.org/cargo/reference/manifest.html
+
+[build-dependencies]
+tauri-build = { version = "1.5", features = ["isolation"] }
+
+[dependencies]
+# Tauri 核心框架
+tauri = { version = "1.5", features = [
+    "api-all",
+    "devtools",
+    "icon-ico",
+    "icon-png",
+    "isolation",
+    "system-tray",
+    "updater",
+    "window-all"
+] }
+
+# 序列化和反序列化
+serde = { version = "1.0", features = ["derive"] }
+serde_json = "1.0"
+
+# 异步运行时
+tokio = { version = "1.0", features = ["full"] }
+futures = "0.3"
+
+# HTTP 客户端 (用于 API 调用)
+reqwest = { version = "0.11", features = ["json", "stream", "multipart"] }
+
+# 日志系统
+log = "0.4"
+env_logger = "0.10"
+tracing = "0.1"
+tracing-subscriber = { version = "0.3", features = ["env-filter"] }
+
+# 配置管理
+config = "0.13"
+directories = "5.0"
+
+# 文件系统操作
+walkdir = "2.4"
+notify = "6.1"
+
+# 数据库 (SQLite)
+rusqlite = { version = "0.29", features = ["bundled"] }
+sqlx = { version = "0.7", features = ["runtime-tokio-rustls", "sqlite"] }
+
+# 加密和安全
+sha2 = "0.10"
+uuid = { version = "1.6", features = ["v4", "serde"] }
+
+# 时间处理
+chrono = { version = "0.4", features = ["serde"] }
+
+# 错误处理
+anyhow = "1.0"
+thiserror = "1.0"
+
+# 系统信息
+sysinfo = "0.29"
+
+# 窗口管理和系统集成
+window-shadows = "0.2"
+window-vibrancy = "0.4"
+
+# 图像处理 (用于图标和资源)
+image = "0.24"
+
+# 网络和 WebSocket
+tungstenite = "0.20"
+tokio-tungstenite = "0.20"
+
+# 压缩和解压
+zip = "0.6"
+tar = "0.4"
+flate2 = "1.0"
+
+# 进程管理
+subprocess = "0.2"
+
+# 正则表达式
+regex = "1.10"
+
+# 命令行参数解析
+clap = { version = "4.4", features = ["derive"] }
+
+# 跨平台路径处理
+path-clean = "1.0"
+
+# 内存映射文件
+memmap2 = "0.9"
+
+# 随机数生成
+rand = "0.8"
+
+# Base64 编码
+base64 = "0.21"
+
+# URL 处理
+url = "2.4"
+
+# 模板引擎 (用于配置文件生成)
+handlebars = "4.4"
+
+# 并发和同步
+parking_lot = "0.12"
+dashmap = "5.5"
+
+# 性能监控
+metrics = "0.21"
+
+# 平台特定依赖
+[target.'cfg(windows)'.dependencies]
+winapi = { version = "0.3", features = [
+    "winuser",
+    "shellapi",
+    "processthreadsapi",
+    "winbase",
+    "handleapi",
+    "synchapi",
+    "winnt"
+] }
+windows = { version = "0.51", features = [
+    "Win32_Foundation",
+    "Win32_System_Threading",
+    "Win32_UI_Shell",
+    "Win32_UI_WindowsAndMessaging"
+] }
+
+[target.'cfg(target_os = "macos")'.dependencies]
+cocoa = "0.25"
+objc = "0.2"
+
+[target.'cfg(target_os = "linux")'.dependencies]
+gtk = "0.18"
+webkit2gtk = "0.19"
+
+[features]
+default = ["custom-protocol"]
+custom-protocol = ["tauri/custom-protocol"]
+
+# 开发模式特性
+dev = [
+    "tauri/devtools"
+]
+
+# 生产模式优化
+production = []
+
+# 实验性功能
+experimental = [
+    "tauri/api-all"
+]
+
+# Live2D 集成 (可选)
+live2d = []
+
+# 语音功能 (可选)
+voice = []
+
+# 插件系统 (可选)
+plugins = []
+
+[profile.dev]
+# 开发模式配置
+opt-level = 0
+debug = true
+split-debuginfo = "unpacked"
+debug-assertions = true
+overflow-checks = true
+lto = false
+panic = "unwind"
+incremental = true
+codegen-units = 256
+rpath = false
+
+[profile.release]
+# 生产模式优化配置
+opt-level = 3
+debug = false
+split-debuginfo = "packed"
+debug-assertions = false
+overflow-checks = false
+lto = true
+panic = "abort"
+incremental = false
+codegen-units = 1
+rpath = false
+strip = true
+
+[profile.release-with-debug]
+# 带调试信息的发布版本
+inherits = "release"
+debug = true
+strip = false
+
+# 工作空间配置 (如果需要)
+[workspace]
+members = [
+    ".",
+    # 可以添加其他相关的 Rust 项目
+]
+
+# 元数据
+[package.metadata.tauri]
+# Tauri 特定的元数据配置
+bundle = true
+category = "Productivity"
+short-description = "智能桌面宠物AI助手"
+long-description = """
+Zishu-sensei 是一个基于 Tauri + React + Live2D 技术栈开发的智能桌面宠物应用。
+它提供可爱的 Live2D 角色展示、智能对话交互、右击设置菜单、适配器管理、
+主题切换和系统托盘等功能，让您的桌面工作更加有趣和高效。
+
+主要特性：
+• 🎭 Live2D 角色展示 - 可爱的桌面宠物形象
+• 💬 智能对话交互 - 基于适配器系统的AI对话
+• ⚙️ 右击设置菜单 - 便捷的功能配置
+• 🔧 适配器管理 - 插件化功能扩展
+• 🎨 主题切换 - 多种视觉风格
+• 📱 系统托盘 - 后台运行和快捷操作
+"""
+
+# 文档配置
+[package.metadata.docs.rs]
+all-features = true
+rustdoc-args = ["--cfg", "docsrs"]
+
+# 发布配置
+[package.metadata.release]
+pre-release-replacements = [
+    { file = "README.md", search = "zishu-sensei = \"[^\"]*\"", replace = "zishu-sensei = \"{{version}}\"" },
+    { file = "src-tauri/tauri.conf.json", search = "\"version\": \"[^\"]*\"", replace = "\"version\": \"{{version}}\"" },
+]

@@ -1,0 +1,233 @@
+/* 组件样式文件 */
+
+/* 按钮组件样式 */
+.btn {
+    @apply inline-flex items-center justify-center rounded-md text-sm font-medium transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 disabled:opacity-50 disabled:pointer-events-none;
+}
+
+.btn-primary {
+    @apply bg-blue-600 text-white hover:bg-blue-700;
+}
+
+.btn-secondary {
+    @apply bg-gray-200 text-gray-900 hover:bg-gray-300 dark:bg-gray-700 dark:text-gray-100 dark:hover:bg-gray-600;
+}
+
+.btn-outline {
+    @apply border border-gray-300 bg-transparent hover:bg-gray-50 dark:border-gray-600 dark:hover:bg-gray-800;
+}
+
+.btn-ghost {
+    @apply bg-transparent hover:bg-gray-100 dark:hover:bg-gray-800;
+}
+
+.btn-sm {
+    @apply h-8 px-3 text-xs;
+}
+
+.btn-md {
+    @apply h-10 px-4 py-2;
+}
+
+.btn-lg {
+    @apply h-12 px-8 text-base;
+}
+
+/* 输入框组件样式 */
+.input {
+    @apply flex w-full rounded-md border border-gray-300 bg-white px-3 py-2 text-sm placeholder:text-gray-400 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent disabled:cursor-not-allowed disabled:opacity-50 dark:border-gray-600 dark:bg-gray-800 dark:text-white dark:placeholder:text-gray-500;
+}
+
+.input-error {
+    @apply border-red-500 focus:ring-red-500;
+}
+
+/* 卡片组件样式 */
+.card {
+    @apply rounded-lg border border-gray-200 bg-white p-6 shadow-sm dark:border-gray-700 dark:bg-gray-800;
+}
+
+.card-header {
+    @apply flex flex-col space-y-1.5 pb-6;
+}
+
+.card-title {
+    @apply text-lg font-semibold leading-none tracking-tight;
+}
+
+.card-description {
+    @apply text-sm text-gray-600 dark:text-gray-400;
+}
+
+.card-content {
+    @apply pb-6;
+}
+
+.card-footer {
+    @apply flex items-center pt-6;
+}
+
+/* 对话框组件样式 */
+.dialog-overlay {
+    @apply fixed inset-0 z-50 bg-black/50 backdrop-blur-sm;
+}
+
+.dialog-content {
+    @apply fixed left-1/2 top-1/2 z-50 w-full max-w-lg -translate-x-1/2 -translate-y-1/2 transform rounded-lg bg-white p-6 shadow-lg dark:bg-gray-800;
+}
+
+.dialog-header {
+    @apply flex flex-col space-y-1.5 text-center sm:text-left;
+}
+
+.dialog-title {
+    @apply text-lg font-semibold leading-none tracking-tight;
+}
+
+.dialog-description {
+    @apply text-sm text-gray-600 dark:text-gray-400;
+}
+
+.dialog-footer {
+    @apply flex flex-col-reverse sm:flex-row sm:justify-end sm:space-x-2;
+}
+
+/* Toast 组件样式 */
+.toast {
+    @apply pointer-events-auto w-full max-w-sm overflow-hidden rounded-lg bg-white shadow-lg ring-1 ring-black ring-opacity-5 dark:bg-gray-800;
+}
+
+.toast-success {
+    @apply border-l-4 border-green-500;
+}
+
+.toast-error {
+    @apply border-l-4 border-red-500;
+}
+
+.toast-warning {
+    @apply border-l-4 border-yellow-500;
+}
+
+.toast-info {
+    @apply border-l-4 border-blue-500;
+}
+
+.toast-container {
+    @apply fixed top-0 right-0 z-50 flex max-h-screen w-full flex-col-reverse p-4 sm:bottom-0 sm:right-0 sm:top-auto sm:flex-col md:max-w-[420px];
+}
+
+/* 下拉菜单组件样式 */
+.dropdown-content {
+    @apply z-50 min-w-[8rem] overflow-hidden rounded-md border border-gray-200 bg-white p-1 text-gray-900 shadow-md animate-in fade-in-0 zoom-in-95 dark:border-gray-700 dark:bg-gray-800 dark:text-gray-100;
+}
+
+.dropdown-item {
+    @apply relative flex cursor-default select-none items-center rounded-sm px-2 py-1.5 text-sm outline-none transition-colors hover:bg-gray-100 focus:bg-gray-100 dark:hover:bg-gray-700 dark:focus:bg-gray-700;
+}
+
+.dropdown-separator {
+    @apply -mx-1 my-1 h-px bg-gray-200 dark:bg-gray-700;
+}
+
+/* 开关组件样式 */
+.switch {
+    @apply peer inline-flex h-6 w-11 shrink-0 cursor-pointer items-center rounded-full border-2 border-transparent transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 disabled:cursor-not-allowed disabled:opacity-50 data-[state=checked]:bg-blue-600 data-[state=unchecked]:bg-gray-200 dark:data-[state=unchecked]:bg-gray-700;
+}
+
+.switch-thumb {
+    @apply pointer-events-none block h-5 w-5 rounded-full bg-white shadow-lg ring-0 transition-transform data-[state=checked]:translate-x-5 data-[state=unchecked]:translate-x-0;
+}
+
+/* 加载指示器样式 */
+.spinner {
+    @apply h-4 w-4 animate-spin rounded-full border-2 border-gray-300 border-t-blue-600;
+}
+
+.spinner-lg {
+    @apply h-8 w-8;
+}
+
+.spinner-sm {
+    @apply h-3 w-3;
+}
+
+/* 徽章组件样式 */
+.badge {
+    @apply inline-flex items-center rounded-full px-2.5 py-0.5 text-xs font-medium;
+}
+
+.badge-primary {
+    @apply bg-blue-100 text-blue-800 dark:bg-blue-900 dark:text-blue-200;
+}
+
+.badge-secondary {
+    @apply bg-gray-100 text-gray-800 dark:bg-gray-700 dark:text-gray-200;
+}
+
+.badge-success {
+    @apply bg-green-100 text-green-800 dark:bg-green-900 dark:text-green-200;
+}
+
+.badge-error {
+    @apply bg-red-100 text-red-800 dark:bg-red-900 dark:text-red-200;
+}
+
+.badge-warning {
+    @apply bg-yellow-100 text-yellow-800 dark:bg-yellow-900 dark:text-yellow-200;
+}
+
+/* 进度条组件样式 */
+.progress {
+    @apply relative h-2 w-full overflow-hidden rounded-full bg-gray-200 dark:bg-gray-700;
+}
+
+.progress-indicator {
+    @apply h-full w-full flex-1 bg-blue-600 transition-all;
+}
+
+/* 分隔符样式 */
+.separator {
+    @apply shrink-0 bg-gray-200 dark:bg-gray-700;
+    width: 1px;
+    height: 100%;
+}
+
+.separator-horizontal {
+    @apply h-px w-full;
+}
+
+/* 标签页组件样式 */
+.tabs-list {
+    @apply inline-flex h-10 items-center justify-center rounded-md bg-gray-100 p-1 text-gray-500 dark:bg-gray-800 dark:text-gray-400;
+}
+
+.tabs-trigger {
+    @apply inline-flex items-center justify-center whitespace-nowrap rounded-sm px-3 py-1.5 text-sm font-medium ring-offset-white transition-all focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 disabled:pointer-events-none disabled:opacity-50 data-[state=active]:bg-white data-[state=active]:text-gray-900 data-[state=active]:shadow-sm dark:ring-offset-gray-950 dark:data-[state=active]:bg-gray-950 dark:data-[state=active]:text-gray-50;
+}
+
+.tabs-content {
+    @apply mt-2 ring-offset-white focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 dark:ring-offset-gray-950;
+}
+
+/* 工具提示样式 */
+.tooltip {
+    @apply z-50 overflow-hidden rounded-md border border-gray-200 bg-white px-3 py-1.5 text-sm text-gray-900 shadow-md animate-in fade-in-0 zoom-in-95 dark:border-gray-700 dark:bg-gray-800 dark:text-gray-100;
+}
+
+/* 滑块组件样式 */
+.slider {
+    @apply relative flex w-full touch-none select-none items-center;
+}
+
+.slider-track {
+    @apply relative h-2 w-full grow overflow-hidden rounded-full bg-gray-200 dark:bg-gray-700;
+}
+
+.slider-range {
+    @apply absolute h-full bg-blue-600;
+}
+
+.slider-thumb {
+    @apply block h-5 w-5 rounded-full border-2 border-blue-600 bg-white ring-offset-white transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 disabled:pointer-events-none disabled:opacity-50 dark:border-blue-500 dark:bg-gray-950 dark:ring-offset-gray-950;
+}

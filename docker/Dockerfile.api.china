@@ -1,0 +1,71 @@
+# 使用Python基础镜像
+FROM python:3.11-slim
+
+# 設置工作目錄
+WORKDIR /app
+
+# 设置环境变量，避免交互式安装
+ENV DEBIAN_FRONTEND=noninteractive
+ENV PYTHONUNBUFFERED=1
+ENV PYTHONDONTWRITEBYTECODE=1
+
+# 设置国内镜像源（适用于Debian 11 bullseye）
+RUN echo "deb https://mirrors.tuna.tsinghua.edu.cn/debian/ bullseye main contrib non-free" > /etc/apt/sources.list && \
+    echo "deb https://mirrors.tuna.tsinghua.edu.cn/debian/ bullseye-updates main contrib non-free" >> /etc/apt/sources.list && \
+    echo "deb https://mirrors.tuna.tsinghua.edu.cn/debian-security bullseye-security main contrib non-free" >> /etc/apt/sources.list
+
+# 安裝系統依賴
+RUN apt-get update && apt-get install -y \
+    build-essential \
+    curl \
+    software-properties-common \
+    git \
+    pkg-config \
+    libhdf5-dev \
+    libssl-dev \
+    && rm -rf /var/lib/apt/lists/*
+
+# 安裝額外工具
+RUN apt-get update && apt-get install -y \
+    wget \
+    gnupg2 \
+    && rm -rf /var/lib/apt/lists/*
+
+# 複製依賴文件
+COPY requirements.txt .
+
+# 配置pip使用国内镜像源
+RUN pip config set global.index-url https://pypi.tuna.tsinghua.edu.cn/simple && \
+    pip config set global.trusted-host pypi.tuna.tsinghua.edu.cn
+
+# 安裝 Python 依賴
+RUN pip install --no-cache-dir --upgrade pip setuptools wheel
+RUN pip install --no-cache-dir -r requirements.txt
+
+# 複製項目源代碼
+COPY . .
+
+# 創建必要的目錄
+RUN mkdir -p /app/configs /app/logs /app/data
+
+# 設置環境變數
+ENV PYTHONPATH=/app
+ENV ZISHU_CONFIG_DIR=/app/configs
+ENV ZISHU_LOG_LEVEL=INFO
+ENV ZISHU_API_HOST=0.0.0.0
+ENV ZISHU_API_PORT=8000
+
+# 健康檢查
+HEALTHCHECK --interval=30s --timeout=10s --start-period=5s --retries=3 \
+    CMD curl -f http://localhost:8000/health || exit 1
+
+# 暴露端口
+EXPOSE 8000
+
+# 創建非 root 用戶
+RUN useradd --create-home --shell /bin/bash zishu
+RUN chown -R zishu:zishu /app
+USER zishu
+
+# 啟動命令
+CMD ["python", "-m", "zishu.api.server", "--host", "0.0.0.0", "--port", "8000"]

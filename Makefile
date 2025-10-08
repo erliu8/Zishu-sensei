@@ -62,6 +62,42 @@ dev-api: ## Run API server in development mode
 dev-logs: ## Show development service logs
 	./scripts/dev.sh logs
 
+# Docker development commands
+docker-dev-setup: ## Setup Docker development environment
+	@if [ "$(OS)" = "Windows_NT" ]; then \
+		powershell -ExecutionPolicy Bypass -File scripts/dev-docker.ps1 setup; \
+	else \
+		./scripts/dev-docker.sh setup; \
+	fi
+
+docker-dev-start: ## Start Docker development environment
+	@if [ "$(OS)" = "Windows_NT" ]; then \
+		powershell -ExecutionPolicy Bypass -File scripts/dev-docker.ps1 start-all; \
+	else \
+		./scripts/dev-docker.sh start-all; \
+	fi
+
+docker-dev-stop: ## Stop Docker development environment
+	@if [ "$(OS)" = "Windows_NT" ]; then \
+		powershell -ExecutionPolicy Bypass -File scripts/dev-docker.ps1 stop; \
+	else \
+		./scripts/dev-docker.sh stop; \
+	fi
+
+docker-dev-logs: ## Show Docker development logs
+	@if [ "$(OS)" = "Windows_NT" ]; then \
+		powershell -ExecutionPolicy Bypass -File scripts/dev-docker.ps1 logs; \
+	else \
+		./scripts/dev-docker.sh logs; \
+	fi
+
+docker-dev-status: ## Show Docker development status
+	@if [ "$(OS)" = "Windows_NT" ]; then \
+		powershell -ExecutionPolicy Bypass -File scripts/dev-docker.ps1 status; \
+	else \
+		./scripts/dev-docker.sh status; \
+	fi
+
 # Database commands
 db-migrate: ## Run database migrations
 	./scripts/dev.sh db-migrate
@@ -152,8 +188,13 @@ shell-redis: ## Get shell access to Redis container
 
 # Jupyter notebook
 jupyter: ## Start Jupyter notebook for development
-	cd docker && docker-compose -f docker-compose.yml -f docker-compose.dev.yml up -d jupyter
-	@echo "Jupyter Lab available at: http://localhost:8888 (token: dev-token)"
+	@if [ -f "docker-compose.dev.yml" ]; then \
+		docker-compose -f docker-compose.dev.yml up -d jupyter-dev; \
+		echo "Jupyter Lab available at: http://localhost:8888 (token: dev-token)"; \
+	else \
+		cd docker && docker-compose -f docker-compose.yml -f docker-compose.dev.yml up -d jupyter; \
+		echo "Jupyter Lab available at: http://localhost:8888 (token: dev-token)"; \
+	fi
 
 # Monitoring
 monitor: ## Start monitoring stack (Prometheus + Grafana)
@@ -163,16 +204,31 @@ monitor: ## Start monitoring stack (Prometheus + Grafana)
 
 # Development tools
 pgadmin: ## Start pgAdmin for database management
-	cd docker && docker-compose -f docker-compose.yml -f docker-compose.dev.yml up -d pgadmin
-	@echo "pgAdmin available at: http://localhost:5050 (admin@zishu.dev/admin)"
+	@if [ -f "docker-compose.dev.yml" ]; then \
+		docker-compose -f docker-compose.dev.yml up -d pgadmin-dev; \
+		echo "pgAdmin available at: http://localhost:5050 (admin@zishu.dev/admin)"; \
+	else \
+		cd docker && docker-compose -f docker-compose.yml -f docker-compose.dev.yml up -d pgadmin; \
+		echo "pgAdmin available at: http://localhost:5050 (admin@zishu.dev/admin)"; \
+	fi
 
 redis-ui: ## Start Redis Commander for Redis management
-	cd docker && docker-compose -f docker-compose.yml -f docker-compose.dev.yml up -d redis-commander
-	@echo "Redis Commander available at: http://localhost:8081"
+	@if [ -f "docker-compose.dev.yml" ]; then \
+		docker-compose -f docker-compose.dev.yml up -d redis-commander-dev; \
+		echo "Redis Commander available at: http://localhost:8081"; \
+	else \
+		cd docker && docker-compose -f docker-compose.yml -f docker-compose.dev.yml up -d redis-commander; \
+		echo "Redis Commander available at: http://localhost:8081"; \
+	fi
 
 mailhog: ## Start Mailhog for email testing
-	cd docker && docker-compose -f docker-compose.yml -f docker-compose.dev.yml up -d mailhog
-	@echo "Mailhog UI available at: http://localhost:8025"
+	@if [ -f "docker-compose.dev.yml" ]; then \
+		docker-compose -f docker-compose.dev.yml up -d mailhog-dev; \
+		echo "Mailhog UI available at: http://localhost:8025"; \
+	else \
+		cd docker && docker-compose -f docker-compose.yml -f docker-compose.dev.yml up -d mailhog; \
+		echo "Mailhog UI available at: http://localhost:8025"; \
+	fi
 
 # Environment management
 env-create: ## Create environment file from template

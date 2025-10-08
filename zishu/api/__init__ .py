@@ -7,9 +7,9 @@ from .server import create_app, run_server, ServerState
 from .dependencies import initialize_dependencies, get_dependencies
 
 __all__ = [
-    'create_app',
-    'run_server', 
-    'ServerState',
-    'initialize_dependencies',
-    'get_dependencies'
+    "create_app",
+    "run_server",
+    "ServerState",
+    "initialize_dependencies",
+    "get_dependencies",
 ]

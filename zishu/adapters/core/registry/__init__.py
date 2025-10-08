@@ -10,8 +10,8 @@ from .discovery import DiscoveryService
 from .dependency import DependencyResolver
 
 __all__ = [
-    'AdapterRegistryCore',
-    'RegistrationService',
-    'DiscoveryService', 
-    'DependencyResolver'
+    "AdapterRegistryCore",
+    "RegistrationService",
+    "DiscoveryService",
+    "DependencyResolver",
 ]

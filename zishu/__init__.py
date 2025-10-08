@@ -15,12 +15,12 @@ from . import models
 from . import character
 
 __all__ = [
-    'api',
-    'core', 
-    'utils',
-    'models',
-    'character',
-    '__version__',
-    '__author__',
-    '__description__'
+    "api",
+    "core",
+    "utils",
+    "models",
+    "character",
+    "__version__",
+    "__author__",
+    "__description__",
 ]

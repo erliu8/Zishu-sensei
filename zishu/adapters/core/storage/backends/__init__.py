@@ -6,6 +6,6 @@ from .memory import MemoryStorageBackend
 from .file import FileStorageBackend
 
 __all__ = [
-    'MemoryStorageBackend',
-    'FileStorageBackend',
+    "MemoryStorageBackend",
+    "FileStorageBackend",
 ]

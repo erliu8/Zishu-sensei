@@ -9,9 +9,4 @@ from .database_adapter import DatabaseAdapter
 from .message_queue_adapter import MessageQueueAdapter
 from .file_system_adapter import FileSystemAdapter
 
-__all__ = [
-    'HttpAdapter',
-    'DatabaseAdapter', 
-    'MessageQueueAdapter',
-    'FileSystemAdapter'
-]
+__all__ = ["HttpAdapter", "DatabaseAdapter", "MessageQueueAdapter", "FileSystemAdapter"]
