@@ -1,0 +1,83 @@
+{
+    "version": "1.0.0",
+    "model": "zishu.model3.json",
+    "preview": "preview.png",
+    "name": "紫舒老师",
+    "description": "AI桌面宠物助手 - 紫舒老师",
+    "author": "Zishu Team",
+    "url": "https://zishu.dev",
+    "settings": {
+        "scale": 1.0,
+        "position": {
+            "x": 0,
+            "y": 0
+        },
+        "hitAreas": [
+            {
+                "name": "head",
+                "id": "HitArea"
+            }
+        ],
+        "expressions": [
+            {
+                "name": "default",
+                "file": "expressions/default.exp3.json"
+            },
+            {
+                "name": "happy",
+                "file": "expressions/happy.exp3.json"
+            },
+            {
+                "name": "sad",
+                "file": "expressions/sad.exp3.json"
+            },
+            {
+                "name": "surprised",
+                "file": "expressions/surprised.exp3.json"
+            }
+        ],
+        "motions": {
+            "idle": [
+                {
+                    "file": "motions/idle_01.motion3.json",
+                    "fadeInTime": 0.5,
+                    "fadeOutTime": 0.5
+                },
+                {
+                    "file": "motions/idle_02.motion3.json",
+                    "fadeInTime": 0.5,
+                    "fadeOutTime": 0.5
+                }
+            ],
+            "tap": [
+                {
+                    "file": "motions/tap_01.motion3.json",
+                    "fadeInTime": 0.5,
+                    "fadeOutTime": 0.5
+                }
+            ],
+            "greeting": [
+                {
+                    "file": "motions/greeting_01.motion3.json",
+                    "fadeInTime": 0.5,
+                    "fadeOutTime": 0.5
+                }
+            ],
+            "speaking": [
+                {
+                    "file": "motions/speaking_01.motion3.json",
+                    "fadeInTime": 0.5,
+                    "fadeOutTime": 0.5
+                }
+            ]
+        },
+        "physics": "physics.physics3.json",
+        "pose": "pose.pose3.json",
+        "displayInfo": {
+            "width": 2048,
+            "height": 2048,
+            "centerX": 0.0,
+            "centerY": 0.0
+        }
+    }
+}

@@ -1,0 +1,256 @@
+/**
+ * 赛博朋克主题 CSS 变量
+ * 特点：霓虹色、暗黑背景、高对比度、科技感、未来主义
+ */
+
+:root.cyberpunk,
+[data-theme='cyberpunk'] {
+    /* ==================== 颜色系统 ==================== */
+    
+    /* 主色调 - 霓虹青色 */
+    --color-primary: 180 100% 50%;
+    --color-primary-rgb: 0, 255, 255;
+    --color-primary-foreground: 240 10% 5%;
+    
+    /* 次要色 - 暗黑紫红 */
+    --color-secondary: 320 60% 15%;
+    --color-secondary-rgb: 61, 15, 48;
+    --color-secondary-foreground: 320 100% 70%;
+    
+    /* 背景色 - 深邃黑紫 */
+    --color-background: 260 40% 6%;
+    --color-background-rgb: 12, 9, 21;
+    --color-foreground: 180 100% 90%;
+    --color-foreground-rgb: 230, 255, 255;
+    
+    /* 卡片 - 深紫黑 */
+    --color-card: 260 50% 8%;
+    --color-card-rgb: 15, 10, 30;
+    --color-card-foreground: 180 100% 90%;
+    
+    /* 弹出层 */
+    --color-popover: 260 60% 10%;
+    --color-popover-rgb: 20, 10, 40;
+    --color-popover-foreground: 180 100% 90%;
+    
+    /* 柔和色 - 深紫灰 */
+    --color-muted: 260 30% 20%;
+    --color-muted-rgb: 45, 36, 66;
+    --color-muted-foreground: 180 30% 70%;
+    
+    /* 强调色 - 霓虹粉红 */
+    --color-accent: 320 100% 50%;
+    --color-accent-rgb: 255, 0, 128;
+    --color-accent-foreground: 0 0% 100%;
+    
+    /* 成功色 - 霓虹绿 */
+    --color-success: 150 100% 45%;
+    --color-success-rgb: 0, 230, 115;
+    --color-success-foreground: 150 100% 10%;
+    
+    /* 警告色 - 霓虹黄橙 */
+    --color-warning: 40 100% 50%;
+    --color-warning-rgb: 255, 170, 0;
+    --color-warning-foreground: 40 100% 10%;
+    
+    /* 错误/危险色 - 霓虹红 */
+    --color-destructive: 0 100% 50%;
+    --color-destructive-rgb: 255, 0, 0;
+    --color-destructive-foreground: 0 0% 100%;
+    
+    /* 信息色 - 霓虹蓝 */
+    --color-info: 210 100% 55%;
+    --color-info-rgb: 51, 153, 255;
+    --color-info-foreground: 210 100% 10%;
+    
+    /* 边框 - 暗青色带光晕 */
+    --color-border: 180 60% 25%;
+    --color-border-rgb: 26, 102, 102;
+    
+    /* 输入框 */
+    --color-input: 260 50% 12%;
+    --color-input-rgb: 23, 15, 46;
+    
+    /* 聚焦环 - 霓虹青色 */
+    --color-ring: 180 100% 50%;
+    --color-ring-rgb: 0, 255, 255;
+    
+    /* ==================== 语义化颜色 ==================== */
+    
+    /* 文本颜色 */
+    --text-primary: hsl(180 100% 90%);
+    --text-secondary: hsl(180 50% 70%);
+    --text-tertiary: hsl(180 30% 55%);
+    --text-disabled: hsl(180 20% 35%);
+    
+    /* 链接颜色 - 霓虹青紫 */
+    --link-color: hsl(180 100% 60%);
+    --link-hover: hsl(280 100% 70%);
+    --link-visited: hsl(320 100% 60%);
+    
+    /* ==================== 阴影 ==================== */
+    
+    /* 带霓虹光晕的阴影 */
+    --shadow-xs: 0 1px 2px 0 rgba(0, 255, 255, 0.2);
+    --shadow-sm: 0 2px 4px 0 rgba(0, 255, 255, 0.25), 
+                 0 0 8px rgba(0, 255, 255, 0.15);
+    --shadow-md: 0 4px 8px -1px rgba(0, 255, 255, 0.3), 
+                 0 0 12px rgba(0, 255, 255, 0.2);
+    --shadow-lg: 0 8px 16px -3px rgba(0, 255, 255, 0.35), 
+                 0 0 20px rgba(0, 255, 255, 0.25);
+    --shadow-xl: 0 16px 32px -5px rgba(0, 255, 255, 0.4), 
+                 0 0 32px rgba(0, 255, 255, 0.3);
+    --shadow-2xl: 0 25px 50px -12px rgba(0, 255, 255, 0.5),
+                  0 0 48px rgba(255, 0, 128, 0.3);
+    
+    /* 内阴影 */
+    --shadow-inner: inset 0 2px 4px 0 rgba(0, 255, 255, 0.15);
+    
+    /* 聚焦阴影 - 强烈霓虹光 */
+    --shadow-focus: 0 0 0 3px rgba(0, 255, 255, 0.6),
+                    0 0 20px rgba(0, 255, 255, 0.5),
+                    0 0 40px rgba(0, 255, 255, 0.3);
+    
+    /* ==================== 透明度 ==================== */
+    
+    --opacity-disabled: 0.35;
+    --opacity-hover: 0.95;
+    --opacity-selected: 0.25;
+    
+    /* ==================== 背景效果 ==================== */
+    
+    --backdrop-blur: blur(16px);
+    --backdrop-blur-sm: blur(8px);
+    --backdrop-blur-lg: blur(24px);
+}
+
+/* ==================== 赛博朋克特殊效果 ==================== */
+
+:root.cyberpunk,
+[data-theme='cyberpunk'] {
+    /* 强化霓虹发光效果 */
+    --character-glow-sm: 0 0 15px, 0 0 25px;
+    --character-glow-md: 0 0 25px, 0 0 40px, 0 0 60px;
+    --character-glow-lg: 0 0 40px, 0 0 70px, 0 0 100px;
+    --character-glow-xl: 0 0 60px, 0 0 100px, 0 0 140px;
+    
+    /* 阴影颜色组合 - 青色和粉色 */
+    --character-shadow-sm: 0 2px 4px rgba(0, 255, 255, 0.3),
+                           0 0 8px rgba(255, 0, 128, 0.2);
+    --character-shadow-md: 0 4px 8px rgba(0, 255, 255, 0.4),
+                           0 0 16px rgba(255, 0, 128, 0.3);
+    --character-shadow-lg: 0 8px 16px rgba(0, 255, 255, 0.5),
+                           0 0 24px rgba(255, 0, 128, 0.4);
+    --character-shadow-xl: 0 12px 24px rgba(0, 255, 255, 0.6),
+                           0 0 36px rgba(255, 0, 128, 0.5);
+    
+    /* 悬停效果 - 更科技感 */
+    --character-hover-scale: 1.03;
+    --character-hover-brightness: 1.3;
+    --character-hover-duration: 150ms;
+    
+    /* 激活效果 */
+    --character-active-scale: 0.97;
+    --character-active-brightness: 1.5;
+    --character-active-duration: 100ms;
+    
+    /* 情绪颜色 - 霓虹化 */
+    --emotion-happy-color: 0 255 255;
+    --emotion-happy-glow: rgba(0, 255, 255, 0.8);
+    
+    --emotion-sad-color: 100 150 255;
+    --emotion-sad-glow: rgba(100, 150, 255, 0.6);
+    
+    --emotion-angry-color: 255 0 100;
+    --emotion-angry-glow: rgba(255, 0, 100, 0.9);
+    
+    --emotion-surprised-color: 255 170 0;
+    --emotion-surprised-glow: rgba(255, 170, 0, 0.8);
+    
+    --emotion-excited-color: 255 0 255;
+    --emotion-excited-glow: rgba(255, 0, 255, 0.8);
+    
+    --emotion-shy-color: 255 100 200;
+    --emotion-shy-glow: rgba(255, 100, 200, 0.7);
+    
+    --emotion-thinking-color: 150 100 255;
+    --emotion-thinking-glow: rgba(150, 100, 255, 0.7);
+    
+    --emotion-confused-color: 200 100 255;
+    --emotion-confused-glow: rgba(200, 100, 255, 0.6);
+    
+    /* 滤镜效果 - 高对比度 */
+    --filter-contrast-normal: 1.15;
+    --filter-contrast-high: 1.3;
+    --filter-saturate-normal: 1.3;
+    --filter-saturate-high: 1.6;
+    --filter-brightness-normal: 1.1;
+    --filter-brightness-high: 1.25;
+    
+    /* 背景叠加 */
+    --overlay-bg-light: rgba(0, 255, 255, 0.1);
+    --overlay-bg-dark: rgba(12, 9, 21, 0.85);
+    
+    /* 扫描线效果 */
+    --scanline-opacity: 0.05;
+    --scanline-color: rgba(0, 255, 255, 0.1);
+    
+    /* 故障效果 */
+    --glitch-intensity: 2px;
+    --glitch-color-1: rgba(255, 0, 0, 0.2);
+    --glitch-color-2: rgba(0, 255, 255, 0.2);
+}
+
+/* ==================== 赛博朋克动画效果 ==================== */
+
+@keyframes cyberpunk-pulse {
+    0%, 100% {
+        opacity: 1;
+        filter: brightness(1) drop-shadow(0 0 8px currentColor);
+    }
+    50% {
+        opacity: 0.8;
+        filter: brightness(1.3) drop-shadow(0 0 16px currentColor);
+    }
+}
+
+@keyframes cyberpunk-flicker {
+    0%, 100% {
+        opacity: 1;
+    }
+    50% {
+        opacity: 0.95;
+    }
+    75% {
+        opacity: 1;
+    }
+    80% {
+        opacity: 0.97;
+    }
+}
+
+@keyframes cyberpunk-glow {
+    0%, 100% {
+        text-shadow: 0 0 10px currentColor,
+                     0 0 20px currentColor,
+                     0 0 30px currentColor;
+    }
+    50% {
+        text-shadow: 0 0 20px currentColor,
+                     0 0 30px currentColor,
+                     0 0 40px currentColor,
+                     0 0 50px currentColor;
+    }
+}
+
+/* 应用霓虹效果到特定元素 */
+:root.cyberpunk *[data-neon="true"],
+[data-theme='cyberpunk'] *[data-neon="true"] {
+    animation: cyberpunk-pulse 2s ease-in-out infinite;
+}
+
+:root.cyberpunk *[data-glow="true"],
+[data-theme='cyberpunk'] *[data-glow="true"] {
+    animation: cyberpunk-glow 3s ease-in-out infinite;
+}
+

@@ -1,0 +1,410 @@
+/**
+ * 设置窗口样式模块
+ * 
+ * 提供完整的设置窗口样式，包括：
+ * - 窗口容器样式
+ * - 标题栏样式
+ * - 内容区域样式
+ * - 调整大小手柄样式
+ * - 错误提示样式
+ * - 拖拽和调整大小状态
+ */
+
+/* ==================== 遮罩层 ==================== */
+.overlay {
+    position: fixed;
+    top: 0;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    background: rgba(0, 0, 0, 0.5);
+    backdrop-filter: blur(4px);
+    z-index: 9998;
+    transition: opacity 0.2s ease;
+}
+
+/* ==================== 窗口容器 ==================== */
+.settingsWindow {
+    position: fixed;
+    top: 50%;
+    left: 50%;
+    transform: translate(-50%, -50%);
+    background: var(--color-background, #ffffff);
+    border-radius: 12px;
+    box-shadow: 
+        0 20px 25px -5px rgba(0, 0, 0, 0.1),
+        0 10px 10px -5px rgba(0, 0, 0, 0.04),
+        0 0 0 1px rgba(0, 0, 0, 0.05);
+    overflow: hidden;
+    z-index: 9999;
+    display: flex;
+    flex-direction: column;
+    transition: box-shadow 0.2s ease;
+}
+
+.settingsWindow:hover {
+    box-shadow: 
+        0 25px 50px -12px rgba(0, 0, 0, 0.25),
+        0 0 0 1px rgba(0, 0, 0, 0.05);
+}
+
+/* 拖拽状态 */
+.settingsWindow.dragging {
+    cursor: move;
+    user-select: none;
+    opacity: 0.95;
+    transition: none;
+}
+
+/* 调整大小状态 */
+.settingsWindow.resizing {
+    user-select: none;
+    transition: none;
+}
+
+/* 最大化状态 */
+.settingsWindow.maximized {
+    top: 0 !important;
+    left: 0 !important;
+    width: 100vw !important;
+    height: 100vh !important;
+    transform: none !important;
+    border-radius: 0;
+}
+
+/* ==================== 标题栏 ==================== */
+.titleBar {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    height: 48px;
+    padding: 0 16px;
+    background: var(--color-surface, #f9fafb);
+    border-bottom: 1px solid var(--color-border, #e5e7eb);
+    cursor: move;
+    user-select: none;
+    flex-shrink: 0;
+}
+
+.titleBarLeft {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+}
+
+.titleBarIcon {
+    font-size: 20px;
+    line-height: 1;
+}
+
+.titleBarTitle {
+    font-size: 16px;
+    font-weight: 600;
+    color: var(--color-text, #111827);
+    margin: 0;
+}
+
+.titleBarRight {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+}
+
+/* 标题栏按钮 */
+.titleBarButton {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    width: 32px;
+    height: 32px;
+    border: none;
+    border-radius: 6px;
+    background: transparent;
+    color: var(--color-text-secondary, #6b7280);
+    cursor: pointer;
+    transition: all 0.15s ease;
+    padding: 0;
+}
+
+.titleBarButton:hover {
+    background: var(--color-hover, rgba(0, 0, 0, 0.05));
+    color: var(--color-text, #111827);
+}
+
+.titleBarButton:active {
+    transform: scale(0.95);
+}
+
+.titleBarButton:focus-visible {
+    outline: 2px solid var(--color-primary, #3b82f6);
+    outline-offset: 2px;
+}
+
+/* 最小化按钮 */
+.minimizeButton:hover {
+    background: rgba(59, 130, 246, 0.1);
+    color: #3b82f6;
+}
+
+/* 最大化按钮 */
+.maximizeButton:hover {
+    background: rgba(16, 185, 129, 0.1);
+    color: #10b981;
+}
+
+/* 关闭按钮 */
+.closeButton:hover {
+    background: #ef4444;
+    color: #ffffff;
+}
+
+.closeButton:active {
+    background: #dc2626;
+}
+
+/* ==================== 内容区域 ==================== */
+.settingsContent {
+    flex: 1;
+    overflow: hidden;
+    background: var(--color-background, #ffffff);
+    position: relative;
+}
+
+/* ==================== 调整大小手柄 ==================== */
+.resizeHandle {
+    position: absolute;
+    right: 0;
+    bottom: 0;
+    width: 20px;
+    height: 20px;
+    cursor: nwse-resize;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    color: var(--color-text-tertiary, #9ca3af);
+    transition: color 0.15s ease;
+    z-index: 10;
+}
+
+.resizeHandle:hover {
+    color: var(--color-text-secondary, #6b7280);
+}
+
+.resizeHandle:active {
+    color: var(--color-primary, #3b82f6);
+}
+
+.resizeHandle svg {
+    width: 16px;
+    height: 16px;
+}
+
+/* ==================== 错误提示 ==================== */
+.errorBanner {
+    position: absolute;
+    top: 0;
+    left: 0;
+    right: 0;
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    padding: 12px 16px;
+    background: #fef2f2;
+    border-bottom: 1px solid #fecaca;
+    color: #991b1b;
+    z-index: 100;
+}
+
+.errorIcon {
+    font-size: 20px;
+    line-height: 1;
+    flex-shrink: 0;
+}
+
+.errorMessage {
+    flex: 1;
+    font-size: 14px;
+    font-weight: 500;
+}
+
+.errorClose {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    width: 24px;
+    height: 24px;
+    border: none;
+    border-radius: 4px;
+    background: transparent;
+    color: #991b1b;
+    cursor: pointer;
+    transition: background 0.15s ease;
+    padding: 0;
+    flex-shrink: 0;
+}
+
+.errorClose:hover {
+    background: rgba(153, 27, 27, 0.1);
+}
+
+.errorClose:active {
+    transform: scale(0.95);
+}
+
+/* ==================== 暗色模式 ==================== */
+@media (prefers-color-scheme: dark) {
+    .settingsWindow {
+        background: var(--color-background, #111827);
+        box-shadow: 
+            0 20px 25px -5px rgba(0, 0, 0, 0.5),
+            0 10px 10px -5px rgba(0, 0, 0, 0.3),
+            0 0 0 1px rgba(255, 255, 255, 0.1);
+    }
+
+    .settingsWindow:hover {
+        box-shadow: 
+            0 25px 50px -12px rgba(0, 0, 0, 0.7),
+            0 0 0 1px rgba(255, 255, 255, 0.1);
+    }
+
+    .titleBar {
+        background: var(--color-surface, #1f2937);
+        border-bottom-color: var(--color-border, #374151);
+    }
+
+    .titleBarTitle {
+        color: var(--color-text, #f9fafb);
+    }
+
+    .titleBarButton {
+        color: var(--color-text-secondary, #9ca3af);
+    }
+
+    .titleBarButton:hover {
+        background: var(--color-hover, rgba(255, 255, 255, 0.1));
+        color: var(--color-text, #f9fafb);
+    }
+
+    .settingsContent {
+        background: var(--color-background, #111827);
+    }
+
+    .resizeHandle {
+        color: var(--color-text-tertiary, #6b7280);
+    }
+
+    .resizeHandle:hover {
+        color: var(--color-text-secondary, #9ca3af);
+    }
+
+    .errorBanner {
+        background: #7f1d1d;
+        border-bottom-color: #991b1b;
+        color: #fecaca;
+    }
+
+    .errorClose {
+        color: #fecaca;
+    }
+
+    .errorClose:hover {
+        background: rgba(254, 202, 202, 0.1);
+    }
+}
+
+/* ==================== 响应式设计 ==================== */
+@media (max-width: 768px) {
+    .settingsWindow {
+        width: 100vw !important;
+        height: 100vh !important;
+        top: 0 !important;
+        left: 0 !important;
+        transform: none !important;
+        border-radius: 0;
+    }
+
+    .titleBar {
+        height: 56px;
+    }
+
+    .resizeHandle {
+        display: none;
+    }
+}
+
+/* ==================== 动画 ==================== */
+@keyframes fadeIn {
+    from {
+        opacity: 0;
+    }
+    to {
+        opacity: 1;
+    }
+}
+
+@keyframes slideUp {
+    from {
+        transform: translateY(20px);
+        opacity: 0;
+    }
+    to {
+        transform: translateY(0);
+        opacity: 1;
+    }
+}
+
+/* ==================== 打印样式 ==================== */
+@media print {
+    .overlay,
+    .titleBar,
+    .resizeHandle,
+    .errorBanner {
+        display: none;
+    }
+
+    .settingsWindow {
+        position: static;
+        width: 100% !important;
+        height: auto !important;
+        box-shadow: none;
+        border-radius: 0;
+    }
+}
+
+/* ==================== 无障碍支持 ==================== */
+.titleBarButton:focus-visible,
+.resizeHandle:focus-visible,
+.errorClose:focus-visible {
+    outline: 2px solid var(--color-primary, #3b82f6);
+    outline-offset: 2px;
+}
+
+/* 高对比度模式 */
+@media (prefers-contrast: high) {
+    .settingsWindow {
+        border: 2px solid currentColor;
+    }
+
+    .titleBar {
+        border-bottom-width: 2px;
+    }
+
+    .titleBarButton {
+        border: 1px solid currentColor;
+    }
+}
+
+/* 减少动画 */
+@media (prefers-reduced-motion: reduce) {
+    .settingsWindow,
+    .titleBarButton,
+    .resizeHandle,
+    .errorClose {
+        transition: none;
+    }
+
+    .settingsWindow.dragging {
+        opacity: 1;
+    }
+}
+

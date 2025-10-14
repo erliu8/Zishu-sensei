@@ -14,6 +14,8 @@ interface TauriAvailability {
  * Tauri Hook 返回值
  */
 interface UseTauriReturn extends TauriAvailability {
+    isTauriEnv: boolean
+    tauriVersion: string
     invoke: <T = any>(command: string, args?: Record<string, any>) => Promise<T>
     listen: (event: string, handler: (event: any) => void) => Promise<() => void>
     emit: (event: string, payload?: any) => Promise<void>
@@ -138,6 +140,8 @@ export const useTauri = (): UseTauriReturn => {
 
     return {
         ...availability,
+        isTauriEnv: availability.isAvailable,
+        tauriVersion: availability.environment?.version || '0.0.0',
         invoke,
         listen,
         emit,

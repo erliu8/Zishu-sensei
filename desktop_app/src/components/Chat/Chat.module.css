@@ -1,0 +1,568 @@
+/**
+ * 聊天组件样式
+ */
+
+/* ==================== 主容器 ==================== */
+
+.chat {
+  display: flex;
+  flex-direction: column;
+  height: 100%;
+  width: 100%;
+  background: var(--color-bg-primary, #ffffff);
+  overflow: hidden;
+}
+
+.chatCompact {
+  --spacing: 8px;
+}
+
+/* ==================== 头部 ==================== */
+
+.chatHeader {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 16px 20px;
+  background: var(--color-bg-primary, #ffffff);
+  border-bottom: 1px solid var(--color-border, #e0e0e0);
+  flex-shrink: 0;
+  z-index: 10;
+}
+
+.headerLeft {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+  flex: 1;
+  min-width: 0;
+}
+
+.sessionTitle {
+  margin: 0;
+  font-size: 18px;
+  font-weight: 600;
+  color: var(--color-text-primary, #333333);
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.sessionStats {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  font-size: 13px;
+  color: var(--color-text-tertiary, #999999);
+}
+
+.sessionStats span {
+  white-space: nowrap;
+}
+
+.headerRight {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  flex-shrink: 0;
+}
+
+.headerButton {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 36px;
+  height: 36px;
+  padding: 0;
+  background: transparent;
+  border: none;
+  border-radius: 8px;
+  color: var(--color-text-secondary, #666666);
+  cursor: pointer;
+  transition: all 0.2s ease;
+}
+
+.headerButton:hover {
+  background: var(--color-bg-secondary, #f8f9fa);
+  color: var(--color-primary, #2196f3);
+}
+
+.headerButton:active {
+  transform: scale(0.95);
+}
+
+/* ==================== 菜单 ==================== */
+
+.menuContainer {
+  position: relative;
+}
+
+.menuDropdown {
+  position: absolute;
+  top: 100%;
+  right: 0;
+  margin-top: 8px;
+  padding: 8px;
+  min-width: 180px;
+  background: var(--color-bg-primary, #ffffff);
+  border: 1px solid var(--color-border, #e0e0e0);
+  border-radius: 12px;
+  box-shadow: 0 4px 16px rgba(0, 0, 0, 0.15);
+  z-index: 100;
+}
+
+.menuItem {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  width: 100%;
+  padding: 10px 12px;
+  background: transparent;
+  border: none;
+  border-radius: 8px;
+  font-size: 14px;
+  color: var(--color-text-primary, #333333);
+  text-align: left;
+  cursor: pointer;
+  transition: all 0.2s ease;
+}
+
+.menuItem:hover {
+  background: var(--color-bg-secondary, #f8f9fa);
+}
+
+.menuItemDanger {
+  color: var(--color-error, #f44336);
+}
+
+.menuItemDanger:hover {
+  background: var(--color-error-light, #ffebee);
+}
+
+.menuDivider {
+  height: 1px;
+  margin: 8px 0;
+  background: var(--color-border-light, #f0f0f0);
+}
+
+/* ==================== 错误横幅 ==================== */
+
+.errorBanner {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  padding: 12px 20px;
+  background: var(--color-error-light, #ffebee);
+  border-bottom: 1px solid var(--color-error, #f44336);
+  color: var(--color-error, #f44336);
+  flex-shrink: 0;
+}
+
+.errorText {
+  flex: 1;
+  font-size: 14px;
+  font-weight: 500;
+}
+
+.retryButton {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  padding: 6px 12px;
+  background: var(--color-error, #f44336);
+  border: none;
+  border-radius: 6px;
+  font-size: 13px;
+  font-weight: 500;
+  color: #ffffff;
+  cursor: pointer;
+  transition: all 0.2s ease;
+  flex-shrink: 0;
+}
+
+.retryButton:hover {
+  background: var(--color-error-dark, #d32f2f);
+  transform: translateY(-1px);
+}
+
+.retryButton:active {
+  transform: translateY(0);
+}
+
+/* ==================== 内容区域 ==================== */
+
+.chatContent {
+  flex: 1;
+  min-height: 0;
+  overflow: hidden;
+  position: relative;
+}
+
+/* ==================== 空状态 ==================== */
+
+.emptyState {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  height: 100%;
+  padding: 40px 20px;
+  text-align: center;
+}
+
+.emptyIcon {
+  font-size: 64px;
+  margin-bottom: 16px;
+  opacity: 0.5;
+}
+
+.emptyTitle {
+  margin: 0 0 8px 0;
+  font-size: 24px;
+  font-weight: 600;
+  color: var(--color-text-primary, #333333);
+}
+
+.emptyDescription {
+  margin: 0 0 32px 0;
+  font-size: 15px;
+  color: var(--color-text-secondary, #666666);
+  max-width: 400px;
+}
+
+.emptySuggestions {
+  width: 100%;
+  max-width: 600px;
+}
+
+.emptySuggestionsTitle {
+  margin: 0 0 16px 0;
+  font-size: 14px;
+  font-weight: 500;
+  color: var(--color-text-secondary, #666666);
+}
+
+.emptySuggestionsList {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+}
+
+.emptySuggestionItem {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  padding: 16px 20px;
+  background: var(--color-bg-secondary, #f8f9fa);
+  border: 1px solid var(--color-border, #e0e0e0);
+  border-radius: 12px;
+  font-size: 15px;
+  color: var(--color-text-primary, #333333);
+  text-align: left;
+  cursor: pointer;
+  transition: all 0.2s ease;
+}
+
+.emptySuggestionItem:hover {
+  background: var(--color-primary-light, #e3f2fd);
+  border-color: var(--color-primary, #2196f3);
+  color: var(--color-primary, #2196f3);
+  transform: translateY(-2px);
+  box-shadow: 0 4px 12px rgba(33, 150, 243, 0.2);
+}
+
+.emptySuggestionItem:active {
+  transform: translateY(0);
+}
+
+.emptySuggestionIcon {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 20px;
+  flex-shrink: 0;
+}
+
+/* ==================== 加载状态 ==================== */
+
+.loadingState {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  height: 100%;
+  padding: 40px 20px;
+  gap: 16px;
+}
+
+.loadingIcon {
+  color: var(--color-primary, #2196f3);
+  animation: spin 1s linear infinite;
+}
+
+.loadingText {
+  font-size: 15px;
+  color: var(--color-text-secondary, #666666);
+}
+
+@keyframes spin {
+  from {
+    transform: rotate(0deg);
+  }
+  to {
+    transform: rotate(360deg);
+  }
+}
+
+/* ==================== 输入区域 ==================== */
+
+.inputArea {
+  padding: 16px 20px;
+  background: var(--color-bg-primary, #ffffff);
+  border-top: 1px solid var(--color-border, #e0e0e0);
+  flex-shrink: 0;
+}
+
+/* ==================== 响应式 ==================== */
+
+@media (max-width: 768px) {
+  .chatHeader {
+    padding: 12px 16px;
+  }
+
+  .sessionTitle {
+    font-size: 16px;
+  }
+
+  .sessionStats {
+    font-size: 12px;
+    gap: 6px;
+  }
+
+  .headerButton {
+    width: 32px;
+    height: 32px;
+  }
+
+  .errorBanner {
+    padding: 10px 16px;
+  }
+
+  .errorText {
+    font-size: 13px;
+  }
+
+  .retryButton {
+    padding: 5px 10px;
+    font-size: 12px;
+  }
+
+  .emptyState {
+    padding: 32px 16px;
+  }
+
+  .emptyIcon {
+    font-size: 48px;
+  }
+
+  .emptyTitle {
+    font-size: 20px;
+  }
+
+  .emptyDescription {
+    font-size: 14px;
+  }
+
+  .emptySuggestionItem {
+    padding: 12px 16px;
+    font-size: 14px;
+  }
+
+  .inputArea {
+    padding: 12px 16px;
+  }
+}
+
+@media (max-width: 480px) {
+  .chatHeader {
+    padding: 10px 12px;
+  }
+
+  .sessionTitle {
+    font-size: 15px;
+  }
+
+  .sessionStats {
+    font-size: 11px;
+    gap: 4px;
+  }
+
+  .sessionStats span:nth-child(n + 5) {
+    display: none; /* 在小屏幕上隐藏 token 统计 */
+  }
+
+  .headerButton {
+    width: 30px;
+    height: 30px;
+  }
+
+  .errorBanner {
+    padding: 8px 12px;
+    gap: 8px;
+  }
+
+  .errorText {
+    font-size: 12px;
+  }
+
+  .retryButton {
+    padding: 4px 8px;
+    font-size: 11px;
+  }
+
+  .emptyState {
+    padding: 24px 12px;
+  }
+
+  .emptyIcon {
+    font-size: 40px;
+    margin-bottom: 12px;
+  }
+
+  .emptyTitle {
+    font-size: 18px;
+    margin-bottom: 6px;
+  }
+
+  .emptyDescription {
+    font-size: 13px;
+    margin-bottom: 24px;
+  }
+
+  .emptySuggestionsTitle {
+    font-size: 13px;
+    margin-bottom: 12px;
+  }
+
+  .emptySuggestionsList {
+    gap: 10px;
+  }
+
+  .emptySuggestionItem {
+    padding: 10px 12px;
+    font-size: 13px;
+    gap: 10px;
+  }
+
+  .emptySuggestionIcon {
+    font-size: 18px;
+  }
+
+  .loadingState {
+    padding: 32px 12px;
+    gap: 12px;
+  }
+
+  .loadingIcon {
+    width: 28px;
+    height: 28px;
+  }
+
+  .loadingText {
+    font-size: 14px;
+  }
+
+  .inputArea {
+    padding: 10px 12px;
+  }
+}
+
+/* ==================== 无障碍 ==================== */
+
+@media (prefers-reduced-motion: reduce) {
+  .headerButton,
+  .menuItem,
+  .retryButton,
+  .emptySuggestionItem {
+    transition: none;
+  }
+
+  .loadingIcon {
+    animation: none;
+  }
+}
+
+/* ==================== 暗色主题 ==================== */
+
+@media (prefers-color-scheme: dark) {
+  .chat {
+    --color-bg-primary: #1e1e1e;
+    --color-bg-secondary: #2a2a2a;
+    --color-border: #404040;
+    --color-border-light: #333333;
+    --color-text-primary: #e0e0e0;
+    --color-text-secondary: #a0a0a0;
+    --color-text-tertiary: #707070;
+    --color-primary: #42a5f5;
+    --color-primary-light: #1e3a52;
+    --color-error: #ef5350;
+    --color-error-light: #3d2020;
+    --color-error-dark: #e53935;
+  }
+
+  .chatHeader {
+    box-shadow: 0 1px 0 rgba(255, 255, 255, 0.05);
+  }
+
+  .menuDropdown {
+    box-shadow: 0 4px 16px rgba(0, 0, 0, 0.4);
+  }
+
+  .emptySuggestionItem:hover {
+    box-shadow: 0 4px 12px rgba(66, 165, 245, 0.3);
+  }
+}
+
+/* ==================== 高对比度模式 ==================== */
+
+@media (prefers-contrast: high) {
+  .chatHeader,
+  .errorBanner,
+  .inputArea {
+    border-width: 2px;
+  }
+
+  .headerButton,
+  .menuItem,
+  .retryButton,
+  .emptySuggestionItem {
+    border: 2px solid currentColor;
+  }
+
+  .menuDropdown {
+    border-width: 2px;
+  }
+}
+
+/* ==================== 打印样式 ==================== */
+
+@media print {
+  .chatHeader,
+  .inputArea,
+  .errorBanner,
+  .headerButton,
+  .menuContainer,
+  .retryButton {
+    display: none;
+  }
+
+  .chat {
+    height: auto;
+    overflow: visible;
+  }
+
+  .chatContent {
+    overflow: visible;
+  }
+}
+

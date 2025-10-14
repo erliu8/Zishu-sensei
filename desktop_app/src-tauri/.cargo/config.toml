@@ -1,0 +1,4 @@
+[env]
+WEBKIT2GTK_4_1 = "1"
+PKG_CONFIG_PATH = "/opt/zishu-sensei/desktop_app/src-tauri/build-pkgconfig:${PKG_CONFIG_PATH}"
+

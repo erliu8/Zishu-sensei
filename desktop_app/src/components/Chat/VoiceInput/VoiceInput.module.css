@@ -1,0 +1,608 @@
+/**
+ * VoiceInput 语音输入组件样式
+ * 
+ * 完整的语音输入样式定义，支持：
+ * - 多种状态样式（空闲、监听、处理中、错误）
+ * - 音频可视化动画
+ * - 响应式布局
+ * - 暗色主题支持
+ * - 流畅的过渡动画
+ * - 无障碍支持
+ * 
+ * @module VoiceInput.module.css
+ */
+
+/* ==================== CSS 变量定义 ==================== */
+
+.container {
+  /* 颜色变量 */
+  --color-bg-primary: #ffffff;
+  --color-bg-secondary: #f8f9fa;
+  --color-bg-hover: #f0f1f3;
+  --color-bg-active: #e8e9eb;
+  
+  --color-border: #e0e0e0;
+  --color-border-focus: #2196f3;
+  
+  --color-text-primary: #333333;
+  --color-text-secondary: #666666;
+  --color-text-tertiary: #999999;
+  
+  --color-primary: #2196f3;
+  --color-primary-light: #e3f2fd;
+  --color-primary-dark: #1976d2;
+  --color-primary-rgb: 33, 150, 243;
+  
+  --color-success: #4caf50;
+  --color-success-light: #e8f5e9;
+  --color-success-dark: #388e3c;
+  
+  --color-error: #f44336;
+  --color-error-light: #ffebee;
+  --color-error-dark: #d32f2f;
+  
+  --color-warning: #ff9800;
+  --color-warning-light: #fff3e0;
+  
+  /* 尺寸变量 */
+  --button-size: 56px;
+  --button-size-small: 40px;
+  --icon-size: 24px;
+  --border-radius: 50%;
+  --border-width: 2px;
+  
+  /* 间距变量 */
+  --spacing-xs: 4px;
+  --spacing-sm: 8px;
+  --spacing-md: 12px;
+  --spacing-lg: 16px;
+  --spacing-xl: 24px;
+  
+  /* 过渡变量 */
+  --transition-fast: 0.15s cubic-bezier(0.4, 0, 0.2, 1);
+  --transition-normal: 0.2s cubic-bezier(0.4, 0, 0.2, 1);
+  --transition-slow: 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+  
+  /* 阴影变量 */
+  --shadow-sm: 0 2px 4px rgba(0, 0, 0, 0.08);
+  --shadow-md: 0 4px 8px rgba(0, 0, 0, 0.12);
+  --shadow-lg: 0 8px 16px rgba(0, 0, 0, 0.16);
+  --shadow-xl: 0 12px 24px rgba(0, 0, 0, 0.20);
+  
+  /* 动画变量 */
+  --pulse-duration: 1.5s;
+  --wave-duration: 1.2s;
+}
+
+/* ==================== 容器 ==================== */
+
+.container {
+  position: relative;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: var(--spacing-md);
+  padding: var(--spacing-md);
+  font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', 'Roboto', 'Oxygen',
+    'Ubuntu', 'Cantarell', 'Fira Sans', 'Droid Sans', 'Helvetica Neue',
+    sans-serif;
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+}
+
+/* ==================== 主按钮 ==================== */
+
+.voiceButton {
+  position: relative;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: var(--button-size);
+  height: var(--button-size);
+  padding: 0;
+  border: var(--border-width) solid var(--color-border);
+  border-radius: var(--border-radius);
+  background: var(--color-bg-primary);
+  color: var(--color-text-primary);
+  font-size: var(--icon-size);
+  cursor: pointer;
+  outline: none;
+  transition: all var(--transition-normal);
+  box-shadow: var(--shadow-sm);
+  overflow: hidden;
+  -webkit-tap-highlight-color: transparent;
+}
+
+.voiceButton:hover:not(:disabled) {
+  background: var(--color-bg-hover);
+  box-shadow: var(--shadow-md);
+  transform: translateY(-2px);
+}
+
+.voiceButton:active:not(:disabled) {
+  transform: translateY(0);
+  box-shadow: var(--shadow-sm);
+}
+
+.voiceButton:focus-visible {
+  border-color: var(--color-primary);
+  box-shadow: 0 0 0 4px rgba(var(--color-primary-rgb), 0.15);
+}
+
+.voiceButton:disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
+  background: var(--color-bg-secondary);
+}
+
+/* ==================== 按钮状态 ==================== */
+
+/* 空闲状态 */
+.voiceButton.status-idle {
+  border-color: var(--color-border);
+  background: var(--color-bg-primary);
+}
+
+.voiceButton.status-idle:hover:not(:disabled) {
+  border-color: var(--color-primary);
+  background: var(--color-primary-light);
+}
+
+/* 监听状态 */
+.voiceButton.status-listening {
+  border-color: var(--color-success);
+  background: var(--color-success-light);
+  animation: pulse var(--pulse-duration) ease-in-out infinite;
+}
+
+.voiceButton.status-listening::before {
+  content: '';
+  position: absolute;
+  top: 50%;
+  left: 50%;
+  width: 100%;
+  height: 100%;
+  border: var(--border-width) solid var(--color-success);
+  border-radius: var(--border-radius);
+  transform: translate(-50%, -50%);
+  animation: ripple var(--wave-duration) ease-out infinite;
+  pointer-events: none;
+}
+
+/* 处理中状态 */
+.voiceButton.status-processing {
+  border-color: var(--color-warning);
+  background: var(--color-warning-light);
+}
+
+.voiceButton.status-processing .icon {
+  animation: spin 1s linear infinite;
+}
+
+/* 错误状态 */
+.voiceButton.status-error {
+  border-color: var(--color-error);
+  background: var(--color-error-light);
+  animation: shake 0.5s ease-in-out;
+}
+
+/* ==================== 图标 ==================== */
+
+.icon {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: var(--icon-size);
+  line-height: 1;
+  transition: transform var(--transition-normal);
+  z-index: 1;
+}
+
+.voiceButton:hover:not(:disabled) .icon {
+  transform: scale(1.1);
+}
+
+/* ==================== 音频可视化 ==================== */
+
+.visualizer {
+  position: absolute;
+  bottom: 8px;
+  left: 50%;
+  transform: translateX(-50%);
+  display: flex;
+  align-items: flex-end;
+  justify-content: center;
+  gap: 2px;
+  height: 16px;
+  z-index: 0;
+}
+
+.visualizerBar {
+  width: 3px;
+  min-height: 4px;
+  background: var(--color-success);
+  border-radius: 2px;
+  animation: wave var(--wave-duration) ease-in-out infinite;
+  transform-origin: bottom;
+  opacity: 0.8;
+}
+
+.visualizerBar:nth-child(1) {
+  animation-delay: 0s;
+}
+
+.visualizerBar:nth-child(2) {
+  animation-delay: 0.1s;
+}
+
+.visualizerBar:nth-child(3) {
+  animation-delay: 0.2s;
+}
+
+.visualizerBar:nth-child(4) {
+  animation-delay: 0.3s;
+}
+
+.visualizerBar:nth-child(5) {
+  animation-delay: 0.4s;
+}
+
+/* ==================== 状态文本 ==================== */
+
+.statusText {
+  display: flex;
+  align-items: center;
+  gap: var(--spacing-sm);
+  font-size: 14px;
+  color: var(--color-text-secondary);
+  font-weight: 500;
+  text-align: center;
+}
+
+.listeningIndicator {
+  display: inline-block;
+  width: 8px;
+  height: 8px;
+  color: var(--color-success);
+  animation: blink 1.5s ease-in-out infinite;
+}
+
+.duration {
+  margin-left: var(--spacing-sm);
+  font-size: 12px;
+  color: var(--color-text-tertiary);
+  font-variant-numeric: tabular-nums;
+}
+
+.errorText {
+  font-size: 14px;
+  color: var(--color-error);
+  font-weight: 500;
+  text-align: center;
+  padding: var(--spacing-sm) var(--spacing-md);
+  background: var(--color-error-light);
+  border-radius: 8px;
+  max-width: 280px;
+  animation: slideIn var(--transition-normal);
+}
+
+/* ==================== 识别文本显示 ==================== */
+
+.transcript {
+  display: flex;
+  flex-direction: column;
+  gap: var(--spacing-xs);
+  padding: var(--spacing-md);
+  background: var(--color-bg-secondary);
+  border-radius: 12px;
+  max-width: 400px;
+  min-width: 280px;
+  box-shadow: var(--shadow-sm);
+  animation: fadeIn var(--transition-normal);
+}
+
+.finalText {
+  font-size: 15px;
+  color: var(--color-text-primary);
+  line-height: 1.5;
+  font-weight: 500;
+}
+
+.interimText {
+  font-size: 15px;
+  color: var(--color-text-tertiary);
+  line-height: 1.5;
+  font-style: italic;
+  opacity: 0.8;
+}
+
+/* ==================== 语言选择器 ==================== */
+
+.languageSelect {
+  padding: var(--spacing-sm) var(--spacing-md);
+  border: 1px solid var(--color-border);
+  border-radius: 8px;
+  background: var(--color-bg-primary);
+  color: var(--color-text-primary);
+  font-size: 13px;
+  font-weight: 500;
+  cursor: pointer;
+  outline: none;
+  transition: all var(--transition-fast);
+  box-shadow: var(--shadow-sm);
+}
+
+.languageSelect:hover:not(:disabled) {
+  border-color: var(--color-primary);
+  background: var(--color-bg-hover);
+}
+
+.languageSelect:focus {
+  border-color: var(--color-primary);
+  box-shadow: 0 0 0 3px rgba(var(--color-primary-rgb), 0.15);
+}
+
+.languageSelect:disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
+  background: var(--color-bg-secondary);
+}
+
+/* ==================== 不支持提示 ==================== */
+
+.unsupportedContainer {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: var(--spacing-md);
+  padding: var(--spacing-xl);
+  background: var(--color-bg-secondary);
+  border-radius: 16px;
+  max-width: 320px;
+  text-align: center;
+  box-shadow: var(--shadow-sm);
+}
+
+.unsupportedIcon {
+  font-size: 48px;
+  opacity: 0.5;
+}
+
+.unsupportedText {
+  font-size: 15px;
+  font-weight: 600;
+  color: var(--color-text-primary);
+  line-height: 1.5;
+}
+
+.unsupportedHint {
+  font-size: 13px;
+  color: var(--color-text-secondary);
+  line-height: 1.4;
+}
+
+/* ==================== 动画定义 ==================== */
+
+/* 脉冲动画 */
+@keyframes pulse {
+  0%, 100% {
+    transform: scale(1);
+    box-shadow: var(--shadow-sm);
+  }
+  50% {
+    transform: scale(1.05);
+    box-shadow: var(--shadow-md);
+  }
+}
+
+/* 波纹动画 */
+@keyframes ripple {
+  0% {
+    transform: translate(-50%, -50%) scale(1);
+    opacity: 1;
+  }
+  100% {
+    transform: translate(-50%, -50%) scale(2);
+    opacity: 0;
+  }
+}
+
+/* 波形动画 */
+@keyframes wave {
+  0%, 100% {
+    transform: scaleY(1);
+  }
+  50% {
+    transform: scaleY(1.5);
+  }
+}
+
+/* 旋转动画 */
+@keyframes spin {
+  from {
+    transform: rotate(0deg);
+  }
+  to {
+    transform: rotate(360deg);
+  }
+}
+
+/* 抖动动画 */
+@keyframes shake {
+  0%, 100% {
+    transform: translateX(0);
+  }
+  10%, 30%, 50%, 70%, 90% {
+    transform: translateX(-4px);
+  }
+  20%, 40%, 60%, 80% {
+    transform: translateX(4px);
+  }
+}
+
+/* 闪烁动画 */
+@keyframes blink {
+  0%, 100% {
+    opacity: 1;
+  }
+  50% {
+    opacity: 0.3;
+  }
+}
+
+/* 淡入动画 */
+@keyframes fadeIn {
+  from {
+    opacity: 0;
+    transform: translateY(-8px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+/* 滑入动画 */
+@keyframes slideIn {
+  from {
+    opacity: 0;
+    transform: translateY(-12px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+/* ==================== 响应式设计 ==================== */
+
+/* 小屏幕 */
+@media (max-width: 640px) {
+  .container {
+    padding: var(--spacing-sm);
+  }
+  
+  .voiceButton {
+    --button-size: 48px;
+    --icon-size: 20px;
+  }
+  
+  .transcript {
+    min-width: 240px;
+    max-width: 100%;
+  }
+  
+  .unsupportedContainer {
+    max-width: 100%;
+    padding: var(--spacing-lg);
+  }
+}
+
+/* 触摸设备 */
+@media (hover: none) and (pointer: coarse) {
+  .voiceButton {
+    --button-size: 60px;
+  }
+  
+  .voiceButton:active:not(:disabled) {
+    transform: scale(0.95);
+  }
+}
+
+/* 高对比度模式 */
+@media (prefers-contrast: high) {
+  .voiceButton {
+    --border-width: 3px;
+  }
+  
+  .statusText,
+  .transcript {
+    border: 1px solid var(--color-border);
+  }
+}
+
+/* 减少动画模式 */
+@media (prefers-reduced-motion: reduce) {
+  *,
+  *::before,
+  *::after {
+    animation-duration: 0.01ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 0.01ms !important;
+  }
+}
+
+/* ==================== 暗色主题 ==================== */
+
+@media (prefers-color-scheme: dark) {
+  .container {
+    --color-bg-primary: #1e1e1e;
+    --color-bg-secondary: #2a2a2a;
+    --color-bg-hover: #333333;
+    --color-bg-active: #3a3a3a;
+    
+    --color-border: #404040;
+    --color-border-focus: #64b5f6;
+    
+    --color-text-primary: #e0e0e0;
+    --color-text-secondary: #b0b0b0;
+    --color-text-tertiary: #808080;
+    
+    --color-primary: #64b5f6;
+    --color-primary-light: rgba(100, 181, 246, 0.12);
+    --color-primary-dark: #42a5f5;
+    
+    --color-success: #66bb6a;
+    --color-success-light: rgba(102, 187, 106, 0.12);
+    --color-success-dark: #4caf50;
+    
+    --color-error: #ef5350;
+    --color-error-light: rgba(239, 83, 80, 0.12);
+    --color-error-dark: #e53935;
+    
+    --color-warning: #ffa726;
+    --color-warning-light: rgba(255, 167, 38, 0.12);
+    
+    --shadow-sm: 0 2px 4px rgba(0, 0, 0, 0.3);
+    --shadow-md: 0 4px 8px rgba(0, 0, 0, 0.4);
+    --shadow-lg: 0 8px 16px rgba(0, 0, 0, 0.5);
+    --shadow-xl: 0 12px 24px rgba(0, 0, 0, 0.6);
+  }
+}
+
+/* ==================== 打印样式 ==================== */
+
+@media print {
+  .container {
+    display: none;
+  }
+}
+
+/* ==================== 无障碍增强 ==================== */
+
+/* 键盘导航焦点环 */
+.voiceButton:focus-visible,
+.languageSelect:focus-visible {
+  outline: 2px solid var(--color-primary);
+  outline-offset: 2px;
+}
+
+/* 屏幕阅读器专用文本 */
+.srOnly {
+  position: absolute;
+  width: 1px;
+  height: 1px;
+  padding: 0;
+  margin: -1px;
+  overflow: hidden;
+  clip: rect(0, 0, 0, 0);
+  white-space: nowrap;
+  border-width: 0;
+}
+
+/* 强制显示焦点（用于调试无障碍） */
+.container[data-show-focus-rings="true"] *:focus {
+  outline: 3px solid red !important;
+  outline-offset: 2px !important;
+}
+

@@ -1,0 +1,421 @@
+/* 消息列表组件样式 */
+
+/* ==================== 主容器 ==================== */
+
+.messageList {
+    @apply relative flex flex-col h-full w-full;
+    @apply bg-gray-50 dark:bg-gray-900;
+}
+
+/* ==================== 滚动容器 ==================== */
+
+.scrollContainer {
+    @apply flex-1 overflow-y-auto overflow-x-hidden;
+    @apply px-4 py-4;
+    scroll-behavior: smooth;
+}
+
+/* 自定义滚动条 */
+.scrollContainer::-webkit-scrollbar {
+    width: 8px;
+}
+
+.scrollContainer::-webkit-scrollbar-track {
+    @apply bg-transparent;
+}
+
+.scrollContainer::-webkit-scrollbar-thumb {
+    @apply bg-gray-300 dark:bg-gray-700 rounded-full;
+    @apply hover:bg-gray-400 dark:hover:bg-gray-600;
+}
+
+.scrollContainer::-webkit-scrollbar-thumb:active {
+    @apply bg-gray-500 dark:bg-gray-500;
+}
+
+/* Firefox 滚动条 */
+.scrollContainer {
+    scrollbar-width: thin;
+    scrollbar-color: theme('colors.gray.300') transparent;
+}
+
+.dark .scrollContainer {
+    scrollbar-color: theme('colors.gray.700') transparent;
+}
+
+/* ==================== 消息容器 ==================== */
+
+.messagesContainer {
+    @apply relative min-h-full flex flex-col;
+}
+
+.messagesEnd {
+    @apply h-px;
+}
+
+/* ==================== 空状态 ==================== */
+
+.emptyState {
+    @apply flex flex-col items-center justify-center;
+    @apply min-h-[400px] px-6 text-center;
+}
+
+.emptyIcon {
+    @apply text-gray-400 dark:text-gray-600 mb-4;
+}
+
+.emptyText {
+    @apply text-xl font-semibold text-gray-700 dark:text-gray-300 mb-2;
+}
+
+.emptyDescription {
+    @apply text-sm text-gray-500 dark:text-gray-400 max-w-md;
+}
+
+/* ==================== 加载状态 ==================== */
+
+.loadingState {
+    @apply flex flex-col items-center justify-center;
+    @apply min-h-[200px] gap-3;
+}
+
+.loadingSpinner {
+    @apply animate-spin text-blue-500;
+}
+
+.loadingText {
+    @apply text-sm text-gray-600 dark:text-gray-400;
+}
+
+/* ==================== 加载更多 ==================== */
+
+.loadMoreTrigger {
+    @apply flex justify-center py-4;
+}
+
+.loadMoreButton {
+    @apply flex items-center gap-2 px-4 py-2 rounded-lg;
+    @apply bg-white dark:bg-gray-800 text-gray-700 dark:text-gray-300;
+    @apply border border-gray-200 dark:border-gray-700;
+    @apply hover:bg-gray-50 dark:hover:bg-gray-750;
+    @apply transition-colors duration-200;
+    @apply text-sm font-medium;
+}
+
+.loadMoreButton:active {
+    @apply scale-95;
+}
+
+.loadingHistory {
+    @apply flex items-center gap-2 text-sm text-gray-500 dark:text-gray-400;
+}
+
+/* ==================== 日期分隔符 ==================== */
+
+.dateSeparator {
+    @apply flex items-center gap-3 my-6;
+}
+
+.dateSeparatorLine {
+    @apply flex-1 h-px bg-gray-200 dark:bg-gray-700;
+}
+
+.dateSeparatorText {
+    @apply flex items-center gap-1.5 px-3 py-1 rounded-full;
+    @apply bg-white dark:bg-gray-800 text-gray-600 dark:text-gray-400;
+    @apply border border-gray-200 dark:border-gray-700;
+    @apply text-xs font-medium;
+}
+
+/* ==================== 滚动到底部按钮 ==================== */
+
+.scrollButton {
+    @apply absolute bottom-6 right-6 z-10;
+    @apply flex items-center justify-center;
+    @apply w-12 h-12 rounded-full;
+    @apply bg-blue-600 text-white shadow-lg;
+    @apply hover:bg-blue-700 hover:shadow-xl;
+    @apply active:scale-95;
+    @apply transition-all duration-200;
+}
+
+.scrollButton:focus {
+    @apply outline-none ring-2 ring-blue-500 ring-offset-2;
+}
+
+.newMessageBadge {
+    @apply absolute -top-1 -right-1;
+    @apply flex items-center justify-center;
+    @apply min-w-[20px] h-5 px-1.5 rounded-full;
+    @apply bg-red-500 text-white text-xs font-bold;
+    @apply animate-bounce;
+}
+
+/* ==================== 消息组动画 ==================== */
+
+@keyframes slideUp {
+    from {
+        opacity: 0;
+        transform: translateY(10px);
+    }
+    to {
+        opacity: 1;
+        transform: translateY(0);
+    }
+}
+
+.messagesContainer > * {
+    animation: slideUp 0.2s ease-out;
+}
+
+/* ==================== 响应式设计 ==================== */
+
+@media (max-width: 768px) {
+    .scrollContainer {
+        @apply px-3 py-3;
+    }
+
+    .scrollButton {
+        @apply w-10 h-10 bottom-4 right-4;
+    }
+
+    .dateSeparator {
+        @apply my-4;
+    }
+
+    .emptyState {
+        @apply min-h-[300px];
+    }
+
+    .emptyIcon {
+        width: 40px;
+        height: 40px;
+    }
+
+    .emptyText {
+        @apply text-lg;
+    }
+}
+
+@media (max-width: 640px) {
+    .scrollContainer {
+        @apply px-2 py-2;
+    }
+
+    .loadMoreButton {
+        @apply px-3 py-1.5 text-xs;
+    }
+
+    .dateSeparatorText {
+        @apply px-2 text-xs;
+    }
+}
+
+/* ==================== 无障碍支持 ==================== */
+
+/* 减少动画 */
+@media (prefers-reduced-motion: reduce) {
+    .scrollContainer {
+        scroll-behavior: auto;
+    }
+
+    .messagesContainer > * {
+        animation: none;
+    }
+
+    .loadingSpinner {
+        @apply animate-none;
+    }
+
+    .newMessageBadge {
+        @apply animate-none;
+    }
+
+    .scrollButton {
+        @apply transition-none;
+    }
+}
+
+/* 高对比度模式 */
+@media (prefers-contrast: high) {
+    .scrollButton {
+        @apply border-2 border-white;
+    }
+
+    .dateSeparatorLine {
+        @apply h-0.5;
+    }
+
+    .loadMoreButton {
+        @apply border-2;
+    }
+}
+
+/* ==================== 打印样式 ==================== */
+
+@media print {
+    .scrollButton,
+    .loadMoreTrigger {
+        @apply hidden;
+    }
+
+    .scrollContainer {
+        @apply overflow-visible h-auto;
+    }
+
+    .messageList {
+        @apply bg-white;
+    }
+
+    .scrollContainer::-webkit-scrollbar {
+        display: none;
+    }
+}
+
+/* ==================== 主题变体 ==================== */
+
+/* 亮色主题特定样式 */
+.messageList:not(.dark) .scrollContainer {
+    background: linear-gradient(to bottom, rgb(249, 250, 251) 0%, rgb(243, 244, 246) 100%);
+}
+
+/* 暗色主题特定样式 */
+.dark .messageList .scrollContainer {
+    background: linear-gradient(to bottom, rgb(17, 24, 39) 0%, rgb(31, 41, 55) 100%);
+}
+
+/* ==================== 性能优化 ==================== */
+
+/* 启用硬件加速 */
+.scrollContainer,
+.scrollButton {
+    will-change: transform;
+    transform: translateZ(0);
+}
+
+/* 优化滚动性能 */
+.messagesContainer {
+    contain: layout style paint;
+}
+
+/* ==================== 特殊状态 ==================== */
+
+/* 拖拽选中时 */
+.messageList::selection,
+.messageList *::selection {
+    @apply bg-blue-200 dark:bg-blue-900/50;
+}
+
+/* 焦点可见性 */
+.scrollButton:focus-visible {
+    @apply outline-none ring-4 ring-blue-500/50;
+}
+
+.loadMoreButton:focus-visible {
+    @apply outline-none ring-2 ring-blue-500;
+}
+
+/* ==================== 动画关键帧 ==================== */
+
+@keyframes fadeInUp {
+    from {
+        opacity: 0;
+        transform: translateY(20px);
+    }
+    to {
+        opacity: 1;
+        transform: translateY(0);
+    }
+}
+
+@keyframes fadeOut {
+    from {
+        opacity: 1;
+    }
+    to {
+        opacity: 0;
+    }
+}
+
+@keyframes pulse {
+    0%,
+    100% {
+        opacity: 1;
+    }
+    50% {
+        opacity: 0.5;
+    }
+}
+
+/* ==================== 辅助类 ==================== */
+
+/* 平滑滚动 */
+.smooth-scroll {
+    scroll-behavior: smooth;
+}
+
+/* 隐藏滚动条 */
+.hide-scrollbar::-webkit-scrollbar {
+    display: none;
+}
+
+.hide-scrollbar {
+    -ms-overflow-style: none;
+    scrollbar-width: none;
+}
+
+/* 渐变遮罩 */
+.fade-mask-top {
+    mask-image: linear-gradient(to bottom, transparent, black 20px);
+    -webkit-mask-image: linear-gradient(to bottom, transparent, black 20px);
+}
+
+.fade-mask-bottom {
+    mask-image: linear-gradient(to top, transparent, black 20px);
+    -webkit-mask-image: linear-gradient(to top, transparent, black 20px);
+}
+
+/* ==================== 加载骨架屏 ==================== */
+
+.skeleton {
+    @apply animate-pulse bg-gray-200 dark:bg-gray-700 rounded;
+}
+
+.skeletonMessage {
+    @apply skeleton h-20 mb-4;
+}
+
+.skeletonAvatar {
+    @apply skeleton w-8 h-8 rounded-full;
+}
+
+.skeletonText {
+    @apply skeleton h-4 mb-2;
+}
+
+/* ==================== 错误状态 ==================== */
+
+.errorState {
+    @apply flex flex-col items-center justify-center;
+    @apply min-h-[200px] px-6 text-center;
+    @apply text-red-600 dark:text-red-400;
+}
+
+.errorIcon {
+    @apply mb-3;
+}
+
+.errorText {
+    @apply text-sm font-medium mb-2;
+}
+
+.errorDescription {
+    @apply text-xs opacity-75;
+}
+
+.retryButton {
+    @apply mt-4 px-4 py-2 rounded-lg;
+    @apply bg-red-600 text-white hover:bg-red-700;
+    @apply transition-colors duration-200;
+}
+

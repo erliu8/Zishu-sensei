@@ -1,0 +1,115 @@
+{
+    "version": "1.0.0",
+    "model": "hiyori.model3.json",
+    "preview": "preview.png",
+    "name": "Hiyori",
+    "description": "Live2D示例模型 - Hiyori",
+    "author": "Live2D Inc.",
+    "url": "https://www.live2d.com/",
+    "settings": {
+        "scale": 1.0,
+        "position": {
+            "x": 0,
+            "y": 0
+        },
+        "hitAreas": [
+            {
+                "name": "head",
+                "id": "HitArea"
+            },
+            {
+                "name": "body",
+                "id": "HitArea2"
+            }
+        ],
+        "expressions": [
+            {
+                "name": "default",
+                "file": "expressions/f01.exp3.json"
+            },
+            {
+                "name": "happy",
+                "file": "expressions/f02.exp3.json"
+            },
+            {
+                "name": "angry",
+                "file": "expressions/f03.exp3.json"
+            },
+            {
+                "name": "sad",
+                "file": "expressions/f04.exp3.json"
+            },
+            {
+                "name": "surprised",
+                "file": "expressions/f05.exp3.json"
+            },
+            {
+                "name": "sleepy",
+                "file": "expressions/f06.exp3.json"
+            }
+        ],
+        "motions": {
+            "idle": [
+                {
+                    "file": "motions/idle_01.motion3.json",
+                    "fadeInTime": 0.5,
+                    "fadeOutTime": 0.5
+                },
+                {
+                    "file": "motions/idle_02.motion3.json", 
+                    "fadeInTime": 0.5,
+                    "fadeOutTime": 0.5
+                },
+                {
+                    "file": "motions/idle_03.motion3.json",
+                    "fadeInTime": 0.5,
+                    "fadeOutTime": 0.5
+                }
+            ],
+            "tap": [
+                {
+                    "file": "motions/tap_body_01.motion3.json",
+                    "fadeInTime": 0.5,
+                    "fadeOutTime": 0.5
+                },
+                {
+                    "file": "motions/tap_body_02.motion3.json",
+                    "fadeInTime": 0.5,
+                    "fadeOutTime": 0.5
+                },
+                {
+                    "file": "motions/tap_body_03.motion3.json",
+                    "fadeInTime": 0.5,
+                    "fadeOutTime": 0.5
+                }
+            ],
+            "greeting": [
+                {
+                    "file": "motions/flick_head_01.motion3.json",
+                    "fadeInTime": 0.5,
+                    "fadeOutTime": 0.5
+                },
+                {
+                    "file": "motions/flick_head_02.motion3.json",
+                    "fadeInTime": 0.5,
+                    "fadeOutTime": 0.5
+                }
+            ],
+            "happy": [
+                {
+                    "file": "motions/shake_01.motion3.json",
+                    "fadeInTime": 0.5,
+                    "fadeOutTime": 0.5
+                }
+            ]
+        },
+        "physics": "physics.physics3.json",
+        "pose": "pose.pose3.json",
+        "displayInfo": {
+            "width": 1920,
+            "height": 1080,
+            "centerX": 0.0,
+            "centerY": 0.0
+        }
+    }
+}

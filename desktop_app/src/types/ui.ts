@@ -179,6 +179,22 @@ export interface ThemeConfig {
 }
 
 /**
+ * 位置信息
+ */
+export interface Position {
+    x: number
+    y: number
+}
+
+/**
+ * 尺寸信息
+ */
+export interface Size {
+    width: number
+    height: number
+}
+
+/**
  * 动画配置
  */
 export interface AnimationConfig {

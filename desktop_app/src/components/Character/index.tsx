@@ -1,4 +1,4 @@
-import React, { useCallback } from 'react'
+import React, { useCallback, useMemo } from 'react'
 import { Live2DViewer } from './Live2D/Live2DViewer'
 import { Live2DModelConfig, Live2DViewerConfig, Live2DAnimationPriority } from '@/types/live2d'
 
@@ -23,8 +23,8 @@ export const Character: React.FC<CharacterProps> = ({
 }) => {
     if (!character) return null
 
-    // Hiyori模型配置
-    const hiyoriModelConfig: Live2DModelConfig = {
+    // Hiyori模型配置 - 使用useMemo缓存以避免不必要的重新渲染
+    const hiyoriModelConfig: Live2DModelConfig = useMemo(() => ({
         id: 'hiyori',
         name: 'Hiyori Momose',
         modelPath: '/live2d_models/hiyori/hiyori.model3.json',
@@ -55,10 +55,10 @@ export const Character: React.FC<CharacterProps> = ({
             originX: 0.5,
             originY: 0.5
         }
-    }
+    }), []) // 空依赖数组，配置永不改变
 
-    // Live2D查看器配置
-    const viewerConfig: Live2DViewerConfig = {
+    // Live2D查看器配置 - 使用useMemo缓存以避免不必要的重新渲染
+    const viewerConfig: Live2DViewerConfig = useMemo(() => ({
         canvasSize: { width: 400, height: 600 },
         renderConfig: {
             scale: 1.0, // 使用自动缩放
@@ -90,7 +90,7 @@ export const Character: React.FC<CharacterProps> = ({
         },
         debugMode: false,
         responsive: true
-    }
+    }), []) // 空依赖数组，配置永不改变
 
     // 处理Live2D交互事件
     const handleLive2DInteraction = useCallback((event: any) => {
@@ -115,14 +115,14 @@ export const Character: React.FC<CharacterProps> = ({
     }, [character, onInteraction])
 
     return (
-        <div className="absolute inset-0 pointer-events-auto">
+        <div className="relative w-full h-full pointer-events-auto flex items-center justify-center">
             <Live2DViewer
                 config={viewerConfig}
                 modelConfig={hiyoriModelConfig}
                 onInteraction={handleLive2DInteraction}
                 onModelLoad={handleModelLoad}
                 onError={handleError}
-                className="w-full h-full"
+                className=""
                 style={{
                     background: 'transparent'
                 }}

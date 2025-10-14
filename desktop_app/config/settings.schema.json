@@ -1,0 +1,223 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://zishu-sensei.app/schemas/settings.json",
+  "title": "Zishu Sensei 应用配置模式",
+  "description": "Zishu Sensei 桌面应用的完整配置模式定义",
+  "type": "object",
+  "required": ["window", "character", "theme", "system"],
+  "properties": {
+    "window": {
+      "type": "object",
+      "title": "窗口配置",
+      "description": "应用窗口的显示和行为配置",
+      "required": ["width", "height", "always_on_top", "transparent", "decorations", "resizable"],
+      "properties": {
+        "width": {
+          "type": "integer",
+          "title": "窗口宽度",
+          "description": "窗口的像素宽度",
+          "minimum": 200,
+          "maximum": 4000,
+          "default": 400
+        },
+        "height": {
+          "type": "integer",
+          "title": "窗口高度",
+          "description": "窗口的像素高度",
+          "minimum": 200,
+          "maximum": 4000,
+          "default": 600
+        },
+        "always_on_top": {
+          "type": "boolean",
+          "title": "窗口置顶",
+          "description": "窗口是否始终显示在其他窗口之上",
+          "default": true
+        },
+        "transparent": {
+          "type": "boolean",
+          "title": "窗口透明",
+          "description": "窗口背景是否透明",
+          "default": true
+        },
+        "decorations": {
+          "type": "boolean",
+          "title": "窗口装饰",
+          "description": "是否显示窗口标题栏和边框",
+          "default": false
+        },
+        "resizable": {
+          "type": "boolean",
+          "title": "可调整大小",
+          "description": "窗口是否可以被用户调整大小",
+          "default": true
+        },
+        "position": {
+          "type": ["array", "null"],
+          "title": "窗口位置",
+          "description": "窗口在屏幕上的位置坐标 [x, y]",
+          "items": {
+            "type": "integer",
+            "minimum": 0
+          },
+          "minItems": 2,
+          "maxItems": 2,
+          "default": null
+        }
+      },
+      "additionalProperties": false
+    },
+    "character": {
+      "type": "object",
+      "title": "角色配置",
+      "description": "虚拟角色的显示和行为配置",
+      "required": ["current_character", "scale", "auto_idle", "interaction_enabled"],
+      "properties": {
+        "current_character": {
+          "type": "string",
+          "title": "当前角色",
+          "description": "当前使用的角色ID",
+          "pattern": "^[a-zA-Z0-9_-]+$",
+          "minLength": 1,
+          "maxLength": 50,
+          "default": "shizuku"
+        },
+        "scale": {
+          "type": "number",
+          "title": "角色缩放",
+          "description": "角色的缩放比例",
+          "minimum": 0.1,
+          "maximum": 5.0,
+          "multipleOf": 0.1,
+          "default": 1.0
+        },
+        "auto_idle": {
+          "type": "boolean",
+          "title": "自动待机",
+          "description": "角色是否自动进入待机状态",
+          "default": true
+        },
+        "interaction_enabled": {
+          "type": "boolean",
+          "title": "启用交互",
+          "description": "是否启用角色交互功能",
+          "default": true
+        }
+      },
+      "additionalProperties": false
+    },
+    "theme": {
+      "type": "object",
+      "title": "主题配置",
+      "description": "应用界面主题和样式配置",
+      "required": ["current_theme"],
+      "properties": {
+        "current_theme": {
+          "type": "string",
+          "title": "当前主题",
+          "description": "当前使用的主题名称",
+          "enum": ["anime", "modern", "classic", "dark", "light", "custom"],
+          "default": "anime"
+        },
+        "custom_css": {
+          "type": ["string", "null"],
+          "title": "自定义CSS",
+          "description": "自定义CSS样式代码",
+          "maxLength": 10000,
+          "default": null
+        }
+      },
+      "additionalProperties": false
+    },
+    "system": {
+      "type": "object",
+      "title": "系统配置",
+      "description": "系统级行为和功能配置",
+      "required": ["auto_start", "minimize_to_tray", "close_to_tray", "show_notifications"],
+      "properties": {
+        "auto_start": {
+          "type": "boolean",
+          "title": "开机自启动",
+          "description": "系统启动时是否自动启动应用",
+          "default": false
+        },
+        "minimize_to_tray": {
+          "type": "boolean",
+          "title": "最小化到托盘",
+          "description": "最小化窗口时是否隐藏到系统托盘",
+          "default": true
+        },
+        "close_to_tray": {
+          "type": "boolean",
+          "title": "关闭到托盘",
+          "description": "关闭窗口时是否隐藏到系统托盘而不是退出应用",
+          "default": true
+        },
+        "show_notifications": {
+          "type": "boolean",
+          "title": "显示通知",
+          "description": "是否显示系统通知",
+          "default": true
+        }
+      },
+      "additionalProperties": false
+    }
+  },
+  "additionalProperties": false,
+  "definitions": {
+    "windowPosition": {
+      "type": "array",
+      "items": {
+        "type": "integer",
+        "minimum": 0
+      },
+      "minItems": 2,
+      "maxItems": 2
+    },
+    "characterId": {
+      "type": "string",
+      "pattern": "^[a-zA-Z0-9_-]+$",
+      "minLength": 1,
+      "maxLength": 50
+    },
+    "themeName": {
+      "type": "string",
+      "enum": ["anime", "modern", "classic", "dark", "light", "custom"]
+    },
+    "scaleValue": {
+      "type": "number",
+      "minimum": 0.1,
+      "maximum": 5.0,
+      "multipleOf": 0.1
+    }
+  },
+  "examples": [
+    {
+      "window": {
+        "width": 400,
+        "height": 600,
+        "always_on_top": true,
+        "transparent": true,
+        "decorations": false,
+        "resizable": true,
+        "position": null
+      },
+      "character": {
+        "current_character": "shizuku",
+        "scale": 1.0,
+        "auto_idle": true,
+        "interaction_enabled": true
+      },
+      "theme": {
+        "current_theme": "anime",
+        "custom_css": null
+      },
+      "system": {
+        "auto_start": false,
+        "minimize_to_tray": true,
+        "close_to_tray": true,
+        "show_notifications": true
+      }
+    }
+  ]
+}

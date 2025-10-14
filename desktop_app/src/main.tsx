@@ -1,3 +1,27 @@
+// PixiJS 修复 - 必须在任何 PixiJS 相关导入之前
+;(function() {
+  try {
+    // 尝试修复全局 PIXI 对象
+    if (typeof window !== 'undefined' && (window as any).PIXI) {
+      const PIXI = (window as any).PIXI
+      if (PIXI.BatchRenderer && PIXI.BatchRenderer.prototype.checkMaxIfStatementsInShader) {
+        const original = PIXI.BatchRenderer.prototype.checkMaxIfStatementsInShader
+        if (!original._isFixed) {
+          PIXI.BatchRenderer.prototype.checkMaxIfStatementsInShader = function(maxIfs: number) {
+            const safeMaxIfs = Math.max(maxIfs || 32, 32)
+            console.log('🔧 PixiJS BatchRenderer main.tsx 修复:', maxIfs, '->', safeMaxIfs)
+            return original.call(this, safeMaxIfs)
+          }
+          PIXI.BatchRenderer.prototype.checkMaxIfStatementsInShader._isFixed = true
+          console.log('✅ PixiJS BatchRenderer main.tsx 修复完成')
+        }
+      }
+    }
+  } catch (error) {
+    console.warn('⚠️ main.tsx PixiJS 修复失败:', error)
+  }
+})()
+
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query'
 import { ReactQueryDevtools } from '@tanstack/react-query-devtools'
 import React from 'react'
@@ -9,6 +33,7 @@ import { LoadingProvider } from '@/contexts/LoadingContext'
 import { TauriProvider } from '@/contexts/TauriContext'
 import { ThemeProvider } from '@/contexts/ThemeContext'
 import { ToastProvider } from '@/contexts/ToastContext'
+import { initializeLive2DCubismCore } from '@/utils/live2d-init'
 import App from './App'
 
 import '@/styles/animations.css'
@@ -21,8 +46,8 @@ const queryClient = new QueryClient({
         queries: {
             // 数据保持新鲜时间
             staleTime: 5 * 60 * 1000, // 5分钟
-            // 缓存时间
-            cacheTime: 10 * 60 * 1000, // 10分钟
+            // 缓存时间（使用 gcTime 替代已弃用的 cacheTime）
+            gcTime: 10 * 60 * 1000, // 10分钟
             // 重试次数
             retry: (failureCount, error: any) => {
                 // 对于 4xx 错误不重试
@@ -54,14 +79,14 @@ const handleGlobalError = (error: Error, errorInfo: React.ErrorInfo) => {
     console.error('全局错误:', error, errorInfo)
 
     // 发送错误报告到后端（如果需要）
-    if (import.meta.env.PROD) {
+    if (import.meta.env?.PROD) {
         // 这里可以集成错误报告服务
         // 例如：Sentry, LogRocket 等
     }
 }
 
 // 性能监控
-if (import.meta.env.DEV) {
+if (import.meta.env?.DEV) {
     // 开发环境下的性能监控
     const observer = new PerformanceObserver((list) => {
         list.getEntries().forEach((entry) => {
@@ -75,6 +100,16 @@ if (import.meta.env.DEV) {
 // 应用初始化
 const initializeApp = async () => {
     try {
+        console.log('🚀 开始初始化应用...')
+        
+        // 首先初始化 Live2D Cubism Core
+        try {
+            await initializeLive2DCubismCore()
+            console.log('✅ Live2D Cubism Core 初始化完成')
+        } catch (error) {
+            console.error('⚠️ Live2D Cubism Core 初始化失败，但应用将继续运行:', error)
+        }
+
         // 检查 Tauri 环境
         if (window.__TAURI__) {
             console.log('Tauri 环境检测成功')
@@ -84,7 +119,12 @@ const initializeApp = async () => {
             const { appWindow } = await import('@tauri-apps/api/window')
 
             // 初始化应用状态
-            await invoke('initialize_app')
+            try {
+                await invoke('initialize_app')
+                console.log('✅ Tauri 应用初始化完成')
+            } catch (error) {
+                console.warn('⚠️ Tauri 应用初始化失败:', error)
+            }
 
             // 设置窗口事件监听
             await appWindow.listen('tauri://close-requested', () => {
@@ -125,17 +165,10 @@ const AppRoot: React.FC = () => {
                                     <ToastProvider>
                                         <App />
                                         {/* React Query 开发工具 */}
-                                        {import.meta.env.DEV && (
+                                        {import.meta.env?.DEV && (
                                             <ReactQueryDevtools
                                                 initialIsOpen={false}
-                                                position="bottom-right"
-                                                toggleButtonProps={{
-                                                    style: {
-                                                        marginLeft: '5px',
-                                                        transform: 'scale(0.8)',
-                                                        transformOrigin: 'bottom right',
-                                                    },
-                                                }}
+                                                position={'bottom-right' as any}
                                             />
                                         )}
                                     </ToastProvider>
@@ -167,7 +200,7 @@ if (import.meta.hot) {
 }
 
 // 注册 Service Worker（生产环境）
-if (import.meta.env.PROD && 'serviceWorker' in navigator) {
+if (import.meta.env?.PROD && 'serviceWorker' in navigator) {
     window.addEventListener('load', () => {
         navigator.serviceWorker
             .register('/sw.js')
@@ -183,9 +216,23 @@ if (import.meta.env.PROD && 'serviceWorker' in navigator) {
 // 全局类型声明
 declare global {
     interface Window {
-        __TAURI__?: any
         __APP_VERSION__?: string
         __BUILD_TIME__?: string
+    }
+    
+    interface ImportMeta {
+        readonly env: ImportMetaEnv
+        readonly hot?: {
+            accept(): void
+            accept(cb: () => void): void
+        }
+    }
+    
+    interface ImportMetaEnv {
+        readonly DEV: boolean
+        readonly PROD: boolean
+        readonly MODE: string
+        readonly BASE_URL: string
     }
 }
 

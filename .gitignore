@@ -4,8 +4,14 @@ output/
 venv/
 anime-offline-database/
 /adapters/
+/data/
 # 但包含测试文件
 !tests/unit/adapters/
+
+# 环境变量文件
+.env
+.env.local
+.env.*.local
 
 # 排除Python临时文件
 __pycache__/

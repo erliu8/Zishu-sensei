@@ -17,16 +17,17 @@ export interface AppError {
  * 应用程序状态
  */
 export interface AppState {
+    windowMode: WindowMode
     isLoading: boolean
-    error: AppError | null
-    initialized: boolean
-    version: string
+    isInitialized: boolean
+    hasError: boolean
+    lastError: AppError | null
 }
 
 /**
  * 窗口模式
  */
-export type WindowMode = 'windowed' | 'fullscreen' | 'minimized' | 'maximized'
+export type WindowMode = 'pet' | 'chat' | 'settings' | 'minimized'
 
 /**
  * 窗口状态

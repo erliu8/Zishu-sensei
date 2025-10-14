@@ -1,0 +1,117 @@
+/**
+ * 浅色主题 CSS 变量
+ */
+
+:root.light,
+[data-theme='light'] {
+    /* ==================== 颜色系统 ==================== */
+    
+    /* 主色调 */
+    --color-primary: 222.2 47.4% 11.2%;
+    --color-primary-rgb: 24, 24, 27;
+    --color-primary-foreground: 210 40% 98%;
+    
+    /* 次要色 */
+    --color-secondary: 210 40% 96.1%;
+    --color-secondary-rgb: 244, 244, 245;
+    --color-secondary-foreground: 222.2 47.4% 11.2%;
+    
+    /* 背景色 */
+    --color-background: 0 0% 100%;
+    --color-background-rgb: 255, 255, 255;
+    --color-foreground: 222.2 84% 4.9%;
+    --color-foreground-rgb: 9, 9, 11;
+    
+    /* 卡片 */
+    --color-card: 0 0% 100%;
+    --color-card-rgb: 255, 255, 255;
+    --color-card-foreground: 222.2 84% 4.9%;
+    
+    /* 弹出层 */
+    --color-popover: 0 0% 100%;
+    --color-popover-rgb: 255, 255, 255;
+    --color-popover-foreground: 222.2 84% 4.9%;
+    
+    /* 柔和色 */
+    --color-muted: 210 40% 96.1%;
+    --color-muted-rgb: 244, 244, 245;
+    --color-muted-foreground: 215.4 16.3% 46.9%;
+    
+    /* 强调色 */
+    --color-accent: 210 40% 96.1%;
+    --color-accent-rgb: 244, 244, 245;
+    --color-accent-foreground: 222.2 47.4% 11.2%;
+    
+    /* 成功色 */
+    --color-success: 142 76% 36%;
+    --color-success-rgb: 22, 163, 74;
+    --color-success-foreground: 144 61% 97%;
+    
+    /* 警告色 */
+    --color-warning: 38 92% 50%;
+    --color-warning-rgb: 245, 158, 11;
+    --color-warning-foreground: 48 96% 89%;
+    
+    /* 错误/危险色 */
+    --color-destructive: 0 84.2% 60.2%;
+    --color-destructive-rgb: 239, 68, 68;
+    --color-destructive-foreground: 0 86% 97%;
+    
+    /* 信息色 */
+    --color-info: 221 83% 53%;
+    --color-info-rgb: 59, 130, 246;
+    --color-info-foreground: 221 91% 96%;
+    
+    /* 边框 */
+    --color-border: 214.3 31.8% 91.4%;
+    --color-border-rgb: 228, 228, 231;
+    
+    /* 输入框 */
+    --color-input: 214.3 31.8% 91.4%;
+    --color-input-rgb: 228, 228, 231;
+    
+    /* 聚焦环 */
+    --color-ring: 222.2 47.4% 11.2%;
+    --color-ring-rgb: 24, 24, 27;
+    
+    /* ==================== 语义化颜色 ==================== */
+    
+    /* 文本颜色 */
+    --text-primary: hsl(var(--color-foreground));
+    --text-secondary: hsl(var(--color-muted-foreground));
+    --text-tertiary: hsl(215.4 16.3% 56.9%);
+    --text-disabled: hsl(214.3 31.8% 81.4%);
+    
+    /* 链接颜色 */
+    --link-color: hsl(221 83% 53%);
+    --link-hover: hsl(221 83% 43%);
+    --link-visited: hsl(271 83% 53%);
+    
+    /* ==================== 阴影 ==================== */
+    
+    --shadow-xs: 0 1px 2px 0 rgba(0, 0, 0, 0.05);
+    --shadow-sm: 0 1px 3px 0 rgba(0, 0, 0, 0.1), 0 1px 2px -1px rgba(0, 0, 0, 0.1);
+    --shadow-md: 0 4px 6px -1px rgba(0, 0, 0, 0.1), 0 2px 4px -2px rgba(0, 0, 0, 0.1);
+    --shadow-lg: 0 10px 15px -3px rgba(0, 0, 0, 0.1), 0 4px 6px -4px rgba(0, 0, 0, 0.1);
+    --shadow-xl: 0 20px 25px -5px rgba(0, 0, 0, 0.1), 0 8px 10px -6px rgba(0, 0, 0, 0.1);
+    --shadow-2xl: 0 25px 50px -12px rgba(0, 0, 0, 0.25);
+    
+    /* 内阴影 */
+    --shadow-inner: inset 0 2px 4px 0 rgba(0, 0, 0, 0.05);
+    
+    /* 聚焦阴影 */
+    --shadow-focus: 0 0 0 3px rgba(59, 130, 246, 0.5);
+    
+    /* ==================== 透明度 ==================== */
+    
+    --opacity-disabled: 0.5;
+    --opacity-hover: 0.8;
+    --opacity-selected: 0.1;
+    
+    /* ==================== 背景效果 ==================== */
+    
+    --backdrop-blur: blur(8px);
+    --backdrop-blur-sm: blur(4px);
+    --backdrop-blur-lg: blur(16px);
+}
+

@@ -1,0 +1,471 @@
+/**
+ * CSS 变量定义文件
+ * 
+ * 提供全局可用的CSS变量，包括：
+ * - 动画时长和缓动函数
+ * - 角色状态相关颜色
+ * - 情绪映射颜色
+ * - Z-index 层级
+ * - 断点配置
+ */
+
+:root {
+    /* ==================== 动画时长 ==================== */
+    
+    /* 基础时长 */
+    --duration-instant: 50ms;
+    --duration-fast: 150ms;
+    --duration-normal: 300ms;
+    --duration-slow: 500ms;
+    --duration-slower: 800ms;
+    --duration-slowest: 1000ms;
+    
+    /* 角色动画专用时长 */
+    --character-animation-quick: 200ms;
+    --character-animation-normal: 400ms;
+    --character-animation-slow: 600ms;
+    --character-animation-breath: 4000ms;
+    --character-animation-idle: 6000ms;
+    --character-animation-sleep: 5000ms;
+    
+    /* ==================== 缓动函数 ==================== */
+    
+    /* 标准缓动 */
+    --ease-linear: linear;
+    --ease-in: cubic-bezier(0.4, 0, 1, 1);
+    --ease-out: cubic-bezier(0, 0, 0.2, 1);
+    --ease-in-out: cubic-bezier(0.4, 0, 0.2, 1);
+    
+    /* 自定义缓动 */
+    --ease-elastic: cubic-bezier(0.68, -0.55, 0.265, 1.55);
+    --ease-bounce: cubic-bezier(0.34, 1.56, 0.64, 1);
+    --ease-smooth: cubic-bezier(0.25, 0.46, 0.45, 0.94);
+    
+    /* 角色动画缓动 */
+    --ease-character-breath: cubic-bezier(0.45, 0.05, 0.55, 0.95);
+    --ease-character-bounce: cubic-bezier(0.68, -0.55, 0.265, 1.55);
+    --ease-character-smooth: cubic-bezier(0.4, 0, 0.2, 1);
+    
+    /* ==================== 情绪颜色映射 ==================== */
+    
+    /* 快乐 - 黄色/金色 */
+    --emotion-happy-color: 255 220 100;
+    --emotion-happy-glow: rgba(255, 220, 100, 0.5);
+    
+    /* 伤心 - 蓝色 */
+    --emotion-sad-color: 59 130 246;
+    --emotion-sad-glow: rgba(59, 130, 246, 0.3);
+    
+    /* 愤怒 - 红色 */
+    --emotion-angry-color: 239 68 68;
+    --emotion-angry-glow: rgba(239, 68, 68, 0.6);
+    
+    /* 惊讶 - 橙色 */
+    --emotion-surprised-color: 245 158 11;
+    --emotion-surprised-glow: rgba(245, 158, 11, 0.5);
+    
+    /* 困惑 - 紫色 */
+    --emotion-confused-color: 139 92 246;
+    --emotion-confused-glow: rgba(139, 92, 246, 0.4);
+    
+    /* 思考 - 靛蓝 */
+    --emotion-thinking-color: 99 102 241;
+    --emotion-thinking-glow: rgba(99, 102, 241, 0.4);
+    
+    /* 兴奋 - 粉红 */
+    --emotion-excited-color: 236 72 153;
+    --emotion-excited-glow: rgba(236, 72, 153, 0.5);
+    
+    /* 疲惫 - 灰色 */
+    --emotion-tired-color: 100 116 139;
+    --emotion-tired-glow: rgba(100, 116, 139, 0.3);
+    
+    /* 害羞 - 浅粉 */
+    --emotion-shy-color: 244 114 182;
+    --emotion-shy-glow: rgba(255, 182, 193, 0.5);
+    
+    /* 中性 - 灰色 */
+    --emotion-neutral-color: 156 163 175;
+    --emotion-neutral-glow: rgba(156, 163, 175, 0.3);
+    
+    /* 生气 - 深红 */
+    --emotion-annoyed-color: 220 38 38;
+    --emotion-annoyed-glow: rgba(220, 38, 38, 0.4);
+    
+    /* 担心 - 黄灰 */
+    --emotion-worried-color: 161 161 170;
+    --emotion-worried-glow: rgba(161, 161, 170, 0.3);
+    
+    /* ==================== 活动状态颜色 ==================== */
+    
+    /* 空闲 */
+    --activity-idle-color: 148 163 184;
+    
+    /* 说话 */
+    --activity-speaking-color: 59 130 246;
+    
+    /* 听取 */
+    --activity-listening-color: 34 197 94;
+    
+    /* 思考 */
+    --activity-thinking-color: 139 92 246;
+    
+    /* 交互 */
+    --activity-interacting-color: 245 158 11;
+    
+    /* 睡眠 */
+    --activity-sleeping-color: 71 85 105;
+    
+    /* 工作 */
+    --activity-working-color: 236 72 153;
+    
+    /* ==================== 角色属性条颜色 ==================== */
+    
+    /* 健康值 - 红色渐变 */
+    --stat-health-from: 239 68 68;
+    --stat-health-to: 248 113 113;
+    
+    /* 心情值 - 橙色渐变 */
+    --stat-mood-from: 245 158 11;
+    --stat-mood-to: 251 191 36;
+    
+    /* 精力值 - 绿色渐变 */
+    --stat-energy-from: 16 185 129;
+    --stat-energy-to: 52 211 153;
+    
+    /* 亲密度 - 粉色渐变 */
+    --stat-affection-from: 236 72 153;
+    --stat-affection-to: 244 114 182;
+    
+    /* ==================== 角色交互效果 ==================== */
+    
+    /* 悬停效果 */
+    --character-hover-scale: 1.02;
+    --character-hover-brightness: 1.05;
+    --character-hover-duration: 200ms;
+    
+    /* 激活效果 */
+    --character-active-scale: 0.98;
+    --character-active-brightness: 1.1;
+    --character-active-duration: 150ms;
+    
+    /* 拖拽效果 */
+    --character-drag-scale: 1.05;
+    --character-drag-opacity: 0.9;
+    --character-drag-shadow: 0 8px 16px rgba(0, 0, 0, 0.2);
+    
+    /* 聚焦效果 */
+    --character-focus-ring-width: 2px;
+    --character-focus-ring-offset: 4px;
+    --character-focus-ring-color: rgb(var(--color-ring));
+    
+    /* ==================== Z-index 层级 ==================== */
+    
+    --z-character-base: 1;
+    --z-character-particle: 2;
+    --z-character-canvas: 3;
+    --z-character-indicator: 5;
+    --z-character-status: 5;
+    --z-character-stats: 5;
+    --z-character-overlay: 10;
+    --z-character-loading: 10;
+    --z-character-error: 10;
+    --z-character-debug: 999;
+    
+    /* ==================== 角色尺寸和间距 ==================== */
+    
+    /* 指示器尺寸 */
+    --indicator-size: 12px;
+    --indicator-border-width: 2px;
+    
+    /* 状态徽章 */
+    --badge-padding-y: var(--spacing-xs);
+    --badge-padding-x: var(--spacing-sm);
+    --badge-font-size: var(--font-size-xs);
+    --badge-border-radius: var(--radius-lg);
+    
+    /* 属性条 */
+    --stat-bar-height: 6px;
+    --stat-bar-border-radius: 3px;
+    --stat-bar-min-width: 200px;
+    --stat-label-width: 40px;
+    
+    /* 加载指示器 */
+    --spinner-size: 48px;
+    --spinner-border-width: 4px;
+    
+    /* ==================== 角色滤镜效果 ==================== */
+    
+    /* 亮度调整 */
+    --filter-brightness-low: 0.7;
+    --filter-brightness-normal: 1;
+    --filter-brightness-high: 1.15;
+    
+    /* 饱和度调整 */
+    --filter-saturate-low: 0.6;
+    --filter-saturate-normal: 1;
+    --filter-saturate-high: 1.3;
+    
+    /* 对比度调整 */
+    --filter-contrast-low: 0.9;
+    --filter-contrast-normal: 1;
+    --filter-contrast-high: 1.1;
+    
+    /* ==================== 响应式断点 ==================== */
+    
+    --breakpoint-xs: 320px;
+    --breakpoint-sm: 640px;
+    --breakpoint-md: 768px;
+    --breakpoint-lg: 1024px;
+    --breakpoint-xl: 1280px;
+    --breakpoint-2xl: 1536px;
+    --breakpoint-3xl: 1920px;
+    
+    /* 角色缩放系数 */
+    --character-scale-mobile: 0.8;
+    --character-scale-tablet: 0.9;
+    --character-scale-desktop: 1;
+    --character-scale-large: 1.1;
+    
+    /* ==================== 背景和叠加层 ==================== */
+    
+    /* 半透明背景 */
+    --overlay-bg-light: rgba(0, 0, 0, 0.4);
+    --overlay-bg-dark: rgba(255, 255, 255, 0.1);
+    
+    /* 模糊效果 */
+    --backdrop-blur-sm: 4px;
+    --backdrop-blur-md: 8px;
+    --backdrop-blur-lg: 12px;
+    --backdrop-blur-xl: 16px;
+    
+    /* ==================== 角色阴影 ==================== */
+    
+    /* 投影深度 */
+    --character-shadow-sm: 0 2px 4px rgba(0, 0, 0, 0.1);
+    --character-shadow-md: 0 4px 8px rgba(0, 0, 0, 0.15);
+    --character-shadow-lg: 0 8px 16px rgba(0, 0, 0, 0.2);
+    --character-shadow-xl: 0 12px 24px rgba(0, 0, 0, 0.25);
+    
+    /* 光晕阴影 */
+    --character-glow-sm: 0 0 8px;
+    --character-glow-md: 0 0 15px;
+    --character-glow-lg: 0 0 25px;
+    --character-glow-xl: 0 0 40px;
+    
+    /* ==================== 性能优化 ==================== */
+    
+    /* GPU 加速 */
+    --gpu-acceleration: translateZ(0);
+    --will-change-transform: transform;
+    --will-change-opacity: opacity;
+    --will-change-filter: filter;
+    --will-change-all: transform, opacity, filter;
+    
+    /* 背面可见性 */
+    --backface-hidden: hidden;
+    --backface-visible: visible;
+    
+    /* 透视距离 */
+    --perspective-near: 500px;
+    --perspective-normal: 1000px;
+    --perspective-far: 2000px;
+    
+    /* ==================== 粒子效果配置 ==================== */
+    
+    /* 粒子大小 */
+    --particle-size-sm: 4px;
+    --particle-size-md: 8px;
+    --particle-size-lg: 12px;
+    
+    /* 粒子动画速度 */
+    --particle-speed-slow: 3s;
+    --particle-speed-normal: 2s;
+    --particle-speed-fast: 1s;
+    
+    /* ==================== 涟漪效果配置 ==================== */
+    
+    /* 涟漪初始大小 */
+    --ripple-initial-size: 10px;
+    
+    /* 涟漪最终缩放 */
+    --ripple-final-scale: 4;
+    
+    /* 涟漪持续时间 */
+    --ripple-duration: 600ms;
+    
+    /* 涟漪颜色 */
+    --ripple-color: rgba(255, 255, 255, 0.5);
+    
+    /* ==================== 可访问性 ==================== */
+    
+    /* 焦点可见性 */
+    --a11y-focus-visible: 2px solid rgb(var(--color-ring));
+    --a11y-focus-offset: 2px;
+    
+    /* 高对比度边框 */
+    --a11y-high-contrast-border: 2px solid currentColor;
+    
+    /* ==================== 调试模式 ==================== */
+    
+    /* 调试边框 */
+    --debug-border: 2px dashed #f59e0b;
+    --debug-border-offset: 4px;
+    --debug-bg: rgba(245, 158, 11, 0.9);
+    --debug-text-color: white;
+    --debug-font-size: 10px;
+}
+/* ==================== 深色主题覆盖 ==================== */
+
+.dark {
+    /* 调整深色主题下的滤镜效果 */
+    --filter-brightness-normal: 0.95;
+    --filter-brightness-high: 1.1;
+    
+    /* 调整背景透明度 */
+    --overlay-bg-light: rgba(255, 255, 255, 0.1);
+    --overlay-bg-dark: rgba(0, 0, 0, 0.6);
+    
+    /* 调整阴影 */
+    --character-shadow-sm: 0 2px 4px rgba(0, 0, 0, 0.3);
+    --character-shadow-md: 0 4px 8px rgba(0, 0, 0, 0.4);
+    --character-shadow-lg: 0 8px 16px rgba(0, 0, 0, 0.5);
+    --character-shadow-xl: 0 12px 24px rgba(0, 0, 0, 0.6);
+}
+
+/* ==================== 高对比度模式 ==================== */
+
+@media (prefers-contrast: high) {
+    :root {
+        /* 增强对比度 */
+        --filter-contrast-normal: 1.2;
+        --filter-contrast-high: 1.3;
+        
+        /* 增强边框 */
+        --character-focus-ring-width: 3px;
+        --indicator-border-width: 3px;
+        
+        /* 增强透明度 */
+        --overlay-bg-light: rgba(0, 0, 0, 0.7);
+        --overlay-bg-dark: rgba(255, 255, 255, 0.2);
+    }
+}
+
+/* ==================== 减少动画偏好 ==================== */
+
+@media (prefers-reduced-motion: reduce) {
+    :root {
+        /* 缩短所有动画时长 */
+        --duration-instant: 0ms;
+        --duration-fast: 0ms;
+        --duration-normal: 0ms;
+        --duration-slow: 0ms;
+        --duration-slower: 0ms;
+        --duration-slowest: 0ms;
+        
+        --character-animation-quick: 0ms;
+        --character-animation-normal: 0ms;
+        --character-animation-slow: 0ms;
+        --character-animation-breath: 0ms;
+        --character-animation-idle: 0ms;
+        --character-animation-sleep: 0ms;
+        
+        /* 移除 will-change */
+        --will-change-transform: auto;
+        --will-change-opacity: auto;
+        --will-change-filter: auto;
+        --will-change-all: auto;
+    }
+}
+
+/* ==================== 小屏幕适配 ==================== */
+
+@media (max-width: 640px) {
+    :root {
+        /* 调整间距 */
+        --spacing-xs: 0.125rem;
+        --spacing-sm: 0.25rem;
+        --spacing-md: 0.5rem;
+        --spacing-lg: 0.75rem;
+        
+        /* 调整字体大小 */
+        --font-size-xs: 0.625rem;
+        --font-size-sm: 0.75rem;
+        --font-size-base: 0.875rem;
+        
+        /* 调整指示器大小 */
+        --indicator-size: 10px;
+        --stat-bar-height: 4px;
+        --stat-bar-min-width: 150px;
+        
+        /* 调整加载器大小 */
+        --spinner-size: 32px;
+        --spinner-border-width: 3px;
+    }
+}
+
+/* ==================== 大屏幕适配 ==================== */
+
+@media (min-width: 1920px) {
+    :root {
+        /* 增大间距 */
+        --spacing-xs: 0.375rem;
+        --spacing-sm: 0.75rem;
+        --spacing-md: 1.25rem;
+        --spacing-lg: 2rem;
+        
+        /* 增大字体 */
+        --font-size-xs: 0.875rem;
+        --font-size-sm: 1rem;
+        --font-size-base: 1.125rem;
+        
+        /* 增大指示器 */
+        --indicator-size: 14px;
+        --stat-bar-height: 8px;
+        --stat-bar-min-width: 240px;
+        
+        /* 增大加载器 */
+        --spinner-size: 64px;
+        --spinner-border-width: 5px;
+    }
+}
+
+/* ==================== 工具类 - 使用变量 ==================== */
+
+.use-emotion-color {
+    color: rgb(var(--emotion-color, var(--emotion-neutral-color)));
+}
+
+.use-activity-color {
+    color: rgb(var(--activity-color, var(--activity-idle-color)));
+}
+
+.use-character-animation {
+    transition: all var(--character-animation-normal) var(--ease-character-smooth);
+}
+
+.use-character-hover {
+    transition: transform var(--character-hover-duration) var(--ease-out),
+                filter var(--character-hover-duration) var(--ease-out);
+}
+
+.use-gpu-acceleration {
+    transform: var(--gpu-acceleration);
+    will-change: var(--will-change-transform);
+    backface-visibility: var(--backface-hidden);
+}
+
+/* ==================== 导出变量为 JavaScript 可用 ==================== */
+
+/*
+ * 要在 JavaScript 中使用这些变量：
+ * 
+ * const styles = getComputedStyle(document.documentElement);
+ * const durationNormal = styles.getPropertyValue('--duration-normal');
+ * 
+ * 或者直接设置：
+ * 
+ * document.documentElement.style.setProperty('--emotion-color', '59 130 246');
+ */
+
+

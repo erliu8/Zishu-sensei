@@ -1,0 +1,78 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+
+<head>
+    <meta charset="UTF-8" />
+    <link rel="icon" type="image/svg+xml" href="/favicon.ico" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Zishu Sensei - AI桌面宠物助手</title>
+    <!-- Live2D Cubism 4 Core 运行时 - 必须在其他 Live2D 代码之前加载 -->
+    <script src="/live2d/live2dcubismcore.min.js"></script>
+    
+    <!-- PixiJS BatchRenderer 修复 - 必须在 PixiJS 加载前执行 -->
+    <script>
+        // 全局 PixiJS 修复脚本
+        (function() {
+            // 监听模块加载，在 PixiJS 加载时立即修复
+            const originalDefine = window.define;
+            const originalRequire = window.require;
+            
+            // 创建一个修复函数
+            function fixPixiJSBatchRenderer(pixiModule) {
+                try {
+                    if (pixiModule && pixiModule.BatchRenderer) {
+                        const BatchRenderer = pixiModule.BatchRenderer;
+                        const originalMethod = BatchRenderer.prototype.checkMaxIfStatementsInShader;
+                        
+                        if (originalMethod && !originalMethod._isFixed) {
+                            BatchRenderer.prototype.checkMaxIfStatementsInShader = function(maxIfs) {
+                                const safeMaxIfs = Math.max(maxIfs || 32, 32);
+                                console.log('🔧 PixiJS BatchRenderer 全局修复:', maxIfs, '->', safeMaxIfs);
+                                return originalMethod.call(this, safeMaxIfs);
+                            };
+                            BatchRenderer.prototype.checkMaxIfStatementsInShader._isFixed = true;
+                            console.log('✅ PixiJS BatchRenderer 全局修复完成');
+                            return true;
+                        }
+                    }
+                } catch (error) {
+                    console.warn('⚠️ PixiJS 全局修复失败:', error);
+                }
+                return false;
+            }
+            
+            // 尝试通过全局对象修复
+            function tryGlobalFix() {
+                if (window.PIXI) {
+                    return fixPixiJSBatchRenderer(window.PIXI);
+                }
+                return false;
+            }
+            
+            // 立即尝试修复
+            tryGlobalFix();
+            
+            // 监听 PIXI 全局对象的创建
+            let pixiCheckInterval = setInterval(() => {
+                if (tryGlobalFix()) {
+                    clearInterval(pixiCheckInterval);
+                }
+            }, 10);
+            
+            // 10秒后停止检查
+            setTimeout(() => {
+                if (pixiCheckInterval) {
+                    clearInterval(pixiCheckInterval);
+                }
+            }, 10000);
+            
+        })();
+    </script>
+</head>
+
+<body>
+    <div id="root"></div>
+    <script type="module" src="/src/main.tsx"></script>
+</body>
+
+</html>

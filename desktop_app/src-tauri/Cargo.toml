@@ -11,20 +11,16 @@ rust-version = "1.70"
 # See more keys and their definitions at https://doc.rust-lang.org/cargo/reference/manifest.html
 
 [build-dependencies]
-tauri-build = { version = "1.5", features = ["isolation"] }
+tauri-build = { version = "1.5", features = [] }
 
 [dependencies]
 # Tauri 核心框架
-tauri = { version = "1.5", features = [
-    "api-all",
+tauri = { version = "1.5", features = [ "window-set-focus", "window-set-always-on-top", "fs-rename-file", "fs-read-dir", "window-set-decorations", "window-unminimize", "window-minimize", "window-center", "window-set-size", "app-hide", "window-show", "fs-write-file", "window-unmaximize", "window-close", "window-set-skip-taskbar", "window-set-resizable", "window-set-min-size", "notification-all", "path-all", "clipboard-read-text", "process-relaunch", "window-set-minimizable", "window-start-dragging", "window-set-max-size", "fs-remove-file", "fs-create-dir", "window-set-title", "window-set-cursor-visible", "window-hide", "app-show", "fs-read-file", "window-set-icon", "clipboard-write-text", "window-set-cursor-icon", "dialog-open", "window-set-position", "fs-copy-file", "dialog-confirm", "window-maximize", "dialog-save", "os-all", "dialog-ask", "fs-remove-dir", "shell-open", "http-request", "fs-exists", "window-set-maximizable", "cli", "dialog-message", "window-set-closable", "window-create", "process-exit", "global-shortcut-all",
     "devtools",
     "icon-ico",
     "icon-png",
-    "isolation",
     "system-tray",
-    "updater",
-    "window-all"
-] }
+    "updater"] }
 
 # 序列化和反序列化
 serde = { version = "1.0", features = ["derive"] }
@@ -42,6 +38,7 @@ log = "0.4"
 env_logger = "0.10"
 tracing = "0.1"
 tracing-subscriber = { version = "0.3", features = ["env-filter"] }
+tracing-appender = "0.2"
 
 # 配置管理
 config = "0.13"
@@ -118,6 +115,8 @@ dashmap = "5.5"
 
 # 性能监控
 metrics = "0.21"
+dirs = "6.0.0"
+num_cpus = "1.17.0"
 
 # 平台特定依赖
 [target.'cfg(windows)'.dependencies]
@@ -141,9 +140,9 @@ windows = { version = "0.51", features = [
 cocoa = "0.25"
 objc = "0.2"
 
-[target.'cfg(target_os = "linux")'.dependencies]
-gtk = "0.18"
-webkit2gtk = "0.19"
+# [target.'cfg(target_os = "linux")'.dependencies]
+# gtk = "0.18"
+# webkit2gtk = "0.18"
 
 [features]
 default = ["custom-protocol"]

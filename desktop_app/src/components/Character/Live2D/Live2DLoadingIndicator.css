@@ -1,0 +1,342 @@
+/* Live2D加载指示器样式 */
+.live2d-loading-indicator {
+  position: absolute;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: rgba(0, 0, 0, 0.8);
+  color: white;
+  z-index: 1000;
+  backdrop-filter: blur(5px);
+}
+
+/* 内容容器 */
+.live2d-loading-indicator__content {
+  text-align: center;
+  padding: 2rem;
+  background: rgba(255, 255, 255, 0.1);
+  border-radius: 12px;
+  backdrop-filter: blur(10px);
+  border: 1px solid rgba(255, 255, 255, 0.2);
+  max-width: 400px;
+  width: 90%;
+}
+
+/* 加载图标 */
+.live2d-loading-indicator__icon {
+  margin-bottom: 1.5rem;
+}
+
+.live2d-loading-indicator__icon-text {
+  font-size: 3rem;
+  display: inline-block;
+  transition: transform 0.3s ease;
+}
+
+.live2d-loading-indicator__icon-text--spinning {
+  animation: spin 2s linear infinite;
+}
+
+@keyframes spin {
+  from {
+    transform: rotate(0deg);
+  }
+  to {
+    transform: rotate(360deg);
+  }
+}
+
+/* 标题 */
+.live2d-loading-indicator__title {
+  margin: 0 0 1rem 0;
+  font-size: 1.5rem;
+  font-weight: 600;
+  color: white;
+}
+
+/* 描述文本 */
+.live2d-loading-indicator__description {
+  margin: 0 0 1.5rem 0;
+  font-size: 1rem;
+  color: rgba(255, 255, 255, 0.9);
+  line-height: 1.5;
+}
+
+/* 进度条容器 */
+.live2d-loading-indicator__progress {
+  margin-bottom: 1rem;
+}
+
+.live2d-loading-indicator__progress-bar {
+  width: 100%;
+  height: 8px;
+  background: rgba(255, 255, 255, 0.2);
+  border-radius: 4px;
+  overflow: hidden;
+  margin-bottom: 0.5rem;
+  position: relative;
+}
+
+.live2d-loading-indicator__progress-fill {
+  height: 100%;
+  background: linear-gradient(90deg, #4CAF50, #66BB6A);
+  border-radius: 4px;
+  transition: width 0.3s ease;
+  position: relative;
+  overflow: hidden;
+}
+
+.live2d-loading-indicator__progress-fill::after {
+  content: '';
+  position: absolute;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  background: linear-gradient(
+    90deg,
+    transparent,
+    rgba(255, 255, 255, 0.4),
+    transparent
+  );
+  animation: shimmer 2s infinite;
+}
+
+@keyframes shimmer {
+  0% {
+    transform: translateX(-100%);
+  }
+  100% {
+    transform: translateX(100%);
+  }
+}
+
+.live2d-loading-indicator__progress-text {
+  font-size: 0.9rem;
+  color: rgba(255, 255, 255, 0.8);
+  font-weight: 500;
+}
+
+/* 自定义消息 */
+.live2d-loading-indicator__message {
+  margin: 0 0 1rem 0;
+  font-size: 0.9rem;
+  color: rgba(255, 255, 255, 0.8);
+  font-style: italic;
+  line-height: 1.4;
+}
+
+/* 加载状态指示点 */
+.live2d-loading-indicator__dots {
+  display: flex;
+  justify-content: center;
+  gap: 0.5rem;
+  margin-top: 1rem;
+}
+
+.live2d-loading-indicator__dot {
+  width: 8px;
+  height: 8px;
+  background: rgba(255, 255, 255, 0.6);
+  border-radius: 50%;
+  animation: pulse 1.5s ease-in-out infinite;
+}
+
+.live2d-loading-indicator__dot:nth-child(1) {
+  animation-delay: 0s;
+}
+
+.live2d-loading-indicator__dot:nth-child(2) {
+  animation-delay: 0.2s;
+}
+
+.live2d-loading-indicator__dot:nth-child(3) {
+  animation-delay: 0.4s;
+}
+
+@keyframes pulse {
+  0%, 80%, 100% {
+    opacity: 0.4;
+    transform: scale(0.8);
+  }
+  40% {
+    opacity: 1;
+    transform: scale(1.2);
+  }
+}
+
+/* 错误状态样式 */
+.live2d-loading-indicator--error .live2d-loading-indicator__content {
+  border-color: rgba(244, 67, 54, 0.5);
+  background: rgba(244, 67, 54, 0.1);
+}
+
+.live2d-loading-indicator--error .live2d-loading-indicator__title {
+  color: #ff6b6b;
+}
+
+.live2d-loading-indicator--error .live2d-loading-indicator__icon-text {
+  animation: none;
+  transform: none;
+}
+
+/* 成功状态样式 */
+.live2d-loading-indicator--success .live2d-loading-indicator__content {
+  border-color: rgba(76, 175, 80, 0.5);
+  background: rgba(76, 175, 80, 0.1);
+}
+
+.live2d-loading-indicator--success .live2d-loading-indicator__title {
+  color: #4CAF50;
+}
+
+.live2d-loading-indicator--success .live2d-loading-indicator__icon-text {
+  animation: none;
+  transform: none;
+}
+
+/* 响应式设计 */
+@media (max-width: 768px) {
+  .live2d-loading-indicator__content {
+    padding: 1.5rem 1rem;
+    max-width: 350px;
+  }
+
+  .live2d-loading-indicator__icon-text {
+    font-size: 2.5rem;
+  }
+
+  .live2d-loading-indicator__title {
+    font-size: 1.3rem;
+  }
+
+  .live2d-loading-indicator__description {
+    font-size: 0.9rem;
+  }
+
+  .live2d-loading-indicator__progress-bar {
+    height: 6px;
+  }
+}
+
+@media (max-width: 480px) {
+  .live2d-loading-indicator__content {
+    padding: 1rem;
+    max-width: 300px;
+    border-radius: 8px;
+  }
+
+  .live2d-loading-indicator__icon-text {
+    font-size: 2rem;
+  }
+
+  .live2d-loading-indicator__title {
+    font-size: 1.2rem;
+    margin-bottom: 0.75rem;
+  }
+
+  .live2d-loading-indicator__description {
+    font-size: 0.85rem;
+    margin-bottom: 1rem;
+  }
+
+  .live2d-loading-indicator__dots {
+    margin-top: 0.75rem;
+  }
+
+  .live2d-loading-indicator__dot {
+    width: 6px;
+    height: 6px;
+  }
+}
+
+/* 高对比度模式 */
+@media (prefers-contrast: high) {
+  .live2d-loading-indicator {
+    background: rgba(0, 0, 0, 0.95);
+  }
+
+  .live2d-loading-indicator__content {
+    background: rgba(255, 255, 255, 0.15);
+    border: 2px solid rgba(255, 255, 255, 0.5);
+  }
+
+  .live2d-loading-indicator__progress-bar {
+    background: rgba(255, 255, 255, 0.4);
+    border: 1px solid rgba(255, 255, 255, 0.6);
+  }
+
+  .live2d-loading-indicator__progress-fill {
+    background: #4CAF50;
+  }
+}
+
+/* 动画偏好设置 */
+@media (prefers-reduced-motion: reduce) {
+  .live2d-loading-indicator__icon-text--spinning {
+    animation: none;
+  }
+
+  .live2d-loading-indicator__progress-fill::after {
+    animation: none;
+  }
+
+  .live2d-loading-indicator__dot {
+    animation: none;
+    opacity: 0.6;
+  }
+
+  /* 为减少动画的用户提供静态指示 */
+  .live2d-loading-indicator__dots::after {
+    content: '加载中...';
+    position: absolute;
+    margin-top: 1.5rem;
+    font-size: 0.8rem;
+    color: rgba(255, 255, 255, 0.7);
+    left: 50%;
+    transform: translateX(-50%);
+  }
+}
+
+/* 深色主题适配 */
+.live2d-loading-indicator--dark {
+  background: rgba(0, 0, 0, 0.9);
+}
+
+.live2d-loading-indicator--dark .live2d-loading-indicator__content {
+  background: rgba(255, 255, 255, 0.05);
+  border-color: rgba(255, 255, 255, 0.1);
+}
+
+/* 浅色主题适配 */
+.live2d-loading-indicator--light {
+  background: rgba(255, 255, 255, 0.9);
+  color: #333;
+}
+
+.live2d-loading-indicator--light .live2d-loading-indicator__content {
+  background: rgba(0, 0, 0, 0.05);
+  border-color: rgba(0, 0, 0, 0.1);
+}
+
+.live2d-loading-indicator--light .live2d-loading-indicator__title {
+  color: #333;
+}
+
+.live2d-loading-indicator--light .live2d-loading-indicator__description,
+.live2d-loading-indicator--light .live2d-loading-indicator__message,
+.live2d-loading-indicator--light .live2d-loading-indicator__progress-text {
+  color: rgba(0, 0, 0, 0.7);
+}
+
+.live2d-loading-indicator--light .live2d-loading-indicator__progress-bar {
+  background: rgba(0, 0, 0, 0.1);
+}
+
+.live2d-loading-indicator--light .live2d-loading-indicator__dot {
+  background: rgba(0, 0, 0, 0.4);
+}

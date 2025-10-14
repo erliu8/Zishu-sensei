@@ -1,0 +1,72 @@
+{
+	"Version": 3,
+	"FileReferences": {
+		"Moc": "hiyori.moc3",
+		"Textures": [
+			"hiyori.2048/texture_00.png",
+			"hiyori.2048/texture_01.png"
+		],
+		"Physics": "hiyori.physics3.json",
+		"DisplayInfo": "hiyori.cdi3.json"
+	},
+	"Groups": [
+		{
+			"Target": "Parameter",
+			"Name": "EyeBlink",
+			"Ids": [
+				"ParamEyeLOpen",
+				"ParamEyeROpen"
+			]
+		},
+		{
+			"Target": "Parameter",
+			"Name": "LipSync",
+			"Ids": [
+				"ParamMouthOpenY"
+			]
+		}
+	],
+	"HitAreas": [
+		{
+			"Name": "Head",
+			"Id": "HitArea_Head"
+		},
+		{
+			"Name": "Body", 
+			"Id": "HitArea_Body"
+		}
+	],
+	"Motions": {
+		"Idle": [
+			{
+				"File": "motions/idle_01.motion3.json",
+				"FadeInTime": 1.0,
+				"FadeOutTime": 1.0
+			}
+		],
+		"TapHead": [
+			{
+				"File": "motions/tap_head_01.motion3.json",
+				"FadeInTime": 0.5,
+				"FadeOutTime": 0.5
+			}
+		],
+		"TapBody": [
+			{
+				"File": "motions/tap_body_01.motion3.json", 
+				"FadeInTime": 0.5,
+				"FadeOutTime": 0.5
+			}
+		]
+	},
+	"Expressions": [
+		{
+			"Name": "Default",
+			"File": "expressions/default.exp3.json"
+		},
+		{
+			"Name": "Happy",
+			"File": "expressions/happy.exp3.json"
+		}
+	]
+}

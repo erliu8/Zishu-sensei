@@ -1,0 +1,12 @@
+prefix=/usr
+exec_prefix=${prefix}
+libdir=${exec_prefix}/lib/x86_64-linux-gnu
+includedir=${prefix}/include/webkitgtk-4.1
+
+Name: webkit2gtk-4.0
+Description: Shim mapping webkit2gtk-4.0 to webkit2gtk-4.1 for compatibility
+Version: 2.48.7
+Requires: webkit2gtk-4.1 >= 2.40
+Libs: -L${libdir} -lwebkit2gtk-4.1
+Cflags: -I${includedir}
+

@@ -1,0 +1,840 @@
+/**
+ * Character 组件样式模块
+ * 
+ * 提供角色组件的完整样式系统，包括：
+ * - 容器布局和定位
+ * - 情绪状态视觉效果
+ * - 活动状态指示器
+ * - 交互反馈动画
+ * - 响应式适配
+ * - 性能优化
+ */
+
+/* ==================== 基础容器样式 ==================== */
+
+/**
+ * 角色容器 - 主容器
+ */
+.character {
+    position: relative;
+    width: 100%;
+    height: 100%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    overflow: hidden;
+    user-select: none;
+    -webkit-user-select: none;
+    
+    /* GPU 加速 */
+    transform: translateZ(0);
+    will-change: transform, opacity;
+    
+    /* 平滑过渡 */
+    transition: transform 0.3s cubic-bezier(0.4, 0, 0.2, 1),
+                opacity 0.3s cubic-bezier(0.4, 0, 0.2, 1),
+                filter 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+}
+
+/**
+ * 角色包装器 - 用于额外的变换层
+ */
+.characterWrapper {
+    position: relative;
+    width: 100%;
+    height: 100%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    pointer-events: auto;
+}
+
+/**
+ * 角色画布容器
+ */
+.canvasContainer {
+    position: relative;
+    width: 100%;
+    height: 100%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    background: transparent;
+    
+    /* 防止拖拽时的文字选择 */
+    -webkit-user-drag: none;
+    user-select: none;
+}
+
+/* ==================== 情绪状态样式 ==================== */
+
+/**
+ * 中性/默认情绪
+ */
+.character[data-emotion="neutral"] {
+    filter: none;
+}
+
+/**
+ * 快乐情绪 - 温暖的光晕效果
+ */
+.character[data-emotion="happy"] {
+    filter: brightness(1.05) saturate(1.1);
+    animation: happyGlow 2s ease-in-out infinite;
+}
+
+@keyframes happyGlow {
+    0%, 100% {
+        filter: brightness(1.05) saturate(1.1) drop-shadow(0 0 10px rgba(255, 220, 100, 0.3));
+    }
+    50% {
+        filter: brightness(1.1) saturate(1.15) drop-shadow(0 0 20px rgba(255, 220, 100, 0.5));
+    }
+}
+
+/**
+ * 伤心情绪 - 降低饱和度
+ */
+.character[data-emotion="sad"] {
+    filter: brightness(0.9) saturate(0.7);
+    animation: sadPulse 3s ease-in-out infinite;
+}
+
+@keyframes sadPulse {
+    0%, 100% {
+        filter: brightness(0.9) saturate(0.7);
+    }
+    50% {
+        filter: brightness(0.85) saturate(0.6);
+    }
+}
+
+/**
+ * 愤怒情绪 - 红色光晕
+ */
+.character[data-emotion="angry"] {
+    filter: brightness(1.1) saturate(1.2) hue-rotate(-5deg);
+    animation: angryShake 0.5s ease-in-out infinite;
+}
+
+@keyframes angryShake {
+    0%, 100% {
+        transform: translateZ(0) rotate(0deg);
+    }
+    25% {
+        transform: translateZ(0) rotate(-1deg);
+    }
+    75% {
+        transform: translateZ(0) rotate(1deg);
+    }
+}
+
+/**
+ * 惊讶情绪 - 放大效果
+ */
+.character[data-emotion="surprised"] {
+    filter: brightness(1.15) contrast(1.1);
+    animation: surpriseScale 0.6s cubic-bezier(0.34, 1.56, 0.64, 1) forwards;
+}
+
+@keyframes surpriseScale {
+    0% {
+        transform: translateZ(0) scale(1);
+    }
+    50% {
+        transform: translateZ(0) scale(1.05);
+    }
+    100% {
+        transform: translateZ(0) scale(1.02);
+    }
+}
+
+/**
+ * 困惑情绪 - 轻微倾斜
+ */
+.character[data-emotion="confused"] {
+    animation: confusedTilt 2s ease-in-out infinite;
+}
+
+@keyframes confusedTilt {
+    0%, 100% {
+        transform: translateZ(0) rotate(0deg);
+    }
+    25% {
+        transform: translateZ(0) rotate(2deg);
+    }
+    75% {
+        transform: translateZ(0) rotate(-2deg);
+    }
+}
+
+/**
+ * 思考情绪 - 脉冲效果
+ */
+.character[data-emotion="thinking"] {
+    animation: thinkingPulse 2.5s ease-in-out infinite;
+}
+
+@keyframes thinkingPulse {
+    0%, 100% {
+        opacity: 1;
+        filter: brightness(1);
+    }
+    50% {
+        opacity: 0.95;
+        filter: brightness(0.98);
+    }
+}
+
+/**
+ * 兴奋情绪 - 跳动效果
+ */
+.character[data-emotion="excited"] {
+    filter: brightness(1.1) saturate(1.2);
+    animation: excitedBounce 0.8s ease-in-out infinite;
+}
+
+@keyframes excitedBounce {
+    0%, 100% {
+        transform: translateZ(0) translateY(0);
+    }
+    50% {
+        transform: translateZ(0) translateY(-8px);
+    }
+}
+
+/**
+ * 疲惫情绪 - 降低亮度
+ */
+.character[data-emotion="tired"] {
+    filter: brightness(0.85) saturate(0.8);
+    animation: tiredDrift 4s ease-in-out infinite;
+}
+
+@keyframes tiredDrift {
+    0%, 100% {
+        transform: translateZ(0) translateY(0);
+    }
+    50% {
+        transform: translateZ(0) translateY(5px);
+    }
+}
+
+/**
+ * 害羞情绪 - 粉色光晕
+ */
+.character[data-emotion="shy"] {
+    filter: saturate(1.1) hue-rotate(5deg);
+    animation: shyBlush 2s ease-in-out infinite;
+}
+
+@keyframes shyBlush {
+    0%, 100% {
+        filter: saturate(1.1) hue-rotate(5deg) drop-shadow(0 0 8px rgba(255, 182, 193, 0.3));
+    }
+    50% {
+        filter: saturate(1.15) hue-rotate(8deg) drop-shadow(0 0 15px rgba(255, 182, 193, 0.5));
+    }
+}
+
+/**
+ * 生气情绪 - 深红光晕
+ */
+.character[data-emotion="annoyed"] {
+    filter: brightness(1.05) saturate(1.15) hue-rotate(-8deg);
+}
+
+/**
+ * 担心情绪 - 轻微摇摆
+ */
+.character[data-emotion="worried"] {
+    animation: worriedSway 3s ease-in-out infinite;
+}
+
+@keyframes worriedSway {
+    0%, 100% {
+        transform: translateZ(0) translateX(0);
+    }
+    33% {
+        transform: translateZ(0) translateX(-3px);
+    }
+    66% {
+        transform: translateZ(0) translateX(3px);
+    }
+}
+
+/* ==================== 活动状态样式 ==================== */
+
+/**
+ * 空闲状态 - 轻微呼吸效果
+ */
+.character[data-activity="idle"] {
+    animation: idleBreathing 4s ease-in-out infinite;
+}
+
+@keyframes idleBreathing {
+    0%, 100% {
+        transform: translateZ(0) scale(1);
+    }
+    50% {
+        transform: translateZ(0) scale(1.01);
+    }
+}
+
+/**
+ * 说话状态 - 轻微点头
+ */
+.character[data-activity="speaking"] {
+    animation: speakingNod 0.5s ease-in-out infinite;
+}
+
+@keyframes speakingNod {
+    0%, 100% {
+        transform: translateZ(0) translateY(0);
+    }
+    50% {
+        transform: translateZ(0) translateY(-2px);
+    }
+}
+
+/**
+ * 听取状态 - 注意力集中
+ */
+.character[data-activity="listening"] {
+    animation: listeningFocus 3s ease-in-out infinite;
+}
+
+@keyframes listeningFocus {
+    0%, 100% {
+        transform: translateZ(0) scale(1);
+        filter: brightness(1);
+    }
+    50% {
+        transform: translateZ(0) scale(1.005);
+        filter: brightness(1.02);
+    }
+}
+
+/**
+ * 思考状态 - 摇头效果
+ */
+.character[data-activity="thinking"] {
+    animation: thinkingHeadTilt 2s ease-in-out infinite;
+}
+
+@keyframes thinkingHeadTilt {
+    0%, 100% {
+        transform: translateZ(0) rotate(0deg);
+    }
+    50% {
+        transform: translateZ(0) rotate(3deg);
+    }
+}
+
+/**
+ * 交互状态 - 高亮效果
+ */
+.character[data-activity="interacting"] {
+    filter: brightness(1.1) drop-shadow(0 0 15px rgba(59, 130, 246, 0.5));
+    animation: interactingPulse 1s ease-in-out infinite;
+}
+
+@keyframes interactingPulse {
+    0%, 100% {
+        transform: translateZ(0) scale(1);
+    }
+    50% {
+        transform: translateZ(0) scale(1.03);
+    }
+}
+
+/**
+ * 睡眠状态 - 降低透明度和亮度
+ */
+.character[data-activity="sleeping"] {
+    filter: brightness(0.7) saturate(0.6);
+    opacity: 0.8;
+    animation: sleepingBreathing 5s ease-in-out infinite;
+}
+
+@keyframes sleepingBreathing {
+    0%, 100% {
+        transform: translateZ(0) scale(1);
+        opacity: 0.8;
+    }
+    50% {
+        transform: translateZ(0) scale(0.99);
+        opacity: 0.75;
+    }
+}
+
+/**
+ * 工作状态 - 轻微摇摆
+ */
+.character[data-activity="working"] {
+    animation: workingBob 2s ease-in-out infinite;
+}
+
+@keyframes workingBob {
+    0%, 100% {
+        transform: translateZ(0) translateY(0) rotate(0deg);
+    }
+    25% {
+        transform: translateZ(0) translateY(-2px) rotate(1deg);
+    }
+    75% {
+        transform: translateZ(0) translateY(-2px) rotate(-1deg);
+    }
+}
+
+/* ==================== 交互反馈样式 ==================== */
+
+/**
+ * 可交互状态
+ */
+.character[data-interactive="true"] {
+    cursor: pointer;
+}
+
+/**
+ * 悬停效果
+ */
+.character[data-interactive="true"]:hover {
+    filter: brightness(1.05);
+    transform: translateZ(0) scale(1.02);
+}
+
+/**
+ * 激活/点击效果
+ */
+.character[data-interactive="true"]:active {
+    filter: brightness(1.1);
+    transform: translateZ(0) scale(0.98);
+}
+
+/**
+ * 聚焦效果
+ */
+.character:focus-visible {
+    outline: 2px solid rgb(var(--color-ring));
+    outline-offset: 4px;
+    border-radius: var(--radius-lg);
+}
+
+/**
+ * 拖拽中
+ */
+.character[data-dragging="true"] {
+    cursor: grabbing;
+    opacity: 0.9;
+    filter: brightness(1.1) drop-shadow(0 8px 16px rgba(0, 0, 0, 0.2));
+    transform: translateZ(0) scale(1.05);
+}
+
+/* ==================== 加载和错误状态 ==================== */
+
+/**
+ * 加载状态
+ */
+.character[data-loading="true"] {
+    pointer-events: none;
+    animation: loadingPulse 1.5s ease-in-out infinite;
+}
+
+@keyframes loadingPulse {
+    0%, 100% {
+        opacity: 0.6;
+    }
+    50% {
+        opacity: 1;
+    }
+}
+
+/**
+ * 加载指示器
+ */
+.loadingIndicator {
+    position: absolute;
+    top: 50%;
+    left: 50%;
+    transform: translate(-50%, -50%);
+    z-index: 10;
+    pointer-events: none;
+}
+
+.loadingSpinner {
+    width: 48px;
+    height: 48px;
+    border: 4px solid rgba(59, 130, 246, 0.2);
+    border-top-color: rgb(59, 130, 246);
+    border-radius: 50%;
+    animation: spin 1s linear infinite;
+}
+
+@keyframes spin {
+    to {
+        transform: rotate(360deg);
+    }
+}
+
+/**
+ * 错误状态
+ */
+.character[data-error="true"] {
+    filter: grayscale(0.5) brightness(0.8);
+    opacity: 0.7;
+}
+
+.errorOverlay {
+    position: absolute;
+    top: 0;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    background: rgba(239, 68, 68, 0.1);
+    backdrop-filter: blur(4px);
+    z-index: 10;
+}
+
+.errorMessage {
+    padding: var(--spacing-md) var(--spacing-lg);
+    background: rgb(var(--color-error) / 0.9);
+    color: white;
+    border-radius: var(--radius-md);
+    font-size: var(--font-size-sm);
+    text-align: center;
+    max-width: 280px;
+}
+
+/* ==================== 状态指示器 ==================== */
+
+/**
+ * 状态指示器容器
+ */
+.statusIndicator {
+    position: absolute;
+    top: var(--spacing-md);
+    right: var(--spacing-md);
+    display: flex;
+    gap: var(--spacing-xs);
+    z-index: 5;
+    pointer-events: none;
+}
+
+/**
+ * 状态徽章
+ */
+.statusBadge {
+    padding: var(--spacing-xs) var(--spacing-sm);
+    background: rgba(0, 0, 0, 0.5);
+    backdrop-filter: blur(8px);
+    border-radius: var(--radius-lg);
+    font-size: var(--font-size-xs);
+    color: white;
+    font-weight: 500;
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+    animation: fadeInDown 0.3s ease-out;
+}
+
+/**
+ * 情绪指示器
+ */
+.emotionIndicator {
+    position: absolute;
+    top: var(--spacing-md);
+    left: var(--spacing-md);
+    width: 12px;
+    height: 12px;
+    border-radius: 50%;
+    border: 2px solid white;
+    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.2);
+    z-index: 5;
+    animation: fadeInLeft 0.3s ease-out;
+}
+
+/* 情绪指示器颜色 */
+.emotionIndicator[data-emotion="happy"] { background: #10b981; }
+.emotionIndicator[data-emotion="sad"] { background: #3b82f6; }
+.emotionIndicator[data-emotion="angry"] { background: #ef4444; }
+.emotionIndicator[data-emotion="surprised"] { background: #f59e0b; }
+.emotionIndicator[data-emotion="confused"] { background: #8b5cf6; }
+.emotionIndicator[data-emotion="thinking"] { background: #6366f1; }
+.emotionIndicator[data-emotion="excited"] { background: #ec4899; }
+.emotionIndicator[data-emotion="tired"] { background: #64748b; }
+.emotionIndicator[data-emotion="shy"] { background: #f472b6; }
+.emotionIndicator[data-emotion="neutral"] { background: #9ca3af; }
+
+/* ==================== 健康/心情条 ==================== */
+
+/**
+ * 属性条容器
+ */
+.statsBar {
+    position: absolute;
+    bottom: var(--spacing-md);
+    left: 50%;
+    transform: translateX(-50%);
+    display: flex;
+    flex-direction: column;
+    gap: var(--spacing-xs);
+    min-width: 200px;
+    padding: var(--spacing-sm);
+    background: rgba(0, 0, 0, 0.4);
+    backdrop-filter: blur(8px);
+    border-radius: var(--radius-md);
+    z-index: 5;
+    animation: fadeInUp 0.3s ease-out;
+}
+
+/**
+ * 单个属性条
+ */
+.statItem {
+    display: flex;
+    align-items: center;
+    gap: var(--spacing-sm);
+}
+
+.statLabel {
+    font-size: var(--font-size-xs);
+    color: rgba(255, 255, 255, 0.9);
+    min-width: 40px;
+}
+
+.statBar {
+    flex: 1;
+    height: 6px;
+    background: rgba(255, 255, 255, 0.2);
+    border-radius: 3px;
+    overflow: hidden;
+}
+
+.statFill {
+    height: 100%;
+    border-radius: 3px;
+    transition: width 0.5s cubic-bezier(0.4, 0, 0.2, 1),
+                background-color 0.3s ease;
+}
+
+/* 属性条颜色 */
+.statFill[data-stat="health"] { background: linear-gradient(90deg, #ef4444, #f87171); }
+.statFill[data-stat="mood"] { background: linear-gradient(90deg, #f59e0b, #fbbf24); }
+.statFill[data-stat="energy"] { background: linear-gradient(90deg, #10b981, #34d399); }
+.statFill[data-stat="affection"] { background: linear-gradient(90deg, #ec4899, #f472b6); }
+
+/* ==================== 特效层 ==================== */
+
+/**
+ * 粒子效果容器
+ */
+.particleContainer {
+    position: absolute;
+    top: 0;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    pointer-events: none;
+    overflow: hidden;
+    z-index: 1;
+}
+
+/**
+ * 光晕效果
+ */
+.auraEffect {
+    position: absolute;
+    top: 50%;
+    left: 50%;
+    width: 200%;
+    height: 200%;
+    transform: translate(-50%, -50%);
+    border-radius: 50%;
+    opacity: 0;
+    pointer-events: none;
+    animation: auraGlow 3s ease-in-out infinite;
+}
+
+@keyframes auraGlow {
+    0%, 100% {
+        opacity: 0;
+        transform: translate(-50%, -50%) scale(0.8);
+    }
+    50% {
+        opacity: 0.3;
+        transform: translate(-50%, -50%) scale(1.2);
+    }
+}
+
+/**
+ * 点击涟漪效果
+ */
+.ripple {
+    position: absolute;
+    border-radius: 50%;
+    background: rgba(255, 255, 255, 0.5);
+    pointer-events: none;
+    animation: rippleEffect 0.6s ease-out forwards;
+}
+
+@keyframes rippleEffect {
+    from {
+        transform: scale(0);
+        opacity: 1;
+    }
+    to {
+        transform: scale(4);
+        opacity: 0;
+    }
+}
+
+/* ==================== 响应式适配 ==================== */
+
+/**
+ * 小屏幕适配 (手机)
+ */
+@media (max-width: 640px) {
+    .character {
+        transform: scale(0.8) translateZ(0);
+    }
+    
+    .statusIndicator,
+    .emotionIndicator,
+    .statsBar {
+        display: none;
+    }
+}
+
+/**
+ * 中等屏幕 (平板)
+ */
+@media (min-width: 641px) and (max-width: 1024px) {
+    .character {
+        transform: scale(0.9) translateZ(0);
+    }
+}
+
+/**
+ * 大屏幕适配
+ */
+@media (min-width: 1920px) {
+    .character {
+        transform: scale(1.1) translateZ(0);
+    }
+}
+
+/* ==================== 性能优化 ==================== */
+
+/**
+ * 减少动画模式
+ */
+@media (prefers-reduced-motion: reduce) {
+    .character,
+    .character[data-emotion],
+    .character[data-activity] {
+        animation: none !important;
+        transition: none !important;
+    }
+    
+    .character[data-interactive="true"]:hover {
+        transform: none;
+    }
+}
+
+/**
+ * 高对比度模式
+ */
+@media (prefers-contrast: high) {
+    .character {
+        filter: contrast(1.2);
+    }
+    
+    .statusBadge,
+    .statsBar {
+        background: rgba(0, 0, 0, 0.9);
+        border: 1px solid white;
+    }
+}
+
+/* ==================== 主题适配 ==================== */
+
+/**
+ * 深色主题
+ */
+:global(.dark) .character {
+    filter: brightness(0.95);
+}
+
+:global(.dark) .statusBadge,
+:global(.dark) .statsBar {
+    background: rgba(255, 255, 255, 0.1);
+}
+
+:global(.dark) .errorMessage {
+    background: rgb(var(--color-error) / 0.95);
+}
+
+/* ==================== 辅助功能 ==================== */
+
+/**
+ * 键盘导航
+ */
+.character:focus-visible::after {
+    content: '';
+    position: absolute;
+    top: -8px;
+    left: -8px;
+    right: -8px;
+    bottom: -8px;
+    border: 3px solid rgb(var(--color-ring));
+    border-radius: var(--radius-lg);
+    pointer-events: none;
+    animation: focusPulse 2s ease-in-out infinite;
+}
+
+@keyframes focusPulse {
+    0%, 100% {
+        opacity: 1;
+    }
+    50% {
+        opacity: 0.6;
+    }
+}
+
+/**
+ * 高对比度焦点
+ */
+@media (prefers-contrast: high) {
+    .character:focus-visible::after {
+        border-width: 4px;
+        border-color: currentColor;
+    }
+}
+
+/* ==================== 调试模式 ==================== */
+
+/**
+ * 调试边框
+ */
+.character[data-debug="true"] {
+    outline: 2px dashed #f59e0b;
+    outline-offset: 4px;
+}
+
+.character[data-debug="true"]::before {
+    content: attr(data-emotion) ' / ' attr(data-activity);
+    position: absolute;
+    top: 0;
+    left: 0;
+    padding: 4px 8px;
+    background: rgba(245, 158, 11, 0.9);
+    color: white;
+    font-size: 10px;
+    font-family: monospace;
+    z-index: 999;
+    pointer-events: none;
+}
+

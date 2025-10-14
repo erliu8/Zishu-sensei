@@ -6,10 +6,8 @@ import { AnimatePresence, motion } from 'framer-motion'
 import React, { Suspense, useCallback, useEffect, useState } from 'react'
 import { ErrorBoundary } from 'react-error-boundary'
 import { Toaster } from 'react-hot-toast'
-import { useLocation } from 'react-router-dom'
 
 // 组件导入
-import { Character } from '@/components/Character'
 import { ChatWindow } from '@/components/Chat/ChatWindow'
 import { ContextMenu } from '@/components/common/ContextMenu'
 import { ErrorFallback } from '@/components/common/ErrorFallback'
@@ -22,7 +20,6 @@ import { SettingsPanel } from '@/components/Settings/SettingsPanel'
 // Hooks 导入
 import { useCharacter } from '@/hooks/useCharacter'
 import { useChat } from '@/hooks/useChat'
-import { useKeyboardShortcuts } from '@/hooks/useKeyboardShortcuts'
 import { useSettings } from '@/hooks/useSettings'
 import { useTauri } from '@/hooks/useTauri'
 import { useTheme } from '@/hooks/useTheme'
@@ -70,7 +67,7 @@ const TRANSITION_CONFIG = {
 const App: React.FC = () => {
     // ==================== 状态管理 ====================
     const [appState, setAppState] = useState<AppState>({
-        windowMode: WINDOW_MODES.PET,
+        windowMode: 'pet' as WindowMode,
         isLoading: true,
         isInitialized: false,
         hasError: false,
@@ -90,30 +87,15 @@ const App: React.FC = () => {
     })
 
     // ==================== Hooks ====================
-    const location = useLocation()
-    const { theme, toggleTheme, setTheme } = useTheme()
+    const { theme, setTheme } = useTheme()
     const { settings, updateSettings, resetSettings } = useSettings()
     const { isConnected, connectionStatus } = useChat()
     const { currentCharacter, switchCharacter, characterList } = useCharacter()
     const { isTauriEnv, tauriVersion } = useTauri()
-    const { windowState, toggleWindowMode, minimizeWindow, closeWindow } = useWindowManager()
+    const { minimizeWindow, closeWindow } = useWindowManager()
 
     // ==================== 键盘快捷键 ====================
-    useKeyboardShortcuts({
-        'ctrl+shift+s': () => handleWindowModeChange(WINDOW_MODES.SETTINGS),
-        'ctrl+shift+c': () => handleWindowModeChange(WINDOW_MODES.CHAT),
-        'ctrl+shift+p': () => handleWindowModeChange(WINDOW_MODES.PET),
-        'ctrl+shift+t': () => toggleTheme(),
-        'ctrl+shift+m': () => minimizeWindow(),
-        'ctrl+shift+q': () => handleAppClose(),
-        'escape': () => {
-            if (contextMenu.visible) {
-                setContextMenu(prev => ({ ...prev, visible: false }))
-            } else if (appState.windowMode !== WINDOW_MODES.PET) {
-                handleWindowModeChange(WINDOW_MODES.PET)
-            }
-        },
-    })
+    // TODO: 实现键盘快捷键
 
     // ==================== 事件处理器 ====================
     const handleWindowModeChange = useCallback((mode: WindowMode) => {
@@ -125,10 +107,11 @@ const App: React.FC = () => {
         }
     }, [isTauriEnv])
 
-    const handleContextMenu = useCallback((event: React.MouseEvent) => {
+    const handleContextMenu = useCallback((event: React.MouseEvent, providedOptions?: ContextMenuOption[]) => {
         event.preventDefault()
 
-        const options: ContextMenuOption[] = [
+        // 如果提供了自定义选项，使用它们；否则使用默认的完整菜单
+        const options: ContextMenuOption[] = providedOptions || [
             {
                 id: 'chat',
                 label: '打开对话',
@@ -142,12 +125,12 @@ const App: React.FC = () => {
                 icon: '⚙️',
                 onClick: () => handleWindowModeChange(WINDOW_MODES.SETTINGS),
             },
-            { id: 'divider-1', type: 'divider' },
+            { id: 'divider-1', label: '', type: 'separator' },
             {
                 id: 'character',
                 label: '切换角色',
                 icon: '🎭',
-                submenu: characterList.map(char => ({
+                children: characterList.map(char => ({
                     id: `character-${char.id}`,
                     label: char.name,
                     icon: char.avatar,
@@ -159,7 +142,7 @@ const App: React.FC = () => {
                 id: 'theme',
                 label: '主题',
                 icon: theme === 'dark' ? '🌙' : '☀️',
-                submenu: [
+                children: [
                     {
                         id: 'theme-light',
                         label: '浅色主题',
@@ -183,7 +166,7 @@ const App: React.FC = () => {
                     },
                 ],
             },
-            { id: 'divider-2', type: 'divider' },
+            { id: 'divider-2', label: '', type: 'separator' },
             {
                 id: 'minimize',
                 label: '最小化',
@@ -271,10 +254,13 @@ const App: React.FC = () => {
     useEffect(() => {
         const initializeApp = async () => {
             try {
+                console.log('开始初始化应用...')
                 setAppState(prev => ({ ...prev, isLoading: true }))
 
+                console.log('Tauri环境检查:', isTauriEnv)
                 // 初始化 Tauri 环境
                 if (isTauriEnv) {
+                    console.log('正在加载Tauri应用状态...')
                     // 加载保存的应用状态
                     const savedState = await invoke<any>('load_app_state')
                     if (savedState) {
@@ -291,7 +277,13 @@ const App: React.FC = () => {
                             switchCharacter(savedState.currentCharacter)
                         }
                     }
+                } else {
+                    console.log('Web环境，跳过Tauri初始化')
+                }
 
+                // 只在Tauri环境中设置窗口事件监听
+                if (isTauriEnv) {
+                    console.log('设置Tauri窗口事件监听...')
                     // 设置窗口事件监听
                     const unlistenClose = await listen('tauri://close-requested', handleAppClose)
                     const unlistenFocus = await listen('tauri://focus', () => {
@@ -310,6 +302,7 @@ const App: React.FC = () => {
                 }
 
                 // 标记初始化完成
+                console.log('应用初始化完成')
                 setAppState(prev => ({
                     ...prev,
                     isLoading: false,
@@ -349,12 +342,18 @@ const App: React.FC = () => {
     const renderWindowContent = () => {
         switch (appState.windowMode) {
             case WINDOW_MODES.PET:
-                return (
+                return currentCharacter ? (
                     <PetWindow
                         character={currentCharacter}
                         onContextMenu={handleContextMenu}
                         onModeChange={handleWindowModeChange}
                     />
+                ) : (
+                    <div className="flex-center h-full">
+                        <div className="text-center text-gray-500">
+                            没有选择角色
+                        </div>
+                    </div>
                 )
 
             case WINDOW_MODES.CHAT:
@@ -463,16 +462,7 @@ const App: React.FC = () => {
                     </motion.div>
                 </AnimatePresence>
 
-                {/* 角色组件 */}
-                {appState.windowMode === WINDOW_MODES.PET && (
-                    <Character
-                        character={currentCharacter}
-                        onInteraction={(type, data) => {
-                            console.log('角色交互:', type, data)
-                            // 处理角色交互逻辑
-                        }}
-                    />
-                )}
+                {/* 角色组件已由 PetWindow 渲染，这里避免重复渲染以防服务实例冲突 */}
 
                 {/* 上下文菜单 */}
                 <ContextMenu
@@ -510,7 +500,7 @@ const App: React.FC = () => {
                 />
 
                 {/* 开发工具信息 */}
-                {import.meta.env.DEV && (
+                {(import.meta as any).env.DEV && (
                     <div className="fixed bottom-2 left-2 text-xs text-gray-500 dark:text-gray-400 bg-black/10 dark:bg-white/10 px-2 py-1 rounded backdrop-blur-sm">
                         <div>模式: {appState.windowMode}</div>
                         <div>主题: {theme}</div>

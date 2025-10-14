@@ -1,0 +1,15 @@
+/**
+ * 样式入口文件
+ * 
+ * 导入所有全局样式、主题和组件样式
+ */
+
+/* 全局样式（包含变量、主题和基础样式） */
+@import './globals.css';
+
+/* 动画定义 */
+@import './animations.css';
+
+/* 组件样式 */
+@import './components.css';
+

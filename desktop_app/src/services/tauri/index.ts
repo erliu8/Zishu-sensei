@@ -6,6 +6,7 @@
 
 export * from './clipboard'
 export * from './commands'
+export * from './config'
 export * from './dialogs'
 export * from './events'
 export * from './files'
@@ -19,6 +20,7 @@ export * from './windows'
 
 // 主要服务类
 export { TauriCommandService } from './commands'
+export { TauriConfigService } from './config'
 export { TauriService } from './core'
 export { TauriEventService } from './events'
 export { TauriSystemService } from './system'

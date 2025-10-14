@@ -1,4 +1,4 @@
-import * as clsx from 'clsx'
+import clsx from 'clsx'
 import { AnimatePresence, motion, type Variants } from 'framer-motion'
 import * as React from 'react'
 import { useCallback, useEffect, useRef, useState } from 'react'

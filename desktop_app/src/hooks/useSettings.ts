@@ -1,249 +1,497 @@
-import type { AppSettings } from '@/types/app'
-import { useCallback, useEffect, useState } from 'react'
+/**
+ * 设置管理 Hook (高级版)
+ * 
+ * 提供完整的设置管理功能，整合了：
+ * - Zustand Store（主要状态管理）
+ * - Tauri 后端（持久化存储）
+ * - localStorage（浏览器备份）
+ * - 实时同步和事件监听
+ */
+
+import type { AppSettings, ThemeMode } from '@/types/app'
+import type { AppConfig, PartialConfigUpdate } from '@/types/settings'
+import { useCallback, useEffect, useState, useRef } from 'react'
+import { useSettingsStore, type SettingsEvent, SyncStatus } from '@/stores/settingsStore'
 import { useTauri } from './useTauri'
 
 /**
  * 设置管理器 Hook 返回值
  */
-interface UseSettingsReturn {
+export interface UseSettingsReturn {
+    // ==================== 基础状态 ====================
+    /** 前端应用设置 */
     settings: AppSettings
-    updateSettings: (updates: Partial<AppSettings>) => Promise<void>
-    resetSettings: () => Promise<void>
-    exportSettings: () => Promise<string>
-    importSettings: (settingsJson: string) => Promise<void>
+    /** 后端配置设置 */
+    config: AppConfig
+    /** 是否正在加载 */
     isLoading: boolean
-    error: string | null
+    /** 是否已初始化 */
+    isInitialized: boolean
+    /** 同步状态 */
+    syncStatus: SyncStatus
+    /** 错误信息 */
+    error: Error | null
+    /** 是否需要同步 */
+    needsSync: boolean
+
+    // ==================== 应用设置操作 ====================
+    /** 更新应用设置 */
+    updateSettings: (updates: Partial<AppSettings>) => Promise<void>
+    /** 重置应用设置 */
+    resetSettings: () => Promise<void>
+    /** 更新主题 */
+    updateTheme: (theme: ThemeMode) => Promise<void>
+    /** 更新语言 */
+    updateLanguage: (language: string) => Promise<void>
+    /** 切换自动启动 */
+    toggleAutoStart: () => Promise<void>
+    /** 更新通知设置 */
+    updateNotifications: (updates: Partial<AppSettings['notifications']>) => Promise<void>
+    /** 更新 AI 设置 */
+    updateAISettings: (updates: Partial<AppSettings['ai']>) => Promise<void>
+
+    // ==================== 配置操作 ====================
+    /** 更新后端配置 */
+    updateConfig: (config: AppConfig) => Promise<void>
+    /** 部分更新配置 */
+    updatePartialConfig: (updates: PartialConfigUpdate) => Promise<void>
+    /** 重置后端配置 */
+    resetConfig: () => Promise<void>
+
+    // ==================== 导入导出 ====================
+    /** 导出设置（JSON 字符串） */
+    exportSettings: () => Promise<string>
+    /** 导出设置到文件 */
+    exportSettingsToFile: (filePath: string) => Promise<void>
+    /** 从 JSON 导入设置 */
+    importSettings: (settingsJson: string) => Promise<void>
+    /** 从文件导入设置 */
+    importSettingsFromFile: (filePath: string) => Promise<void>
+
+    // ==================== 同步操作 ====================
+    /** 同步到后端 */
+    syncToBackend: () => Promise<void>
+    /** 从后端同步 */
+    syncFromBackend: () => Promise<void>
+    /** 强制同步 */
+    forceSync: () => Promise<void>
+    /** 刷新配置 */
+    refreshConfig: () => Promise<void>
+
+    // ==================== 工具方法 ====================
+    /** 清除错误 */
+    clearError: () => void
+    /** 重置所有设置 */
+    resetAll: () => Promise<void>
+    /** 添加事件监听器 */
+    addEventListener: (listener: (event: SettingsEvent) => void) => () => void
 }
 
 /**
- * 默认设置
- */
-const defaultSettings: AppSettings = {
-    theme: 'system',
-    language: 'zh-CN',
-    autoStart: false,
-    windowState: {
-        mode: 'windowed',
-        position: { x: 0, y: 0 },
-        size: { width: 1200, height: 800 },
-        isVisible: true,
-        isAlwaysOnTop: false,
-        isResizable: true,
-        title: '紫舒老师桌面版',
-    },
-    notifications: {
-        enabled: true,
-        sound: true,
-        desktop: true,
-    },
-    ai: {
-        model: 'gpt-3.5-turbo',
-        temperature: 0.7,
-        maxTokens: 2000,
-    },
-    character: {
-        model: 'default',
-        voice: 'female',
-        personality: 'friendly',
-    },
-}
-
-/**
- * 设置管理 Hook
+ * 设置管理 Hook (高级版)
+ * 
+ * 使用示例：
+ * ```tsx
+ * const {
+ *   settings,
+ *   config,
+ *   updateSettings,
+ *   updateTheme,
+ *   isLoading,
+ *   error
+ * } = useSettings()
+ * 
+ * // 更新主题
+ * await updateTheme('dark')
+ * 
+ * // 更新设置
+ * await updateSettings({
+ *   language: 'en-US',
+ *   notifications: { enabled: false }
+ * })
+ * 
+ * // 监听设置变更
+ * useEffect(() => {
+ *   const unsubscribe = addEventListener((event) => {
+ *     console.log('设置已更新:', event)
+ *   })
+ *   return unsubscribe
+ * }, [addEventListener])
+ * ```
  */
 export const useSettings = (): UseSettingsReturn => {
-    const { isAvailable, invoke } = useTauri()
-    const [settings, setSettings] = useState<AppSettings>(defaultSettings)
-    const [isLoading, setIsLoading] = useState(true)
-    const [error, setError] = useState<string | null>(null)
+    const { isAvailable } = useTauri()
+    const [localError, setLocalError] = useState<Error | null>(null)
+    const initializedRef = useRef(false)
 
-    // 加载设置
-    const loadSettings = useCallback(async () => {
-        setIsLoading(true)
-        setError(null)
+    // 从 Store 获取状态和方法
+    const {
+        appSettings,
+        appConfig,
+        isLoading,
+        isInitialized,
+        syncStatus,
+        error: storeError,
+        needsSync,
+        initialize,
+        updateAppSettings,
+        resetAppSettings,
+        updateTheme: storeUpdateTheme,
+        updateLanguage: storeUpdateLanguage,
+        toggleAutoStart: storeToggleAutoStart,
+        updateNotifications: storeUpdateNotifications,
+        updateAISettings: storeUpdateAISettings,
+        updateConfig: storeUpdateConfig,
+        updatePartialConfig: storeUpdatePartialConfig,
+        resetAppConfig,
+        exportSettings: storeExportSettings,
+        importSettings: storeImportSettings,
+        syncToBackend: storeSyncToBackend,
+        syncFromBackend: storeSyncFromBackend,
+        forceSync: storeForceSync,
+        refreshConfig: storeRefreshConfig,
+        clearError: storeClearError,
+        resetAllSettings,
+        addEventListener: storeAddEventListener
+    } = useSettingsStore()
 
-        try {
-            let loadedSettings: AppSettings
+    // 组合 Store 错误和本地错误
+    const error = storeError || localError
 
-            if (isAvailable) {
-                // 从 Tauri 后端加载设置
-                loadedSettings = await invoke<AppSettings>('load_settings')
-            } else {
-                // 从 localStorage 加载设置
-                const stored = localStorage.getItem('app-settings')
-                loadedSettings = stored ? JSON.parse(stored) : defaultSettings
-            }
-
-            // 合并默认设置，确保所有字段都存在
-            const mergedSettings = {
-                ...defaultSettings,
-                ...loadedSettings,
-                windowState: {
-                    ...defaultSettings.windowState,
-                    ...loadedSettings.windowState,
-                },
-                notifications: {
-                    ...defaultSettings.notifications,
-                    ...loadedSettings.notifications,
-                },
-                ai: {
-                    ...defaultSettings.ai,
-                    ...loadedSettings.ai,
-                },
-                character: {
-                    ...defaultSettings.character,
-                    ...loadedSettings.character,
-                },
-            }
-
-            setSettings(mergedSettings)
-        } catch (err) {
-            const errorMessage = err instanceof Error ? err.message : 'Failed to load settings'
-            setError(errorMessage)
-            console.error('Failed to load settings:', err)
-
-            // 使用默认设置
-            setSettings(defaultSettings)
-        } finally {
-            setIsLoading(false)
-        }
-    }, [isAvailable, invoke])
-
-    // 保存设置
-    const saveSettings = useCallback(async (newSettings: AppSettings) => {
-        try {
-            if (isAvailable) {
-                // 保存到 Tauri 后端
-                await invoke('save_settings', { settings: newSettings })
-            } else {
-                // 保存到 localStorage
-                localStorage.setItem('app-settings', JSON.stringify(newSettings))
-            }
-        } catch (err) {
-            const errorMessage = err instanceof Error ? err.message : 'Failed to save settings'
-            throw new Error(errorMessage)
-        }
-    }, [isAvailable, invoke])
-
-    // 更新设置
-    const updateSettings = useCallback(async (updates: Partial<AppSettings>) => {
-        setError(null)
-
-        try {
-            const newSettings = {
-                ...settings,
-                ...updates,
-                // 深度合并嵌套对象
-                windowState: updates.windowState ? {
-                    ...settings.windowState,
-                    ...updates.windowState,
-                } : settings.windowState,
-                notifications: updates.notifications ? {
-                    ...settings.notifications,
-                    ...updates.notifications,
-                } : settings.notifications,
-                ai: updates.ai ? {
-                    ...settings.ai,
-                    ...updates.ai,
-                } : settings.ai,
-                character: updates.character ? {
-                    ...settings.character,
-                    ...updates.character,
-                } : settings.character,
-            }
-
-            await saveSettings(newSettings)
-            setSettings(newSettings)
-
-            // 发送设置更新事件
-            if (isAvailable) {
-                await invoke('emit_settings_updated', { settings: newSettings })
-            }
-        } catch (err) {
-            const errorMessage = err instanceof Error ? err.message : 'Failed to update settings'
-            setError(errorMessage)
-            console.error('Failed to update settings:', err)
-        }
-    }, [settings, saveSettings, isAvailable, invoke])
-
-    // 重置设置
-    const resetSettings = useCallback(async () => {
-        setError(null)
-
-        try {
-            await saveSettings(defaultSettings)
-            setSettings(defaultSettings)
-
-            // 发送设置重置事件
-            if (isAvailable) {
-                await invoke('emit_settings_reset')
-            }
-        } catch (err) {
-            const errorMessage = err instanceof Error ? err.message : 'Failed to reset settings'
-            setError(errorMessage)
-            console.error('Failed to reset settings:', err)
-        }
-    }, [saveSettings, isAvailable, invoke])
-
-    // 导出设置
-    const exportSettings = useCallback(async (): Promise<string> => {
-        try {
-            const exportData = {
-                version: '1.0.0',
-                timestamp: Date.now(),
-                settings,
-            }
-
-            return JSON.stringify(exportData, null, 2)
-        } catch (err) {
-            const errorMessage = err instanceof Error ? err.message : 'Failed to export settings'
-            throw new Error(errorMessage)
-        }
-    }, [settings])
-
-    // 导入设置
-    const importSettings = useCallback(async (settingsJson: string) => {
-        setError(null)
-
-        try {
-            const importData = JSON.parse(settingsJson)
-
-            if (!importData.settings) {
-                throw new Error('Invalid settings format')
-            }
-
-            // 验证设置格式
-            const importedSettings = {
-                ...defaultSettings,
-                ...importData.settings,
-            }
-
-            await saveSettings(importedSettings)
-            setSettings(importedSettings)
-
-            // 发送设置导入事件
-            if (isAvailable) {
-                await invoke('emit_settings_imported', { settings: importedSettings })
-            }
-        } catch (err) {
-            const errorMessage = err instanceof Error ? err.message : 'Failed to import settings'
-            setError(errorMessage)
-            console.error('Failed to import settings:', err)
-        }
-    }, [saveSettings, isAvailable, invoke])
-
-    // 初始化加载设置
+    // 初始化设置
     useEffect(() => {
-        loadSettings()
-    }, [loadSettings])
+        if (!initializedRef.current && !isInitialized) {
+            initializedRef.current = true
+            initialize().catch(err => {
+                console.error('设置初始化失败:', err)
+                setLocalError(err instanceof Error ? err : new Error(String(err)))
+            })
+        }
+    }, [initialize, isInitialized])
+
+    // ==================== 应用设置操作 ====================
+
+    const updateSettings = useCallback(async (updates: Partial<AppSettings>) => {
+        setLocalError(null)
+        try {
+            await updateAppSettings(updates)
+        } catch (err) {
+            const error = err instanceof Error ? err : new Error(String(err))
+            setLocalError(error)
+            throw error
+        }
+    }, [updateAppSettings])
+
+    const resetSettings = useCallback(async () => {
+        setLocalError(null)
+        try {
+            await resetAppSettings()
+        } catch (err) {
+            const error = err instanceof Error ? err : new Error(String(err))
+            setLocalError(error)
+            throw error
+        }
+    }, [resetAppSettings])
+
+    const updateTheme = useCallback(async (theme: ThemeMode) => {
+        setLocalError(null)
+        try {
+            await storeUpdateTheme(theme)
+        } catch (err) {
+            const error = err instanceof Error ? err : new Error(String(err))
+            setLocalError(error)
+            throw error
+        }
+    }, [storeUpdateTheme])
+
+    const updateLanguage = useCallback(async (language: string) => {
+        setLocalError(null)
+        try {
+            await storeUpdateLanguage(language)
+        } catch (err) {
+            const error = err instanceof Error ? err : new Error(String(err))
+            setLocalError(error)
+            throw error
+        }
+    }, [storeUpdateLanguage])
+
+    const toggleAutoStart = useCallback(async () => {
+        setLocalError(null)
+        try {
+            await storeToggleAutoStart()
+        } catch (err) {
+            const error = err instanceof Error ? err : new Error(String(err))
+            setLocalError(error)
+            throw error
+        }
+    }, [storeToggleAutoStart])
+
+    const updateNotifications = useCallback(async (updates: Partial<AppSettings['notifications']>) => {
+        setLocalError(null)
+        try {
+            await storeUpdateNotifications(updates)
+        } catch (err) {
+            const error = err instanceof Error ? err : new Error(String(err))
+            setLocalError(error)
+            throw error
+        }
+    }, [storeUpdateNotifications])
+
+    const updateAISettings = useCallback(async (updates: Partial<AppSettings['ai']>) => {
+        setLocalError(null)
+        try {
+            await storeUpdateAISettings(updates)
+        } catch (err) {
+            const error = err instanceof Error ? err : new Error(String(err))
+            setLocalError(error)
+            throw error
+        }
+    }, [storeUpdateAISettings])
+
+    // ==================== 配置操作 ====================
+
+    const updateConfig = useCallback(async (config: AppConfig) => {
+        setLocalError(null)
+        try {
+            await storeUpdateConfig(config)
+        } catch (err) {
+            const error = err instanceof Error ? err : new Error(String(err))
+            setLocalError(error)
+            throw error
+        }
+    }, [storeUpdateConfig])
+
+    const updatePartialConfig = useCallback(async (updates: PartialConfigUpdate) => {
+        setLocalError(null)
+        try {
+            await storeUpdatePartialConfig(updates)
+        } catch (err) {
+            const error = err instanceof Error ? err : new Error(String(err))
+            setLocalError(error)
+            throw error
+        }
+    }, [storeUpdatePartialConfig])
+
+    const resetConfig = useCallback(async () => {
+        setLocalError(null)
+        try {
+            await resetAppConfig()
+        } catch (err) {
+            const error = err instanceof Error ? err : new Error(String(err))
+            setLocalError(error)
+            throw error
+        }
+    }, [resetAppConfig])
+
+    // ==================== 导入导出 ====================
+
+    const exportSettings = useCallback(async (): Promise<string> => {
+        setLocalError(null)
+        try {
+            return await storeExportSettings()
+        } catch (err) {
+            const error = err instanceof Error ? err : new Error(String(err))
+            setLocalError(error)
+            throw error
+        }
+    }, [storeExportSettings])
+
+    const exportSettingsToFile = useCallback(async (filePath: string) => {
+        setLocalError(null)
+        try {
+            await storeExportSettings(filePath)
+        } catch (err) {
+            const error = err instanceof Error ? err : new Error(String(err))
+            setLocalError(error)
+            throw error
+        }
+    }, [storeExportSettings])
+
+    const importSettings = useCallback(async (settingsJson: string) => {
+        setLocalError(null)
+        try {
+            await storeImportSettings(settingsJson)
+        } catch (err) {
+            const error = err instanceof Error ? err : new Error(String(err))
+            setLocalError(error)
+            throw error
+        }
+    }, [storeImportSettings])
+
+    const importSettingsFromFile = useCallback(async (filePath: string) => {
+        setLocalError(null)
+        try {
+            await storeImportSettings({ filePath })
+        } catch (err) {
+            const error = err instanceof Error ? err : new Error(String(err))
+            setLocalError(error)
+            throw error
+        }
+    }, [storeImportSettings])
+
+    // ==================== 同步操作 ====================
+
+    const syncToBackend = useCallback(async () => {
+        if (!isAvailable) {
+            console.warn('Tauri 不可用，无法同步到后端')
+            return
+        }
+
+        setLocalError(null)
+        try {
+            await storeSyncToBackend()
+        } catch (err) {
+            const error = err instanceof Error ? err : new Error(String(err))
+            setLocalError(error)
+            throw error
+        }
+    }, [isAvailable, storeSyncToBackend])
+
+    const syncFromBackend = useCallback(async () => {
+        if (!isAvailable) {
+            console.warn('Tauri 不可用，无法从后端同步')
+            return
+        }
+
+        setLocalError(null)
+        try {
+            await storeSyncFromBackend()
+        } catch (err) {
+            const error = err instanceof Error ? err : new Error(String(err))
+            setLocalError(error)
+            throw error
+        }
+    }, [isAvailable, storeSyncFromBackend])
+
+    const forceSync = useCallback(async () => {
+        if (!isAvailable) {
+            console.warn('Tauri 不可用，无法强制同步')
+            return
+        }
+
+        setLocalError(null)
+        try {
+            await storeForceSync()
+        } catch (err) {
+            const error = err instanceof Error ? err : new Error(String(err))
+            setLocalError(error)
+            throw error
+        }
+    }, [isAvailable, storeForceSync])
+
+    const refreshConfig = useCallback(async () => {
+        if (!isAvailable) {
+            console.warn('Tauri 不可用，无法刷新配置')
+            return
+        }
+
+        setLocalError(null)
+        try {
+            await storeRefreshConfig()
+        } catch (err) {
+            const error = err instanceof Error ? err : new Error(String(err))
+            setLocalError(error)
+            throw error
+        }
+    }, [isAvailable, storeRefreshConfig])
+
+    // ==================== 工具方法 ====================
+
+    const clearError = useCallback(() => {
+        setLocalError(null)
+        storeClearError()
+    }, [storeClearError])
+
+    const resetAll = useCallback(async () => {
+        setLocalError(null)
+        try {
+            await resetAllSettings()
+        } catch (err) {
+            const error = err instanceof Error ? err : new Error(String(err))
+            setLocalError(error)
+            throw error
+        }
+    }, [resetAllSettings])
+
+    const addEventListener = useCallback((listener: (event: SettingsEvent) => void) => {
+        return storeAddEventListener(listener)
+    }, [storeAddEventListener])
 
     return {
-        settings,
+        // 基础状态
+        settings: appSettings,
+        config: appConfig,
+        isLoading,
+        isInitialized,
+        syncStatus,
+        error,
+        needsSync: needsSync(),
+
+        // 应用设置操作
         updateSettings,
         resetSettings,
+        updateTheme,
+        updateLanguage,
+        toggleAutoStart,
+        updateNotifications,
+        updateAISettings,
+
+        // 配置操作
+        updateConfig,
+        updatePartialConfig,
+        resetConfig,
+
+        // 导入导出
         exportSettings,
+        exportSettingsToFile,
         importSettings,
-        isLoading,
-        error,
+        importSettingsFromFile,
+
+        // 同步操作
+        syncToBackend,
+        syncFromBackend,
+        forceSync,
+        refreshConfig,
+
+        // 工具方法
+        clearError,
+        resetAll,
+        addEventListener
+    }
+}
+
+/**
+ * 简化版设置 Hook
+ * 
+ * 仅提供基础的设置读取和更新功能，适合简单场景
+ */
+export const useSimpleSettings = () => {
+    const { settings, updateSettings, isLoading, error } = useSettings()
+    return { settings, updateSettings, isLoading, error }
+}
+
+/**
+ * 主题 Hook
+ * 
+ * 专门用于主题管理
+ */
+export const useThemeSettings = () => {
+    const { settings, updateTheme } = useSettings()
+    return {
+        theme: settings.theme,
+        updateTheme
+    }
+}
+
+/**
+ * 语言 Hook
+ * 
+ * 专门用于语言管理
+ */
+export const useLanguageSettings = () => {
+    const { settings, updateLanguage } = useSettings()
+    return {
+        language: settings.language,
+        updateLanguage
     }
 }

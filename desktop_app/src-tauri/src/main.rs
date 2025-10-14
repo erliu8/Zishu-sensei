@@ -1,15 +1,8 @@
 // Prevents additional console window on Windows in release, DO NOT REMOVE!!
 #![cfg_attr(not(debug_assertions), windows_subsystem = "windows")]
 
-use std::sync::Arc;
-use std::collections::HashMap;
-use parking_lot::Mutex;
-use tauri::{
-    api::shell,
-    AppHandle, CustomMenuItem, Manager, SystemTray, SystemTrayEvent, SystemTrayMenu,
-    SystemTrayMenuItem, SystemTraySubmenu, Window, WindowBuilder, WindowUrl,
-};
-use tracing::{error, info, warn};
+use tauri::{api::shell, AppHandle, Manager, WindowBuilder, WindowUrl};
+use tracing::{error, info};
 use serde::{Deserialize, Serialize};
 
 // 导入模块
@@ -17,9 +10,11 @@ mod commands;
 mod events;
 mod state;
 mod utils;
+mod adapter;
+mod system_monitor;
+mod database;
 
 use commands::*;
-use events::*;
 use state::*;
 use utils::*;
 
@@ -101,143 +96,9 @@ impl Default for AppConfig {
     }
 }
 
-/// 创建系统托盘菜单
-fn create_system_tray() -> SystemTray {
-    let chat_menu = CustomMenuItem::new("chat".to_string(), "💬 开始对话");
-    let separator1 = SystemTrayMenuItem::Separator;
-    
-    // 设置子菜单
-    let character_settings = CustomMenuItem::new("character_settings".to_string(), "🎭 角色设置");
-    let theme_settings = CustomMenuItem::new("theme_settings".to_string(), "🎨 主题设置");
-    let adapter_settings = CustomMenuItem::new("adapter_settings".to_string(), "🔧 适配器管理");
-    let sound_settings = CustomMenuItem::new("sound_settings".to_string(), "🔊 声音设置");
-    let system_settings = CustomMenuItem::new("system_settings".to_string(), "📱 系统设置");
-    
-    let settings_submenu = SystemTraySubmenu::new(
-        "⚙️ 设置",
-        SystemTrayMenu::new()
-            .add_item(character_settings)
-            .add_item(theme_settings)
-            .add_item(adapter_settings)
-            .add_item(sound_settings)
-            .add_item(system_settings),
-    );
-    
-    let adapter_market = CustomMenuItem::new("adapter_market".to_string(), "🔄 适配器市场");
-    let workflow_editor = CustomMenuItem::new("workflow_editor".to_string(), "📋 工作流编辑器");
-    let separator2 = SystemTrayMenuItem::Separator;
-    
-    let show_window = CustomMenuItem::new("show_window".to_string(), "👁️ 显示窗口");
-    let hide_window = CustomMenuItem::new("hide_window".to_string(), "🙈 隐藏窗口");
-    let separator3 = SystemTrayMenuItem::Separator;
-    
-    let about = CustomMenuItem::new("about".to_string(), "ℹ️ 关于");
-    let quit = CustomMenuItem::new("quit".to_string(), "❌ 退出");
+// 系统托盘创建函数已移至 events::tray 模块
 
-    let tray_menu = SystemTrayMenu::new()
-        .add_item(chat_menu)
-        .add_native_item(separator1)
-        .add_submenu(settings_submenu)
-        .add_item(adapter_market)
-        .add_item(workflow_editor)
-        .add_native_item(separator2)
-        .add_item(show_window)
-        .add_item(hide_window)
-        .add_native_item(separator3)
-        .add_item(about)
-        .add_item(quit);
-
-    SystemTray::new().with_menu(tray_menu)
-}
-
-/// 处理系统托盘事件
-fn handle_system_tray_event(app: &AppHandle, event: SystemTrayEvent) {
-    match event {
-        SystemTrayEvent::LeftClick {
-            position: _,
-            size: _,
-            ..
-        } => {
-            info!("系统托盘左键点击");
-            // 切换主窗口显示/隐藏
-            if let Some(window) = app.get_window("main") {
-                if window.is_visible().unwrap_or(false) {
-                    let _ = window.hide();
-                } else {
-                    let _ = window.show();
-                    let _ = window.set_focus();
-                }
-            }
-        }
-        SystemTrayEvent::RightClick {
-            position: _,
-            size: _,
-            ..
-        } => {
-            info!("系统托盘右键点击");
-            // 右键点击会自动显示菜单
-        }
-        SystemTrayEvent::DoubleClick {
-            position: _,
-            size: _,
-            ..
-        } => {
-            info!("系统托盘双击");
-            // 双击打开聊天窗口
-            open_chat_window(app);
-        }
-        SystemTrayEvent::MenuItemClick { id, .. } => {
-            info!("托盘菜单项点击: {}", id);
-            match id.as_str() {
-                "chat" => {
-                    open_chat_window(app);
-                }
-                "character_settings" => {
-                    open_settings_window(app, "character");
-                }
-                "theme_settings" => {
-                    open_settings_window(app, "theme");
-                }
-                "adapter_settings" => {
-                    open_settings_window(app, "adapter");
-                }
-                "sound_settings" => {
-                    open_settings_window(app, "sound");
-                }
-                "system_settings" => {
-                    open_settings_window(app, "system");
-                }
-                "adapter_market" => {
-                    open_adapter_market(app);
-                }
-                "workflow_editor" => {
-                    open_workflow_editor(app);
-                }
-                "show_window" => {
-                    if let Some(window) = app.get_window("main") {
-                        let _ = window.show();
-                        let _ = window.set_focus();
-                    }
-                }
-                "hide_window" => {
-                    if let Some(window) = app.get_window("main") {
-                        let _ = window.hide();
-                    }
-                }
-                "about" => {
-                    show_about_dialog(app);
-                }
-                "quit" => {
-                    info!("用户请求退出应用");
-                    app.exit(0);
-                }
-                _ => {
-                    warn!("未处理的托盘菜单项: {}", id);
-                }
-            }
-        }
-    }
-}
+// 系统托盘事件处理已移至 events::tray 模块
 
 /// 打开聊天窗口
 fn open_chat_window(app: &AppHandle) {
@@ -362,82 +223,7 @@ fn show_about_dialog(app: &AppHandle) {
     dialog::message(Some(&app.get_window("main").unwrap()), "关于 Zishu Sensei", message);
 }
 
-/// 处理窗口事件
-fn handle_window_event(event: tauri::GlobalWindowEvent) {
-    match event.event() {
-        tauri::WindowEvent::CloseRequested { api, .. } => {
-            let window = event.window();
-            let app_handle = window.app_handle();
-            
-            // 获取应用状态
-            if let Ok(app_state) = app_handle.try_state::<AppState>() {
-                let config = app_state.config.lock();
-                
-                // 如果配置为关闭到托盘，则隐藏窗口而不是关闭
-                if config.system.close_to_tray && window.label() == "main" {
-                    api.prevent_close();
-                    let _ = window.hide();
-                    info!("主窗口隐藏到托盘");
-                    return;
-                }
-            }
-            
-            // 其他窗口正常关闭
-            info!("窗口 {} 关闭", window.label());
-        }
-        tauri::WindowEvent::Focused(focused) => {
-            if *focused {
-                info!("窗口 {} 获得焦点", event.window().label());
-            } else {
-                info!("窗口 {} 失去焦点", event.window().label());
-            }
-        }
-        tauri::WindowEvent::Moved(position) => {
-            info!("窗口 {} 移动到位置: {:?}", event.window().label(), position);
-            
-            // 保存主窗口位置
-            if event.window().label() == "main" {
-                let app_handle = event.window().app_handle();
-                if let Ok(app_state) = app_handle.try_state::<AppState>() {
-                    let mut config = app_state.config.lock();
-                    config.window.position = Some((position.x, position.y));
-                    
-                    // 异步保存配置
-                    let config_clone = config.clone();
-                    let app_handle_clone = app_handle.clone();
-                    tokio::spawn(async move {
-                        if let Err(e) = save_config(&app_handle_clone, &config_clone).await {
-                            error!("保存配置失败: {}", e);
-                        }
-                    });
-                }
-            }
-        }
-        tauri::WindowEvent::Resized(size) => {
-            info!("窗口 {} 大小改变: {}x{}", event.window().label(), size.width, size.height);
-            
-            // 保存主窗口大小
-            if event.window().label() == "main" {
-                let app_handle = event.window().app_handle();
-                if let Ok(app_state) = app_handle.try_state::<AppState>() {
-                    let mut config = app_state.config.lock();
-                    config.window.width = size.width as f64;
-                    config.window.height = size.height as f64;
-                    
-                    // 异步保存配置
-                    let config_clone = config.clone();
-                    let app_handle_clone = app_handle.clone();
-                    tokio::spawn(async move {
-                        if let Err(e) = save_config(&app_handle_clone, &config_clone).await {
-                            error!("保存配置失败: {}", e);
-                        }
-                    });
-                }
-            }
-        }
-        _ => {}
-    }
-}
+// 窗口事件处理已移至 events::window 模块
 
 /// 初始化日志系统
 fn init_logging() -> Result<(), Box<dyn std::error::Error>> {
@@ -471,18 +257,18 @@ fn init_logging() -> Result<(), Box<dyn std::error::Error>> {
 }
 
 /// 应用启动时的初始化
-async fn app_setup(app: &mut tauri::App) -> Result<(), Box<dyn std::error::Error + Send + Sync>> {
+async fn app_setup(app: &tauri::AppHandle) -> Result<(), Box<dyn std::error::Error + Send + Sync>> {
     info!("开始应用初始化");
     
     // 初始化应用状态
-    let app_state = AppState::new(app.handle()).await?;
+    let app_state = AppState::new(app.clone()).await?;
     app.manage(app_state);
     
     // 初始化数据库
-    database::init_database(app.handle()).await?;
+    database::init_database(app.clone()).await?;
     
     // 加载配置
-    let config = load_config(app.handle()).await.unwrap_or_default();
+    let config = load_config(app).await.unwrap_or_default();
     
     // 设置主窗口属性
     if let Some(main_window) = app.get_window("main") {
@@ -520,7 +306,7 @@ async fn app_setup(app: &mut tauri::App) -> Result<(), Box<dyn std::error::Error
     }
     
     // 启动后台任务
-    start_background_tasks(app.handle()).await?;
+    start_background_tasks(app.clone()).await?;
     
     info!("应用初始化完成");
     Ok(())
@@ -542,7 +328,7 @@ async fn start_background_tasks(app_handle: AppHandle) -> Result<(), Box<dyn std
         let mut interval = tokio::time::interval(tokio::time::Duration::from_secs(300)); // 5分钟
         loop {
             interval.tick().await;
-            if let Ok(app_state) = app_handle_clone.try_state::<AppState>() {
+            if let Some(app_state) = app_handle_clone.try_state::<AppState>() {
                 let config = app_state.config.lock().clone();
                 if let Err(e) = save_config(&app_handle_clone, &config).await {
                     error!("自动保存配置失败: {}", e);
@@ -566,18 +352,17 @@ async fn main() {
     info!("🐾 Zishu Sensei 桌面宠物应用启动");
     
     // 创建系统托盘
-    let system_tray = create_system_tray();
+    let system_tray = events::tray::create_system_tray();
     
     // 构建 Tauri 应用
     let app_result = tauri::Builder::default()
         .system_tray(system_tray)
-        .on_system_tray_event(handle_system_tray_event)
-        .on_window_event(handle_window_event)
+        .on_system_tray_event(events::tray::handle_system_tray_event)
+        .on_window_event(events::window::handle_window_event)
         .setup(|app| {
-            // 异步初始化
             let app_handle = app.handle();
-            tokio::spawn(async move {
-                if let Err(e) = app_setup(&mut *app_handle.clone()).await {
+            tauri::async_runtime::spawn(async move {
+                if let Err(e) = app_setup(&app_handle).await {
                     error!("应用初始化失败: {}", e);
                     std::process::exit(1);
                 }
@@ -585,55 +370,82 @@ async fn main() {
             Ok(())
         })
         .invoke_handler(tauri::generate_handler![
-            // 聊天相关命令
-            chat::send_message,
-            chat::get_chat_history,
-            chat::clear_chat_history,
-            chat::set_chat_model,
+            // 聊天命令
+            commands::chat::send_message,
+            commands::chat::get_chat_history,
+            commands::chat::clear_chat_history,
+            commands::chat::set_chat_model,
             
-            // 角色相关命令
-            character::get_characters,
-            character::switch_character,
-            character::get_character_info,
-            character::play_motion,
-            character::set_expression,
+            // 设置命令
+            commands::settings::get_settings,
+            commands::settings::update_settings,
+            commands::settings::update_partial_settings,
+            commands::settings::reset_settings,
+            commands::settings::export_settings,
+            commands::settings::import_settings,
+            commands::settings::get_window_config,
+            commands::settings::update_window_config,
+            commands::settings::get_character_config,
+            commands::settings::update_character_config,
+            commands::settings::get_theme_config,
+            commands::settings::update_theme_config,
+            commands::settings::get_system_config,
+            commands::settings::update_system_config,
+            commands::settings::get_config_paths,
+            commands::settings::get_config_info,
+            commands::settings::get_backup_files,
+            commands::settings::clean_old_backups,
+            commands::settings::create_config_snapshot,
+            commands::settings::restore_from_snapshot,
+            commands::settings::compare_configs,
             
-            // 设置相关命令
-            settings::get_settings,
-            settings::update_settings,
-            settings::reset_settings,
-            settings::export_settings,
-            settings::import_settings,
+            // 角色命令
+            commands::character::get_characters,
+            commands::character::get_character_info,
+            commands::character::switch_character,
+            commands::character::play_motion,
+            commands::character::set_expression,
+            commands::character::get_current_character,
+            commands::character::toggle_character_interaction,
+            commands::character::set_character_scale,
             
-            // 适配器相关命令
-            adapter::get_adapters,
-            adapter::install_adapter,
-            adapter::uninstall_adapter,
-            adapter::execute_adapter,
-            adapter::get_adapter_config,
-            adapter::update_adapter_config,
+            // 窗口命令
+            commands::window::minimize_to_tray,
+            commands::window::show_window,
+            commands::window::hide_window,
+            commands::window::set_window_position,
+            commands::window::set_window_size,
+            commands::window::toggle_always_on_top,
+            commands::window::get_window_info,
+            commands::window::center_window,
+            commands::window::maximize_window,
+            commands::window::unmaximize_window,
+            commands::window::close_window,
             
-            // 桌面操作命令
-            desktop::get_desktop_info,
-            desktop::execute_workflow,
-            desktop::get_workflows,
-            desktop::save_workflow,
-            desktop::delete_workflow,
+            // 系统命令
+            commands::system::get_system_info,
+            commands::system::get_app_version,
+            commands::system::check_for_updates,
+            commands::system::restart_app,
+            commands::system::quit_app,
+            commands::system::show_in_folder,
+            commands::system::open_url,
+            commands::system::get_app_data_path,
+            commands::system::get_app_log_path,
+            commands::system::set_auto_start,
+            commands::system::copy_to_clipboard,
+            commands::system::read_from_clipboard,
             
-            // 系统相关命令
-            system::get_system_info,
-            system::get_app_version,
-            system::check_for_updates,
-            system::restart_app,
-            system::show_in_folder,
+            // 适配器命令
+            commands::adapter::get_adapters,
+            commands::adapter::install_adapter,
+            commands::adapter::uninstall_adapter,
+            commands::adapter::execute_adapter,
+            commands::adapter::get_adapter_config,
+            commands::adapter::update_adapter_config,
             
-            // 窗口管理命令
-            window::minimize_to_tray,
-            window::show_window,
-            window::hide_window,
-            window::set_window_position,
-            window::set_window_size,
-            window::toggle_always_on_top,
+            // 桌面命令
+            commands::desktop::get_desktop_info,
         ])
         .build(tauri::generate_context!());
     

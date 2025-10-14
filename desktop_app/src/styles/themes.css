@@ -1,0 +1,227 @@
+/**
+ * 主题系统全局样式
+ * 包含主题切换过渡效果和全局主题样式
+ */
+
+/* 导入所有主题 */
+@import './themes/light.css';
+@import './themes/dark.css';
+@import './themes/anime.css';
+@import './themes/cyberpunk.css';
+
+/* ==================== 主题过渡效果 ==================== */
+
+/* 主题切换时的平滑过渡 */
+html.theme-transitioning,
+html.theme-transitioning *,
+html.theme-transitioning *:before,
+html.theme-transitioning *:after {
+    transition: background-color 0.3s ease,
+                color 0.3s ease,
+                border-color 0.3s ease,
+                box-shadow 0.3s ease !important;
+}
+
+/* 禁用动画时不使用过渡 */
+@media (prefers-reduced-motion: reduce) {
+    html.theme-transitioning,
+    html.theme-transitioning *,
+    html.theme-transitioning *:before,
+    html.theme-transitioning *:after {
+        transition: none !important;
+    }
+}
+
+/* ==================== 全局主题样式 ==================== */
+
+/* 确保 body 继承根元素的颜色方案 */
+body {
+    background-color: hsl(var(--color-background));
+    color: hsl(var(--color-foreground));
+    transition: background-color 0.3s ease, color 0.3s ease;
+}
+
+/* 选择文本时的高亮颜色 */
+::selection {
+    background-color: hsl(var(--color-primary) / 0.3);
+    color: hsl(var(--color-foreground));
+}
+
+::-moz-selection {
+    background-color: hsl(var(--color-primary) / 0.3);
+    color: hsl(var(--color-foreground));
+}
+
+/* ==================== 滚动条主题化 ==================== */
+
+/* Webkit 浏览器滚动条 */
+::-webkit-scrollbar {
+    width: 10px;
+    height: 10px;
+}
+
+::-webkit-scrollbar-track {
+    background: hsl(var(--color-muted) / 0.5);
+    border-radius: 5px;
+}
+
+::-webkit-scrollbar-thumb {
+    background: hsl(var(--color-muted-foreground) / 0.5);
+    border-radius: 5px;
+}
+
+::-webkit-scrollbar-thumb:hover {
+    background: hsl(var(--color-muted-foreground) / 0.7);
+}
+
+/* Firefox 滚动条 */
+* {
+    scrollbar-width: thin;
+    scrollbar-color: hsl(var(--color-muted-foreground) / 0.5) hsl(var(--color-muted) / 0.5);
+}
+
+/* ==================== 主题特定增强 ==================== */
+
+/* 动漫主题 - 更生动的过渡 */
+:root.anime,
+[data-theme='anime'] {
+    --transition-timing: cubic-bezier(0.34, 1.56, 0.64, 1);
+}
+
+:root.anime *,
+[data-theme='anime'] * {
+    transition-timing-function: var(--transition-timing);
+}
+
+/* 赛博朋克主题 - 背景效果 */
+:root.cyberpunk,
+[data-theme='cyberpunk'] {
+    --bg-grid-size: 40px;
+    --bg-grid-color: rgba(0, 255, 255, 0.05);
+}
+
+:root.cyberpunk body::before,
+[data-theme='cyberpunk'] body::before {
+    content: '';
+    position: fixed;
+    top: 0;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    background-image: 
+        linear-gradient(rgba(0, 255, 255, 0.03) 1px, transparent 1px),
+        linear-gradient(90deg, rgba(0, 255, 255, 0.03) 1px, transparent 1px);
+    background-size: var(--bg-grid-size) var(--bg-grid-size);
+    pointer-events: none;
+    z-index: -1;
+}
+
+/* 赛博朋克主题 - 扫描线效果 */
+:root.cyberpunk body::after,
+[data-theme='cyberpunk'] body::after {
+    content: '';
+    position: fixed;
+    top: 0;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    background: linear-gradient(
+        to bottom,
+        transparent 50%,
+        var(--scanline-color) 50%
+    );
+    background-size: 100% 4px;
+    opacity: var(--scanline-opacity);
+    pointer-events: none;
+    z-index: 9999;
+    animation: scanline 8s linear infinite;
+}
+
+@keyframes scanline {
+    0% {
+        background-position: 0 0;
+    }
+    100% {
+        background-position: 0 100vh;
+    }
+}
+
+/* 减少动画偏好时禁用特殊效果 */
+@media (prefers-reduced-motion: reduce) {
+    :root.cyberpunk body::after,
+    [data-theme='cyberpunk'] body::after {
+        animation: none;
+    }
+}
+
+/* ==================== 主题加载状态 ==================== */
+
+/* 主题加载时的占位效果 */
+html:not(.theme-loaded) {
+    opacity: 0;
+}
+
+html.theme-loaded {
+    opacity: 1;
+    transition: opacity 0.3s ease;
+}
+
+/* ==================== 打印样式 ==================== */
+
+@media print {
+    /* 打印时强制使用浅色主题 */
+    :root,
+    body {
+        background: white !important;
+        color: black !important;
+    }
+    
+    /* 移除背景效果 */
+    :root.cyberpunk body::before,
+    :root.cyberpunk body::after,
+    [data-theme='cyberpunk'] body::before,
+    [data-theme='cyberpunk'] body::after {
+        display: none !important;
+    }
+}
+
+/* ==================== 辅助类 ==================== */
+
+/* 强制浅色文本 */
+.text-light {
+    color: hsl(0 0% 100%) !important;
+}
+
+/* 强制深色文本 */
+.text-dark {
+    color: hsl(0 0% 0%) !important;
+}
+
+/* 主题色文本 */
+.text-primary {
+    color: hsl(var(--color-primary)) !important;
+}
+
+/* 强制透明背景 */
+.bg-transparent {
+    background-color: transparent !important;
+}
+
+/* 主题色背景 */
+.bg-primary {
+    background-color: hsl(var(--color-primary)) !important;
+    color: hsl(var(--color-primary-foreground)) !important;
+}
+
+/* 卡片背景 */
+.bg-card {
+    background-color: hsl(var(--color-card)) !important;
+    color: hsl(var(--color-card-foreground)) !important;
+}
+
+/* 柔和背景 */
+.bg-muted {
+    background-color: hsl(var(--color-muted)) !important;
+    color: hsl(var(--color-muted-foreground)) !important;
+}
+

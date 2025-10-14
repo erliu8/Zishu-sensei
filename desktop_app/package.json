@@ -34,6 +34,7 @@
     "scripts": {
         "dev": "vite dev",
         "build": "tsc && vite build",
+        "build:dev": "tsc --project tsconfig.dev.json && vite build",
         "preview": "vite preview",
         "tauri": "tauri",
         "tauri:dev": "tauri dev",
@@ -42,6 +43,7 @@
         "lint": "eslint . --ext ts,tsx --report-unused-disable-directives --max-warnings 0",
         "lint:fix": "eslint . --ext ts,tsx --fix",
         "type-check": "tsc --noEmit",
+        "type-check:dev": "tsc --project tsconfig.dev.json --noEmit",
         "format": "prettier --write \"src/**/*.{ts,tsx,js,jsx,json,css,scss,md}\"",
         "format:check": "prettier --check \"src/**/*.{ts,tsx,js,jsx,json,css,scss,md}\"",
         "test": "vitest",
@@ -86,7 +88,10 @@
         "react-use": "^17.4.2",
         "tailwind-merge": "^2.0.0",
         "zod": "^3.22.4",
-        "zustand": "^4.4.7"
+        "zustand": "^4.4.7",
+        "pixi.js": "^7.3.2",
+        "pixi-live2d-display": "^0.4.0",
+        "live2d-library": "^1.1.1"
     },
     "devDependencies": {
         "@tailwindcss/aspect-ratio": "^0.4.2",

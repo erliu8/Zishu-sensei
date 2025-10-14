@@ -3,7 +3,7 @@
     "build": {
         "beforeBuildCommand": "npm run build",
         "beforeDevCommand": "npm run dev",
-        "devPath": "http://localhost:1420",
+        "devPath": "http://localhost:1424",
         "distDir": "../dist",
         "withGlobalTauri": false
     },
@@ -142,13 +142,7 @@
             "active": true,
             "targets": "all",
             "identifier": "dev.zishu.sensei",
-            "icon": [
-                "icons/32x32.png",
-                "icons/128x128.png",
-                "icons/128x128@2x.png",
-                "icons/icon.icns",
-                "icons/icon.ico"
-            ],
+            "icon": [],
             "resources": [
                 "assets/**/*",
                 "live2d/**/*"
@@ -160,7 +154,7 @@
             "longDescription": "Zishu Sensei 是一个基于 Tauri + React + Live2D 技术栈开发的智能桌面宠物应用。它提供可爱的 Live2D 角色展示、智能对话交互、右击设置菜单、适配器管理、主题切换和系统托盘等功能，让您的桌面工作更加有趣和高效。",
             "deb": {
                 "depends": [
-                    "libwebkit2gtk-4.0-37",
+                    "libwebkit2gtk-4.1-0",
                     "libgtk-3-0",
                     "libayatana-appindicator3-1"
                 ],
@@ -250,21 +244,12 @@
                 "decorations": false,
                 "transparent": true,
                 "maximized": false,
-                "theme": "Auto",
+                "theme": "Light",
                 "titleBarStyle": "Transparent",
                 "hiddenTitle": true,
                 "acceptFirstMouse": true,
                 "tabbingIdentifier": null,
-                "additionalBrowserArgs": "--disable-features=msWebOOUI,msPdfOOUI,msSmartScreenProtection --disable-web-security --allow-running-insecure-content",
-                "shadow": true,
-                "windowEffects": {
-                    "effects": [
-                        "blur",
-                        "vibrancy"
-                    ],
-                    "state": "active",
-                    "radius": 8.0
-                },
+                "additionalBrowserArgs": "--disable-features=msWebOOUI,msPdfOOUI,msSmartScreenProtection --disable-web-security --allow-running-insecure-content --enable-webgl --enable-webgl2 --enable-accelerated-2d-canvas --enable-gpu-rasterization --ignore-gpu-blacklist --disable-gpu-sandbox --enable-unsafe-webgpu --use-gl=desktop --enable-features=VaapiVideoDecoder",
                 "label": "main",
                 "url": "index.html",
                 "fileDropEnabled": true,
@@ -274,7 +259,6 @@
                 "maximizable": false,
                 "focus": true,
                 "contentProtected": false,
-                "cursorGrabbed": false,
                 "userAgent": "Zishu-Sensei/1.0.0 (Desktop Pet Application)"
             }
         ],

@@ -372,20 +372,28 @@ desktop_app/
   - 对话后端功能测试，API 连接验证
 
 **第6周（对话前端界面）**
-- **第1天 (6h)**:
-  - `src/components/Chat/InputBox/index.tsx` (4h) - 输入框组件
-  - `src/components/Chat/index.tsx` (2h) - 对话组件入口
+- **第1天 (6h)**: ✅ **已完成**
+  - ✅ `src/components/Chat/InputBox/index.tsx` (4h) - 输入框组件
+  - ✅ `src/components/Chat/InputBox/InputBox.tsx` (4h) - 输入框主组件
+  - ✅ `src/components/Chat/InputBox/InputBox.types.ts` - 类型定义文件
+  - ✅ `src/components/Chat/InputBox/utils.ts` - 工具函数
+  - ✅ `src/components/Chat/InputBox/hooks.ts` - 自定义 Hooks
+  - ✅ `src/components/Chat/InputBox/constants.ts` - 常量配置
+  - ✅ `src/components/Chat/InputBox/InputBox.module.css` (2h) - 输入框样式
+  - ✅ `src/components/Chat/InputBox/InputBox.example.tsx` - 使用示例
+  - ✅ `src/components/Chat/InputBox/InputBox.test.tsx` - 单元测试
+  - ✅ `src/components/Chat/index.tsx` (2h) - 对话组件入口
+  - ✅ `src/components/Chat/Chat.module.css` (2h) - 对话样式
 - **第2天 (6h)**:
   - `src/components/Chat/VoiceInput/index.tsx` (4h) - 语音输入组件
-  - `src/components/Chat/Chat.module.css` (2h) - 对话样式
+  - `src/components/Chat/VoiceInput/VoiceInput.module.css` (2h) - 语音输入样式
 - **第3天 (6h)**:
   - `src/utils/formatters.ts` (2h) - 消息格式化工具
   - `src/utils/validators.ts` (2h) - 输入验证工具
   - `src/components/Chat/MessageList/MessageList.module.css` (2h) - 消息列表样式
 - **第4天 (6h)**:
-  - `src/components/Chat/InputBox/InputBox.module.css` (2h) - 输入框样式
-  - `src/components/Chat/VoiceInput/VoiceInput.module.css` (2h) - 语音输入样式
   - `src/assets/sounds/effects/` (2h) - 音效资源整理
+  - 对话组件集成测试和优化 (4h)
 - **第5天 (4h)**:
   - 对话系统完整测试，前后端联调
 
@@ -396,7 +404,7 @@ desktop_app/
   - `src-tauri/src/commands/settings.rs` (4h) - 设置管理Rust命令
   - `src-tauri/src/state/settings.rs` (2h) - 设置状态管理
 - **第2天 (6h)**:
-  - `src-tauri/src/events/window.rs` (3h) - 窗口事件处理
+  - `src-tauri/src/events/window.rs` (3h) - c
   - `src-tauri/src/events/tray.rs` (3h) - 托盘事件处理
 - **第3天 (6h)**:
   - `src-tauri/src/utils/config.rs` (3h) - 配置管理工具

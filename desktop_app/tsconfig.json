@@ -74,7 +74,7 @@
     },
     "include": [
         "src"
-    ],
+, "tests/InputBox.test.tsx"    ],
     "exclude": [
         "node_modules",
         "dist",

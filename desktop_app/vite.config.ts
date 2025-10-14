@@ -1,19 +1,142 @@
 import react from '@vitejs/plugin-react-swc'
 import { resolve } from 'path'
-import { defineConfig } from 'vite'
+import { defineConfig } from 'vitest/config'
+import type { Plugin } from 'vite'
+
+// PixiJS BatchRenderer 修复插件
+function pixiJSFixPlugin(): Plugin {
+  return {
+    name: 'pixijs-fix',
+    transformIndexHtml: {
+      enforce: 'pre',
+      transform(html: string) {
+        // 在 HTML 中注入修复脚本
+        const fixScript = `
+          <script>
+            // PixiJS BatchRenderer 修复 - 在所有模块加载前执行
+            (function() {
+              console.log('🔧 PixiJS 修复插件启动');
+              
+              // 保存原始的模块加载函数
+              const originalImport = window.__vitePreload || window.import;
+              
+              // 修复函数
+              function fixPixiJS(pixi) {
+                if (pixi && pixi.BatchRenderer && pixi.BatchRenderer.prototype.checkMaxIfStatementsInShader) {
+                  const original = pixi.BatchRenderer.prototype.checkMaxIfStatementsInShader;
+                  if (!original._viteFixed) {
+                    pixi.BatchRenderer.prototype.checkMaxIfStatementsInShader = function(maxIfs) {
+                      const safeMaxIfs = Math.max(maxIfs || 32, 32);
+                      console.log('🔧 PixiJS Vite插件修复:', maxIfs, '->', safeMaxIfs);
+                      return original.call(this, safeMaxIfs);
+                    };
+                    pixi.BatchRenderer.prototype.checkMaxIfStatementsInShader._viteFixed = true;
+                    console.log('✅ PixiJS Vite插件修复完成');
+                    return true;
+                  }
+                }
+                return false;
+              }
+              
+              // 监听全局 PIXI 对象 - 快速且短时尝试，无超时噪声
+              let applied = false;
+              const tryApply = () => {
+                if (applied) return;
+                const pixi = (window.PIXI || window.__PIXI__ ||
+                              (window.pixiApp && window.pixiApp.PIXI) ||
+                              (document && document['PIXI']));
+                if (pixi && fixPixiJS(pixi)) {
+                  applied = true;
+                  console.log('✅ PixiJS Vite插件修复成功');
+                }
+              };
+              const checkInterval = setInterval(tryApply, 10);
+              setTimeout(() => { clearInterval(checkInterval); }, 3000);
+              
+              // 监听模块加载事件
+              const originalDefine = window.define;
+              const originalRequire = window.require;
+              
+              // 拦截可能的模块系统
+              if (typeof window !== 'undefined') {
+                // 监听 script 标签加载
+                const observer = new MutationObserver((mutations) => {
+                  mutations.forEach((mutation) => {
+                    mutation.addedNodes.forEach((node) => {
+                      if (node.nodeType === 1 && node.tagName === 'SCRIPT') {
+                        setTimeout(() => {
+                          const pixi = window.PIXI || window.__PIXI__;
+                          if (pixi) {
+                            fixPixiJS(pixi);
+                          }
+                        }, 100);
+                      }
+                    });
+                  });
+                });
+                observer.observe(document, { childList: true, subtree: true });
+                
+                setTimeout(() => observer.disconnect(), 3000);
+              }
+              
+              // 监听 window 对象属性变化
+              let pixiPropertyAdded = false;
+              Object.defineProperty(window, 'PIXI', {
+                get() {
+                  return window._PIXI_INTERNAL_;
+                },
+                set(value) {
+                  window._PIXI_INTERNAL_ = value;
+                  if (value && !pixiPropertyAdded) {
+                    pixiPropertyAdded = true;
+                    setTimeout(() => fixPixiJS(value), 0);
+                  }
+                },
+                configurable: true
+              });
+            })();
+          </script>
+        `;
+        
+        return html.replace('<head>', '<head>' + fixScript);
+      }
+    }
+  };
+}
 
 // https://vitejs.dev/config/
-export default defineConfig(async () => ({
+export default defineConfig(({ mode }) => ({
     plugins: [
+        pixiJSFixPlugin(), // PixiJS 修复插件 - 必须在 react 插件之前
         react({
-            // 启用 React Fast Refresh
-            fastRefresh: true,
-            // 启用 SWC 装饰器支持
-            //plugins: [
-            //  ['@swc/plugin-styled-components', {}],
-            //],
+            // 启用 SWC 装饰器支持（如需）
+            // plugins: [
+            //   ['@swc/plugin-styled-components', {}],
+            // ],
         }),
     ],
+    
+    // 开发模式下禁用 TypeScript 检查以提高 HMR 性能
+    ...(mode === 'development' && {
+        esbuild: {
+            // 在开发模式下跳过类型检查
+            target: 'es2020',
+            keepNames: true,
+            // 禁用 TypeScript 检查
+            tsconfigRaw: {
+                compilerOptions: {
+                    skipLibCheck: true,
+                    noUnusedLocals: false,
+                    noUnusedParameters: false,
+                    strict: false,
+                    noImplicitAny: false,
+                    // 完全跳过类型检查
+                    checkJs: false,
+                    allowJs: true,
+                }
+            }
+        }
+    }),
 
     // 路径解析配置
     resolve: {
@@ -35,7 +158,7 @@ export default defineConfig(async () => ({
 
     // 开发服务器配置
     server: {
-        port: 1420,
+        port: 1424,
         host: '0.0.0.0',
         strictPort: true,
         open: false, // Tauri 会自动打开窗口
@@ -45,20 +168,20 @@ export default defineConfig(async () => ({
             '/api': {
                 target: 'http://localhost:3000',
                 changeOrigin: true,
-                rewrite: (path) => path.replace(/^\/api/, ''),
+                rewrite: (path: string) => path.replace(/^\/api/, ''),
             },
         },
         // HMR 配置
         hmr: {
-            port: 1421,
+            port: 1423,
         },
     },
 
     // 预览服务器配置
     preview: {
-        port: 1420,
+        port: 1424,
         host: '0.0.0.0',
-        strictPort: true,
+        strictPort: false,
     },
 
     // 构建配置
@@ -110,7 +233,7 @@ export default defineConfig(async () => ({
                 // 文件命名
                 chunkFileNames: 'assets/js/[name]-[hash].js',
                 entryFileNames: 'assets/js/[name]-[hash].js',
-                assetFileNames: (assetInfo) => {
+                assetFileNames: (assetInfo: { name?: string }) => {
                     const info = assetInfo.name?.split('.') ?? []
                     let extType = info[info.length - 1]
 
@@ -208,17 +331,19 @@ export default defineConfig(async () => ({
         __BUILD_TIME__: JSON.stringify(new Date().toISOString()),
     },
 
-    // esbuild 配置
-    esbuild: {
-        // 移除 console 和 debugger（生产环境）
-        drop: process.env.NODE_ENV === 'production' ? ['console', 'debugger'] : [],
-        // 保留函数名
-        keepNames: true,
-    },
+    // esbuild 配置 - 生产环境专用
+    ...(mode === 'production' && {
+        esbuild: {
+            // 移除 console 和 debugger（生产环境）
+            drop: ['console', 'debugger'],
+            // 保留函数名
+            keepNames: true,
+        }
+    }),
 
     // 工作线程配置
     worker: {
         format: 'es',
-        plugins: [react()],
+        plugins: () => [react()],
     },
 }))

@@ -1,0 +1,94 @@
+{
+    "extends": "./tsconfig.json",
+    "compilerOptions": {
+        "target": "ES2020",
+        "useDefineForClassFields": true,
+        "lib": [
+            "ES2020",
+            "DOM",
+            "DOM.Iterable"
+        ],
+        "module": "ESNext",
+        "skipLibCheck": true,
+        /* Bundler mode */
+        "moduleResolution": "bundler",
+        "allowImportingTsExtensions": true,
+        "resolveJsonModule": true,
+        "isolatedModules": true,
+        "noEmit": true,
+        "jsx": "react-jsx",
+        /* Relaxed linting for development */
+        "strict": false,
+        "noUnusedLocals": false,
+        "noUnusedParameters": false,
+        "noFallthroughCasesInSwitch": false,
+        "noImplicitAny": false,
+        "noImplicitReturns": false,
+        "noImplicitThis": false,
+        "strictNullChecks": false,
+        "strictFunctionTypes": false,
+        "strictBindCallApply": false,
+        "strictPropertyInitialization": false,
+        "noImplicitOverride": false,
+        /* Path mapping */
+        "baseUrl": ".",
+        "paths": {
+            "@/*": [
+                "src/*"
+            ],
+            "@/components/*": [
+                "src/components/*"
+            ],
+            "@/pages/*": [
+                "src/pages/*"
+            ],
+            "@/hooks/*": [
+                "src/hooks/*"
+            ],
+            "@/utils/*": [
+                "src/utils/*"
+            ],
+            "@/stores/*": [
+                "src/stores/*"
+            ],
+            "@/types/*": [
+                "src/types/*"
+            ],
+            "@/styles/*": [
+                "src/styles/*"
+            ],
+            "@/assets/*": [
+                "src/assets/*"
+            ],
+            "@/api/*": [
+                "src/api/*"
+            ],
+            "@/constants/*": [
+                "src/constants/*"
+            ],
+            "@/contexts/*": [
+                "src/contexts/*"
+            ]
+        },
+        /* Additional options */
+        "allowSyntheticDefaultImports": true,
+        "esModuleInterop": true,
+        "forceConsistentCasingInFileNames": true,
+        "declaration": false,
+        "declarationMap": false,
+        "sourceMap": true,
+        "removeComments": false,
+        "experimentalDecorators": true,
+        "emitDecoratorMetadata": true,
+        /* Suppress errors for development */
+        "noErrorTruncation": true
+    },
+    "include": [
+        "src"
+    ],
+    "exclude": [
+        "node_modules",
+        "dist",
+        "src-tauri"
+    ]
+}

@@ -1,13 +1,31 @@
-import type { ThemeMode } from '@/types/app'
 import React, { createContext, useCallback, useEffect, useState } from 'react'
+import {
+    ThemeName,
+    ThemeConfig,
+    getThemeManager,
+    THEMES,
+} from '@/styles/themes'
 
 /**
  * 主题上下文类型
  */
 interface ThemeContextType {
-    theme: ThemeMode
+    /** 当前主题名称 */
+    theme: ThemeName
+    /** 当前主题配置 */
+    themeConfig: ThemeConfig
+    /** 系统主题偏好 */
     systemTheme: 'light' | 'dark'
-    setTheme: (theme: ThemeMode) => void
+    /** 设置主题 */
+    setTheme: (theme: ThemeName) => void
+    /** 切换深色/浅色主题 */
+    toggleTheme: () => void
+    /** 是否为深色主题 */
+    isDark: boolean
+    /** 所有可用主题 */
+    allThemes: ThemeConfig[]
+    /** 重置为系统主题 */
+    resetToSystemTheme: () => void
 }
 
 /**
@@ -20,17 +38,25 @@ export const ThemeContext = createContext<ThemeContextType | null>(null)
  */
 interface ThemeProviderProps {
     children: React.ReactNode
-    defaultTheme?: ThemeMode
+    defaultTheme?: ThemeName
 }
 
 /**
  * 主题提供者组件
+ * 集成新的主题管理系统，支持 light、dark、anime、cyberpunk 等主题
  */
 export const ThemeProvider: React.FC<ThemeProviderProps> = ({
     children,
-    defaultTheme = 'system',
+    defaultTheme,
 }) => {
-    const [theme, setThemeState] = useState<ThemeMode>(defaultTheme)
+    const manager = getThemeManager()
+    
+    const [theme, setThemeState] = useState<ThemeName>(() => 
+        defaultTheme || manager.getTheme()
+    )
+    const [themeConfig, setThemeConfig] = useState<ThemeConfig>(() =>
+        THEMES[theme]
+    )
     const [systemTheme, setSystemTheme] = useState<'light' | 'dark'>('light')
 
     // 检测系统主题
@@ -42,38 +68,38 @@ export const ThemeProvider: React.FC<ThemeProviderProps> = ({
     }, [])
 
     // 设置主题
-    const setTheme = useCallback((newTheme: ThemeMode) => {
-        setThemeState(newTheme)
+    const setTheme = useCallback((newTheme: ThemeName) => {
+        manager.setTheme(newTheme)
+    }, [manager])
 
-        // 保存到 localStorage
-        if (typeof window !== 'undefined') {
-            localStorage.setItem('theme', newTheme)
-        }
-    }, [])
+    // 切换主题
+    const toggleTheme = useCallback(() => {
+        manager.toggleTheme()
+    }, [manager])
 
-    // 应用主题到 DOM
-    const applyTheme = useCallback((effectiveTheme: 'light' | 'dark') => {
-        if (typeof document !== 'undefined') {
-            const root = document.documentElement
-            root.classList.remove('light', 'dark')
-            root.classList.add(effectiveTheme)
-            root.setAttribute('data-theme', effectiveTheme)
-        }
-    }, [])
+    // 重置为系统主题
+    const resetToSystemTheme = useCallback(() => {
+        manager.resetToSystemTheme()
+    }, [manager])
 
     // 初始化主题
     useEffect(() => {
-        // 从 localStorage 读取保存的主题
-        if (typeof window !== 'undefined') {
-            const savedTheme = localStorage.getItem('theme') as ThemeMode
-            if (savedTheme && ['light', 'dark', 'system'].includes(savedTheme)) {
-                setThemeState(savedTheme)
-            }
+        // 如果提供了默认主题，应用它
+        if (defaultTheme) {
+            manager.setTheme(defaultTheme)
         }
 
         // 检测系统主题
         detectSystemTheme()
-    }, [detectSystemTheme])
+
+        // 订阅主题变化
+        const unsubscribe = manager.subscribe((newTheme) => {
+            setThemeState(newTheme)
+            setThemeConfig(THEMES[newTheme])
+        })
+
+        return () => unsubscribe()
+    }, [manager, defaultTheme, detectSystemTheme])
 
     // 监听系统主题变化
     useEffect(() => {
@@ -89,16 +115,15 @@ export const ThemeProvider: React.FC<ThemeProviderProps> = ({
         return () => mediaQuery.removeEventListener('change', handleChange)
     }, [])
 
-    // 应用有效主题
-    useEffect(() => {
-        const effectiveTheme = theme === 'system' ? systemTheme : theme
-        applyTheme(effectiveTheme)
-    }, [theme, systemTheme, applyTheme])
-
     const contextValue: ThemeContextType = {
         theme,
+        themeConfig,
         systemTheme,
         setTheme,
+        toggleTheme,
+        isDark: themeConfig.isDark,
+        allThemes: Object.values(THEMES),
+        resetToSystemTheme,
     }
 
     return (
@@ -106,4 +131,31 @@ export const ThemeProvider: React.FC<ThemeProviderProps> = ({
             {children}
         </ThemeContext.Provider>
     )
+}
+
+/**
+ * useTheme Hook - 使用主题上下文
+ * 
+ * @example
+ * ```tsx
+ * function MyComponent() {
+ *   const { theme, setTheme, isDark } = useThemeContext();
+ *   
+ *   return (
+ *     <div>
+ *       <p>Current theme: {theme}</p>
+ *       <button onClick={() => setTheme('anime')}>
+ *         Switch to Anime Theme
+ *       </button>
+ *     </div>
+ *   );
+ * }
+ * ```
+ */
+export const useThemeContext = (): ThemeContextType => {
+    const context = React.useContext(ThemeContext)
+    if (!context) {
+        throw new Error('useThemeContext must be used within a ThemeProvider')
+    }
+    return context
 }

@@ -1,0 +1,388 @@
+/**
+ * 主题选择器样式
+ */
+
+/* ==================== 网格布局 ==================== */
+
+.grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(200px, 1fr));
+    gap: 1rem;
+    padding: 0.5rem;
+}
+
+.gridItem {
+    display: flex;
+    flex-direction: column;
+    gap: 0.75rem;
+    padding: 1rem;
+    background: hsl(var(--color-card));
+    border: 2px solid hsl(var(--color-border));
+    border-radius: 0.75rem;
+    cursor: pointer;
+    transition: all 0.2s ease;
+    position: relative;
+    overflow: hidden;
+}
+
+.gridItem:hover {
+    transform: translateY(-2px);
+    box-shadow: var(--shadow-md);
+    border-color: hsl(var(--color-primary) / 0.5);
+}
+
+.gridItem.active {
+    border-color: hsl(var(--color-primary));
+    background: hsl(var(--color-primary) / 0.05);
+    box-shadow: var(--shadow-lg);
+}
+
+.gridItem:focus-visible {
+    outline: none;
+    box-shadow: var(--shadow-focus);
+}
+
+.preview {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    height: 80px;
+    border-radius: 0.5rem;
+    background: linear-gradient(
+        135deg,
+        var(--theme-preview-color, hsl(var(--color-muted))),
+        color-mix(in srgb, var(--theme-preview-color, hsl(var(--color-muted))) 70%, transparent)
+    );
+    position: relative;
+}
+
+.icon {
+    font-size: 2rem;
+    line-height: 1;
+}
+
+.checkmark {
+    position: absolute;
+    top: 0.5rem;
+    right: 0.5rem;
+    width: 1.5rem;
+    height: 1.5rem;
+    background: hsl(var(--color-primary));
+    color: hsl(var(--color-primary-foreground));
+    border-radius: 50%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 0.875rem;
+    font-weight: bold;
+}
+
+.info {
+    display: flex;
+    flex-direction: column;
+    gap: 0.25rem;
+    text-align: center;
+}
+
+.label {
+    font-weight: 600;
+    font-size: 1rem;
+    color: hsl(var(--color-foreground));
+}
+
+.description {
+    font-size: 0.75rem;
+    color: hsl(var(--color-muted-foreground));
+    line-height: 1.4;
+}
+
+/* ==================== 列表布局 ==================== */
+
+.list {
+    display: flex;
+    flex-direction: column;
+    gap: 0.5rem;
+}
+
+.listItem {
+    display: flex;
+    align-items: center;
+    gap: 1rem;
+    padding: 1rem;
+    background: hsl(var(--color-card));
+    border: 1px solid hsl(var(--color-border));
+    border-radius: 0.5rem;
+    cursor: pointer;
+    transition: all 0.2s ease;
+    text-align: left;
+}
+
+.listItem:hover {
+    background: hsl(var(--color-muted) / 0.5);
+    border-color: hsl(var(--color-primary) / 0.5);
+}
+
+.listItem.active {
+    background: hsl(var(--color-primary) / 0.1);
+    border-color: hsl(var(--color-primary));
+}
+
+.listItem:focus-visible {
+    outline: none;
+    box-shadow: var(--shadow-focus);
+}
+
+.listItem .icon {
+    font-size: 1.5rem;
+    flex-shrink: 0;
+}
+
+.content {
+    display: flex;
+    flex-direction: column;
+    gap: 0.25rem;
+    flex: 1;
+}
+
+.listItem .label {
+    text-align: left;
+}
+
+.listItem .description {
+    text-align: left;
+}
+
+.listItem .checkmark {
+    position: static;
+    margin-left: auto;
+    flex-shrink: 0;
+}
+
+/* ==================== 下拉菜单 ==================== */
+
+.dropdown {
+    position: relative;
+}
+
+.select {
+    width: 100%;
+    padding: 0.75rem 1rem;
+    background: hsl(var(--color-input));
+    border: 1px solid hsl(var(--color-border));
+    border-radius: 0.5rem;
+    font-size: 1rem;
+    color: hsl(var(--color-foreground));
+    cursor: pointer;
+    transition: all 0.2s ease;
+}
+
+.select:hover {
+    border-color: hsl(var(--color-primary) / 0.5);
+}
+
+.select:focus {
+    outline: none;
+    border-color: hsl(var(--color-primary));
+    box-shadow: var(--shadow-focus);
+}
+
+/* ==================== 切换按钮 ==================== */
+
+.toggle {
+    display: inline-flex;
+    align-items: center;
+    gap: 0.5rem;
+    padding: 0.5rem 0.75rem;
+    background: hsl(var(--color-card));
+    border: 1px solid hsl(var(--color-border));
+    border-radius: 0.5rem;
+    cursor: pointer;
+    transition: all 0.2s ease;
+    font-size: 0.875rem;
+    color: hsl(var(--color-foreground));
+}
+
+.toggle:hover {
+    background: hsl(var(--color-muted));
+    border-color: hsl(var(--color-primary) / 0.5);
+    transform: scale(1.05);
+}
+
+.toggle:active {
+    transform: scale(0.95);
+}
+
+.toggle:focus-visible {
+    outline: none;
+    box-shadow: var(--shadow-focus);
+}
+
+.toggleIcon {
+    font-size: 1.25rem;
+    line-height: 1;
+}
+
+.toggleLabel {
+    font-weight: 500;
+}
+
+/* ==================== 预览卡片 ==================== */
+
+.previewCard {
+    display: flex;
+    flex-direction: column;
+    padding: 1.5rem;
+    background: hsl(var(--color-card));
+    border: 2px solid hsl(var(--color-border));
+    border-radius: 1rem;
+    cursor: pointer;
+    transition: all 0.3s ease;
+    position: relative;
+    overflow: hidden;
+}
+
+.previewCard::before {
+    content: '';
+    position: absolute;
+    top: 0;
+    left: 0;
+    right: 0;
+    height: 4px;
+    background: var(--theme-preview-color, hsl(var(--color-primary)));
+    opacity: 0;
+    transition: opacity 0.3s ease;
+}
+
+.previewCard:hover {
+    transform: translateY(-4px);
+    box-shadow: var(--shadow-xl);
+    border-color: hsl(var(--color-primary) / 0.5);
+}
+
+.previewCard:hover::before {
+    opacity: 1;
+}
+
+.previewCard.active {
+    border-color: hsl(var(--color-primary));
+    box-shadow: var(--shadow-lg);
+}
+
+.previewCard.active::before {
+    opacity: 1;
+}
+
+.previewHeader {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    margin-bottom: 1rem;
+}
+
+.previewHeader .icon {
+    font-size: 2.5rem;
+}
+
+.badge {
+    padding: 0.25rem 0.75rem;
+    background: hsl(var(--color-primary));
+    color: hsl(var(--color-primary-foreground));
+    border-radius: 1rem;
+    font-size: 0.75rem;
+    font-weight: 600;
+}
+
+.previewBody {
+    flex: 1;
+    margin-bottom: 1rem;
+}
+
+.previewTitle {
+    font-size: 1.25rem;
+    font-weight: 700;
+    margin: 0 0 0.5rem 0;
+    color: hsl(var(--color-foreground));
+}
+
+.previewDescription {
+    font-size: 0.875rem;
+    line-height: 1.5;
+    margin: 0;
+    color: hsl(var(--color-muted-foreground));
+}
+
+.previewFooter {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    padding-top: 1rem;
+    border-top: 1px solid hsl(var(--color-border));
+}
+
+.previewType {
+    font-size: 0.75rem;
+    font-weight: 600;
+    text-transform: uppercase;
+    letter-spacing: 0.05em;
+    color: hsl(var(--color-muted-foreground));
+}
+
+/* ==================== 响应式 ==================== */
+
+@media (max-width: 640px) {
+    .grid {
+        grid-template-columns: 1fr;
+    }
+
+    .gridItem {
+        padding: 0.875rem;
+    }
+
+    .preview {
+        height: 60px;
+    }
+
+    .icon {
+        font-size: 1.5rem;
+    }
+
+    .previewHeader .icon {
+        font-size: 2rem;
+    }
+}
+
+/* ==================== 主题特定样式 ==================== */
+
+/* 动漫主题增强 */
+:root.anime .gridItem,
+[data-theme='anime'] .gridItem,
+:root.anime .listItem,
+[data-theme='anime'] .listItem {
+    transition: all 0.2s cubic-bezier(0.34, 1.56, 0.64, 1);
+}
+
+:root.anime .gridItem:hover,
+[data-theme='anime'] .gridItem:hover {
+    transform: translateY(-4px) scale(1.02);
+}
+
+/* 赛博朋克主题增强 */
+:root.cyberpunk .gridItem.active,
+[data-theme='cyberpunk'] .gridItem.active,
+:root.cyberpunk .listItem.active,
+[data-theme='cyberpunk'] .listItem.active {
+    box-shadow: 
+        0 0 20px hsl(var(--color-primary) / 0.5),
+        var(--shadow-lg);
+}
+
+:root.cyberpunk .checkmark,
+[data-theme='cyberpunk'] .checkmark {
+    box-shadow: 0 0 10px hsl(var(--color-primary));
+}
+
+:root.cyberpunk .toggle:hover,
+[data-theme='cyberpunk'] .toggle:hover {
+    box-shadow: 0 0 15px hsl(var(--color-primary) / 0.3);
+}
+

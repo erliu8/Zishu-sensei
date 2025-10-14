@@ -1,0 +1,80 @@
+/* Live2D演示页面样式 */
+.live2d-demo {
+  min-height: 100vh;
+  display: flex;
+  flex-direction: column;
+  background: linear-gradient(180deg, #f8f9fa 0%, #e9ecef 100%);
+}
+
+.live2d-demo__header {
+  text-align: center;
+  padding: 3rem 2rem 2rem;
+  background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+  color: white;
+  box-shadow: 0 4px 20px rgba(0, 0, 0, 0.1);
+}
+
+.live2d-demo__header h1 {
+  margin: 0 0 1rem 0;
+  font-size: 3rem;
+  font-weight: 700;
+  text-shadow: 2px 2px 4px rgba(0, 0, 0, 0.3);
+}
+
+.live2d-demo__header p {
+  margin: 0;
+  font-size: 1.2rem;
+  opacity: 0.9;
+  font-weight: 300;
+}
+
+.live2d-demo__main {
+  flex: 1;
+  padding: 2rem 0;
+}
+
+.live2d-demo__footer {
+  text-align: center;
+  padding: 2rem;
+  background: #2c3e50;
+  color: white;
+  margin-top: auto;
+}
+
+.live2d-demo__footer p {
+  margin: 0;
+  opacity: 0.8;
+}
+
+/* 响应式设计 */
+@media (max-width: 768px) {
+  .live2d-demo__header {
+    padding: 2rem 1rem 1.5rem;
+  }
+
+  .live2d-demo__header h1 {
+    font-size: 2.5rem;
+  }
+
+  .live2d-demo__header p {
+    font-size: 1.1rem;
+  }
+
+  .live2d-demo__main {
+    padding: 1rem 0;
+  }
+
+  .live2d-demo__footer {
+    padding: 1.5rem;
+  }
+}
+
+@media (max-width: 480px) {
+  .live2d-demo__header h1 {
+    font-size: 2rem;
+  }
+
+  .live2d-demo__header p {
+    font-size: 1rem;
+  }
+}

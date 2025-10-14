@@ -1,0 +1,166 @@
+/**
+ * 动漫主题 CSS 变量
+ * 特点：高饱和度、鲜艳明亮、温暖色调、充满活力
+ */
+
+:root.anime,
+[data-theme='anime'] {
+    /* ==================== 颜色系统 ==================== */
+    
+    /* 主色调 - 鲜艳的蓝紫色 */
+    --color-primary: 260 100% 65%;
+    --color-primary-rgb: 135, 81, 251;
+    --color-primary-foreground: 0 0% 100%;
+    
+    /* 次要色 - 柔和的粉色 */
+    --color-secondary: 330 85% 92%;
+    --color-secondary-rgb: 252, 231, 243;
+    --color-secondary-foreground: 330 81% 25%;
+    
+    /* 背景色 - 纯净的白色带微粉 */
+    --color-background: 330 100% 99%;
+    --color-background-rgb: 255, 252, 254;
+    --color-foreground: 330 25% 15%;
+    --color-foreground-rgb: 48, 36, 43;
+    
+    /* 卡片 - 轻微粉紫渐变感 */
+    --color-card: 300 100% 98%;
+    --color-card-rgb: 254, 250, 254;
+    --color-card-foreground: 330 25% 15%;
+    
+    /* 弹出层 */
+    --color-popover: 0 0% 100%;
+    --color-popover-rgb: 255, 255, 255;
+    --color-popover-foreground: 330 25% 15%;
+    
+    /* 柔和色 - 薰衣草色 */
+    --color-muted: 270 60% 95%;
+    --color-muted-rgb: 245, 243, 250;
+    --color-muted-foreground: 270 15% 45%;
+    
+    /* 强调色 - 明亮的天蓝色 */
+    --color-accent: 200 100% 92%;
+    --color-accent-rgb: 217, 245, 255;
+    --color-accent-foreground: 200 100% 30%;
+    
+    /* 成功色 - 春天的绿色 */
+    --color-success: 140 80% 50%;
+    --color-success-rgb: 26, 230, 102;
+    --color-success-foreground: 140 80% 95%;
+    
+    /* 警告色 - 明亮的橙黄色 */
+    --color-warning: 45 100% 60%;
+    --color-warning-rgb: 255, 214, 51;
+    --color-warning-foreground: 45 100% 20%;
+    
+    /* 错误/危险色 - 鲜艳的粉红 */
+    --color-destructive: 340 85% 60%;
+    --color-destructive-rgb: 243, 92, 139;
+    --color-destructive-foreground: 0 0% 100%;
+    
+    /* 信息色 - 鲜艳的蓝色 */
+    --color-info: 210 100% 65%;
+    --color-info-rgb: 77, 171, 255;
+    --color-info-foreground: 210 100% 95%;
+    
+    /* 边框 - 柔和的紫粉色 */
+    --color-border: 300 40% 88%;
+    --color-border-rgb: 235, 220, 238;
+    
+    /* 输入框 */
+    --color-input: 270 60% 95%;
+    --color-input-rgb: 245, 243, 250;
+    
+    /* 聚焦环 - 鲜艳的紫色 */
+    --color-ring: 260 100% 65%;
+    --color-ring-rgb: 135, 81, 251;
+    
+    /* ==================== 语义化颜色 ==================== */
+    
+    /* 文本颜色 */
+    --text-primary: hsl(330 25% 15%);
+    --text-secondary: hsl(270 15% 45%);
+    --text-tertiary: hsl(270 10% 65%);
+    --text-disabled: hsl(270 10% 75%);
+    
+    /* 链接颜色 - 活力的蓝紫色 */
+    --link-color: hsl(260 100% 60%);
+    --link-hover: hsl(260 100% 50%);
+    --link-visited: hsl(280 80% 60%);
+    
+    /* ==================== 阴影 ==================== */
+    
+    /* 柔和且带色彩的阴影 */
+    --shadow-xs: 0 1px 2px 0 rgba(135, 81, 251, 0.1);
+    --shadow-sm: 0 2px 4px 0 rgba(135, 81, 251, 0.12), 0 1px 2px -1px rgba(135, 81, 251, 0.1);
+    --shadow-md: 0 6px 12px -2px rgba(135, 81, 251, 0.15), 0 2px 4px -2px rgba(135, 81, 251, 0.12);
+    --shadow-lg: 0 12px 24px -4px rgba(135, 81, 251, 0.18), 0 4px 8px -4px rgba(135, 81, 251, 0.15);
+    --shadow-xl: 0 24px 48px -8px rgba(135, 81, 251, 0.22), 0 8px 16px -6px rgba(135, 81, 251, 0.18);
+    --shadow-2xl: 0 32px 64px -12px rgba(135, 81, 251, 0.28);
+    
+    /* 内阴影 */
+    --shadow-inner: inset 0 2px 4px 0 rgba(135, 81, 251, 0.08);
+    
+    /* 聚焦阴影 - 发光效果 */
+    --shadow-focus: 0 0 0 4px rgba(135, 81, 251, 0.4),
+                    0 0 12px rgba(135, 81, 251, 0.3);
+    
+    /* ==================== 透明度 ==================== */
+    
+    --opacity-disabled: 0.45;
+    --opacity-hover: 0.85;
+    --opacity-selected: 0.15;
+    
+    /* ==================== 背景效果 ==================== */
+    
+    --backdrop-blur: blur(12px);
+    --backdrop-blur-sm: blur(6px);
+    --backdrop-blur-lg: blur(20px);
+}
+
+/* ==================== 动漫主题特殊效果 ==================== */
+
+:root.anime,
+[data-theme='anime'] {
+    /* 角色发光效果增强 */
+    --character-glow-sm: 0 0 12px;
+    --character-glow-md: 0 0 20px;
+    --character-glow-lg: 0 0 32px;
+    --character-glow-xl: 0 0 48px;
+    
+    /* 更活泼的悬停效果 */
+    --character-hover-scale: 1.05;
+    --character-hover-brightness: 1.1;
+    --character-hover-duration: 200ms;
+    
+    /* 更有弹性的激活效果 */
+    --character-active-scale: 0.95;
+    --character-active-brightness: 1.15;
+    --character-active-duration: 150ms;
+    
+    /* 情绪颜色增强 - 更鲜艳 */
+    --emotion-happy-color: 255 230 120;
+    --emotion-happy-glow: rgba(255, 230, 120, 0.7);
+    
+    --emotion-sad-color: 100 180 255;
+    --emotion-sad-glow: rgba(100, 180, 255, 0.5);
+    
+    --emotion-angry-color: 255 100 130;
+    --emotion-angry-glow: rgba(255, 100, 130, 0.7);
+    
+    --emotion-surprised-color: 255 180 80;
+    --emotion-surprised-glow: rgba(255, 180, 80, 0.6);
+    
+    --emotion-excited-color: 255 120 200;
+    --emotion-excited-glow: rgba(255, 120, 200, 0.7);
+    
+    --emotion-shy-color: 255 180 220;
+    --emotion-shy-glow: rgba(255, 180, 220, 0.6);
+    
+    /* 滤镜效果 - 更高饱和度 */
+    --filter-saturate-normal: 1.15;
+    --filter-saturate-high: 1.4;
+    --filter-brightness-normal: 1.05;
+    --filter-brightness-high: 1.15;
+}
+

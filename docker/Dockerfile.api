@@ -3,26 +3,31 @@ FROM python:3.11-slim
 # 設置工作目錄
 WORKDIR /app
 
+# 配置 APT 使用阿里云镜像源
+RUN sed -i 's/deb.debian.org/mirrors.aliyun.com/g' /etc/apt/sources.list.d/debian.sources && \
+    sed -i 's/security.debian.org/mirrors.aliyun.com/g' /etc/apt/sources.list.d/debian.sources
+
 # 安裝系統依賴
 RUN apt-get update && apt-get install -y \
     build-essential \
     curl \
-    software-properties-common \
     git \
     pkg-config \
+    wget \
+    gnupg2 \
     libhdf5-dev \
     libssl-dev \
     && rm -rf /var/lib/apt/lists/*
 
-# 安裝 CUDA 相關工具（如果需要）
+# 设置环境参数
 ENV DEBIAN_FRONTEND=noninteractive
-RUN apt-get update && apt-get install -y \
-    wget \
-    gnupg2 \
-    && rm -rf /var/lib/apt/lists/*
 
 # 複製依賴文件
 COPY requirements.txt .
+
+# 配置 pip 使用清华大学镜像源
+RUN pip config set global.index-url https://pypi.tuna.tsinghua.edu.cn/simple
+RUN pip config set global.trusted-host pypi.tuna.tsinghua.edu.cn
 
 # 安裝 Python 依賴
 RUN pip install --no-cache-dir --upgrade pip setuptools wheel

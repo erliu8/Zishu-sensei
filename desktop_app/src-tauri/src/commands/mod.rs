@@ -41,7 +41,10 @@ use serde::{Deserialize, Serialize};
 use tauri::{AppHandle, State, Window};
 use std::collections::HashMap;
 
-use crate::{AppState, ZishuError, ZishuResult};
+use crate::state::AppState;
+
+/// Simplified result type for command handlers
+pub type ZishuResult<T> = Result<T, String>;
 
 // ================================
 // 子模块声明
@@ -133,8 +136,8 @@ impl<T> CommandResponse<T> {
         }
     }
 
-    /// 从 ZishuError 创建错误响应
-    pub fn from_error(err: ZishuError) -> Self {
+    /// 从错误创建错误响应
+    pub fn from_error(err: impl ToString) -> Self {
         Self::error(err.to_string())
     }
 }
@@ -334,7 +337,7 @@ macro_rules! create_sync_command {
 // ================================
 
 /// 验证命令参数
-pub fn validate_params<T>(params: &T) -> ZishuResult<()>
+pub fn validate_params<T>(_params: &T) -> ZishuResult<()>
 where
     T: serde::Serialize,
 {
@@ -353,7 +356,7 @@ pub fn log_command_execution(command_name: &str, params: Option<&str>) {
 }
 
 /// 处理命令错误
-pub fn handle_command_error(command_name: &str, error: &ZishuError) -> String {
+pub fn handle_command_error(command_name: &str, error: &str) -> String {
     let error_msg = format!("命令 {} 执行失败: {}", command_name, error);
     tracing::error!("{}", error_msg);
     error_msg

@@ -7,6 +7,9 @@ import { useTauri } from './useTauri'
  */
 interface UseWindowManagerReturn {
     windowState: WindowState
+    toggleWindowMode: () => Promise<void>
+    minimizeWindow: () => Promise<void>
+    closeWindow: () => Promise<void>
     setWindowMode: (mode: WindowState['mode']) => Promise<void>
     setWindowPosition: (x: number, y: number) => Promise<void>
     setWindowSize: (width: number, height: number) => Promise<void>
@@ -69,6 +72,67 @@ export const useWindowManager = (): UseWindowManagerReturn => {
             console.error('Failed to set window mode:', error)
         }
     }, [isAvailable, invoke])
+
+    // 切换窗口模式
+    const toggleWindowMode = useCallback(async () => {
+        if (!isAvailable) return
+
+        try {
+            const currentMode = windowState.mode
+            let newMode: WindowState['mode']
+            
+            switch (currentMode) {
+                case 'pet':
+                    newMode = 'chat'
+                    break
+                case 'chat':
+                    newMode = 'settings'
+                    break
+                case 'settings':
+                    newMode = 'pet'
+                    break
+                default:
+                    newMode = 'pet'
+            }
+            
+            await setWindowMode(newMode)
+        } catch (error) {
+            console.error('Failed to toggle window mode:', error)
+        }
+    }, [isAvailable, windowState.mode, setWindowMode])
+
+    // 最小化
+    const minimize = useCallback(async () => {
+        if (!isAvailable) return
+
+        try {
+            await invoke('minimize_window')
+            setWindowState(prev => ({ ...prev, mode: 'minimized' }))
+        } catch (error) {
+            console.error('Failed to minimize window:', error)
+        }
+    }, [isAvailable, invoke])
+
+    // 关闭窗口
+    const close = useCallback(async () => {
+        if (!isAvailable) return
+
+        try {
+            await invoke('close_window')
+        } catch (error) {
+            console.error('Failed to close window:', error)
+        }
+    }, [isAvailable, invoke])
+
+    // 最小化窗口（别名）
+    const minimizeWindow = useCallback(async () => {
+        await minimize()
+    }, [minimize])
+
+    // 关闭窗口（别名）
+    const closeWindow = useCallback(async () => {
+        await close()
+    }, [close])
 
     // 设置窗口位置
     const setWindowPosition = useCallback(async (x: number, y: number) => {
@@ -154,18 +218,6 @@ export const useWindowManager = (): UseWindowManagerReturn => {
         }
     }, [isAvailable, invoke])
 
-    // 最小化
-    const minimize = useCallback(async () => {
-        if (!isAvailable) return
-
-        try {
-            await invoke('minimize_window')
-            setWindowState(prev => ({ ...prev, mode: 'minimized' }))
-        } catch (error) {
-            console.error('Failed to minimize window:', error)
-        }
-    }, [isAvailable, invoke])
-
     // 最大化
     const maximize = useCallback(async () => {
         if (!isAvailable) return
@@ -244,17 +296,6 @@ export const useWindowManager = (): UseWindowManagerReturn => {
             await invoke('blur_window')
         } catch (error) {
             console.error('Failed to blur window:', error)
-        }
-    }, [isAvailable, invoke])
-
-    // 关闭窗口
-    const close = useCallback(async () => {
-        if (!isAvailable) return
-
-        try {
-            await invoke('close_window')
-        } catch (error) {
-            console.error('Failed to close window:', error)
         }
     }, [isAvailable, invoke])
 
@@ -349,6 +390,9 @@ export const useWindowManager = (): UseWindowManagerReturn => {
 
     return {
         windowState,
+        toggleWindowMode,
+        minimizeWindow,
+        closeWindow,
         setWindowMode,
         setWindowPosition,
         setWindowSize,

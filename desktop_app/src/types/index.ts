@@ -8,6 +8,7 @@ export * from './common'
 export * from './desktop'
 export * from './live2d'
 export * from './settings'
+export * from './sound'
 export * from './tauri'
 export * from './ui'
 

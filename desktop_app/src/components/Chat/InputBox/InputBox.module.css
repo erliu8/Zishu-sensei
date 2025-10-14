@@ -1,0 +1,1391 @@
+/**
+ * InputBox 组件样式
+ * 
+ * 完整的输入框样式定义，支持多种状态和交互
+ * 包含响应式、暗色主题、无障碍和动画效果
+ * 
+ * @module InputBox.module.css
+ */
+
+/* ==================== CSS 变量定义 ==================== */
+
+.inputBox {
+  /* 颜色变量 */
+  --color-bg-primary: #ffffff;
+  --color-bg-secondary: #f8f9fa;
+  --color-bg-tertiary: #f0f1f3;
+  --color-bg-hover: #e8e9eb;
+  --color-bg-active: #e0e1e3;
+  
+  --color-border: #e0e0e0;
+  --color-border-light: #f0f0f0;
+  --color-border-dark: #cccccc;
+  --color-border-focus: #2196f3;
+  
+  --color-text-primary: #333333;
+  --color-text-secondary: #666666;
+  --color-text-tertiary: #999999;
+  --color-text-placeholder: #999999;
+  --color-text-disabled: #cccccc;
+  
+  --color-primary: #2196f3;
+  --color-primary-light: #e3f2fd;
+  --color-primary-dark: #1976d2;
+  --color-primary-rgb: 33, 150, 243;
+  
+  --color-success: #4caf50;
+  --color-success-light: #e8f5e9;
+  --color-warning: #ff9800;
+  --color-warning-light: #fff3e0;
+  --color-error: #f44336;
+  --color-error-light: #ffebee;
+  
+  --color-shadow: rgba(0, 0, 0, 0.1);
+  --color-shadow-focus: rgba(33, 150, 243, 0.15);
+  
+  /* 尺寸变量 */
+  --input-border-width: 2px;
+  --input-border-radius: 16px;
+  --input-padding: 12px 16px;
+  --tool-button-size: 36px;
+  --send-button-size: 40px;
+  
+  /* 间距变量 */
+  --spacing-xs: 4px;
+  --spacing-sm: 8px;
+  --spacing-md: 12px;
+  --spacing-lg: 16px;
+  
+  /* 过渡变量 */
+  --transition-fast: 0.15s ease;
+  --transition-normal: 0.2s ease;
+  --transition-slow: 0.3s ease;
+  
+  /* Z-index 层级 */
+  --z-dropdown: 100;
+  --z-modal: 200;
+  --z-tooltip: 300;
+  
+  /* 阴影变量 */
+  --shadow-sm: 0 2px 4px rgba(0, 0, 0, 0.05);
+  --shadow-md: 0 4px 8px rgba(0, 0, 0, 0.1);
+  --shadow-lg: 0 8px 16px rgba(0, 0, 0, 0.15);
+  --shadow-xl: 0 12px 24px rgba(0, 0, 0, 0.2);
+}
+
+/* ==================== 容器 ==================== */
+
+.inputBox {
+  position: relative;
+  display: flex;
+  flex-direction: column;
+  gap: var(--spacing-sm);
+  width: 100%;
+  font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', 'Roboto', 'Oxygen',
+    'Ubuntu', 'Cantarell', 'Fira Sans', 'Droid Sans', 'Helvetica Neue',
+    sans-serif;
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+}
+
+/* 拖拽状态 */
+.inputBox.dragging {
+  pointer-events: none;
+}
+
+.inputBox.dragOver .inputContainer {
+  border-color: var(--color-primary);
+  background: var(--color-primary-light);
+  box-shadow: 0 0 0 4px rgba(var(--color-primary-rgb), 0.1);
+}
+
+/* ==================== 建议 ==================== */
+
+.suggestions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+  padding: 12px 16px;
+  background: var(--color-bg-secondary, #f8f9fa);
+  border-radius: 12px;
+  margin-bottom: 8px;
+}
+
+.suggestionItem {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  padding: 8px 12px;
+  background: var(--color-bg-primary, #ffffff);
+  border: 1px solid var(--color-border, #e0e0e0);
+  border-radius: 8px;
+  font-size: 14px;
+  color: var(--color-text-secondary, #666666);
+  cursor: pointer;
+  transition: all 0.2s ease;
+}
+
+.suggestionItem:hover:not(:disabled) {
+  background: var(--color-primary-light, #e3f2fd);
+  border-color: var(--color-primary, #2196f3);
+  color: var(--color-primary, #2196f3);
+  transform: translateY(-1px);
+}
+
+.suggestionItem:active:not(:disabled) {
+  transform: translateY(0);
+}
+
+.suggestionItem:disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
+}
+
+.suggestionIcon {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 16px;
+}
+
+.suggestionText {
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  max-width: 200px;
+}
+
+/* ==================== 附件 ==================== */
+
+.attachments {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+  padding: 12px;
+  background: var(--color-bg-secondary, #f8f9fa);
+  border-radius: 12px;
+  margin-bottom: 8px;
+}
+
+.attachmentItem {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 8px 12px;
+  background: var(--color-bg-primary, #ffffff);
+  border: 1px solid var(--color-border, #e0e0e0);
+  border-radius: 8px;
+  max-width: 250px;
+  transition: all 0.2s ease;
+}
+
+.attachmentItem:hover {
+  border-color: var(--color-primary, #2196f3);
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+}
+
+.attachmentImage {
+  width: 40px;
+  height: 40px;
+  border-radius: 4px;
+  overflow: hidden;
+  flex-shrink: 0;
+}
+
+.attachmentImage img {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+}
+
+.attachmentIcon {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 40px;
+  height: 40px;
+  background: var(--color-bg-secondary, #f8f9fa);
+  border-radius: 4px;
+  color: var(--color-text-secondary, #666666);
+  flex-shrink: 0;
+}
+
+.attachmentInfo {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+  flex: 1;
+  min-width: 0;
+}
+
+.attachmentName {
+  font-size: 14px;
+  font-weight: 500;
+  color: var(--color-text-primary, #333333);
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.attachmentSize {
+  font-size: 12px;
+  color: var(--color-text-tertiary, #999999);
+}
+
+.attachmentRemove {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 20px;
+  height: 20px;
+  padding: 0;
+  background: transparent;
+  border: none;
+  border-radius: 4px;
+  color: var(--color-text-secondary, #666666);
+  cursor: pointer;
+  transition: all 0.2s ease;
+  flex-shrink: 0;
+}
+
+.attachmentRemove:hover {
+  background: var(--color-error-light, #ffebee);
+  color: var(--color-error, #f44336);
+}
+
+/* ==================== 错误提示 ==================== */
+
+.error {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 8px 12px;
+  background: var(--color-error-light, #ffebee);
+  border: 1px solid var(--color-error, #f44336);
+  border-radius: 8px;
+  color: var(--color-error, #f44336);
+  font-size: 13px;
+  margin-bottom: 8px;
+}
+
+/* ==================== 主输入区域 ==================== */
+
+.inputContainer {
+  display: flex;
+  align-items: flex-end;
+  gap: 8px;
+  padding: 12px 16px;
+  background: var(--color-bg-primary, #ffffff);
+  border: 2px solid var(--color-border, #e0e0e0);
+  border-radius: 16px;
+  transition: all 0.2s ease;
+}
+
+.inputContainer:focus-within {
+  border-color: var(--color-primary, #2196f3);
+  box-shadow: 0 0 0 3px rgba(33, 150, 243, 0.1);
+}
+
+/* ==================== 工具栏 ==================== */
+
+.toolbar {
+  display: flex;
+  align-items: center;
+  gap: 4px;
+  flex-shrink: 0;
+}
+
+.toolButton {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 36px;
+  height: 36px;
+  padding: 0;
+  background: transparent;
+  border: none;
+  border-radius: 8px;
+  color: var(--color-text-secondary, #666666);
+  cursor: pointer;
+  transition: all 0.2s ease;
+}
+
+.toolButton:hover:not(:disabled) {
+  background: var(--color-bg-secondary, #f8f9fa);
+  color: var(--color-primary, #2196f3);
+}
+
+.toolButton:active:not(:disabled) {
+  transform: scale(0.95);
+}
+
+.toolButton:disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
+}
+
+.toolButtonActive {
+  background: var(--color-primary-light, #e3f2fd);
+  color: var(--color-primary, #2196f3);
+}
+
+.fileInput {
+  display: none;
+}
+
+/* ==================== 表情选择器 ==================== */
+
+.emojiContainer {
+  position: relative;
+}
+
+.emojiPicker {
+  position: absolute;
+  bottom: 100%;
+  left: 0;
+  margin-bottom: 8px;
+  padding: 12px;
+  background: var(--color-bg-primary, #ffffff);
+  border: 1px solid var(--color-border, #e0e0e0);
+  border-radius: 12px;
+  box-shadow: 0 4px 16px rgba(0, 0, 0, 0.15);
+  z-index: 100;
+  min-width: 280px;
+}
+
+.emojiPickerHeader {
+  padding: 0 0 8px 0;
+  font-size: 13px;
+  font-weight: 600;
+  color: var(--color-text-secondary, #666666);
+  border-bottom: 1px solid var(--color-border-light, #f0f0f0);
+  margin-bottom: 8px;
+}
+
+.emojiGrid {
+  display: grid;
+  grid-template-columns: repeat(8, 1fr);
+  gap: 4px;
+  max-height: 200px;
+  overflow-y: auto;
+}
+
+.emojiButton {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 32px;
+  height: 32px;
+  padding: 0;
+  background: transparent;
+  border: none;
+  border-radius: 6px;
+  font-size: 20px;
+  cursor: pointer;
+  transition: all 0.2s ease;
+}
+
+.emojiButton:hover {
+  background: var(--color-bg-secondary, #f8f9fa);
+  transform: scale(1.2);
+}
+
+.emojiButton:active {
+  transform: scale(1.1);
+}
+
+/* ==================== 文本输入区 ==================== */
+
+.textareaContainer {
+  position: relative;
+  flex: 1;
+  min-width: 0;
+}
+
+.textarea {
+  width: 100%;
+  min-height: 24px;
+  padding: 8px 12px;
+  padding-right: 60px;
+  background: transparent;
+  border: none;
+  outline: none;
+  font-family: inherit;
+  font-size: 15px;
+  line-height: 1.5;
+  color: var(--color-text-primary, #333333);
+  resize: none;
+  overflow-y: auto;
+  scrollbar-width: thin;
+  scrollbar-color: var(--color-border, #e0e0e0) transparent;
+}
+
+.textarea::placeholder {
+  color: var(--color-text-placeholder, #999999);
+}
+
+.textarea::-webkit-scrollbar {
+  width: 6px;
+}
+
+.textarea::-webkit-scrollbar-track {
+  background: transparent;
+}
+
+.textarea::-webkit-scrollbar-thumb {
+  background: var(--color-border, #e0e0e0);
+  border-radius: 3px;
+}
+
+.textarea::-webkit-scrollbar-thumb:hover {
+  background: var(--color-border-dark, #cccccc);
+}
+
+.textarea:disabled {
+  opacity: 0.6;
+  cursor: not-allowed;
+}
+
+.textareaError {
+  color: var(--color-error, #f44336);
+}
+
+/* ==================== 字符计数 ==================== */
+
+.charCount {
+  position: absolute;
+  bottom: 8px;
+  right: 12px;
+  font-size: 11px;
+  color: var(--color-text-tertiary, #999999);
+  pointer-events: none;
+  user-select: none;
+}
+
+.charCountError {
+  color: var(--color-error, #f44336);
+  font-weight: 600;
+}
+
+/* ==================== 发送按钮 ==================== */
+
+.sendContainer {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 4px;
+  flex-shrink: 0;
+}
+
+.sendButton {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 40px;
+  height: 40px;
+  padding: 0;
+  background: var(--color-bg-secondary, #f8f9fa);
+  border: none;
+  border-radius: 10px;
+  color: var(--color-text-secondary, #666666);
+  cursor: pointer;
+  transition: all 0.2s ease;
+}
+
+.sendButton:hover:not(:disabled) {
+  background: var(--color-primary-light, #e3f2fd);
+  color: var(--color-primary, #2196f3);
+  transform: scale(1.05);
+}
+
+.sendButton:active:not(:disabled) {
+  transform: scale(0.95);
+}
+
+.sendButton:disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
+  transform: none;
+}
+
+.sendButtonActive {
+  background: var(--color-primary, #2196f3);
+  color: #ffffff;
+  box-shadow: 0 2px 8px rgba(33, 150, 243, 0.3);
+}
+
+.sendButtonActive:hover:not(:disabled) {
+  background: var(--color-primary-dark, #1976d2);
+  color: #ffffff;
+}
+
+/* ==================== 快捷键提示 ==================== */
+
+.shortcutHint {
+  display: flex;
+  align-items: center;
+  gap: 2px;
+  font-size: 10px;
+  color: var(--color-text-tertiary, #999999);
+  white-space: nowrap;
+}
+
+/* ==================== 加载动画 ==================== */
+
+.spinning {
+  animation: spin 1s linear infinite;
+}
+
+@keyframes spin {
+  from {
+    transform: rotate(0deg);
+  }
+  to {
+    transform: rotate(360deg);
+  }
+}
+
+/* ==================== 响应式 ==================== */
+
+@media (max-width: 768px) {
+  .inputContainer {
+    padding: 10px 12px;
+  }
+
+  .toolButton {
+    width: 32px;
+    height: 32px;
+  }
+
+  .sendButton {
+    width: 36px;
+    height: 36px;
+  }
+
+  .textarea {
+    font-size: 14px;
+  }
+
+  .suggestionText {
+    max-width: 150px;
+  }
+
+  .attachmentItem {
+    max-width: 200px;
+  }
+
+  .emojiPicker {
+    min-width: 240px;
+  }
+
+  .emojiGrid {
+    grid-template-columns: repeat(6, 1fr);
+  }
+
+  .shortcutHint {
+    display: none;
+  }
+}
+
+@media (max-width: 480px) {
+  .inputContainer {
+    padding: 8px 10px;
+    gap: 6px;
+  }
+
+  .toolbar {
+    gap: 2px;
+  }
+
+  .toolButton {
+    width: 30px;
+    height: 30px;
+  }
+
+  .sendButton {
+    width: 34px;
+    height: 34px;
+  }
+
+  .textarea {
+    font-size: 13px;
+    padding: 6px 10px;
+  }
+
+  .suggestionItem {
+    padding: 6px 10px;
+    font-size: 13px;
+  }
+
+  .suggestionText {
+    max-width: 120px;
+  }
+
+  .attachmentItem {
+    padding: 6px 10px;
+    max-width: 180px;
+  }
+
+  .attachmentImage,
+  .attachmentIcon {
+    width: 32px;
+    height: 32px;
+  }
+
+  .attachmentName {
+    font-size: 13px;
+  }
+
+  .emojiPicker {
+    min-width: 220px;
+  }
+
+  .emojiGrid {
+    grid-template-columns: repeat(5, 1fr);
+    max-height: 160px;
+  }
+
+  .emojiButton {
+    width: 28px;
+    height: 28px;
+    font-size: 18px;
+  }
+}
+
+/* ==================== 无障碍 ==================== */
+
+@media (prefers-reduced-motion: reduce) {
+  .inputContainer,
+  .toolButton,
+  .sendButton,
+  .suggestionItem,
+  .attachmentItem,
+  .emojiButton {
+    transition: none;
+  }
+
+  .spinning {
+    animation: none;
+  }
+}
+
+/* ==================== 暗色主题 ==================== */
+
+@media (prefers-color-scheme: dark) {
+  .inputBox {
+    --color-bg-primary: #1e1e1e;
+    --color-bg-secondary: #2a2a2a;
+    --color-border: #404040;
+    --color-border-light: #333333;
+    --color-border-dark: #555555;
+    --color-text-primary: #e0e0e0;
+    --color-text-secondary: #a0a0a0;
+    --color-text-tertiary: #707070;
+    --color-text-placeholder: #606060;
+    --color-primary: #42a5f5;
+    --color-primary-light: #1e3a52;
+    --color-primary-dark: #2196f3;
+    --color-error: #ef5350;
+    --color-error-light: #3d2020;
+  }
+
+  .textarea {
+    scrollbar-color: var(--color-border, #404040) transparent;
+  }
+}
+
+/* ==================== 高对比度模式 ==================== */
+
+@media (prefers-contrast: high) {
+  .inputContainer {
+    border-width: 3px;
+  }
+
+  .toolButton,
+  .sendButton,
+  .suggestionItem,
+  .attachmentItem {
+    border: 2px solid currentColor;
+  }
+
+  .error {
+    border-width: 2px;
+  }
+}
+
+/* ==================== 拖拽上传区域 ==================== */
+
+.dragDropOverlay {
+  position: absolute;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: var(--spacing-md);
+  background: rgba(33, 150, 243, 0.05);
+  border: 2px dashed var(--color-primary);
+  border-radius: var(--input-border-radius);
+  z-index: 50;
+  pointer-events: none;
+  opacity: 0;
+  transition: opacity var(--transition-normal);
+}
+
+.dragDropOverlay.active {
+  opacity: 1;
+}
+
+.dragDropIcon {
+  font-size: 48px;
+  color: var(--color-primary);
+  animation: float 2s ease-in-out infinite;
+}
+
+.dragDropText {
+  font-size: 16px;
+  font-weight: 500;
+  color: var(--color-primary);
+}
+
+@keyframes float {
+  0%, 100% {
+    transform: translateY(0);
+  }
+  50% {
+    transform: translateY(-10px);
+  }
+}
+
+/* ==================== 附件进度条 ==================== */
+
+.attachmentProgress {
+  position: relative;
+  width: 100%;
+  height: 4px;
+  background: var(--color-bg-tertiary);
+  border-radius: 2px;
+  overflow: hidden;
+  margin-top: 4px;
+}
+
+.attachmentProgressBar {
+  position: absolute;
+  top: 0;
+  left: 0;
+  height: 100%;
+  background: var(--color-primary);
+  border-radius: 2px;
+  transition: width var(--transition-normal);
+}
+
+.attachmentProgressBar.uploading {
+  background: linear-gradient(
+    90deg,
+    var(--color-primary) 0%,
+    var(--color-primary-light) 50%,
+    var(--color-primary) 100%
+  );
+  background-size: 200% 100%;
+  animation: progress 1.5s linear infinite;
+}
+
+@keyframes progress {
+  0% {
+    background-position: 200% 0;
+  }
+  100% {
+    background-position: -200% 0;
+  }
+}
+
+/* ==================== 附件状态标识 ==================== */
+
+.attachmentStatus {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 18px;
+  height: 18px;
+  border-radius: 50%;
+  font-size: 12px;
+  flex-shrink: 0;
+}
+
+.attachmentStatus.pending {
+  background: var(--color-bg-tertiary);
+  color: var(--color-text-tertiary);
+}
+
+.attachmentStatus.uploading {
+  background: var(--color-warning-light);
+  color: var(--color-warning);
+  animation: pulse 1s ease-in-out infinite;
+}
+
+.attachmentStatus.success {
+  background: var(--color-success-light);
+  color: var(--color-success);
+}
+
+.attachmentStatus.failed {
+  background: var(--color-error-light);
+  color: var(--color-error);
+}
+
+@keyframes pulse {
+  0%, 100% {
+    opacity: 1;
+  }
+  50% {
+    opacity: 0.5;
+  }
+}
+
+/* ==================== 格式化工具栏 ==================== */
+
+.formatToolbar {
+  display: flex;
+  align-items: center;
+  gap: var(--spacing-xs);
+  padding: var(--spacing-sm) var(--spacing-md);
+  background: var(--color-bg-secondary);
+  border-bottom: 1px solid var(--color-border-light);
+  border-radius: var(--input-border-radius) var(--input-border-radius) 0 0;
+}
+
+.formatButton {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 28px;
+  height: 28px;
+  padding: 0;
+  background: transparent;
+  border: none;
+  border-radius: 6px;
+  color: var(--color-text-secondary);
+  cursor: pointer;
+  transition: all var(--transition-fast);
+}
+
+.formatButton:hover {
+  background: var(--color-bg-hover);
+  color: var(--color-text-primary);
+}
+
+.formatButton.active {
+  background: var(--color-primary-light);
+  color: var(--color-primary);
+}
+
+.formatDivider {
+  width: 1px;
+  height: 20px;
+  background: var(--color-border);
+  margin: 0 var(--spacing-xs);
+}
+
+/* ==================== 自动补全下拉 ==================== */
+
+.autocomplete {
+  position: absolute;
+  bottom: 100%;
+  left: 0;
+  right: 0;
+  margin-bottom: var(--spacing-sm);
+  max-height: 200px;
+  background: var(--color-bg-primary);
+  border: 1px solid var(--color-border);
+  border-radius: 12px;
+  box-shadow: var(--shadow-lg);
+  overflow-y: auto;
+  z-index: var(--z-dropdown);
+}
+
+.autocompleteItem {
+  display: flex;
+  align-items: center;
+  gap: var(--spacing-sm);
+  padding: var(--spacing-sm) var(--spacing-md);
+  cursor: pointer;
+  transition: background var(--transition-fast);
+}
+
+.autocompleteItem:hover,
+.autocompleteItem.selected {
+  background: var(--color-bg-secondary);
+}
+
+.autocompleteItem.active {
+  background: var(--color-primary-light);
+  color: var(--color-primary);
+}
+
+.autocompleteIcon {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 24px;
+  height: 24px;
+  flex-shrink: 0;
+}
+
+.autocompleteText {
+  flex: 1;
+  min-width: 0;
+}
+
+.autocompleteTitle {
+  font-size: 14px;
+  font-weight: 500;
+  color: var(--color-text-primary);
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.autocompleteDescription {
+  font-size: 12px;
+  color: var(--color-text-tertiary);
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.autocompleteShortcut {
+  display: flex;
+  align-items: center;
+  gap: var(--spacing-xs);
+  font-size: 11px;
+  color: var(--color-text-tertiary);
+  flex-shrink: 0;
+}
+
+.autocompleteKey {
+  padding: 2px 6px;
+  background: var(--color-bg-tertiary);
+  border: 1px solid var(--color-border);
+  border-radius: 4px;
+  font-family: 'Monaco', 'Menlo', 'Courier New', monospace;
+}
+
+/* ==================== 语音输入动画 ==================== */
+
+.voiceRecording {
+  position: relative;
+  overflow: hidden;
+}
+
+.voiceRecording::after {
+  content: '';
+  position: absolute;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  background: radial-gradient(
+    circle,
+    rgba(244, 67, 54, 0.1) 0%,
+    transparent 70%
+  );
+  animation: voicePulse 1.5s ease-in-out infinite;
+}
+
+@keyframes voicePulse {
+  0%, 100% {
+    transform: scale(1);
+    opacity: 1;
+  }
+  50% {
+    transform: scale(1.1);
+    opacity: 0.5;
+  }
+}
+
+.voiceWaveform {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 2px;
+  height: 24px;
+}
+
+.voiceWaveBar {
+  width: 3px;
+  background: var(--color-error);
+  border-radius: 2px;
+  animation: wave 1s ease-in-out infinite;
+}
+
+.voiceWaveBar:nth-child(1) {
+  animation-delay: 0s;
+}
+
+.voiceWaveBar:nth-child(2) {
+  animation-delay: 0.1s;
+}
+
+.voiceWaveBar:nth-child(3) {
+  animation-delay: 0.2s;
+}
+
+.voiceWaveBar:nth-child(4) {
+  animation-delay: 0.3s;
+}
+
+.voiceWaveBar:nth-child(5) {
+  animation-delay: 0.4s;
+}
+
+@keyframes wave {
+  0%, 100% {
+    height: 8px;
+  }
+  50% {
+    height: 20px;
+  }
+}
+
+/* ==================== Tooltip 提示 ==================== */
+
+.tooltip {
+  position: absolute;
+  bottom: calc(100% + 8px);
+  left: 50%;
+  transform: translateX(-50%);
+  padding: 6px 10px;
+  background: var(--color-text-primary);
+  color: var(--color-bg-primary);
+  font-size: 12px;
+  border-radius: 6px;
+  white-space: nowrap;
+  pointer-events: none;
+  opacity: 0;
+  transition: opacity var(--transition-fast);
+  z-index: var(--z-tooltip);
+}
+
+.tooltip::after {
+  content: '';
+  position: absolute;
+  top: 100%;
+  left: 50%;
+  transform: translateX(-50%);
+  border: 4px solid transparent;
+  border-top-color: var(--color-text-primary);
+}
+
+.toolButton:hover .tooltip,
+.sendButton:hover .tooltip {
+  opacity: 1;
+}
+
+/* ==================== 通知徽章 ==================== */
+
+.badge {
+  position: absolute;
+  top: -4px;
+  right: -4px;
+  min-width: 18px;
+  height: 18px;
+  padding: 0 4px;
+  background: var(--color-error);
+  color: #ffffff;
+  font-size: 11px;
+  font-weight: 600;
+  border-radius: 9px;
+  border: 2px solid var(--color-bg-primary);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  pointer-events: none;
+}
+
+/* ==================== 空状态 ==================== */
+
+.emptyState {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: var(--spacing-md);
+  padding: var(--spacing-lg);
+  color: var(--color-text-tertiary);
+  text-align: center;
+}
+
+.emptyStateIcon {
+  font-size: 48px;
+  opacity: 0.5;
+}
+
+.emptyStateText {
+  font-size: 14px;
+}
+
+/* ==================== 紧凑模式 ==================== */
+
+.inputBox.compact .inputContainer {
+  padding: var(--spacing-sm);
+  gap: var(--spacing-xs);
+}
+
+.inputBox.compact .toolButton {
+  width: 28px;
+  height: 28px;
+}
+
+.inputBox.compact .sendButton {
+  width: 32px;
+  height: 32px;
+}
+
+.inputBox.compact .textarea {
+  font-size: 14px;
+  padding: var(--spacing-xs) var(--spacing-sm);
+}
+
+.inputBox.compact .suggestions {
+  padding: var(--spacing-sm);
+  gap: var(--spacing-xs);
+}
+
+.inputBox.compact .suggestionItem {
+  padding: 6px var(--spacing-sm);
+  font-size: 13px;
+}
+
+.inputBox.compact .attachments {
+  padding: var(--spacing-sm);
+  gap: var(--spacing-xs);
+}
+
+.inputBox.compact .attachmentItem {
+  padding: 6px var(--spacing-sm);
+}
+
+/* ==================== 禁用状态 ==================== */
+
+.inputBox.disabled {
+  opacity: 0.6;
+  pointer-events: none;
+  user-select: none;
+}
+
+.inputBox.disabled .inputContainer {
+  background: var(--color-bg-tertiary);
+  border-color: var(--color-border-light);
+}
+
+/* ==================== 错误状态 ==================== */
+
+.inputBox.hasError .inputContainer {
+  border-color: var(--color-error);
+  background: var(--color-error-light);
+}
+
+.inputBox.hasError .inputContainer:focus-within {
+  box-shadow: 0 0 0 3px rgba(244, 67, 54, 0.1);
+}
+
+/* ==================== 流式响应状态 ==================== */
+
+.inputBox.streaming .sendButton {
+  background: var(--color-warning);
+  color: #ffffff;
+}
+
+.inputBox.streaming .sendButton:hover:not(:disabled) {
+  background: #f57c00;
+}
+
+.streamingIndicator {
+  display: flex;
+  align-items: center;
+  gap: 4px;
+  padding: 4px 8px;
+  background: var(--color-warning-light);
+  border: 1px solid var(--color-warning);
+  border-radius: 6px;
+  font-size: 12px;
+  color: var(--color-warning);
+}
+
+.streamingDot {
+  width: 6px;
+  height: 6px;
+  background: currentColor;
+  border-radius: 50%;
+  animation: blink 1.4s infinite both;
+}
+
+.streamingDot:nth-child(1) {
+  animation-delay: 0s;
+}
+
+.streamingDot:nth-child(2) {
+  animation-delay: 0.2s;
+}
+
+.streamingDot:nth-child(3) {
+  animation-delay: 0.4s;
+}
+
+@keyframes blink {
+  0%, 80%, 100% {
+    opacity: 0.3;
+  }
+  40% {
+    opacity: 1;
+  }
+}
+
+/* ==================== 聚焦模式 ==================== */
+
+.inputBox.focused .inputContainer {
+  border-color: var(--color-primary);
+  box-shadow: 0 0 0 3px var(--color-shadow-focus);
+}
+
+/* ==================== 打字中指示器 ==================== */
+
+.typingIndicator {
+  display: flex;
+  align-items: center;
+  gap: 4px;
+  padding: 2px 8px;
+  color: var(--color-text-tertiary);
+  font-size: 12px;
+}
+
+.typingDot {
+  width: 4px;
+  height: 4px;
+  background: currentColor;
+  border-radius: 50%;
+  animation: typing 1.4s infinite both;
+}
+
+.typingDot:nth-child(1) {
+  animation-delay: 0s;
+}
+
+.typingDot:nth-child(2) {
+  animation-delay: 0.2s;
+}
+
+.typingDot:nth-child(3) {
+  animation-delay: 0.4s;
+}
+
+@keyframes typing {
+  0%, 60%, 100% {
+    transform: translateY(0);
+  }
+  30% {
+    transform: translateY(-6px);
+  }
+}
+
+/* ==================== 自定义滚动条（全局） ==================== */
+
+.autocomplete::-webkit-scrollbar,
+.emojiGrid::-webkit-scrollbar {
+  width: 6px;
+  height: 6px;
+}
+
+.autocomplete::-webkit-scrollbar-track,
+.emojiGrid::-webkit-scrollbar-track {
+  background: transparent;
+}
+
+.autocomplete::-webkit-scrollbar-thumb,
+.emojiGrid::-webkit-scrollbar-thumb {
+  background: var(--color-border);
+  border-radius: 3px;
+}
+
+.autocomplete::-webkit-scrollbar-thumb:hover,
+.emojiGrid::-webkit-scrollbar-thumb:hover {
+  background: var(--color-border-dark);
+}
+
+/* ==================== 辅助功能焦点环 ==================== */
+
+.toolButton:focus-visible,
+.sendButton:focus-visible,
+.suggestionItem:focus-visible,
+.attachmentRemove:focus-visible,
+.emojiButton:focus-visible,
+.formatButton:focus-visible {
+  outline: 2px solid var(--color-primary);
+  outline-offset: 2px;
+}
+
+/* ==================== 加载骨架屏 ==================== */
+
+.skeleton {
+  background: linear-gradient(
+    90deg,
+    var(--color-bg-secondary) 0%,
+    var(--color-bg-tertiary) 50%,
+    var(--color-bg-secondary) 100%
+  );
+  background-size: 200% 100%;
+  animation: skeleton 1.5s ease-in-out infinite;
+  border-radius: 4px;
+}
+
+@keyframes skeleton {
+  0% {
+    background-position: 200% 0;
+  }
+  100% {
+    background-position: -200% 0;
+  }
+}
+
+/* ==================== 打印样式 ==================== */
+
+@media print {
+  .inputBox {
+    display: none;
+  }
+}
+
+/* ==================== 工具提示位置变体 ==================== */
+
+.tooltip.top {
+  bottom: calc(100% + 8px);
+  top: auto;
+}
+
+.tooltip.bottom {
+  top: calc(100% + 8px);
+  bottom: auto;
+}
+
+.tooltip.bottom::after {
+  top: auto;
+  bottom: 100%;
+  border-top-color: transparent;
+  border-bottom-color: var(--color-text-primary);
+}
+
+.tooltip.left {
+  left: auto;
+  right: calc(100% + 8px);
+  transform: translateY(-50%);
+}
+
+.tooltip.right {
+  left: calc(100% + 8px);
+  right: auto;
+  transform: translateY(-50%);
+}
+
