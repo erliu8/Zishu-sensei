@@ -80,7 +80,7 @@ from ..base.exceptions import (
 )
 from ..base.metadata import AdapterMetadata, AdapterCapability, CapabilityCategory
 from ..core.security import SecurityManager
-from ..security.audit import (
+from ..core.security.audit import (
     get_audit_logger,
     AuditEventType,
     AuditLevel,
@@ -331,7 +331,7 @@ class CodeOptimizationRule:
 class CodeGenerationError(BaseAdapterException):
     """代码生成错误"""
 
-    def __init__(self, message: str, error_code: ErrorCode = ErrorCode.EXECUTION_ERROR):
+    def __init__(self, message: str, error_code: ErrorCode = ErrorCode.ADAPTER_EXECUTION_FAILED):
         super().__init__(message, error_code, ExceptionSeverity.ERROR)
 
 
@@ -378,39 +378,31 @@ class CodeTemplateManager:
         self.templates["python_function"] = CodeTemplate(
             template_id="python_function",
             name="Python Function Template",
+            description="基础Python函数模板",
             language=CodeLanguage.PYTHON,
             pattern=CodePattern.FUNCTION,
-            complexity=CodeComplexity.SIMPLE,
             template_code='''def {function_name}({parameters}):
     """
     {description}
-    
+
     Args:
         {args_description}
-    
+
     Returns:
         {return_description}
     """
     # TODO: Implement function logic
     pass
-''',
-            placeholders=[
-                "function_name",
-                "parameters",
-                "description",
-                "args_description",
-                "return_description",
-            ],
-            metadata={"category": "basic", "author": "system"},
+'''
         )
 
         # Python类模板
         self.templates["python_class"] = CodeTemplate(
             template_id="python_class",
             name="Python Class Template",
+            description="基础Python类模板",
             language=CodeLanguage.PYTHON,
             pattern=CodePattern.CLASS,
-            complexity=CodeComplexity.MEDIUM,
             template_code='''class {class_name}:
     """
     {description}
@@ -424,16 +416,7 @@ class CodeTemplateManager:
         """Main processing method"""
         # TODO: Implement method logic
         pass
-''',
-            placeholders=[
-                "class_name",
-                "description",
-                "init_parameters",
-                "init_body",
-                "method_name",
-                "method_parameters",
-            ],
-            metadata={"category": "oop", "author": "system"},
+'''
         )
 
     async def search_templates(
@@ -740,7 +723,7 @@ class CodeAnalyzer:
             # 更多语言分析器可以扩展
         }
 
-    @audit_operation(operation="analyze_code", component="code_generator")
+    @audit_operation(AuditEventType.ADAPTER_EXECUTE, "Code analysis")
     async def analyze_code(self, code: str, language: CodeLanguage) -> Dict[str, Any]:
         """分析代码"""
         try:
@@ -1214,8 +1197,9 @@ class JavaCodeFormatter(BaseCodeFormatter):
 class IntelligentCodeGenerator:
     """智能代码生成器主类"""
 
-    def __init__(self):
+    def __init__(self, config: Optional[Dict[str, Any]] = None):
         """初始化智能代码生成器"""
+        self.config = config or {}
         self.template_manager = CodeTemplateManager()
         self.quality_analyzer = CodeQualityAnalyzer()
         self.pattern_engine = CodePatternEngine()
@@ -1426,6 +1410,84 @@ class IntelligentCodeGenerator:
             errors.append("Max length must be positive")
 
         return errors
+    
+    def validate_code(self, code: str, language: CodeLanguage = CodeLanguage.PYTHON) -> bool:
+        """验证代码语法正确性"""
+        try:
+            if language == CodeLanguage.PYTHON:
+                import ast
+                ast.parse(code)
+                return True
+            else:
+                # 其他语言的简单检查
+                return bool(code.strip())
+        except:
+            return False
+    
+    def format_code(self, code: str, language: CodeLanguage = CodeLanguage.PYTHON) -> str:
+        """格式化代码"""
+        try:
+            formatter = self.optimizer.formatters.get(language)
+            if formatter:
+                # 同步调用格式化器的format方法（去掉async）
+                import asyncio
+                loop = asyncio.new_event_loop()
+                asyncio.set_event_loop(loop)
+                try:
+                    result = loop.run_until_complete(formatter.format(code))
+                    return result
+                finally:
+                    loop.close()
+            else:
+                # 基础格式化
+                return self._basic_format_code(code)
+        except Exception as e:
+            logger.warning(f"Failed to format code: {e}")
+            return code
+    
+    def _basic_format_code(self, code: str) -> str:
+        """基础代码格式化"""
+        lines = code.split("\n")
+        formatted_lines = []
+        indent_level = 0
+        
+        for line in lines:
+            stripped = line.strip()
+            if not stripped:
+                formatted_lines.append("")
+                continue
+            
+            # 简化的缩进逻辑
+            if any(stripped.startswith(keyword) for keyword in ["def ", "class ", "if ", "for ", "while "]):
+                formatted_lines.append("    " * indent_level + stripped)
+                if stripped.endswith(":"):
+                    indent_level += 1
+            elif stripped in ["}", ")", "]"] or stripped.startswith("}"):
+                indent_level = max(0, indent_level - 1)
+                formatted_lines.append("    " * indent_level + stripped)
+            else:
+                formatted_lines.append("    " * indent_level + stripped)
+        
+        return "\n".join(formatted_lines)
+    
+    async def _call_model(self, prompt: str, **kwargs) -> Dict[str, Any]:
+        """调用模型生成代码（模拟实现）"""
+        # 模拟模型调用 - 在实际实现中会调用真实的AI模型
+        await asyncio.sleep(0.1)  # 模拟网络延迟
+        
+        # 根据提示生成简单的代码
+        if "function" in prompt.lower():
+            code = f"def generated_function():\n    \"\"\"{prompt}\"\"\"\n    # TODO: Implement function logic\n    pass"
+        elif "class" in prompt.lower():
+            code = f"class GeneratedClass:\n    \"\"\"{prompt}\"\"\"\n    \n    def __init__(self):\n        pass\n    \n    def process(self):\n        # TODO: Implement class logic\n        pass"
+        else:
+            code = f"# Generated code for: {prompt}\nresult = 'placeholder'"
+        
+        return {
+            "code": code,
+            "confidence": 0.8,
+            "explanation": f"Generated code based on: {prompt}"
+        }
 
 
 # ================================

@@ -17,6 +17,25 @@ from .base import AsyncService, ServiceStatus, ServiceHealth, HealthCheckResult
 logger = logging.getLogger(__name__)
 
 
+# ================================
+# 异常类定义
+# ================================
+
+class ServiceStartupError(Exception):
+    """服务启动错误"""
+    pass
+
+
+class ServiceShutdownError(Exception):
+    """服务关闭错误"""
+    pass
+
+
+class CircularDependencyError(Exception):
+    """循环依赖错误"""
+    pass
+
+
 @dataclass
 class ServiceDependency:
     """服务依赖关系"""

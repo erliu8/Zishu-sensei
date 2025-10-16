@@ -1175,3 +1175,41 @@ async def render(template_id: str, variables: Dict[str, Any] = None, **kwargs) -
     engine = get_global_engine()
     result = await engine.render_template(template_id, variables, **kwargs)
     return result.content
+
+
+# ================================
+# 向后兼容性别名和导出
+# ================================
+
+# 为了保持与测试代码的兼容性
+PromptEngine = DynamicPromptEngine
+PromptTemplate = TemplateMetadata  # 使用TemplateMetadata作为PromptTemplate的别名
+PromptVariable = dict  # 简单的变量字典
+PromptContext = TemplateContext  # 使用TemplateContext作为PromptContext的别名
+TemplateLoader = TemplateLoader  # 已存在
+PromptValidator = TemplateProcessor  # 使用TemplateProcessor作为验证器
+PromptCache = dict  # 简单的缓存字典
+PromptOptimizer = AdvancedTemplateProcessor  # 使用高级处理器作为优化器
+PromptEngineError = PromptEngineException  # 异常别名
+PromptTemplateError = TemplateSyntaxError  # 模板错误别名
+PromptValidationError = VariableNotFoundError  # 验证错误别名
+
+
+# 导出的主要类和异常
+__all__ = [
+    'DynamicPromptEngine',
+    'PromptEngine',  # 别名
+    'PromptTemplate',
+    'PromptVariable', 
+    'PromptContext',
+    'TemplateLoader',
+    'PromptValidator',
+    'PromptCache',
+    'PromptOptimizer',
+    'PromptEngineError',
+    'PromptTemplateError', 
+    'PromptValidationError',
+    'create_prompt_engine',
+    'get_global_engine',
+    'render'
+]

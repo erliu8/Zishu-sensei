@@ -18,6 +18,17 @@ use crate::{
     utils::*,
 };
 
+use crate::utils::config::{
+    get_config_info as utils_get_config_info,
+    get_backup_files as utils_get_backup_files,
+    clean_old_backups as utils_clean_old_backups,
+    create_config_snapshot as utils_create_config_snapshot,
+    restore_from_snapshot as utils_restore_from_snapshot,
+    get_config_diff,
+    validate_config,
+    save_config,
+};
+
 // ================================
 // Request/Response Types
 // ================================
@@ -524,7 +535,7 @@ pub async fn get_config_paths() -> Result<CommandResponse<serde_json::Value>, St
 pub async fn get_config_info() -> Result<CommandResponse<serde_json::Value>, String> {
     info!("获取配置信息");
     
-    match get_config_info().await {
+    match utils_get_config_info().await {
         Ok(info) => {
             Ok(CommandResponse::success(info))
         }
@@ -540,7 +551,7 @@ pub async fn get_config_info() -> Result<CommandResponse<serde_json::Value>, Str
 pub async fn get_backup_files() -> Result<CommandResponse<Vec<String>>, String> {
     info!("获取配置备份文件列表");
     
-    match get_backup_files().await {
+    match utils_get_backup_files().await {
         Ok(backups) => {
             let paths: Vec<String> = backups
                 .iter()
@@ -560,7 +571,7 @@ pub async fn get_backup_files() -> Result<CommandResponse<Vec<String>>, String> 
 pub async fn clean_old_backups(keep_count: usize) -> Result<CommandResponse<usize>, String> {
     info!("清理旧备份文件，保留最近 {} 个", keep_count);
     
-    match clean_old_backups(keep_count).await {
+    match utils_clean_old_backups(keep_count).await {
         Ok(removed_count) => {
             info!("成功删除 {} 个旧备份文件", removed_count);
             Ok(CommandResponse::success_with_message(
@@ -585,7 +596,7 @@ pub async fn create_config_snapshot(
     
     let config = state.config.lock().clone();
     
-    match create_config_snapshot(&config, description).await {
+    match utils_create_config_snapshot(&config, description).await {
         Ok(path) => {
             let path_str = path.to_string_lossy().to_string();
             Ok(CommandResponse::success_with_message(
@@ -611,7 +622,7 @@ pub async fn restore_from_snapshot(
     
     let path = PathBuf::from(&snapshot_path);
     
-    match restore_from_snapshot(path).await {
+    match utils_restore_from_snapshot(path).await {
         Ok(config) => {
             // Validate restored config
             if let Err(e) = validate_config(&config) {

@@ -57,29 +57,74 @@ export const UpdateNotification: React.FC = () => {
                     initial={{ opacity: 0, y: -50 }}
                     animate={{ opacity: 1, y: 0 }}
                     exit={{ opacity: 0, y: -50 }}
-                    className="fixed top-4 right-4 z-50 bg-blue-600 text-white rounded-lg shadow-lg p-4 max-w-sm"
+                    style={{
+                        position: 'fixed',
+                        top: '16px',
+                        right: '16px',
+                        zIndex: 50,
+                        backgroundColor: 'hsl(var(--color-primary))',
+                        color: 'hsl(var(--color-primary-foreground))',
+                        borderRadius: '12px',
+                        boxShadow: '0 10px 25px rgba(0, 0, 0, 0.2)',
+                        padding: '16px',
+                        maxWidth: '384px',
+                    }}
                 >
-                    <div className="flex items-start gap-3">
-                        <div className="text-2xl">🚀</div>
-                        <div className="flex-1">
-                            <h3 className="font-semibold mb-1">
+                    <div style={{
+                        display: 'flex',
+                        alignItems: 'flex-start',
+                        gap: '12px',
+                    }}>
+                        <div style={{ fontSize: '24px' }}>🚀</div>
+                        <div style={{ flex: 1 }}>
+                            <h3 style={{
+                                fontWeight: 600,
+                                marginBottom: '4px',
+                            }}>
                                 新版本可用
                             </h3>
                             {updateInfo && (
-                                <p className="text-sm opacity-90 mb-2">
+                                <p style={{
+                                    fontSize: '14px',
+                                    opacity: 0.9,
+                                    marginBottom: '8px',
+                                }}>
                                     版本 {updateInfo.version} 已发布
                                 </p>
                             )}
-                            <div className="flex gap-2">
+                            <div style={{ display: 'flex', gap: '8px' }}>
                                 <button
                                     onClick={handleUpdate}
-                                    className="px-3 py-1 bg-white text-blue-600 rounded text-sm font-medium hover:bg-gray-100 transition-colors"
+                                    style={{
+                                        padding: '4px 12px',
+                                        backgroundColor: 'hsl(var(--color-background))',
+                                        color: 'hsl(var(--color-primary))',
+                                        border: 'none',
+                                        borderRadius: '4px',
+                                        fontSize: '14px',
+                                        fontWeight: 500,
+                                        cursor: 'pointer',
+                                        transition: 'opacity 200ms',
+                                    }}
+                                    onMouseEnter={(e) => e.currentTarget.style.opacity = '0.9'}
+                                    onMouseLeave={(e) => e.currentTarget.style.opacity = '1'}
                                 >
                                     立即更新
                                 </button>
                                 <button
                                     onClick={handleDismiss}
-                                    className="px-3 py-1 bg-blue-700 text-white rounded text-sm hover:bg-blue-800 transition-colors"
+                                    style={{
+                                        padding: '4px 12px',
+                                        backgroundColor: 'hsl(var(--color-primary) / 0.8)',
+                                        color: 'hsl(var(--color-primary-foreground))',
+                                        border: 'none',
+                                        borderRadius: '4px',
+                                        fontSize: '14px',
+                                        cursor: 'pointer',
+                                        transition: 'opacity 200ms',
+                                    }}
+                                    onMouseEnter={(e) => e.currentTarget.style.opacity = '0.9'}
+                                    onMouseLeave={(e) => e.currentTarget.style.opacity = '1'}
                                 >
                                     稍后提醒
                                 </button>
@@ -87,7 +132,21 @@ export const UpdateNotification: React.FC = () => {
                         </div>
                         <button
                             onClick={handleDismiss}
-                            className="text-white/70 hover:text-white text-lg leading-none"
+                            style={{
+                                color: 'hsl(var(--color-primary-foreground) / 0.7)',
+                                fontSize: '18px',
+                                lineHeight: 1,
+                                border: 'none',
+                                background: 'transparent',
+                                cursor: 'pointer',
+                                padding: 0,
+                            }}
+                            onMouseEnter={(e) => {
+                                e.currentTarget.style.color = 'hsl(var(--color-primary-foreground))'
+                            }}
+                            onMouseLeave={(e) => {
+                                e.currentTarget.style.color = 'hsl(var(--color-primary-foreground) / 0.7)'
+                            }}
                         >
                             ×
                         </button>

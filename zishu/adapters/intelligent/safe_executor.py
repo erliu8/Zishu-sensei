@@ -69,7 +69,7 @@ from ..base.exceptions import (
 )
 from ..base.metadata import AdapterMetadata, AdapterCapability, CapabilityCategory
 from ..core.security import SecurityManager
-from ..security.audit import (
+from ..core.security.audit import (
     get_audit_logger,
     AuditEventType,
     AuditLevel,
@@ -109,6 +109,7 @@ class ExecutionStatus(Enum):
 
     PENDING = "pending"  # 等待执行
     RUNNING = "running"  # 正在执行
+    SUCCESS = "success"  # 执行成功
     COMPLETED = "completed"  # 执行完成
     FAILED = "failed"  # 执行失败
     TIMEOUT = "timeout"  # 执行超时
@@ -317,7 +318,7 @@ class ExecutionRequest:
 class SafeExecutorError(BaseAdapterException):
     """安全执行器错误基类"""
 
-    def __init__(self, message: str, error_code: ErrorCode = ErrorCode.EXECUTION_ERROR):
+    def __init__(self, message: str, error_code: ErrorCode = ErrorCode.ADAPTER_EXECUTION_FAILED):
         super().__init__(message, error_code, ExceptionSeverity.ERROR)
 
 
@@ -499,7 +500,7 @@ class SecurityScanner:
             ),
         }
 
-    @audit_operation(operation="security_scan", component="safe_executor")
+    @audit_operation(AuditEventType.SECURITY_VIOLATION, "Security scan performed")
     async def scan_code(self, code: str, language: CodeLanguage) -> SecurityScanResult:
         """扫描代码安全性"""
         start_time = time.time()
@@ -790,18 +791,21 @@ class ThreatAnalyzer:
         """分析执行环境的风险"""
         risk_score = 0.0
 
-        # 网络访问增加风险
-        if request.network_access:
+        # 网络访问增加风险 (从环境变量或配置中检查)
+        if hasattr(request, 'network_access') and request.network_access:
             risk_score += 0.3
 
         # 高内存/CPU限制可能表示资源密集型攻击
-        if request.memory_limit > 1024 * 1024 * 1024:  # > 1GB
+        memory_limit = getattr(request.resource_limits, 'memory_mb', 256) * 1024 * 1024  # Convert MB to bytes
+        if memory_limit > 1024 * 1024 * 1024:  # > 1GB
             risk_score += 0.2
-        if request.cpu_limit > 2.0:  # > 2 CPU cores
+        cpu_limit = getattr(request.resource_limits, 'cpu_cores', 1.0)
+        if cpu_limit > 2.0:  # > 2 CPU cores
             risk_score += 0.2
 
         # 长超时时间
-        if request.timeout > 300:  # > 5 minutes
+        timeout = getattr(request.resource_limits, 'timeout_seconds', 30)
+        if timeout > 300:  # > 5 minutes
             risk_score += 0.2
 
         return risk_score
@@ -969,15 +973,18 @@ class CodeValidator:
         issues = []
 
         # 检查超时时间
-        if request.timeout > 600:  # 10 minutes
+        timeout = getattr(request.resource_limits, 'timeout_seconds', 30)
+        if timeout > 600:  # 10 minutes
             issues.append("Timeout too long (max 10 minutes)")
 
         # 检查内存限制
-        if request.memory_limit > 2 * 1024 * 1024 * 1024:  # 2GB
+        memory_limit = getattr(request.resource_limits, 'memory_mb', 256) * 1024 * 1024
+        if memory_limit > 2 * 1024 * 1024 * 1024:  # 2GB
             issues.append("Memory limit too high (max 2GB)")
 
         # 检查CPU限制
-        if request.cpu_limit > 4.0:  # 4 cores
+        cpu_limit = getattr(request.resource_limits, 'cpu_cores', 1.0)
+        if cpu_limit > 4.0:  # 4 cores
             issues.append("CPU limit too high (max 4 cores)")
 
         return issues
@@ -1016,7 +1023,7 @@ class SandboxManager:
             logger.warning(f"Docker not available: {e}")
         return False
 
-    @audit_operation(operation="create_sandbox", component="safe_executor")
+    @audit_operation(AuditEventType.ADAPTER_EXECUTE, "Sandbox creation")
     async def create_sandbox(self, request: ExecutionRequest) -> "Sandbox":
         """创建沙盒环境"""
         try:
@@ -1179,7 +1186,7 @@ class ProcessSandbox(Sandbox):
 
             # 设置环境变量
             env = os.environ.copy()
-            env.update(self.request.environment_vars)
+            env.update(self.request.environment_variables)
 
             # 创建进程
             self.process = await asyncio.create_subprocess_shell(
@@ -1196,13 +1203,14 @@ class ProcessSandbox(Sandbox):
             try:
                 # 提供输入数据
                 stdin_data = None
-                if self.request.stdin:
-                    stdin_data = self.request.stdin.encode("utf-8")
+                if self.request.stdin_data:
+                    stdin_data = self.request.stdin_data.encode("utf-8")
 
                 # 等待执行完成或超时
+                timeout = getattr(self.request.resource_limits, 'timeout_seconds', 30)
                 stdout, stderr = await asyncio.wait_for(
                     self.process.communicate(input=stdin_data),
-                    timeout=self.request.timeout,
+                    timeout=timeout,
                 )
 
                 execution_time = time.time() - start_time
@@ -1213,27 +1221,27 @@ class ProcessSandbox(Sandbox):
 
                 # 读取输出文件
                 output_files = {}
-                for pattern in self.request.output_patterns:
-                    for file_path in self.sandbox_path.glob(pattern):
-                        if file_path.is_file():
-                            try:
-                                with open(file_path, "r", encoding="utf-8") as f:
-                                    output_files[file_path.name] = f.read()
-                            except Exception as e:
-                                logger.warning(
-                                    f"Failed to read output file {file_path}: {e}"
-                                )
+                if hasattr(self.request, 'output_patterns'):
+                    for pattern in self.request.output_patterns:
+                        for file_path in self.sandbox_path.glob(pattern):
+                            if file_path.is_file():
+                                try:
+                                    with open(file_path, "r", encoding="utf-8") as f:
+                                        output_files[file_path.name] = f.read()
+                                except Exception as e:
+                                    logger.warning(
+                                        f"Failed to read output file {file_path}: {e}"
+                                    )
 
                 return ExecutionResult(
                     request_id=self.request.request_id,
+                    status=ExecutionStatus.SUCCESS if self.process.returncode == 0 else ExecutionStatus.FAILED,
                     success=self.process.returncode == 0,
-                    exit_code=self.process.returncode,
+                    return_code=self.process.returncode,
                     stdout=stdout_str,
                     stderr=stderr_str,
-                    execution_time=execution_time,
-                    memory_usage=0,  # 进程沙盒无法准确测量内存使用
+                    execution_time_seconds=execution_time,
                     output_files=output_files,
-                    sandbox_logs=[],
                 )
 
             except asyncio.TimeoutError:
@@ -1250,28 +1258,27 @@ class ProcessSandbox(Sandbox):
 
                 return ExecutionResult(
                     request_id=self.request.request_id,
+                    status=ExecutionStatus.TIMEOUT,
                     success=False,
-                    exit_code=-1,
+                    return_code=-1,
                     stdout="",
-                    stderr=f"Execution timed out after {self.request.timeout} seconds",
-                    execution_time=execution_time,
-                    memory_usage=0,
+                    stderr=f"Execution timed out after {timeout} seconds",
+                    execution_time_seconds=execution_time,
                     output_files={},
-                    sandbox_logs=["Execution timed out"],
                 )
 
         except Exception as e:
             execution_time = time.time() - start_time
             return ExecutionResult(
                 request_id=self.request.request_id,
+                status=ExecutionStatus.ERROR,
                 success=False,
-                exit_code=-1,
+                return_code=-1,
                 stdout="",
                 stderr=f"Execution failed: {str(e)}",
-                execution_time=execution_time,
-                memory_usage=0,
+                execution_time_seconds=execution_time,
                 output_files={},
-                sandbox_logs=[f"Execution error: {str(e)}"],
+                error_message=str(e),
             )
         finally:
             self.is_running = False
@@ -1331,12 +1338,10 @@ class DockerSandbox(Sandbox):
                 command="sleep 3600",  # 保持容器运行
                 working_dir="/workspace",
                 volumes={str(self.sandbox_path): {"bind": "/workspace", "mode": "rw"}},
-                environment=self.request.environment_vars,
-                network_disabled=not self.request.network_access,
-                mem_limit=self.request.memory_limit,
-                cpu_quota=int(self.request.cpu_limit * 100000)
-                if self.request.cpu_limit
-                else None,
+                environment=self.request.environment_variables,
+                network_disabled=not getattr(self.request, 'network_access', False),
+                mem_limit=f"{getattr(self.request.resource_limits, 'memory_mb', 256)}m",
+                cpu_quota=int(getattr(self.request.resource_limits, 'cpu_cores', 1.0) * 100000),
                 detach=True,
                 remove=True,
                 security_opt=["no-new-privileges:true"],
@@ -1421,28 +1426,27 @@ class DockerSandbox(Sandbox):
 
             return ExecutionResult(
                 request_id=self.request.request_id,
-                success=exec_result.exit_code == 0,
-                exit_code=exec_result.exit_code,
+                status=ExecutionStatus.SUCCESS if exec_result.return_code == 0 else ExecutionStatus.FAILED,
+                success=exec_result.return_code == 0,
+                return_code=exec_result.return_code,
                 stdout=stdout_str,
                 stderr=stderr_str,
-                execution_time=execution_time,
-                memory_usage=memory_usage,
+                execution_time_seconds=execution_time,
                 output_files=output_files,
-                sandbox_logs=[],
             )
 
         except Exception as e:
             execution_time = time.time() - start_time
             return ExecutionResult(
                 request_id=self.request.request_id,
+                status=ExecutionStatus.ERROR,
                 success=False,
-                exit_code=-1,
+                return_code=-1,
                 stdout="",
                 stderr=f"Execution failed: {str(e)}",
-                execution_time=execution_time,
-                memory_usage=0,
+                execution_time_seconds=execution_time,
                 output_files={},
-                sandbox_logs=[f"Execution error: {str(e)}"],
+                error_message=str(e),
             )
         finally:
             self.is_running = False
@@ -1489,7 +1493,7 @@ class SafeCodeExecutor:
 
         logger.info("Safe code executor initialized")
 
-    @audit_operation(operation="execute_code", component="safe_executor")
+    @audit_operation(AuditEventType.ADAPTER_EXECUTE, "Code execution")
     async def execute_code(self, request: ExecutionRequest) -> ExecutionResult:
         """安全执行代码的主要接口"""
         try:
@@ -1499,14 +1503,14 @@ class SafeCodeExecutor:
             if threat_level == ThreatLevel.CRITICAL:
                 return ExecutionResult(
                     request_id=request.request_id,
+                    status=ExecutionStatus.FAILED,
                     success=False,
-                    exit_code=-1,
+                    return_code=-1,
                     stdout="",
                     stderr="Code execution blocked due to critical security threat",
-                    execution_time=0,
-                    memory_usage=0,
+                    execution_time_seconds=0.0,
+                    error_message="Critical security threat detected",
                     output_files={},
-                    sandbox_logs=["Execution blocked - critical threat detected"],
                 )
 
             # 2. 代码验证
@@ -1515,14 +1519,14 @@ class SafeCodeExecutor:
             if not validation_result.is_valid:
                 return ExecutionResult(
                     request_id=request.request_id,
+                    status=ExecutionStatus.FAILED,
                     success=False,
-                    exit_code=-1,
+                    return_code=-1,
                     stdout="",
                     stderr=f"Code validation failed: {'; '.join(validation_result.issues)}",
-                    execution_time=0,
-                    memory_usage=0,
+                    execution_time_seconds=0.0,
+                    error_message="Code validation failed",
                     output_files={},
-                    sandbox_logs=[f"Validation failed: {validation_result.issues}"],
                 )
 
             # 3. 创建沙盒环境
@@ -1533,17 +1537,18 @@ class SafeCodeExecutor:
                 result = await sandbox.execute()
 
                 # 5. 记录审计日志
-                self.audit_logger.info(
-                    f"Code execution completed",
-                    extra={
-                        "request_id": request.request_id,
-                        "language": request.language.value,
-                        "success": result.success,
-                        "execution_time": result.execution_time,
-                        "threat_level": threat_level.value,
-                        "validation_issues": len(validation_result.issues),
-                    },
-                )
+                if self.audit_logger:
+                    self.audit_logger.info(
+                        f"Code execution completed",
+                        extra={
+                            "request_id": request.request_id,
+                            "language": request.language.value,
+                            "success": result.success,
+                            "execution_time": result.execution_time_seconds,
+                            "threat_level": threat_level.value,
+                            "validation_issues": len(validation_result.issues),
+                        },
+                    )
 
                 return result
 
@@ -1555,14 +1560,14 @@ class SafeCodeExecutor:
             logger.error(f"Code execution failed: {e}")
             return ExecutionResult(
                 request_id=request.request_id,
+                status=ExecutionStatus.ERROR,
                 success=False,
-                exit_code=-1,
+                return_code=-1,
                 stdout="",
                 stderr=f"Internal execution error: {str(e)}",
-                execution_time=0,
-                memory_usage=0,
+                execution_time_seconds=0.0,
+                error_message=str(e),
                 output_files={},
-                sandbox_logs=[f"Internal error: {str(e)}"],
             )
 
     async def batch_execute(
@@ -1586,17 +1591,66 @@ class SafeCodeExecutor:
             if isinstance(result, Exception):
                 results[i] = ExecutionResult(
                     request_id=requests[i].request_id,
+                    status=ExecutionStatus.ERROR,
                     success=False,
-                    exit_code=-1,
+                    return_code=-1,
                     stdout="",
                     stderr=f"Batch execution error: {str(result)}",
-                    execution_time=0,
-                    memory_usage=0,
+                    execution_time_seconds=0.0,
                     output_files={},
-                    sandbox_logs=[f"Batch error: {str(result)}"],
+                    error_message=str(result),
                 )
 
         return results
+
+    def analyze_code(self, code: str, language: str = "python") -> Dict[str, Any]:
+        """分析代码安全性"""
+        try:
+            # 创建一个简单的分析结果
+            analysis = {
+                "is_safe": True,
+                "risk_score": 0.0,
+                "issues": [],
+                "suggestions": []
+            }
+            
+            # 简单的危险模式检测
+            dangerous_patterns = [
+                ("os.", "Operating system access"),
+                ("sys.", "System access"),
+                ("subprocess", "Process execution"),
+                ("eval(", "Dynamic code evaluation"),
+                ("exec(", "Code execution"),
+                ("__import__", "Dynamic imports"),
+                ("open(", "File access")
+            ]
+            
+            code_lower = code.lower()
+            for pattern, description in dangerous_patterns:
+                if pattern in code_lower:
+                    analysis["is_safe"] = False
+                    analysis["risk_score"] += 0.2
+                    analysis["issues"].append(f"Detected {description}: {pattern}")
+            
+            # 计算最终风险等级
+            if analysis["risk_score"] > 0.5:
+                analysis["threat_level"] = "high"
+            elif analysis["risk_score"] > 0.2:
+                analysis["threat_level"] = "medium"
+            else:
+                analysis["threat_level"] = "low"
+                
+            return analysis
+            
+        except Exception as e:
+            logger.error(f"Code analysis failed: {e}")
+            return {
+                "is_safe": False,
+                "risk_score": 1.0,
+                "issues": [f"Analysis failed: {str(e)}"],
+                "suggestions": [],
+                "threat_level": "high"
+            }
 
     async def cleanup(self):
         """清理所有资源"""

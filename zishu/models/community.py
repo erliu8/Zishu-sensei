@@ -668,7 +668,7 @@ class ForumBase(BaseModel):
     """论坛基础模式"""
 
     name: str = Field(..., min_length=1, max_length=100)
-    slug: str = Field(..., min_length=1, max_length=100, regex=r"^[a-z0-9-]+$")
+    slug: str = Field(..., min_length=1, max_length=100, pattern=r"^[a-z0-9-]+$")
     description: Optional[str] = None
     forum_type: ForumType = ForumType.GENERAL
     is_public: bool = True
@@ -679,7 +679,7 @@ class ForumCreate(ForumBase):
 
     parent_id: Optional[str] = None
     icon: Optional[str] = None
-    color: Optional[str] = Field(None, regex=r"^#[0-9A-Fa-f]{6}$")
+    color: Optional[str] = Field(None, pattern=r"^#[0-9A-Fa-f]{6}$")
 
 
 class ForumResponse(ForumBase):

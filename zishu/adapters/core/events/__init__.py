@@ -7,8 +7,12 @@
 from .bus import EventBus
 from .handlers import EventHandler, AsyncEventHandler
 from .filters import EventFilter, EventFilterChain
+from ..types import Event, EventType, Priority
 
 __all__ = [
+    "Event",
+    "EventType",
+    "Priority",
     "EventBus",
     "EventHandler",
     "AsyncEventHandler",

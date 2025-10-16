@@ -16,8 +16,8 @@ from dataclasses import dataclass, field
 from enum import Enum
 from collections import defaultdict, deque
 import threading
-from email.mime.text import MimeText
-from email.mime.multipart import MimeMultipart
+from email.mime.text import MIMEText
+from email.mime.multipart import MIMEMultipart
 
 from .core import (
     MetricType,
@@ -526,7 +526,7 @@ class EmailNotifier(AlertNotifier):
             self._update_stats(False, error_msg)
             return False
 
-    def _send_email(self, msg: MimeMultipart) -> None:
+    def _send_email(self, msg: MIMEMultipart) -> None:
         """发送邮件(同步)"""
         with smtplib.SMTP(self.smtp_host, self.smtp_port) as server:
             if self.use_tls:

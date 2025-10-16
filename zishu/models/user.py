@@ -589,7 +589,7 @@ class UserPreference(DatabaseBaseModel):
 class UserBase(BaseModel):
     """用户基础模式"""
 
-    username: str = Field(..., min_length=3, max_length=50, regex=r"^[a-zA-Z0-9_-]+$")
+    username: str = Field(..., min_length=3, max_length=50, pattern=r"^[a-zA-Z0-9_-]+$")
     email: EmailStr
 
 

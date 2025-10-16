@@ -389,8 +389,8 @@ pub mod helpers {
             }
             
             // 获取窗口状态
-            config.window.always_on_top = window.is_always_on_top()
-                .unwrap_or(config.window.always_on_top);
+            // Note: is_always_on_top() is not available in Tauri 1.x
+            // We'll keep the current config value
             config.window.resizable = window.is_resizable()
                 .unwrap_or(config.window.resizable);
             

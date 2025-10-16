@@ -65,7 +65,7 @@ except ImportError:
     logging.warning("SQLAlchemy 未安装，数据库功能将被禁用")
 
 try:
-    import aioredis
+    from redis import asyncio as aioredis
 
     HAS_REDIS = True
 except ImportError:

@@ -1,9 +1,8 @@
-import clsx from 'clsx'
-import React from 'react'
+import React, { CSSProperties } from 'react'
 
 interface LoadingSpinnerProps {
     size?: 'sm' | 'md' | 'lg' | 'xl'
-    className?: string
+    style?: CSSProperties
     color?: 'primary' | 'secondary' | 'white' | 'gray'
 }
 
@@ -12,35 +11,52 @@ interface LoadingSpinnerProps {
  */
 export const LoadingSpinner: React.FC<LoadingSpinnerProps> = ({
     size = 'md',
-    className,
+    style,
     color = 'primary',
 }) => {
-    const sizeClasses = {
-        sm: 'w-4 h-4',
-        md: 'w-6 h-6',
-        lg: 'w-8 h-8',
-        xl: 'w-12 h-12',
+    const sizeMap = {
+        sm: 16,
+        md: 24,
+        lg: 32,
+        xl: 48,
     }
 
-    const colorClasses = {
-        primary: 'text-blue-600',
-        secondary: 'text-gray-600',
-        white: 'text-white',
-        gray: 'text-gray-400',
+    const colorMap = {
+        primary: 'hsl(var(--color-primary))',
+        secondary: 'hsl(var(--color-muted-foreground))',
+        white: '#ffffff',
+        gray: 'hsl(var(--color-muted-foreground))',
     }
+
+    const spinnerSize = sizeMap[size]
+    const spinnerColor = colorMap[color]
 
     return (
         <div
-            className={clsx(
-                'animate-spin rounded-full border-2 border-current border-t-transparent',
-                sizeClasses[size],
-                colorClasses[color],
-                className
-            )}
+            style={{
+                width: spinnerSize,
+                height: spinnerSize,
+                border: '2px solid',
+                borderColor: spinnerColor,
+                borderTopColor: 'transparent',
+                borderRadius: '50%',
+                animation: 'spin 1s linear infinite',
+                ...style,
+            }}
             role="status"
             aria-label="加载中"
         >
-            <span className="sr-only">加载中...</span>
+            <span style={{
+                position: 'absolute',
+                width: '1px',
+                height: '1px',
+                padding: 0,
+                margin: '-1px',
+                overflow: 'hidden',
+                clip: 'rect(0, 0, 0, 0)',
+                whiteSpace: 'nowrap',
+                border: 0,
+            }}>加载中...</span>
         </div>
     )
 }

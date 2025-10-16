@@ -89,7 +89,7 @@ from ..base.exceptions import (
 )
 from ..base.metadata import AdapterMetadata, AdapterCapability, CapabilityCategory
 from ..core.security import SecurityManager
-from ..security.audit import (
+from ..core.security.audit import (
     get_audit_logger,
     AuditEventType,
     AuditLevel,
@@ -450,11 +450,11 @@ class LearningDataManager:
         self.data_by_type: Dict[DataType, List[str]] = defaultdict(list)
         self.data_by_quality: Dict[float, List[str]] = defaultdict(list)
 
-        self._lock = asyncio.Lock()
+        self._lock = None  # 将在异步上下文中初始化
         self.audit_logger = get_audit_logger()
+        self._initialized = False
 
-        # 加载现有数据
-        asyncio.create_task(self._load_existing_data())
+        # 不在初始化时加载数据，而是延迟到第一次使用时
 
     async def _load_existing_data(self):
         """加载现有数据"""
@@ -485,9 +485,19 @@ class LearningDataManager:
         except Exception as e:
             logger.error(f"Failed to load existing data: {e}")
 
-    @audit_operation(operation="add_learning_data", component="learning_engine")
+    async def _ensure_initialized(self):
+        """确保管理器已初始化"""
+        if not self._initialized:
+            if self._lock is None:
+                self._lock = asyncio.Lock()
+            await self._load_existing_data()
+            self._initialized = True
+
+    @audit_operation(AuditEventType.ADAPTER_EXECUTE, "Learning data added")
     async def add_data(self, data: LearningData) -> bool:
         """添加学习数据"""
+        await self._ensure_initialized()
+        
         async with self._lock:
             try:
                 # 保存到文件
@@ -519,6 +529,7 @@ class LearningDataManager:
 
     async def get_data(self, data_id: str) -> Optional[LearningData]:
         """获取数据"""
+        await self._ensure_initialized()
         return self.data_index.get(data_id)
 
     async def get_data_by_type(
@@ -649,7 +660,7 @@ class ModelManager:
             self.device = torch.device("cpu")
             logger.info("Using CPU device")
 
-    @audit_operation(operation="load_model", component="learning_engine")
+    @audit_operation(AuditEventType.ADAPTER_EXECUTE, "Model loading")
     async def load_model(self, config: ModelConfig) -> bool:
         """加载模型到内存"""
         if not TRANSFORMERS_AVAILABLE:
@@ -748,8 +759,16 @@ class LoRAStrategy(LearningStrategyBase):
 class ContinuousLearningEngine:
     """持续学习引擎 - 核心协调器"""
 
-    def __init__(self, config_path: Union[str, Path]):
-        self.config_path = Path(config_path)
+    def __init__(self, config: Union[str, Path, Dict[str, Any]]):
+        if isinstance(config, dict):
+            # 如果传入的是配置字典，使用临时目录
+            self.config_path = Path(tempfile.mkdtemp(prefix="learning_engine_"))
+            self.config = config
+        else:
+            # 如果传入的是路径，直接使用
+            self.config_path = Path(config)
+            self.config = {}
+        
         self.config_path.mkdir(parents=True, exist_ok=True)
 
         # 初始化组件
@@ -764,11 +783,14 @@ class ContinuousLearningEngine:
         # 任务管理
         self.active_tasks: Dict[str, LearningTask] = {}
         self.sessions: Dict[str, LearningSession] = {}
+        
+        # 反馈历史记录
+        self.feedback_history: List[Dict[str, Any]] = []
 
         self.audit_logger = get_audit_logger()
         logger.info("Continuous Learning Engine initialized")
 
-    @audit_operation(operation="start_session", component="learning_engine")
+    @audit_operation(AuditEventType.ADAPTER_EXECUTE, "Learning session started")
     async def start_session(self, user_id: Optional[str] = None) -> str:
         """启动学习会话"""
         session = LearningSession(
@@ -837,6 +859,94 @@ class ContinuousLearningEngine:
             "created_at": session.created_at.isoformat(),
             "last_activity": session.last_activity.isoformat(),
         }
+    
+    async def record_feedback(self, feedback: Dict[str, Any]) -> bool:
+        """记录反馈"""
+        try:
+            # 添加时间戳
+            feedback_record = feedback.copy()
+            feedback_record["timestamp"] = datetime.now(timezone.utc).isoformat()
+            
+            self.feedback_history.append(feedback_record)
+            
+            # 限制历史记录数量，避免内存溢出
+            max_history = 1000
+            if len(self.feedback_history) > max_history:
+                self.feedback_history = self.feedback_history[-max_history:]
+            
+            logger.info(f"Recorded feedback: {feedback.get('request_id', 'unknown')}")
+            return True
+            
+        except Exception as e:
+            logger.error(f"Failed to record feedback: {e}")
+            return False
+    
+    def get_performance_metrics(self) -> Dict[str, float]:
+        """获取性能指标"""
+        if not self.feedback_history:
+            return {
+                "success_rate": 0.0,
+                "average_rating": 0.0,
+                "average_execution_time": 0.0
+            }
+        
+        successful_feedbacks = [f for f in self.feedback_history if f.get("success", False)]
+        success_rate = len(successful_feedbacks) / len(self.feedback_history)
+        
+        ratings = [f.get("user_rating", 0) for f in self.feedback_history if "user_rating" in f]
+        average_rating = sum(ratings) / len(ratings) if ratings else 0.0
+        
+        execution_times = [f.get("execution_time", 0) for f in self.feedback_history if "execution_time" in f]
+        average_execution_time = sum(execution_times) / len(execution_times) if execution_times else 0.0
+        
+        return {
+            "success_rate": success_rate,
+            "average_rating": average_rating,
+            "average_execution_time": average_execution_time
+        }
+    
+    async def get_suggestions(self) -> List[str]:
+        """获取改进建议"""
+        try:
+            suggestions = []
+            
+            # 分析反馈历史
+            if len(self.feedback_history) >= 2:
+                recent_failures = [
+                    f for f in self.feedback_history[-10:] 
+                    if not f.get("success", True)
+                ]
+                
+                if len(recent_failures) > 2:
+                    suggestions.append("Consider improving error handling mechanisms")
+                
+                low_ratings = [
+                    f for f in self.feedback_history[-10:] 
+                    if f.get("user_rating", 5) < 3
+                ]
+                
+                if len(low_ratings) > 1:
+                    suggestions.append("Focus on improving code quality and user satisfaction")
+                
+                # 检查常见错误模式
+                error_types = [f.get("common_error", "") for f in recent_failures]
+                if "syntax_error" in error_types:
+                    suggestions.append("Enhance syntax validation before code execution")
+                if "logic_error" in error_types:
+                    suggestions.append("Improve logical flow analysis in generated code")
+            
+            # 默认建议
+            if not suggestions:
+                suggestions = [
+                    "Continue collecting feedback to improve model performance",
+                    "Monitor execution success rates regularly"
+                ]
+            
+            return suggestions
+            
+        except Exception as e:
+            logger.error(f"Failed to generate suggestions: {e}")
+            return ["Error generating suggestions - please check system status"]
 
 
 # ================================
@@ -851,7 +961,7 @@ class LearningEngineAdapter:
         self.engine = engine
         self.audit_logger = get_audit_logger()
 
-    @audit_operation(operation="collect_feedback", component="learning_engine")
+    @audit_operation(AuditEventType.USER_ACTION, "Feedback collected")
     async def collect_code_feedback(
         self,
         session_id: str,

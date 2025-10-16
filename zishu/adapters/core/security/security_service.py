@@ -201,7 +201,7 @@ class AdapterSecurityService(AsyncService):
         super().__init__("adapter_security", config.to_dict() if config else {})
 
         self.security_config = config or SecurityServiceConfig()
-        self.permission_manager = PermissionManager()
+        self.permission_manager = EnhancedPermissionManager()
         self.audit_logger = get_audit_logger()
 
         # 安全上下文管理
@@ -835,7 +835,7 @@ class AdapterSecurityService(AsyncService):
         for session_id in sessions_to_remove:
             await self._remove_security_context(session_id)
 
-    async def _load_default_policies(self) -> None:
+    def _load_default_policies(self) -> None:
         """加载默认安全策略"""
         # 基础访问策略
         self._security_policies["basic_access"] = SecurityPolicy(

@@ -58,23 +58,66 @@ export const ChatWindow: React.FC<ChatWindowProps> = ({
             initial={{ opacity: 0, scale: 0.9 }}
             animate={{ opacity: 1, scale: 1 }}
             exit={{ opacity: 0, scale: 0.9 }}
-            className="w-full h-full bg-white dark:bg-gray-900 flex flex-col"
+            style={{
+                width: '100%',
+                height: '100%',
+                display: 'flex',
+                flexDirection: 'column',
+                backgroundColor: 'hsl(var(--color-background))',
+                color: 'hsl(var(--color-foreground))',
+            }}
         >
             {/* 标题栏 */}
-            <div className="flex items-center justify-between p-4 border-b border-gray-200 dark:border-gray-700">
-                <h1 className="text-lg font-semibold text-gray-900 dark:text-white">
+            <div style={{
+                display: 'flex',
+                alignItems: 'center',
+                justifyContent: 'space-between',
+                padding: '16px',
+                borderBottom: '1px solid hsl(var(--color-border))',
+            }}>
+                <h1 style={{
+                    fontSize: '18px',
+                    fontWeight: 600,
+                    color: 'hsl(var(--color-foreground))',
+                }}>
                     对话
                 </h1>
-                <div className="flex gap-2">
+                <div style={{ display: 'flex', gap: '8px' }}>
                     <button
                         onClick={onMinimize}
-                        className="p-2 text-gray-500 hover:text-gray-700 dark:text-gray-400 dark:hover:text-gray-200 rounded-md hover:bg-gray-100 dark:hover:bg-gray-800 transition-colors"
+                        style={{
+                            padding: '8px',
+                            color: 'hsl(var(--color-muted-foreground))',
+                            borderRadius: '6px',
+                            border: 'none',
+                            background: 'transparent',
+                            cursor: 'pointer',
+                        }}
+                        onMouseEnter={(e) => {
+                            e.currentTarget.style.backgroundColor = 'hsl(var(--color-accent))'
+                        }}
+                        onMouseLeave={(e) => {
+                            e.currentTarget.style.backgroundColor = 'transparent'
+                        }}
                     >
                         ➖
                     </button>
                     <button
                         onClick={onClose}
-                        className="p-2 text-gray-500 hover:text-gray-700 dark:text-gray-400 dark:hover:text-gray-200 rounded-md hover:bg-gray-100 dark:hover:bg-gray-800 transition-colors"
+                        style={{
+                            padding: '8px',
+                            color: 'hsl(var(--color-muted-foreground))',
+                            borderRadius: '6px',
+                            border: 'none',
+                            background: 'transparent',
+                            cursor: 'pointer',
+                        }}
+                        onMouseEnter={(e) => {
+                            e.currentTarget.style.backgroundColor = 'hsl(var(--color-accent))'
+                        }}
+                        onMouseLeave={(e) => {
+                            e.currentTarget.style.backgroundColor = 'transparent'
+                        }}
                     >
                         ✕
                     </button>
@@ -82,20 +125,42 @@ export const ChatWindow: React.FC<ChatWindowProps> = ({
             </div>
 
             {/* 消息列表 */}
-            <div className="flex-1 overflow-y-auto p-4 space-y-4">
+            <div style={{
+                flex: 1,
+                overflowY: 'auto',
+                padding: '16px',
+                display: 'flex',
+                flexDirection: 'column',
+                gap: '16px',
+            }}>
                 {messages.map((msg) => (
                     <div
                         key={msg.id}
-                        className={`flex ${msg.sender === 'user' ? 'justify-end' : 'justify-start'}`}
+                        style={{
+                            display: 'flex',
+                            justifyContent: msg.sender === 'user' ? 'flex-end' : 'flex-start',
+                        }}
                     >
                         <div
-                            className={`max-w-xs lg:max-w-md px-4 py-2 rounded-lg ${msg.sender === 'user'
-                                ? 'bg-blue-600 text-white'
-                                : 'bg-gray-200 dark:bg-gray-700 text-gray-900 dark:text-white'
-                                }`}
+                            style={{
+                                maxWidth: '70%',
+                                padding: '12px 16px',
+                                borderRadius: '12px',
+                                backgroundColor: msg.sender === 'user'
+                                    ? 'hsl(var(--color-primary))'
+                                    : 'hsl(var(--color-muted))',
+                                color: msg.sender === 'user'
+                                    ? 'hsl(var(--color-primary-foreground))'
+                                    : 'hsl(var(--color-foreground))',
+                            }}
                         >
-                            <p className="text-sm">{msg.content}</p>
-                            <p className="text-xs opacity-70 mt-1">
+                            <p style={{ fontSize: '14px', margin: 0 }}>{msg.content}</p>
+                            <p style={{
+                                fontSize: '12px',
+                                opacity: 0.7,
+                                marginTop: '4px',
+                                marginBottom: 0,
+                            }}>
                                 {new Date(msg.timestamp).toLocaleTimeString()}
                             </p>
                         </div>
@@ -104,20 +169,55 @@ export const ChatWindow: React.FC<ChatWindowProps> = ({
             </div>
 
             {/* 输入框 */}
-            <div className="p-4 border-t border-gray-200 dark:border-gray-700">
-                <div className="flex gap-2">
+            <div style={{
+                padding: '16px',
+                borderTop: '1px solid hsl(var(--color-border))',
+            }}>
+                <div style={{ display: 'flex', gap: '8px' }}>
                     <input
                         type="text"
                         value={message}
                         onChange={(e) => setMessage(e.target.value)}
                         onKeyPress={(e) => e.key === 'Enter' && handleSendMessage()}
                         placeholder="输入消息..."
-                        className="flex-1 px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-md bg-white dark:bg-gray-800 text-gray-900 dark:text-white focus:outline-none focus:ring-2 focus:ring-blue-500"
+                        style={{
+                            flex: 1,
+                            padding: '8px 12px',
+                            border: '1px solid hsl(var(--color-border))',
+                            borderRadius: '6px',
+                            backgroundColor: 'hsl(var(--color-background))',
+                            color: 'hsl(var(--color-foreground))',
+                            outline: 'none',
+                        }}
+                        onFocus={(e) => {
+                            e.currentTarget.style.borderColor = 'hsl(var(--color-primary))'
+                        }}
+                        onBlur={(e) => {
+                            e.currentTarget.style.borderColor = 'hsl(var(--color-border))'
+                        }}
                     />
                     <button
                         onClick={handleSendMessage}
                         disabled={!message.trim()}
-                        className="px-4 py-2 bg-blue-600 text-white rounded-md hover:bg-blue-700 disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
+                        style={{
+                            padding: '8px 16px',
+                            backgroundColor: 'hsl(var(--color-primary))',
+                            color: 'hsl(var(--color-primary-foreground))',
+                            borderRadius: '6px',
+                            border: 'none',
+                            cursor: message.trim() ? 'pointer' : 'not-allowed',
+                            opacity: message.trim() ? 1 : 0.5,
+                        }}
+                        onMouseEnter={(e) => {
+                            if (message.trim()) {
+                                e.currentTarget.style.opacity = '0.9'
+                            }
+                        }}
+                        onMouseLeave={(e) => {
+                            if (message.trim()) {
+                                e.currentTarget.style.opacity = '1'
+                            }
+                        }}
                     >
                         发送
                     </button>

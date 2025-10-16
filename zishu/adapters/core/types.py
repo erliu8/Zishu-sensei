@@ -62,6 +62,12 @@ class LifecycleState(str, Enum):
 class EventType(str, Enum):
     """事件类型"""
 
+    # 服务事件
+    SERVICE_STARTED = "service.started"
+    SERVICE_STOPPED = "service.stopped"
+    SERVICE_ERROR = "service.error"
+    SERVICE_INITIALIZED = "service.initialized"
+
     # 生命周期事件
     LIFECYCLE_STATE_CHANGED = "lifecycle.state_changed"
     LIFECYCLE_ERROR = "lifecycle.error"
@@ -70,6 +76,7 @@ class EventType(str, Enum):
     ADAPTER_REGISTERED = "adapter.registered"
     ADAPTER_UNREGISTERED = "adapter.unregistered"
     ADAPTER_UPDATED = "adapter.updated"
+    ADAPTER_VALIDATED = "adapter.validated"
 
     # 运行时事件
     ADAPTER_STARTED = "adapter.started"
@@ -115,7 +122,8 @@ class Priority(int, Enum):
 
     CRITICAL = 1  # 关键
     HIGH = 2  # 高
-    MEDIUM = 3  # 中等
+    NORMAL = 3  # 正常
+    MEDIUM = 3  # 中等 (保留向后兼容)
     LOW = 4  # 低
     BACKGROUND = 5  # 后台
 
@@ -151,9 +159,22 @@ class AdapterIdentity:
 class AdapterConfiguration:
     """适配器配置"""
 
+    # 身份信息 (管理器期望的字段)
+    identity: str = ""
+    name: Optional[str] = None
+    version: str = "1.0.0"
+    adapter_type: AdapterType = AdapterType.SOFT
+    adapter_class: Optional[Type] = None
+    description: Optional[str] = None
+    author: Optional[str] = None
+    tags: Optional[List[str]] = None
+
+    # 配置信息
     config: Dict[str, Any] = field(default_factory=dict)
     environment: Dict[str, str] = field(default_factory=dict)
     resources: Dict[str, Any] = field(default_factory=dict)
+    dependencies: Set[str] = field(default_factory=set)
+    capabilities: Set[str] = field(default_factory=set)
     security_level: SecurityLevel = SecurityLevel.INTERNAL
     priority: Priority = Priority.MEDIUM
 
@@ -269,10 +290,10 @@ class AdapterRegistration:
     def to_dict(self) -> Dict[str, Any]:
         """转换为字典"""
         return {
-            "adapter_id": self.adapter_id,
-            "name": self.name,
+            "adapter_id": self.identity.adapter_id,
+            "name": self.identity.name,
             "version": self.identity.version,
-            "adapter_type": self.adapter_type.value,
+            "adapter_type": self.identity.adapter_type.value,
             "status": self.status.value,
             "lifecycle_state": self.lifecycle_state.value,
             "health_status": self.health_status.value,

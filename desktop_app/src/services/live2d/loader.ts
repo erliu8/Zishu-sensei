@@ -2621,23 +2621,26 @@ export class Live2DModelLoader {
                   }
                 }
                 
-                // 只在有问题时输出详细日志
-                if (stageState.stageChildren === 0 || !stageState.firstChildVisible) {
-                  console.log('🔧 [DEBUG] 渲染监控 - 发现问题:')
-                  console.log('  👶 Stage子对象数量:', stageState.stageChildren)
-                  console.log('  👁️ 模型可见性:', stageState.firstChildVisible, '透明度:', stageState.firstChildAlpha)
-                  console.log('  📍 模型位置:', stageState.firstChildPosition)
-                  console.log('  📏 模型缩放:', stageState.firstChildScale)
-                }
+                // 输出详细日志
+                console.log('🎨 [DEBUG] 渲染监控状态:')
+                console.log('  👶 Stage子对象数量:', stageState.stageChildren)
+                console.log('  🎭 Stage可见性:', stageState.stageVisible, '透明度:', stageState.stageAlpha)
+                console.log('  🤖 模型类型:', stageState.firstChildType)
+                console.log('  👁️ 模型可见性:', stageState.firstChildVisible, '透明度:', stageState.firstChildAlpha)
+                console.log('  📍 模型位置:', stageState.firstChildPosition)
+                console.log('  📏 模型缩放:', stageState.firstChildScale)
+                console.log('  🖼️ 渲染器尺寸:', stageState.rendererSize)
                 
                 // 强制渲染一次
                 this.app.renderer.render(this.app.stage)
               }
             }
             
-            // 立即监控一次，然后减少监控频率
-            setTimeout(monitorRendering, 1000)
-            // 减少后续监控频率，避免控制台噪音
+            // 立即监控一次
+            monitorRendering()
+            // 后续定期监控
+            setTimeout(monitorRendering, 2000)
+            setTimeout(monitorRendering, 5000)
             setTimeout(monitorRendering, 10000)
       } catch (renderError) {
         console.error('❌ [DEBUG] 强制渲染测试失败:', renderError)
@@ -2645,6 +2648,76 @@ export class Live2DModelLoader {
       
       // 最终位置/可见性修正并立即渲染一次
       this.finalizeModelPlacement(modelInstance)
+
+      // 🔧 [FIX] 强制设置Canvas的CSS样式确保可见
+      if (this.canvas) {
+        console.log('🎨 [CSS FIX] 强制设置Canvas样式确保可见')
+        const canvas = this.canvas as HTMLCanvasElement
+        
+        // 🔍 [DOM DEBUG] 检查DOM层级
+        let element: HTMLElement | null = canvas
+        const domHierarchy: Array<{tag: string, class: string, id: string, zIndex: string, opacity: string, display: string}> = []
+        let depth = 0
+        while (element && depth < 10) {
+          const computed = window.getComputedStyle(element)
+          domHierarchy.push({
+            tag: element.tagName,
+            class: element.className || '',
+            id: element.id || '',
+            zIndex: computed.zIndex,
+            opacity: computed.opacity,
+            display: computed.display
+          })
+          element = element.parentElement
+          depth++
+        }
+        console.log('🔍 [DOM DEBUG] Canvas DOM层级:')
+        domHierarchy.forEach((layer, index) => {
+          console.log(`  层级 ${index}: ${layer.tag}.${layer.class || '(无class)'}#${layer.id || '(无id)'}`, {
+            zIndex: layer.zIndex,
+            opacity: layer.opacity,
+            display: layer.display
+          })
+        })
+        
+        // 先设置父元素样式
+        const parent = canvas.parentElement
+        if (parent) {
+          console.log('🎨 [CSS FIX] 设置父元素样式')
+          parent.style.display = 'block'
+          parent.style.opacity = '1'
+          parent.style.visibility = 'visible'
+          parent.style.overflow = 'visible'
+          parent.style.minHeight = '400px'
+          parent.style.position = 'relative'
+          parent.style.zIndex = '1'
+          console.log(`✅ [CSS FIX] 父元素样式: ${parent.tagName}.${parent.className}`, {
+            width: parent.offsetWidth,
+            height: parent.offsetHeight
+          })
+        }
+        
+        // 🔧 [CRITICAL FIX] 修复HTML元素透明度
+        const htmlElement = document.documentElement
+        if (htmlElement && window.getComputedStyle(htmlElement).opacity === '0') {
+          htmlElement.style.opacity = '1'
+        }
+        
+        // 设置Canvas样式 - 确保可见性
+        canvas.style.cssText = `
+          display: block !important;
+          opacity: 1 !important;
+          visibility: visible !important;
+          position: relative !important;
+          z-index: 1 !important;
+          width: 100% !important;
+          height: 100% !important;
+          pointer-events: auto !important;
+          min-width: 200px !important;
+          min-height: 200px !important;
+          overflow: visible !important;
+        `.replace(/\s+/g, ' ').trim()
+      }
 
       // 🔧 [FIX] 启动持续渲染循环
       this.startRenderLoop()
@@ -5151,14 +5224,6 @@ export class Live2DModelLoader {
       this.app.ticker.add(() => {
         try {
           if (this.app && this.app.renderer && this.app.stage) {
-            // 🔧 [DEBUG] 定期输出渲染状态（每10秒一次）
-            if (this.renderDebugCounter % 600 === 0) { // 60fps * 10s = 600
-              console.log('🎨 [RENDER DEBUG] 渲染状态:')
-              console.log('  👥 Stage子元素:', this.app.stage.children.length)
-              console.log('  🎯 有Live2D模型:', this.app.stage.children.some(child => child.constructor.name.includes('Live2D')))
-            }
-            this.renderDebugCounter++
-            
             // 检查WebGL上下文是否有效
             const gl = (this.app.renderer as any).gl
             if (gl && !gl.isContextLost() && !(this.app.renderer as any).destroyed) {
@@ -5184,7 +5249,6 @@ export class Live2DModelLoader {
   }
 
   private renderLoopAdded = false
-  private renderDebugCounter = 0
 
   /**
    * 更新循环

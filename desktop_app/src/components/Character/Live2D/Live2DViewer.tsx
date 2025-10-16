@@ -238,43 +238,28 @@ export const Live2DViewer = forwardRef<Live2DViewerRef, Live2DViewerProps>(({
     if (!canvasRef.current) return
 
     // 执行WebGL诊断
-    console.log('🔍 执行WebGL诊断...')
     printWebGLDiagnostics()
     
     const tauriIssues = checkTauriWebGLIssues()
     if (tauriIssues.length > 0) {
-      console.group('⚠️ Tauri WebGL问题')
-      tauriIssues.forEach(issue => console.warn(issue))
-      console.groupEnd()
+      console.warn('⚠️ Tauri WebGL问题:', tauriIssues)
     }
 
     const maybeLoadInitialModel = async () => {
       try {
-        console.log('🔍 Live2DViewer 检查模型加载条件:')
-        console.log('  - isReady:', isReady)
-        console.log('  - hasModelConfig:', !!modelConfig)
-        console.log('  - initialModelLoaded:', initialModelLoadedRef.current)
-        console.log('  - cancelled:', cancelledRef.current)
-        console.log('  - modelConfig:', modelConfig)
-        
         if (cancelledRef.current) return
         if (isReady && modelConfig && !initialModelLoadedRef.current) {
-          console.log('🎯 开始加载初始模型:', modelConfig.name)
           await loadModel(modelConfig, finalRenderConfig)
           if (cancelledRef.current) return
           initialModelLoadedRef.current = true
-          console.log('✅ 初始模型加载完成:', modelConfig.name)
           
           // 🔧 [FIX] 模型加载完成后，同步模型位置到组件状态
           const transform = viewerApi.service?.getModelTransform?.(modelConfig.id)
           if (transform) {
-            console.log('🔧 [FIX] 同步模型位置到组件状态:', transform)
             setModelPosition({ x: transform.x, y: transform.y })
           }
           
           ;(emitEvent as any)?.(Live2DViewerEvent.VIEWER_READY, { viewerId: 'live2d-viewer' })
-        } else {
-          console.log('⏳ 模型加载条件未满足，等待...')
         }
       } catch (error) {
         if (cancelledRef.current) return
@@ -326,20 +311,6 @@ export const Live2DViewer = forwardRef<Live2DViewerRef, Live2DViewerProps>(({
         hasParent: !!canvas.parentElement
       }
       
-      console.log('🔧 [DEBUG] Canvas状态监控:')
-      console.log('  📅 时间戳:', canvasState.timestamp)
-      console.log('  🎯 Canvas存在:', canvasState.canvasExists)
-      console.log('  👁️ 显示状态:', {
-        display: canvasState.display,
-        visibility: canvasState.visibility,
-        opacity: canvasState.opacity
-      })
-      console.log('  📏 Canvas尺寸:', canvasState.dimensions)
-      console.log('  📐 边界矩形:', canvasState.boundingRect)
-      console.log('  🖥️ WebGL上下文:', canvasState.webglContext)
-      console.log('  📦 父元素:', canvasState.parentElement)
-      console.log('  🔗 有父元素:', canvasState.hasParent)
-      
       // 🔧 [CRITICAL] 检查并修复Canvas问题
       let needsRecovery = false
       
@@ -363,8 +334,6 @@ export const Live2DViewer = forwardRef<Live2DViewerRef, Live2DViewerProps>(({
       
       // 执行恢复操作
       if (needsRecovery) {
-        console.log('🔧 [RECOVERY] 开始Canvas状态恢复...')
-        
         // 🔧 [CRITICAL FIX] 强制清理旧的Canvas状态
         try {
           // 清理可能存在的WebGL上下文
@@ -389,8 +358,6 @@ export const Live2DViewer = forwardRef<Live2DViewerRef, Live2DViewerProps>(({
         newCanvas.style.width = '100%'
         newCanvas.style.height = '100%'
         newCanvas.style.cursor = finalConfig.enableInteraction ? 'pointer' : 'default'
-        
-        console.log(`🔧 [RECOVERY] Canvas尺寸设置: 内部=${newCanvas.width}x${newCanvas.height}, 样式=${newCanvas.style.width}x${newCanvas.style.height}`)
         newCanvas.style.position = 'relative'
         
         // 🔧 [CRITICAL FIX] 强制设置Canvas的内部属性
@@ -405,7 +372,6 @@ export const Live2DViewer = forwardRef<Live2DViewerRef, Live2DViewerProps>(({
         
         // 替换Canvas元素
         if (containerRef.current) {
-          console.log('🔧 [RECOVERY] 替换Canvas元素...')
           try {
             // 移除旧Canvas
             if (canvas.parentNode) {
@@ -429,43 +395,21 @@ export const Live2DViewer = forwardRef<Live2DViewerRef, Live2DViewerProps>(({
 
             // 向全局派发 Canvas 恢复事件，交由 Hook 统一处理重建
             window.dispatchEvent(new Event('live2d-canvas-recovered'))
-
-            console.log('✅ [RECOVERY] Canvas元素替换成功')
           } catch (error) {
-            console.error('❌ [RECOVERY] Canvas元素替换失败:', error)
+            console.error('❌ Canvas元素替换失败:', error)
           }
         }
         
-        console.log('✅ [RECOVERY] Canvas状态恢复完成')
-        
         // 🔧 [CRITICAL] 重置模型加载状态，确保热重载后能重新加载模型
-        console.log('🔄 [RECOVERY] 重置模型加载状态...')
         initialModelLoadedRef.current = false
         
         // 重新检查状态并触发服务重新初始化
         setTimeout(() => {
-          const newRect = canvas.getBoundingClientRect()
-          console.log('🔍 [RECOVERY] 恢复后Canvas状态:', {
-            clientWidth: canvas.clientWidth,
-            clientHeight: canvas.clientHeight,
-            boundingRect: {
-              width: newRect.width,
-              height: newRect.height,
-              visible: newRect.width > 0 && newRect.height > 0
-            },
-            hasParent: !!canvas.parentElement,
-            parentTag: canvas.parentElement?.tagName
-          })
-          
           // 🔧 [CRITICAL] 触发服务重新检查和初始化
-          // 通过强制更新canvasRef来触发useLive2DViewer的useEffect
           if (canvasRef.current) {
-            console.log('🔄 [RECOVERY] 触发Live2D服务重新检查...')
             // 兼容旧的组件内事件（保留）
             const event = new CustomEvent('canvas-recovered')
             canvasRef.current.dispatchEvent(event)
-            // 同时已通过 window 派发全局事件，Hook 将负责服务重建
-            console.log('🔄 [RECOVERY] 强制重新检查模型加载条件...')
           }
         }, 100)
       }
@@ -562,50 +506,26 @@ export const Live2DViewer = forwardRef<Live2DViewerRef, Live2DViewerProps>(({
       return
     }
     
-    if (!viewerApi.isReady) {
-      console.log('🖱️ [DRAG] API未就绪')
-      return
-    }
+    if (!viewerApi.isReady) return
 
     // 🔧 [FIX] 使用拖拽开始时的初始位置 + 累积偏移量，而不是每次基于当前位置累加
     const dx = event.clientX - dragStart.x
     const dy = event.clientY - dragStart.y
-    
-    console.log('🖱️ [DRAG] 拖拽中:', { dx, dy, isDragging, dragInitialPosition })
 
     // 获取当前模型
     const currentModel = viewerApi.getCurrentModel?.()
-    if (!currentModel) {
-      console.log('🖱️ [DRAG] 无法获取当前模型')
-      return
-    }
+    if (!currentModel) return
 
     const service = (viewerApi as any).service
-    if (!service) {
-      console.log('🖱️ [DRAG] Service不可用')
-      return
-    }
+    if (!service) return
 
     // 获取模型ID
     const modelId = currentModel.config?.id
-    if (!modelId) {
-      console.log('🖱️ [DRAG] 无法获取模型ID:', currentModel)
-      return
-    }
+    if (!modelId) return
 
     // 🔧 [FIX] 基于拖拽开始时的初始位置计算新位置
     const newX = dragInitialPosition.x + dx
     const newY = dragInitialPosition.y + dy
-    
-    console.log('🖱️ [DRAG] 更新模型位置:', { 
-      modelId, 
-      initialX: dragInitialPosition.x, 
-      initialY: dragInitialPosition.y, 
-      newX, 
-      newY, 
-      dx, 
-      dy 
-    })
     
     service.updateModelPosition(modelId, newX, newY)
     setModelPosition({ x: newX, y: newY })
@@ -615,9 +535,6 @@ export const Live2DViewer = forwardRef<Live2DViewerRef, Live2DViewerProps>(({
    * 鼠标松开 - 结束拖动
    */
   const handleMouseUp = useCallback(() => {
-    if (isDragging) {
-      console.log('🖱️ [DRAG] 结束拖拽')
-    }
     setIsDragging(false)
   }, [isDragging])
 
@@ -627,54 +544,33 @@ export const Live2DViewer = forwardRef<Live2DViewerRef, Live2DViewerProps>(({
    */
   useEffect(() => {
     const canvas = canvasRef.current
-    if (!canvas) {
-      console.log('🎡 [WHEEL] Canvas不存在，跳过滚轮监听器')
-      return
-    }
+    if (!canvas) return
 
     const handleWheel = (event: WheelEvent) => {
-      console.log('🎡 [WHEEL] 滚轮事件:', { deltaY: event.deltaY })
-      
       // 先阻止默认行为
       event.preventDefault()
       event.stopPropagation()
       
-      if (!viewerApi.isReady) {
-        console.log('🎡 [WHEEL] API未就绪')
-        return
-      }
+      if (!viewerApi.isReady) return
       
       const currentModel = viewerApi.getCurrentModel?.()
-      if (!currentModel) {
-        console.log('🎡 [WHEEL] 无模型')
-        return
-      }
+      if (!currentModel) return
 
       const service = (viewerApi as any).service
-      if (!service) {
-        console.log('🎡 [WHEEL] Service不可用')
-        return
-      }
+      if (!service) return
 
       // 获取模型ID
       const modelId = currentModel.config?.id
-      if (!modelId) {
-        console.log('🎡 [WHEEL] 无法获取模型ID')
-        return
-      }
+      if (!modelId) return
 
       // 获取当前缩放
       const transform = service.getModelTransform(modelId)
-      if (!transform) {
-        console.log('🎡 [WHEEL] 无法获取transform')
-        return
-      }
+      if (!transform) return
 
       // 计算新的缩放值
       const delta = event.deltaY > 0 ? -0.1 : 0.1
       const newScale = Math.max(0.1, Math.min(5.0, transform.scale + delta))
       
-      console.log('🎡 [WHEEL] 缩放:', { oldScale: transform.scale, newScale, delta })
       service.updateModelScale(modelId, newScale)
     }
 
@@ -736,7 +632,6 @@ export const Live2DViewer = forwardRef<Live2DViewerRef, Live2DViewerProps>(({
       if (viewerApi.isReady && (viewerApi as any).service) {
         const service = (viewerApi as any).service
         if (service.app && service.app.renderer) {
-          console.log('🔄 Canvas尺寸变化，调整渲染器:', newSize)
           service.app.renderer.resize(newSize.width, newSize.height)
         }
       }
@@ -767,63 +662,22 @@ export const Live2DViewer = forwardRef<Live2DViewerRef, Live2DViewerProps>(({
         style={canvasStyle}
         width={canvasSize.width}
         height={canvasSize.height}
-        onClick={(event) => {
-          console.log('👆 [DEBUG] Canvas直接点击事件:', {
-            clientX: event.clientX,
-            clientY: event.clientY,
-            offsetX: event.nativeEvent.offsetX,
-            offsetY: event.nativeEvent.offsetY,
-            button: event.button,
-            canvasSize: {
-              width: finalConfig.canvasSize.width,
-              height: finalConfig.canvasSize.height
-            },
-            modelState: {
-              loaded: modelState.loaded,
-              interactive: modelState.interactive,
-              visible: modelState.visible
-            }
-          })
+        onClick={() => {
+          // Canvas点击事件 - 由Live2D服务处理
         }}
         onMouseDown={(event) => {
-          console.log('👆 [DEBUG] Canvas鼠标按下:', {
-            clientX: event.clientX,
-            clientY: event.clientY,
-            button: event.button
-          })
           handleMouseDown(event)
         }}
-        onMouseUp={(event) => {
-          console.log('👆 [DEBUG] Canvas鼠标释放:', {
-            clientX: event.clientX,
-            clientY: event.clientY,
-            button: event.button
-          })
+        onMouseUp={() => {
+          // 鼠标释放
         }}
         onContextMenu={() => {
-          console.log('🖱️ [DEBUG] Canvas右键菜单 - 允许冒泡到父组件显示自定义菜单')
           // 不阻止事件冒泡，让右键事件传播到 PetWindow，从而触发自定义菜单
+          // 注意：我们不调用 event.preventDefault() 或 event.stopPropagation()
+          console.log('🖱️ [CONTEXT MENU] 右键菜单事件触发，传播到父组件')
         }}
         onLoad={() => {
-          // 🔧 [DEBUG] Canvas加载后检查可见性
-          if (canvasRef.current) {
-            const canvas = canvasRef.current
-            const computedStyle = window.getComputedStyle(canvas)
-            console.log('🔧 [DEBUG] Canvas可见性检查:', {
-              display: computedStyle.display,
-              visibility: computedStyle.visibility,
-              opacity: computedStyle.opacity,
-              width: computedStyle.width,
-              height: computedStyle.height,
-              position: computedStyle.position,
-              zIndex: computedStyle.zIndex,
-              clientWidth: canvas.clientWidth,
-              clientHeight: canvas.clientHeight,
-              offsetWidth: canvas.offsetWidth,
-              offsetHeight: canvas.offsetHeight,
-              boundingRect: canvas.getBoundingClientRect()
-            })
-          }
+          // Canvas加载完成
         }}
       />
 

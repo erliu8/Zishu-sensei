@@ -5,10 +5,11 @@
   flex-direction: column;
   background: transparent;
   border-radius: 8px;
-  overflow: hidden;
+  overflow: visible !important; /* 🔧 确保内容不被裁剪 */
   user-select: none;
   font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', 'Roboto', sans-serif;
   z-index: 10; /* ensure above base layout */
+  min-height: 400px !important; /* 🔧 确保有最小高度 */
 }
 
 .live2d-viewer--fullscreen {
@@ -23,11 +24,16 @@
 
 /* 画布样式 */
 .live2d-viewer__canvas {
-  display: block;
-  width: 100%;
-  height: 100%;
-  background: transparent;
+  display: block !important;
+  width: 100% !important;
+  height: 100% !important;
+  background: rgba(255, 0, 0, 0.1); /* 临时红色背景，用于调试 */
   transition: cursor 0.2s ease;
+  position: relative !important;
+  z-index: 1 !important;
+  opacity: 1 !important;
+  visibility: visible !important;
+  pointer-events: auto !important;
 }
 
 .live2d-viewer__canvas:hover {
@@ -153,7 +159,7 @@
 }
 
 .live2d-viewer--loading .live2d-viewer__canvas {
-  opacity: 0.7;
+  opacity: 1 !important; /* 🔧 确保加载时也完全可见 */
 }
 
 /* 无障碍支持 */

@@ -212,8 +212,8 @@ export class Live2DInteractionManager {
     document.addEventListener('keydown', this.handleKeyDown.bind(this))
     document.addEventListener('keyup', this.handleKeyUp.bind(this))
 
-    // 防止右键菜单
-    this.canvas.addEventListener('contextmenu', (e) => e.preventDefault())
+    // 🔧 [FIX] 不阻止右键菜单，允许事件冒泡到父组件
+    // this.canvas.addEventListener('contextmenu', (e) => e.preventDefault())
   }
 
   /**

@@ -75,7 +75,7 @@ from ..base.metadata import (
     AdapterType,
     SecurityLevel,
 )
-from ..base.security import SecurityManager
+from ..core.security import SecurityManager
 from ..utils.config import ConfigManager, get_config_manager
 
 # 配置日志

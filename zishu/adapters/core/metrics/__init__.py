@@ -78,19 +78,31 @@ from .alerts import (
     WebhookNotifier,
 )
 
-# 便捷函数
+# 便捷函数、配置和类型别名
 from .utils import (
-    create_metrics_service,
-    setup_default_collectors,
-    register_prometheus_metrics,
-    start_metrics_server,
-    get_metrics_summary,
+    MetricsService,  # 类型别名，指向AdapterMetricsService
+    MetricsConfig,
+    setup_metrics_system,
+    set_global_metrics_service,
+    get_global_metrics_service,
+    clear_global_metrics_service,
 )
+
+# 暂时注释掉不存在的函数
+# from .utils import (
+#     create_metrics_service,
+#     setup_default_collectors,
+#     register_prometheus_metrics,
+#     start_metrics_server,
+#     get_metrics_summary,
+# )
 
 __all__ = [
     # 核心组件
     "AdapterMetricsService",
+    "MetricsService",  # 类型别名
     "MetricsServiceConfig",
+    "MetricsConfig",
     # 数据结构
     "Metric",
     "MetricType",

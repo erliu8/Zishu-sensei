@@ -115,7 +115,15 @@ export const Character: React.FC<CharacterProps> = ({
     }, [character, onInteraction])
 
     return (
-        <div className="relative w-full h-full pointer-events-auto flex items-center justify-center">
+        <div style={{
+            position: 'relative',
+            width: '100%',
+            height: '100%',
+            pointerEvents: 'auto',
+            display: 'flex',
+            alignItems: 'center',
+            justifyContent: 'center',
+        }}>
             <Live2DViewer
                 config={viewerConfig}
                 modelConfig={hiyoriModelConfig}

@@ -65,8 +65,18 @@ except ImportError:
 # 项目内部导入
 from ..utils.cache import CacheManager
 from ..utils.performance import PerformanceMonitor
-from .knowledge_base import KnowledgeBase, KnowledgeItem
+from .knowledge_base import KnowledgeBaseAdapter, Document
 from .prompt_engine import PromptEngine
+
+
+# ================================
+# 异常类定义
+# ================================
+
+
+class RAGEngineError(Exception):
+    """RAG引擎异常基类"""
+    pass
 
 
 # ================================
@@ -156,6 +166,17 @@ class GenerationConfig:
 
 
 @dataclass
+class RerankingConfig:
+    """重排序配置"""
+    
+    enabled: bool = True
+    model_name: str = "cross-encoder/ms-marco-MiniLM-L-6-v2"
+    top_k: int = 3
+    batch_size: int = 16
+    max_length: int = 512
+
+
+@dataclass
 class RAGConfig:
     """RAG整体配置"""
 
@@ -167,12 +188,27 @@ class RAGConfig:
     enable_monitoring: bool = True
     batch_size: int = 32
     max_retries: int = 3
+    
+    # 测试配置支持的额外字段
+    vector_store_type: str = "memory"
+    embedding_model: str = "text-embedding-ada-002"
+    embedding_dimension: int = 1536
+    retrieval_config: Optional[RetrievalConfig] = None
+    reranking_config: Optional[RerankingConfig] = None
+    max_document_size: int = 10000
+    
+    def __post_init__(self):
+        # 为了向后兼容，使用retrieval_config如果提供了的话
+        if self.retrieval_config is not None:
+            self.retrieval = self.retrieval_config
+        if self.reranking_config is None:
+            self.reranking_config = RerankingConfig()
 
 
 class RetrievalResult(NamedTuple):
     """检索结果"""
 
-    item: KnowledgeItem
+    item: Document
     score: float
     rank: int
     metadata: Dict[str, Any]
@@ -188,9 +224,85 @@ class RAGResult(NamedTuple):
     processing_time: float
 
 
+class QueryResult(NamedTuple):
+    """查询结果"""
+    
+    document: Document
+    score: float
+    retrieval_method: str = "similarity"
+
+
 # ================================
 # 核心接口定义
 # ================================
+
+
+class DocumentStore(ABC):
+    """文档存储抽象基类"""
+    
+    @abstractmethod
+    async def add_document(self, document: Document) -> str:
+        """添加文档"""
+        pass
+    
+    @abstractmethod
+    async def get_document(self, document_id: str) -> Optional[Document]:
+        """获取文档"""
+        pass
+    
+    @abstractmethod
+    async def get_documents(self, document_ids: List[str]) -> List[Document]:
+        """批量获取文档"""
+        pass
+    
+    @abstractmethod
+    async def delete_document(self, document_id: str) -> bool:
+        """删除文档"""
+        pass
+    
+    @abstractmethod
+    async def search_by_metadata(self, filters: Dict[str, Any]) -> List[Document]:
+        """按元数据搜索文档"""
+        pass
+
+
+class VectorStore(ABC):
+    """向量存储抽象基类"""
+    
+    @abstractmethod
+    async def add_vectors(self, vectors: List[Dict[str, Any]]) -> bool:
+        """添加向量"""
+        pass
+    
+    @abstractmethod
+    async def search(self, query_vector: np.ndarray, top_k: int = 10, 
+                    filters: Optional[Dict[str, Any]] = None) -> List[Dict[str, Any]]:
+        """搜索相似向量"""
+        pass
+    
+    @abstractmethod
+    async def delete(self, vector_id: str) -> bool:
+        """删除向量"""
+        pass
+    
+    @abstractmethod
+    def get_statistics(self) -> Dict[str, Any]:
+        """获取统计信息"""
+        pass
+
+
+class EmbeddingService(ABC):
+    """嵌入服务抽象基类"""
+    
+    @abstractmethod
+    async def encode(self, text: str) -> np.ndarray:
+        """编码单个文本"""
+        pass
+    
+    @abstractmethod
+    async def encode_batch(self, texts: List[str]) -> List[np.ndarray]:
+        """批量编码文本"""
+        pass
 
 
 class Retriever(ABC):
@@ -232,6 +344,46 @@ class Generator(ABC):
 
 
 # ================================
+# 服务类
+# ================================
+
+
+class RetrievalService:
+    """检索服务"""
+    
+    def __init__(self, config: RetrievalConfig):
+        self.config = config
+    
+    def process_query(self, query: str) -> str:
+        """处理查询"""
+        # 简单的查询预处理
+        processed = query.strip().lower()
+        return processed
+    
+    def filter_results(self, results: List[Dict[str, Any]], 
+                      similarity_threshold: float) -> List[Dict[str, Any]]:
+        """过滤结果"""
+        return [r for r in results if r.get("score", 0) >= similarity_threshold]
+
+
+class RerankingService:
+    """重排序服务"""
+    
+    def __init__(self, config: RerankingConfig):
+        self.config = config
+    
+    async def rerank(self, query: str, results: List[Dict[str, Any]]) -> List[Dict[str, Any]]:
+        """重新排序结果"""
+        # 简单的重排序实现
+        for i, result in enumerate(results):
+            # 模拟重排序分数
+            result["rerank_score"] = result.get("score", 0) * (1.0 - i * 0.05)
+        
+        # 按重排序分数排序
+        return sorted(results, key=lambda x: x.get("rerank_score", 0), reverse=True)
+
+
+# ================================
 # 具体实现类
 # ================================
 
@@ -240,7 +392,7 @@ class SimilarityRetriever(Retriever):
     """基于相似度的检索器"""
 
     def __init__(
-        self, knowledge_base: KnowledgeBase, embedding_model: Optional[str] = None
+        self, knowledge_base: KnowledgeBaseAdapter, embedding_model: Optional[str] = None
     ):
         self.knowledge_base = knowledge_base
         self.embedding_model = embedding_model
@@ -435,7 +587,7 @@ class RAGEngine:
 
     def __init__(
         self,
-        knowledge_base: KnowledgeBase,
+        knowledge_base: KnowledgeBaseAdapter,
         prompt_engine: PromptEngine,
         config: Optional[RAGConfig] = None,
         cache_manager: Optional[CacheManager] = None,
@@ -1224,7 +1376,7 @@ class HybridGenerator(Generator):
 class FactCheckingGenerator(Generator):
     """事实核查生成器"""
 
-    def __init__(self, prompt_engine: PromptEngine, knowledge_base: KnowledgeBase):
+    def __init__(self, prompt_engine: PromptEngine, knowledge_base: KnowledgeBaseAdapter):
         self.prompt_engine = prompt_engine
         self.knowledge_base = knowledge_base
         self.fact_cache = {}
@@ -1353,7 +1505,7 @@ class RAGEngineFactory:
     @staticmethod
     def create_engine(
         engine_type: str,
-        knowledge_base: KnowledgeBase,
+        knowledge_base: KnowledgeBaseAdapter,
         prompt_engine: PromptEngine,
         config: Optional[RAGConfig] = None,
         **kwargs,
@@ -1417,7 +1569,7 @@ class RAGEngineFactory:
 class KeywordRetriever(Retriever):
     """基于关键词的检索器实现"""
 
-    def __init__(self, knowledge_base: KnowledgeBase):
+    def __init__(self, knowledge_base: KnowledgeBaseAdapter):
         self.knowledge_base = knowledge_base
 
     async def retrieve(
@@ -1432,9 +1584,9 @@ class KeywordRetriever(Retriever):
             # 这里是模拟实现
             for i in range(min(config.top_k, 3)):
                 # 创建模拟的知识项
-                from .knowledge_base import KnowledgeItem
+                from .knowledge_base import Document
 
-                item = KnowledgeItem(
+                item = Document(
                     id=f"keyword_{i}",
                     content=f"基于关键词'{', '.join(keywords)}'找到的相关内容 {i+1}",
                     source=f"keyword_source_{i}",
@@ -2009,6 +2161,150 @@ class RAGUtils:
 
 
 # ================================
+# 具体存储实现类（用于测试）
+# ================================
+
+
+class MemoryDocumentStore(DocumentStore):
+    """内存文档存储实现"""
+    
+    def __init__(self):
+        self._documents: Dict[str, Document] = {}
+    
+    async def add_document(self, document: Document) -> str:
+        """添加文档"""
+        doc_id = document.id or str(uuid.uuid4())
+        # 创建带ID的新文档
+        new_doc = Document(
+            id=doc_id,
+            content=document.content,
+            source=document.source,
+            metadata=document.metadata
+        )
+        self._documents[doc_id] = new_doc
+        return doc_id
+    
+    async def get_document(self, document_id: str) -> Optional[Document]:
+        """获取文档"""
+        return self._documents.get(document_id)
+    
+    async def get_documents(self, document_ids: List[str]) -> List[Document]:
+        """批量获取文档"""
+        return [self._documents[doc_id] for doc_id in document_ids 
+                if doc_id in self._documents]
+    
+    async def delete_document(self, document_id: str) -> bool:
+        """删除文档"""
+        if document_id in self._documents:
+            del self._documents[document_id]
+            return True
+        return False
+    
+    async def search_by_metadata(self, filters: Dict[str, Any]) -> List[Document]:
+        """按元数据搜索文档"""
+        results = []
+        for doc in self._documents.values():
+            if all(doc.metadata.get(k) == v for k, v in filters.items()):
+                results.append(doc)
+        return results
+
+
+class MemoryVectorStore(VectorStore):
+    """内存向量存储实现"""
+    
+    def __init__(self, dimension: int = 1536):
+        self.dimension = dimension
+        self._vectors: Dict[str, Dict[str, Any]] = {}
+    
+    async def add_vectors(self, vectors: List[Dict[str, Any]]) -> bool:
+        """添加向量"""
+        try:
+            for vector_data in vectors:
+                vector_id = vector_data["id"]
+                self._vectors[vector_id] = vector_data
+            return True
+        except Exception:
+            return False
+    
+    async def search(self, query_vector: np.ndarray, top_k: int = 10, 
+                    filters: Optional[Dict[str, Any]] = None) -> List[Dict[str, Any]]:
+        """搜索相似向量"""
+        if not NUMPY_AVAILABLE:
+            # 返回模拟结果
+            return [
+                {"id": f"vec_{i}", "score": 0.9 - i * 0.1, "metadata": {}}
+                for i in range(min(top_k, 3))
+            ]
+        
+        results = []
+        for vector_id, vector_data in self._vectors.items():
+            # 应用过滤器
+            if filters:
+                metadata = vector_data.get("metadata", {})
+                if not all(metadata.get(k) == v for k, v in filters.items()):
+                    continue
+            
+            # 计算相似度
+            stored_vector = vector_data.get("vector")
+            if stored_vector is not None:
+                # 计算余弦相似度
+                similarity = np.dot(query_vector, stored_vector) / (
+                    np.linalg.norm(query_vector) * np.linalg.norm(stored_vector)
+                )
+                results.append({
+                    "id": vector_id,
+                    "score": float(similarity),
+                    "metadata": vector_data.get("metadata", {})
+                })
+        
+        # 按分数排序并返回top_k
+        results.sort(key=lambda x: x["score"], reverse=True)
+        return results[:top_k]
+    
+    async def delete(self, vector_id: str) -> bool:
+        """删除向量"""
+        if vector_id in self._vectors:
+            del self._vectors[vector_id]
+            return True
+        return False
+    
+    def get_statistics(self) -> Dict[str, Any]:
+        """获取统计信息"""
+        return {
+            "total_vectors": len(self._vectors),
+            "dimension": self.dimension,
+            "index_size": len(self._vectors) * self.dimension * 4  # 假设float32
+        }
+
+
+class MockEmbeddingService(EmbeddingService):
+    """模拟嵌入服务实现"""
+    
+    def __init__(self, dimension: int = 1536):
+        self.dimension = dimension
+        # 为了一致性，使用固定种子
+        self._rng = np.random.RandomState(42) if NUMPY_AVAILABLE else None
+    
+    async def encode(self, text: str) -> np.ndarray:
+        """编码单个文本"""
+        if not NUMPY_AVAILABLE:
+            # 返回模拟向量
+            return [0.1] * self.dimension
+        
+        # 基于文本内容生成确定性向量
+        text_hash = hash(text)
+        self._rng.seed(abs(text_hash) % (2**32))
+        vector = self._rng.normal(0, 1, self.dimension)
+        # 归一化
+        vector = vector / np.linalg.norm(vector)
+        return vector.astype(np.float32)
+    
+    async def encode_batch(self, texts: List[str]) -> List[np.ndarray]:
+        """批量编码文本"""
+        return [await self.encode(text) for text in texts]
+
+
+# ================================
 # 主要导出接口
 # ================================
 
@@ -2018,8 +2314,23 @@ __all__ = [
     "RAGConfig",
     "RetrievalConfig",
     "GenerationConfig",
+    "RerankingConfig",
     "RAGResult",
     "RetrievalResult",
+    "QueryResult",
+    # 异常类
+    "RAGEngineError",
+    # 抽象基类
+    "DocumentStore",
+    "VectorStore", 
+    "EmbeddingService",
+    # 服务类
+    "RetrievalService",
+    "RerankingService",
+    # 具体实现类
+    "MemoryDocumentStore",
+    "MemoryVectorStore",
+    "MockEmbeddingService",
     # 枚举
     "RAGMode",
     "RetrievalStrategy",

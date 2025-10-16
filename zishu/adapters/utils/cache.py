@@ -681,7 +681,7 @@ class FileBackend(CacheBackend):
 
 # Redis后端（可选）
 try:
-    import aioredis
+    from redis import asyncio as aioredis
 
     class RedisBackend(CacheBackend):
         """Redis存储后端"""
@@ -1362,6 +1362,14 @@ async def cache_transaction(cache: Optional[Cache] = None):
         pass
 
 
+# ================================
+# 向后兼容性别名
+# ================================
+
+# 为了保持与其他模块的兼容性
+CacheManager = Cache
+
+
 # 导出主要类和函数
 __all__ = [
     # 枚举
@@ -1375,6 +1383,7 @@ __all__ = [
     "CacheConfig",
     # 核心类
     "Cache",
+    "CacheManager",  # 别名
     "CacheBackend",
     "CacheSerializer",
     "CacheCompressor",

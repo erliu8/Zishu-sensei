@@ -4,7 +4,7 @@ Redis存储后端实现
 """
 
 import asyncio
-import aioredis
+from redis import asyncio as aioredis
 import json
 import uuid
 import logging

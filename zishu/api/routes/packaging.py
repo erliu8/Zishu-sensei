@@ -237,7 +237,7 @@ async def list_packages(
     verified_only: bool = Query(False, description="仅显示已验证的包"),
     # 排序
     sort_by: str = Query("updated_at", description="排序字段"),
-    sort_order: str = Query("desc", regex="^(asc|desc)$", description="排序方向"),
+    sort_order: str = Query("desc", pattern="^(asc|desc)$", description="排序方向"),
     current_user: Optional[User] = Depends(get_current_user),
     db: AsyncSession = Depends(get_db_session),
 ):

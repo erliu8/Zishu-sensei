@@ -67,10 +67,21 @@ class ValidationResult:
     """验证结果"""
 
     is_valid: bool
+    adapter_id: Optional[str] = None
     issues: List[ValidationIssue] = field(default_factory=list)
     score: float = 0.0  # 验证分数 (0-100)
     metadata: Dict[str, Any] = field(default_factory=dict)
     timestamp: datetime = field(default_factory=lambda: datetime.now(timezone.utc))
+
+    @property
+    def summary(self) -> str:
+        """获取验证结果摘要"""
+        if self.is_valid:
+            return f"Validation passed with score {self.score:.1f}"
+        else:
+            error_count = len([i for i in self.issues if i.severity == ValidationSeverity.ERROR])
+            warning_count = len([i for i in self.issues if i.severity == ValidationSeverity.WARNING])
+            return f"Validation failed: {error_count} errors, {warning_count} warnings"
 
     @property
     def has_errors(self) -> bool:
@@ -242,9 +253,11 @@ class AdapterValidationService(AsyncService):
                 status=ServiceHealth.HEALTHY,
                 message=f"Validation service healthy with {rules_count} rules",
                 details={
+                    "service_name": self.name,
                     "rules_count": rules_count,
                     "cache_size": cache_size,
                     "cache_hit_rate": self._calculate_cache_hit_rate(),
+                    "validation_rules_count": rules_count,
                 },
             )
 
@@ -259,7 +272,13 @@ class AdapterValidationService(AsyncService):
         self, registration: AdapterRegistration, use_cache: bool = True
     ) -> ValidationResult:
         """验证适配器"""
-        adapter_id = registration.identity.id
+        if not self.is_running:
+            raise RuntimeError(f"Service '{self.name}' is not running")
+        
+        if not registration:
+            raise ValueError("AdapterRegistration is required")
+        
+        adapter_id = registration.identity.adapter_id
 
         # 检查缓存
         if use_cache and adapter_id in self._validation_cache:
@@ -308,6 +327,7 @@ class AdapterValidationService(AsyncService):
             self._metrics.error_count += 1
             return ValidationResult(
                 is_valid=False,
+                adapter_id=adapter_id,
                 issues=[
                     ValidationIssue(
                         category=ValidationCategory.PERFORMANCE,
@@ -322,6 +342,7 @@ class AdapterValidationService(AsyncService):
             logger.error(f"Validation failed for adapter '{adapter_id}': {e}")
             return ValidationResult(
                 is_valid=False,
+                adapter_id=adapter_id,
                 issues=[
                     ValidationIssue(
                         category=ValidationCategory.STRUCTURE,
@@ -341,6 +362,10 @@ class AdapterValidationService(AsyncService):
             # 清空缓存（规则变化可能影响验证结果）
             self._validation_cache.clear()
 
+    async def register_validation_rule(self, rule: ValidationRule) -> None:
+        """注册验证规则（别名方法）"""
+        await self.add_validation_rule(rule)
+
     async def remove_validation_rule(self, rule_name: str) -> None:
         """移除验证规则"""
         async with self._validation_lock:
@@ -351,9 +376,20 @@ class AdapterValidationService(AsyncService):
                 # 清空缓存
                 self._validation_cache.clear()
 
-    async def get_validation_rules(self) -> List[ValidationRule]:
+    async def unregister_validation_rule(self, rule_name: str) -> bool:
+        """注销验证规则"""
+        async with self._validation_lock:
+            if rule_name in self._validation_rules:
+                del self._validation_rules[rule_name]
+                logger.info(f"Unregistered validation rule: {rule_name}")
+                # 清空缓存
+                self._validation_cache.clear()
+                return True
+            return False
+
+    async def get_validation_rules(self) -> Dict[str, ValidationRule]:
         """获取所有验证规则"""
-        return list(self._validation_rules.values())
+        return dict(self._validation_rules)
 
     async def clear_cache(self, adapter_id: Optional[str] = None) -> None:
         """清空验证缓存"""
@@ -376,6 +412,19 @@ class AdapterValidationService(AsyncService):
             "error_count": self.metrics.error_count,
             "rules_by_category": self._get_rules_by_category(),
         }
+
+    async def get_cache_stats(self) -> Dict[str, Any]:
+        """获取缓存统计信息"""
+        return {
+            "size": len(self._validation_cache),
+            "max_size": self._max_cache_size,
+            "ttl": self._cache_ttl,
+            "hit_rate": self._calculate_cache_hit_rate(),
+        }
+
+    def get_metrics(self):
+        """获取服务指标"""
+        return self._metrics
 
     # 内部方法
 
@@ -425,12 +474,13 @@ class AdapterValidationService(AsyncService):
 
         return ValidationResult(
             is_valid=is_valid,
+            adapter_id=registration.identity.adapter_id,
             issues=all_issues,
             score=final_score,
             metadata={
                 "rules_executed": rule_count,
-                "adapter_id": registration.identity.id,
-                "adapter_type": registration.identity.type,
+                "adapter_id": registration.identity.adapter_id,
+                "adapter_type": registration.identity.adapter_type,
             },
         )
 
@@ -586,8 +636,19 @@ class AdapterIdentityRule(ValidationRule):
         issues = []
         identity = registration.identity
 
+        if not identity:
+            issues.append(
+                ValidationIssue(
+                    category=self.category,
+                    severity=self.severity,
+                    message="Adapter identity is required",
+                    suggestion="Provide adapter identity information",
+                )
+            )
+            return issues
+
         # 检查ID
-        if not identity.id:
+        if not identity.adapter_id:
             issues.append(
                 ValidationIssue(
                     category=self.category,
@@ -596,7 +657,7 @@ class AdapterIdentityRule(ValidationRule):
                     suggestion="Provide a unique adapter ID",
                 )
             )
-        elif not re.match(r"^[a-zA-Z0-9_-]+$", identity.id):
+        elif not re.match(r"^[a-zA-Z0-9_-]+$", identity.adapter_id):
             issues.append(
                 ValidationIssue(
                     category=self.category,
@@ -607,7 +668,7 @@ class AdapterIdentityRule(ValidationRule):
             )
 
         # 检查类型
-        if not identity.type:
+        if not identity.adapter_type:
             issues.append(
                 ValidationIssue(
                     category=self.category,
@@ -765,11 +826,11 @@ class ConfigurationSchemaRule(ValidationRule):
         issues = []
         config = registration.configuration
 
-        if not config or not config.settings:
+        if not config or not config.config:
             return issues
 
         # 检查配置设置的合理性
-        settings = config.settings
+        settings = config.config
 
         # 检查超时设置
         if "timeout" in settings:
@@ -828,10 +889,10 @@ class SecurityConfigRule(ValidationRule):
         issues = []
         config = registration.configuration
 
-        if not config or not config.settings:
+        if not config or not config.config:
             return issues
 
-        settings = config.settings
+        settings = config.config
 
         # 检查敏感信息是否明文存储
         sensitive_keys = [
@@ -1052,7 +1113,7 @@ class DependencyRule(ValidationRule):
             return issues
 
         # 检查依赖声明
-        dependencies = getattr(config, "dependencies", None) or config.settings.get(
+        dependencies = getattr(config, "dependencies", None) or config.config.get(
             "dependencies", []
         )
 
@@ -1082,7 +1143,7 @@ class DependencyRule(ValidationRule):
                         )
 
         # 检查循环依赖（简单检查）
-        adapter_id = registration.identity.id
+        adapter_id = registration.identity.adapter_id
         if isinstance(dependencies, list):
             for dep in dependencies:
                 dep_name = dep.split("==")[0].split(">=")[0].split("<=")[0].strip()
@@ -1120,7 +1181,7 @@ class PermissionRule(ValidationRule):
         # 检查权限声明
         permissions = getattr(
             config, "required_permissions", None
-        ) or config.settings.get("permissions", [])
+        ) or config.config.get("permissions", [])
 
         if not permissions:
             issues.append(
@@ -1176,8 +1237,8 @@ class PerformanceRule(ValidationRule):
         adapter_class = registration.adapter_class
 
         # 检查性能相关配置
-        if config and config.settings:
-            settings = config.settings
+        if config and config.config:
+            settings = config.config
 
             # 检查超时设置
             timeout = settings.get("timeout", None)
@@ -1271,10 +1332,10 @@ class ResourceLimitRule(ValidationRule):
         issues = []
         config = registration.configuration
 
-        if not config or not config.settings:
+        if not config or not config.config:
             return issues
 
-        settings = config.settings
+        settings = config.config
 
         # 检查内存限制
         memory_limit = settings.get("memory_limit", None)
@@ -1416,8 +1477,8 @@ class VersionCompatibilityRule(ValidationRule):
 
         # 检查最小支持版本
         config = registration.configuration
-        if config and config.settings:
-            min_version = config.settings.get("min_supported_version", None)
+        if config and config.config:
+            min_version = config.config.get("min_supported_version", None)
             if min_version and isinstance(min_version, str):
                 # 简单比较（实际应使用proper version comparison library）
                 if min_version > version:
@@ -1453,7 +1514,7 @@ class PlatformCompatibilityRule(ValidationRule):
             return issues
 
         # 检查平台特定设置
-        settings = config.settings if config.settings else {}
+        settings = config.config if config.config else {}
 
         # 检查操作系统兼容性
         os_specific_keys = [

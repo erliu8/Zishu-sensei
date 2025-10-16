@@ -9,6 +9,7 @@ import logging
 from typing import Dict, List, Optional, Any, Set, Type
 from datetime import datetime, timezone
 from contextlib import asynccontextmanager
+import weakref
 
 from .services.base import AsyncService, ServiceStatus, ServiceHealth, HealthCheckResult
 from .services.orchestrator import AdapterServiceOrchestrator, OrchestratorConfig
@@ -23,6 +24,7 @@ from .types import (
     AdapterRegistration,
     AdapterIdentity,
     AdapterStatus,
+    AdapterType,
     LifecycleState,
     EventType,
     Event,
@@ -96,6 +98,13 @@ class AdapterManager:
         self._services: Dict[str, AsyncService] = {}
         self._adapters: Dict[str, BaseAdapter] = {}
 
+        # 并发控制和资源管理
+        self._adapter_locks: Dict[str, asyncio.Lock] = {}
+        self._adapter_locks_lock = asyncio.Lock()  # 保护_adapter_locks字典的锁
+        self._registry_lock = asyncio.Lock()       # 注册/注销操作的锁
+        self._adapter_cleanup_tasks: Dict[str, asyncio.Task] = {}
+        self._shutdown_event = asyncio.Event()
+
         # 安全管理器
         self._security_manager: Optional[SecurityManager] = None
         if self.config.enable_security:
@@ -106,7 +115,27 @@ class AdapterManager:
         self._lock = asyncio.Lock()
         self._initialized = False
 
-        logger.info("AdapterManager initialized with microservice architecture")
+        logger.info("AdapterManager initialized with enhanced concurrency controls")
+
+    async def _get_adapter_lock(self, adapter_id: str) -> asyncio.Lock:
+        """获取适配器级别的锁"""
+        async with self._adapter_locks_lock:
+            if adapter_id not in self._adapter_locks:
+                self._adapter_locks[adapter_id] = asyncio.Lock()
+            return self._adapter_locks[adapter_id]
+
+    async def _cleanup_adapter_lock(self, adapter_id: str) -> None:
+        """清理适配器锁"""
+        async with self._adapter_locks_lock:
+            self._adapter_locks.pop(adapter_id, None)
+
+    async def _with_timeout(self, coro, timeout: float, operation_name: str):
+        """带超时的操作包装器"""
+        try:
+            return await asyncio.wait_for(coro, timeout=timeout)
+        except asyncio.TimeoutError:
+            logger.error(f"{operation_name} timed out after {timeout}s")
+            raise RuntimeError(f"{operation_name} timed out")
 
     @property
     def status(self) -> ServiceStatus:
@@ -187,7 +216,6 @@ class AdapterManager:
                 )
 
                 health_service = AdapterHealthService(
-                    registry_service=registry_service,
                     event_bus=event_bus,
                     config=self.config.extra_config.get(
                         "health_service",
@@ -215,16 +243,16 @@ class AdapterManager:
                     self._orchestrator.register_service(metrics_service)
 
                 # 设置服务依赖关系
-                self._orchestrator.add_dependency("adapter_registry", "adapter_events")
+                self._orchestrator.add_dependency("adapter_registry", "adapter_event")
                 self._orchestrator.add_dependency(
-                    "adapter_validation", "adapter_events"
+                    "adapter_validation", "adapter_event"
                 )
                 self._orchestrator.add_dependency("adapter_health", "adapter_registry")
-                self._orchestrator.add_dependency("adapter_health", "adapter_events")
+                self._orchestrator.add_dependency("adapter_health", "adapter_event")
 
                 if metrics_service:
                     self._orchestrator.add_dependency(
-                        "adapter_metrics", "adapter_events"
+                        "adapter_metrics", "adapter_event"
                     )
                     self._orchestrator.add_dependency(
                         "adapter_metrics", "adapter_registry"
@@ -295,24 +323,71 @@ class AdapterManager:
             try:
                 self._status = ServiceStatus.STOPPING
                 logger.info("Stopping AdapterManager...")
+                
+                # 设置关闭事件
+                self._shutdown_event.set()
 
-                # 停止所有适配器
-                for adapter_id in list(self._adapters.keys()):
+                # 并发停止所有适配器
+                adapter_ids = list(self._adapters.keys())
+                if adapter_ids:
+                    logger.info(f"Stopping {len(adapter_ids)} adapters...")
+                    
+                    # 创建停止任务列表
+                    stop_tasks = []
+                    for adapter_id in adapter_ids:
+                        task = asyncio.create_task(self._safe_stop_adapter(adapter_id))
+                        stop_tasks.append(task)
+                    
+                    # 等待所有适配器停止，但不超过总超时时间
                     try:
-                        await self.stop_adapter(adapter_id)
-                    except Exception as e:
-                        logger.error(f"Failed to stop adapter {adapter_id}: {e}")
+                        await asyncio.wait_for(
+                            asyncio.gather(*stop_tasks, return_exceptions=True),
+                            timeout=self.config.shutdown_timeout * 2  # 给予更多时间
+                        )
+                    except asyncio.TimeoutError:
+                        logger.warning("Some adapters failed to stop within timeout")
+                        # 强制清理剩余的适配器
+                        for adapter_id in list(self._adapters.keys()):
+                            try:
+                                del self._adapters[adapter_id]
+                                logger.info(f"Forcefully removed adapter {adapter_id}")
+                            except Exception:
+                                pass
+
+                # 清理所有清理任务
+                for task in list(self._adapter_cleanup_tasks.values()):
+                    if not task.done():
+                        task.cancel()
+                        try:
+                            await task
+                        except asyncio.CancelledError:
+                            pass
+                self._adapter_cleanup_tasks.clear()
 
                 # 停止所有服务
-                await self._orchestrator.stop_all()
+                try:
+                    await asyncio.wait_for(
+                        self._orchestrator.stop_all(),
+                        timeout=self.config.shutdown_timeout
+                    )
+                except asyncio.TimeoutError:
+                    logger.warning("Service orchestrator stop timed out")
 
                 # 关闭安全管理器
                 if self._security_manager:
-                    await self._security_manager.shutdown()
-                    logger.info("Security manager shutdown")
+                    try:
+                        await asyncio.wait_for(
+                            self._security_manager.shutdown(),
+                            timeout=5.0
+                        )
+                        logger.info("Security manager shutdown")
+                    except asyncio.TimeoutError:
+                        logger.warning("Security manager shutdown timed out")
 
+                # 清理所有状态
                 self._adapters.clear()
                 self._services.clear()
+                self._adapter_locks.clear()
 
                 self._status = ServiceStatus.STOPPED
                 logger.info("AdapterManager stopped successfully")
@@ -321,6 +396,19 @@ class AdapterManager:
                 self._status = ServiceStatus.ERROR
                 logger.error(f"Failed to stop AdapterManager: {e}")
                 raise
+
+    async def _safe_stop_adapter(self, adapter_id: str) -> None:
+        """安全停止适配器（内部方法）"""
+        try:
+            await self.stop_adapter(adapter_id)
+        except Exception as e:
+            logger.error(f"Failed to stop adapter {adapter_id}: {e}")
+            # 强制清理
+            if adapter_id in self._adapters:
+                try:
+                    del self._adapters[adapter_id]
+                except Exception:
+                    pass
 
     @asynccontextmanager
     async def lifecycle(self):
@@ -338,39 +426,74 @@ class AdapterManager:
         if not self.is_running:
             raise RuntimeError("AdapterManager must be running to register adapters")
 
-        try:
-            # 验证适配器配置
-            if self.config.enable_validation:
-                validation_result = (
-                    await self.validation_service.validate_adapter_config(config)
-                )
-                if not validation_result.is_valid:
-                    logger.error(
-                        f"Adapter validation failed: {validation_result.summary}"
-                    )
+        async with self._registry_lock:
+            try:
+                adapter_id = config.identity
+                
+                # 检查适配器数量限制
+                if len(self._adapters) >= self.config.max_adapters:
+                    logger.error(f"Maximum adapter limit ({self.config.max_adapters}) reached")
                     return False
 
-            # 注册适配器
-            success = await self.registry_service.register_adapter(config)
+                # 验证适配器配置（带超时）
+                if self.config.enable_validation:
+                    # 创建临时注册信息用于验证
+                    temp_registration = AdapterRegistration(
+                        identity=AdapterIdentity(
+                            adapter_id=adapter_id,
+                            name=config.name or adapter_id,
+                            version=config.version or "1.0.0",
+                            adapter_type=config.adapter_type or AdapterType.SOFT,
+                        ),
+                        adapter_class=config.adapter_class,
+                        configuration=AdapterConfiguration(
+                            config=config.config or {},
+                            dependencies=config.dependencies or [],
+                        ),
+                    )
+                    
+                    validation_coro = self.validation_service.validate_adapter(temp_registration)
+                    validation_result = await self._with_timeout(
+                        validation_coro,
+                        timeout=10.0,  # 10秒验证超时
+                        operation_name=f"Adapter validation for {adapter_id}"
+                    )
+                    
+                    if not validation_result.is_valid:
+                        logger.error(
+                            f"Adapter validation failed: {validation_result.summary}"
+                        )
+                        return False
 
-            if success:
-                logger.info(f"Adapter {config.identity} registered successfully")
-
-                # 发布注册事件
-                await self.event_service.publish_event(
-                    EventType.ADAPTER_REGISTERED,
-                    {
-                        "adapter_id": config.identity,
-                        "config": config,
-                        "timestamp": datetime.now(timezone.utc),
-                    },
+                # 注册适配器（带超时）
+                register_coro = self.registry_service.register_adapter(config)
+                success = await self._with_timeout(
+                    register_coro,
+                    timeout=5.0,  # 5秒注册超时
+                    operation_name=f"Adapter registration for {adapter_id}"
                 )
 
-            return success
+                if success:
+                    logger.info(f"Adapter {adapter_id} registered successfully")
 
-        except Exception as e:
-            logger.error(f"Failed to register adapter {config.identity}: {e}")
-            return False
+                    # 发布注册事件（异步，不等待）
+                    event = Event(
+                        event_type=EventType.ADAPTER_REGISTERED,
+                        source="adapter_manager",
+                        data={
+                            "adapter_id": adapter_id,
+                            "config": config,
+                            "timestamp": datetime.now(timezone.utc),
+                        },
+                    )
+                    # 使用create_task避免阻塞
+                    asyncio.create_task(self.event_service.emit_event(event))
+
+                return success
+
+            except Exception as e:
+                logger.error(f"Failed to register adapter {getattr(config, 'identity', 'unknown')}: {e}")
+                return False
 
     async def unregister_adapter(self, adapter_id: str) -> bool:
         """注销适配器"""
@@ -389,10 +512,12 @@ class AdapterManager:
                 logger.info(f"Adapter {adapter_id} unregistered successfully")
 
                 # 发布注销事件
-                await self.event_service.publish_event(
-                    EventType.ADAPTER_UNREGISTERED,
-                    {"adapter_id": adapter_id, "timestamp": datetime.now(timezone.utc)},
+                event = Event(
+                    event_type=EventType.ADAPTER_UNREGISTERED,
+                    source="adapter_manager",
+                    data={"adapter_id": adapter_id, "timestamp": datetime.now(timezone.utc)},
                 )
+                await self.event_service.emit_event(event)
 
             return success
 
@@ -405,78 +530,148 @@ class AdapterManager:
         if not self.is_running:
             raise RuntimeError("AdapterManager must be running to start adapters")
 
-        try:
-            # 获取适配器注册信息
-            registration = await self.registry_service.get_adapter(adapter_id)
-            if not registration:
-                logger.error(f"Adapter {adapter_id} not found")
+        adapter_lock = await self._get_adapter_lock(adapter_id)
+        async with adapter_lock:
+            try:
+                # 检查适配器是否已经在运行
+                if adapter_id in self._adapters:
+                    logger.warning(f"Adapter {adapter_id} is already running")
+                    return True
+
+                # 获取适配器注册信息（带超时）
+                registration_coro = self.registry_service.get_adapter(adapter_id)
+                registration = await self._with_timeout(
+                    registration_coro,
+                    timeout=5.0,
+                    operation_name=f"Get adapter registration for {adapter_id}"
+                )
+                
+                if not registration:
+                    logger.error(f"Adapter {adapter_id} not found")
+                    return False
+
+                # 创建适配器实例（带超时）
+                create_coro = self._create_adapter_instance(registration)
+                adapter = await self._with_timeout(
+                    create_coro,
+                    timeout=10.0,
+                    operation_name=f"Create adapter instance for {adapter_id}"
+                )
+
+                if adapter:
+                    # 启动适配器（带超时）
+                    start_coro = adapter.start()
+                    await self._with_timeout(
+                        start_coro,
+                        timeout=self.config.startup_timeout,
+                        operation_name=f"Start adapter {adapter_id}"
+                    )
+                    
+                    self._adapters[adapter_id] = adapter
+
+                    # 更新注册状态（异步，不等待失败）
+                    try:
+                        update_coro = self.registry_service.update_adapter_status(
+                            adapter_id, AdapterStatus.RUNNING
+                        )
+                        await self._with_timeout(
+                            update_coro,
+                            timeout=3.0,
+                            operation_name=f"Update adapter status for {adapter_id}"
+                        )
+                    except Exception as e:
+                        logger.warning(f"Failed to update adapter status: {e}")
+
+                    # 发布启动事件（异步，不等待）
+                    event = Event(
+                        event_type=EventType.ADAPTER_STARTED,
+                        source="adapter_manager",
+                        data={"adapter_id": adapter_id, "timestamp": datetime.now(timezone.utc)},
+                    )
+                    asyncio.create_task(self.event_service.emit_event(event))
+
+                    logger.info(f"Adapter {adapter_id} started successfully")
+                    return True
+
                 return False
 
-            # 检查适配器是否已经在运行
-            if adapter_id in self._adapters:
-                logger.warning(f"Adapter {adapter_id} is already running")
-                return True
-
-            # 创建并启动适配器实例
-            # 这里需要根据配置创建具体的适配器实例
-            # 暂时使用占位符逻辑
-            adapter = await self._create_adapter_instance(registration.configuration)
-
-            if adapter:
-                await adapter.start()
-                self._adapters[adapter_id] = adapter
-
-                # 更新注册状态
-                await self.registry_service.update_adapter_status(
-                    adapter_id, AdapterStatus.RUNNING
-                )
-
-                # 发布启动事件
-                await self.event_service.publish_event(
-                    EventType.ADAPTER_STARTED,
-                    {"adapter_id": adapter_id, "timestamp": datetime.now(timezone.utc)},
-                )
-
-                logger.info(f"Adapter {adapter_id} started successfully")
-                return True
-
-            return False
-
-        except Exception as e:
-            logger.error(f"Failed to start adapter {adapter_id}: {e}")
-            return False
+            except Exception as e:
+                logger.error(f"Failed to start adapter {adapter_id}: {e}")
+                # 清理部分创建的资源
+                if adapter_id in self._adapters:
+                    try:
+                        await self._adapters[adapter_id].stop()
+                        del self._adapters[adapter_id]
+                    except Exception as cleanup_error:
+                        logger.error(f"Failed to cleanup adapter {adapter_id}: {cleanup_error}")
+                return False
 
     async def stop_adapter(self, adapter_id: str) -> bool:
         """停止适配器"""
         if not self.is_running:
             raise RuntimeError("AdapterManager must be running to stop adapters")
 
-        try:
-            if adapter_id not in self._adapters:
-                logger.warning(f"Adapter {adapter_id} is not running")
+        adapter_lock = await self._get_adapter_lock(adapter_id)
+        async with adapter_lock:
+            try:
+                if adapter_id not in self._adapters:
+                    logger.warning(f"Adapter {adapter_id} is not running")
+                    return True
+
+                adapter = self._adapters[adapter_id]
+                
+                # 停止适配器（带超时）
+                stop_coro = adapter.stop()
+                await self._with_timeout(
+                    stop_coro,
+                    timeout=self.config.shutdown_timeout,
+                    operation_name=f"Stop adapter {adapter_id}"
+                )
+                
+                # 从运行列表中移除
+                del self._adapters[adapter_id]
+
+                # 更新注册状态（异步，不等待失败）
+                try:
+                    update_coro = self.registry_service.update_adapter_status(
+                        adapter_id, AdapterStatus.STOPPED
+                    )
+                    await self._with_timeout(
+                        update_coro,
+                        timeout=3.0,
+                        operation_name=f"Update adapter status for {adapter_id}"
+                    )
+                except Exception as e:
+                    logger.warning(f"Failed to update adapter status: {e}")
+
+                # 发布停止事件（异步，不等待）
+                event = Event(
+                    event_type=EventType.ADAPTER_STOPPED,
+                    source="adapter_manager",
+                    data={"adapter_id": adapter_id, "timestamp": datetime.now(timezone.utc)},
+                )
+                asyncio.create_task(self.event_service.emit_event(event))
+
+                logger.info(f"Adapter {adapter_id} stopped successfully")
                 return True
 
-            adapter = self._adapters[adapter_id]
-            await adapter.stop()
-            del self._adapters[adapter_id]
-
-            # 更新注册状态
-            await self.registry_service.update_adapter_status(
-                adapter_id, AdapterStatus.STOPPED
-            )
-
-            # 发布停止事件
-            await self.event_service.publish_event(
-                EventType.ADAPTER_STOPPED,
-                {"adapter_id": adapter_id, "timestamp": datetime.now(timezone.utc)},
-            )
-
-            logger.info(f"Adapter {adapter_id} stopped successfully")
-            return True
-
-        except Exception as e:
-            logger.error(f"Failed to stop adapter {adapter_id}: {e}")
-            return False
+            except Exception as e:
+                logger.error(f"Failed to stop adapter {adapter_id}: {e}")
+                # 强制清理
+                if adapter_id in self._adapters:
+                    try:
+                        del self._adapters[adapter_id]
+                        logger.info(f"Forcefully removed adapter {adapter_id} from running list")
+                    except Exception:
+                        pass
+                return False
+            finally:
+                # 清理适配器锁和任务
+                await self._cleanup_adapter_lock(adapter_id)
+                if adapter_id in self._adapter_cleanup_tasks:
+                    task = self._adapter_cleanup_tasks.pop(adapter_id)
+                    if not task.done():
+                        task.cancel()
 
     async def restart_adapter(self, adapter_id: str) -> bool:
         """重启适配器"""
@@ -631,18 +826,154 @@ class AdapterManager:
 
         return self.metrics_service.get_tracked_adapters()
 
+    # 适配器状态查询方法
+
+    async def get_adapter_status(self, adapter_id: str) -> Optional[AdapterStatus]:
+        """获取适配器状态"""
+        if not self.is_running:
+            raise RuntimeError("AdapterManager must be running")
+        
+        registration = await self.registry_service.get_adapter(adapter_id)
+        if not registration:
+            return None
+        
+        return registration.status
+
+    # 适配器处理方法
+
+    async def process_with_adapter(
+        self, adapter_id: str, input_data: Any, context: Optional[Dict[str, Any]] = None
+    ) -> Any:
+        """使用适配器处理数据"""
+        if not self.is_running:
+            raise RuntimeError("AdapterManager must be running")
+        
+        if adapter_id not in self._adapters:
+            raise RuntimeError(f"Adapter {adapter_id} is not running")
+        
+        adapter = self._adapters[adapter_id]
+        if hasattr(adapter, 'process'):
+            return await adapter.process(input_data, context)
+        else:
+            raise RuntimeError(f"Adapter {adapter_id} does not support processing")
+
+    async def batch_process_with_adapter(
+        self, adapter_id: str, input_batch: List[Any], context: Optional[Dict[str, Any]] = None
+    ) -> List[Any]:
+        """批量处理数据"""
+        if not self.is_running:
+            raise RuntimeError("AdapterManager must be running")
+        
+        results = []
+        for input_data in input_batch:
+            result = await self.process_with_adapter(adapter_id, input_data, context)
+            results.append(result)
+        return results
+
+    async def get_adapter_info(self, adapter_id: str) -> Optional[AdapterRegistration]:
+        """获取适配器信息"""
+        if not self.is_running:
+            raise RuntimeError("AdapterManager must be running")
+        
+        return await self.registry_service.get_adapter(adapter_id)
+
+    async def list_adapters_by_type(self, adapter_type: AdapterType) -> List[AdapterRegistration]:
+        """按类型列出适配器"""
+        if not self.is_running:
+            raise RuntimeError("AdapterManager must be running")
+        
+        return await self.registry_service.find_adapters_by_type(adapter_type.value)
+
+    async def health_check_adapter(self, adapter_id: str) -> Optional[HealthCheckResult]:
+        """检查适配器健康状况"""
+        if not self.is_running:
+            raise RuntimeError("AdapterManager must be running")
+        
+        if adapter_id not in self._adapters:
+            return None
+        
+        adapter = self._adapters[adapter_id]
+        if hasattr(adapter, 'health_check'):
+            return await adapter.health_check()
+        else:
+            # 默认健康状态
+            from .services.base import HealthStatus
+            return HealthCheckResult(
+                status=HealthStatus.HEALTHY,
+                checks={"adapter_running": True},
+                details={"adapter_id": adapter_id}
+            )
+
+    async def health_check_all_adapters(self) -> Dict[str, HealthCheckResult]:
+        """检查所有适配器健康状况"""
+        if not self.is_running:
+            raise RuntimeError("AdapterManager must be running")
+        
+        results = {}
+        for adapter_id in self._adapters.keys():
+            health_result = await self.health_check_adapter(adapter_id)
+            if health_result:
+                results[adapter_id] = health_result
+        return results
+
+    async def get_resource_usage(self) -> Dict[str, Any]:
+        """获取资源使用情况"""
+        if not self.is_running:
+            raise RuntimeError("AdapterManager must be running")
+        
+        return {
+            "total_adapters": len(await self.list_adapters()),
+            "running_adapters": len(self._adapters),
+            "memory_usage": 0,  # 需要实际实现
+            "cpu_usage": 0.0,   # 需要实际实现
+        }
+
+    async def update_adapter_config(
+        self, adapter_id: str, new_config: AdapterConfiguration
+    ) -> bool:
+        """更新适配器配置"""
+        if not self.is_running:
+            raise RuntimeError("AdapterManager must be running")
+        
+        try:
+            # 这里应该实现配置更新逻辑
+            # 暂时返回True
+            logger.info(f"Config update requested for adapter {adapter_id}")
+            return True
+        except Exception as e:
+            logger.error(f"Failed to update config for adapter {adapter_id}: {e}")
+            return False
+
+    async def shutdown(self) -> None:
+        """关闭管理器"""
+        await self.stop()
+
     # 内部方法
 
     async def _create_adapter_instance(
-        self, config: AdapterConfiguration
+        self, registration: AdapterRegistration
     ) -> Optional[BaseAdapter]:
         """创建适配器实例"""
-        # 这里应该根据配置创建具体的适配器实例
-        # 暂时返回None，需要根据实际的适配器类型实现
-        logger.warning(
-            f"Adapter instance creation not implemented for {config.identity}"
-        )
-        return None
+        try:
+            adapter_class = registration.adapter_class
+            if not adapter_class:
+                logger.error(f"No adapter class found for {registration.adapter_id}")
+                return None
+            
+            # 创建适配器实例
+            config_dict = registration.configuration.config if registration.configuration else {}
+            adapter_instance = adapter_class(config_dict)
+            
+            # 如果适配器有初始化方法，调用它
+            if hasattr(adapter_instance, 'initialize'):
+                await adapter_instance.initialize()
+            
+            logger.info(f"Created adapter instance for {registration.adapter_id}")
+            return adapter_instance
+            
+        except Exception as e:
+            logger.error(f"Failed to create adapter instance for {registration.adapter_id}: {e}")
+            return None
 
     def __repr__(self) -> str:
         return f"<AdapterManager(status='{self._status}', services={len(self._services)}, adapters={len(self._adapters)})>"

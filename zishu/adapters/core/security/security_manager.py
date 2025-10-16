@@ -7,7 +7,7 @@
 
 import asyncio
 import logging
-from typing import Any, Dict, List, Optional, Callable
+from typing import Any, Dict, List, Optional, Callable, Tuple
 from datetime import datetime, timezone
 
 from .security_service import AdapterSecurityService, SecurityServiceConfig
@@ -66,7 +66,7 @@ class SecurityManager:
         self.audit_logger = audit_logger or get_audit_logger()
 
         # 初始化核心组件
-        self.security_service = AdapterSecurityService(self.config, self.audit_logger)
+        self.security_service = AdapterSecurityService(self.config)
         self.context_manager = SecurityContextManager()
         self.session_manager = SessionManager(self.context_manager)
         self.threat_detector = ThreatDetector()

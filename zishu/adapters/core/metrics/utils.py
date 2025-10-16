@@ -20,14 +20,14 @@ from .core import (
     MetricSample,
     MetricType,
     AggregationType,
-    MetricsCollector,
-    MetricsService,
+    AdapterMetricsService,
 )
+
+# 类型别名，用于向后兼容
+MetricsService = AdapterMetricsService
 from .collectors import (
     SystemMetricsCollector,
     AdapterMetricsCollector,
-    CustomMetricsCollector,
-    PerformanceMetricsCollector,
 )
 from .storage import MetricsStorage, MetricsStorageManager, MemoryMetricsStorage
 from .dashboard import MetricsQuery, QueryBuilder, MetricsQueryEngine, MetricsDashboard
@@ -719,7 +719,9 @@ async def setup_metrics_system(config: MetricsConfig) -> MetricsService:
     await storage_manager.initialize_all()
 
     # 创建指标服务
-    service = MetricsService(storage_manager)
+    from .core import MetricsServiceConfig
+    service_config = MetricsServiceConfig()
+    service = MetricsService(service_config)
 
     # 添加收集器
     collectors = []

@@ -1,4 +1,4 @@
-mod config;
+pub mod config;
 pub mod bridge;
 
 pub use config::{
@@ -13,5 +13,11 @@ pub use config::{
     export_config,
     validate_config,
     merge_config,
+    get_config_info,
+    get_backup_files,
+    clean_old_backups,
+    create_config_snapshot,
+    restore_from_snapshot,
+    get_config_diff,
 };
 

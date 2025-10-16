@@ -26,7 +26,7 @@ except ImportError:
     logging.warning("aiofiles 未安装，将使用同步文件操作")
 
 try:
-    import aioredis
+    from redis import asyncio as aioredis
 
     HAS_REDIS = True
 except ImportError:

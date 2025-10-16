@@ -715,7 +715,7 @@ class AdapterBase(BaseModel):
     """适配器基础模式"""
 
     name: str = Field(..., min_length=1, max_length=100)
-    slug: str = Field(..., min_length=1, max_length=100, regex=r"^[a-z0-9-]+$")
+    slug: str = Field(..., min_length=1, max_length=100, pattern=r"^[a-z0-9-]+$")
     display_name: Optional[str] = Field(None, max_length=100)
     description: Optional[str] = Field(None, max_length=1000)
     adapter_type: AdapterType

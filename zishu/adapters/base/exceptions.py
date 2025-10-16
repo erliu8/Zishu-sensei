@@ -1257,3 +1257,11 @@ __all__ = [
     "permission_denied",
     "security_violation",
 ]
+
+
+# ================================
+# 向后兼容性别名
+# ================================
+
+# 为了保持与其他模块的兼容性
+AdapterSecurityError = SecurityError

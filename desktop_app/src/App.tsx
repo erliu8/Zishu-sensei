@@ -1,7 +1,6 @@
 import { listen } from '@tauri-apps/api/event'
 import { invoke } from '@tauri-apps/api/tauri'
 import { appWindow } from '@tauri-apps/api/window'
-import clsx from 'clsx'
 import { AnimatePresence, motion } from 'framer-motion'
 import React, { Suspense, useCallback, useEffect, useState } from 'react'
 import { ErrorBoundary } from 'react-error-boundary'
@@ -19,7 +18,6 @@ import { SettingsPanel } from '@/components/Settings/SettingsPanel'
 
 // Hooks 导入
 import { useCharacter } from '@/hooks/useCharacter'
-import { useChat } from '@/hooks/useChat'
 import { useSettings } from '@/hooks/useSettings'
 import { useTauri } from '@/hooks/useTauri'
 import { useTheme } from '@/hooks/useTheme'
@@ -89,7 +87,6 @@ const App: React.FC = () => {
     // ==================== Hooks ====================
     const { theme, setTheme } = useTheme()
     const { settings, updateSettings, resetSettings } = useSettings()
-    const { isConnected, connectionStatus } = useChat()
     const { currentCharacter, switchCharacter, characterList } = useCharacter()
     const { isTauriEnv, tauriVersion } = useTauri()
     const { minimizeWindow, closeWindow } = useWindowManager()
@@ -108,6 +105,13 @@ const App: React.FC = () => {
     }, [isTauriEnv])
 
     const handleContextMenu = useCallback((event: React.MouseEvent, providedOptions?: ContextMenuOption[]) => {
+        console.log('🖱️ [App] handleContextMenu 被调用:', { 
+            button: event.button, 
+            clientX: event.clientX, 
+            clientY: event.clientY,
+            hasProvidedOptions: !!providedOptions,
+            providedOptionsCount: providedOptions?.length 
+        })
         event.preventDefault()
 
         // 如果提供了自定义选项，使用它们；否则使用默认的完整菜单
@@ -117,7 +121,7 @@ const App: React.FC = () => {
                 label: '打开对话',
                 icon: '💬',
                 onClick: () => handleWindowModeChange(WINDOW_MODES.CHAT),
-                disabled: !isConnected,
+                disabled: false, // 暂时禁用连接检查
             },
             {
                 id: 'settings',
@@ -157,13 +161,14 @@ const App: React.FC = () => {
                         onClick: () => setTheme('dark'),
                         checked: theme === 'dark',
                     },
-                    {
-                        id: 'theme-auto',
-                        label: '跟随系统',
-                        icon: '🔄',
-                        onClick: () => setTheme('system'),
-                        checked: theme === 'system',
-                    },
+                    // 暂时禁用"跟随系统"选项，因为 ThemeName 类型不支持 'system'
+                    // {
+                    //     id: 'theme-auto',
+                    //     label: '跟随系统',
+                    //     icon: '🔄',
+                    //     onClick: () => setTheme('system' as any),
+                    //     checked: theme === 'system',
+                    // },
                 ],
             },
             { id: 'divider-2', label: '', type: 'separator' },
@@ -181,14 +186,26 @@ const App: React.FC = () => {
             },
         ]
 
-        setContextMenu({
+        const newContextMenu = {
             visible: true,
             x: event.clientX,
             y: event.clientY,
             options,
+        }
+        
+        console.log('🖱️ [App] 设置 contextMenu 状态:', {
+            visible: true,
+            x: event.clientX,
+            y: event.clientY,
+            optionsCount: options.length
         })
+        setContextMenu(newContextMenu)
+        
+        // 调试：验证状态已更新
+        setTimeout(() => {
+            console.log('🖱️ [App] contextMenu 状态验证（新值）:', newContextMenu)
+        }, 50)
     }, [
-        isConnected,
         theme,
         characterList,
         currentCharacter,
@@ -349,8 +366,16 @@ const App: React.FC = () => {
                         onModeChange={handleWindowModeChange}
                     />
                 ) : (
-                    <div className="flex-center h-full">
-                        <div className="text-center text-gray-500">
+                    <div style={{
+                        display: 'flex',
+                        alignItems: 'center',
+                        justifyContent: 'center',
+                        height: '100%',
+                    }}>
+                        <div style={{
+                            textAlign: 'center',
+                            color: 'hsl(var(--color-muted-foreground))',
+                        }}>
                             没有选择角色
                         </div>
                     </div>
@@ -374,14 +399,32 @@ const App: React.FC = () => {
 
             default:
                 return (
-                    <div className="flex-center h-full">
-                        <div className="text-center">
-                            <h2 className="text-lg font-semibold text-gray-900 dark:text-white mb-2">
+                    <div style={{
+                        display: 'flex',
+                        alignItems: 'center',
+                        justifyContent: 'center',
+                        height: '100%',
+                    }}>
+                        <div style={{ textAlign: 'center' }}>
+                            <h2 style={{
+                                fontSize: '18px',
+                                fontWeight: 600,
+                                color: 'hsl(var(--color-foreground))',
+                                marginBottom: '8px',
+                            }}>
                                 未知窗口模式
                             </h2>
                             <button
                                 onClick={() => handleWindowModeChange(WINDOW_MODES.PET)}
-                                className="btn btn-primary"
+                                style={{
+                                    padding: '8px 16px',
+                                    backgroundColor: 'hsl(var(--color-primary))',
+                                    color: 'hsl(var(--color-primary-foreground))',
+                                    border: 'none',
+                                    borderRadius: '6px',
+                                    cursor: 'pointer',
+                                    fontSize: '14px',
+                                }}
                             >
                                 返回主界面
                             </button>
@@ -394,13 +437,27 @@ const App: React.FC = () => {
     // ==================== 加载状态 ====================
     if (appState.isLoading) {
         return (
-            <div className="flex-center h-screen bg-gradient-to-br from-primary-50 to-primary-100 dark:from-gray-900 dark:to-gray-800">
-                <div className="text-center">
-                    <LoadingSpinner size="lg" className="mb-4" />
-                    <h2 className="text-xl font-semibold text-gray-900 dark:text-white mb-2">
+            <div style={{
+                display: 'flex',
+                alignItems: 'center',
+                justifyContent: 'center',
+                height: '100vh',
+                background: 'linear-gradient(135deg, hsl(var(--color-primary) / 0.05), hsl(var(--color-primary) / 0.15))',
+            }}>
+                <div style={{ textAlign: 'center' }}>
+                    <LoadingSpinner size="lg" style={{ marginBottom: '16px' }} />
+                    <h2 style={{
+                        fontSize: '20px',
+                        fontWeight: 600,
+                        color: 'hsl(var(--color-foreground))',
+                        marginBottom: '8px',
+                    }}>
                         正在启动 Zishu-sensei
                     </h2>
-                    <p className="text-gray-600 dark:text-gray-400">
+                    <p style={{
+                        color: 'hsl(var(--color-muted-foreground))',
+                        fontSize: '14px',
+                    }}>
                         正在初始化应用程序...
                     </p>
                 </div>
@@ -427,16 +484,14 @@ const App: React.FC = () => {
             onReset={() => setAppState(prev => ({ ...prev, hasError: false, lastError: null }))}
         >
             <div
-                className={clsx(
-                    'app-container',
-                    'h-screen w-screen overflow-hidden',
-                    'bg-white dark:bg-gray-900',
-                    'transition-colors duration-200',
-                    {
-                        'cursor-move': appState.windowMode === WINDOW_MODES.PET,
-                        'cursor-default': appState.windowMode !== WINDOW_MODES.PET,
-                    }
-                )}
+                style={{
+                    height: '100vh',
+                    width: '100vw',
+                    overflow: 'hidden',
+                    backgroundColor: 'hsl(var(--color-background))',
+                    transition: 'background-color 200ms',
+                    cursor: appState.windowMode === WINDOW_MODES.PET ? 'move' : 'default',
+                }}
                 data-tauri-drag-region={appState.windowMode === WINDOW_MODES.PET}
             >
                 {/* 主要内容区域 */}
@@ -448,11 +503,16 @@ const App: React.FC = () => {
                         exit="exit"
                         variants={ANIMATION_VARIANTS}
                         transition={TRANSITION_CONFIG}
-                        className="h-full w-full"
+                        style={{ height: '100%', width: '100%' }}
                     >
                         <Suspense
                             fallback={
-                                <div className="flex-center h-full">
+                                <div style={{
+                                    display: 'flex',
+                                    alignItems: 'center',
+                                    justifyContent: 'center',
+                                    height: '100%',
+                                }}>
                                     <LoadingSpinner size="md" />
                                 </div>
                             }
@@ -501,10 +561,19 @@ const App: React.FC = () => {
 
                 {/* 开发工具信息 */}
                 {(import.meta as any).env.DEV && (
-                    <div className="fixed bottom-2 left-2 text-xs text-gray-500 dark:text-gray-400 bg-black/10 dark:bg-white/10 px-2 py-1 rounded backdrop-blur-sm">
+                    <div style={{
+                        position: 'fixed',
+                        bottom: '8px',
+                        left: '8px',
+                        fontSize: '12px',
+                        color: 'hsl(var(--color-muted-foreground))',
+                        backgroundColor: 'hsl(var(--color-muted) / 0.8)',
+                        padding: '4px 8px',
+                        borderRadius: '4px',
+                        backdropFilter: 'blur(4px)',
+                    }}>
                         <div>模式: {appState.windowMode}</div>
                         <div>主题: {theme}</div>
-                        <div>连接: {connectionStatus}</div>
                         {isTauriEnv && <div>Tauri: {tauriVersion}</div>}
                     </div>
                 )}

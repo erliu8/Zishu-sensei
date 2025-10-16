@@ -15,7 +15,7 @@ from .base import (
     HealthCheckResult,
     ServiceMetrics,
 )
-from .orchestrator import AdapterOrchestrator
+from .orchestrator import AdapterServiceOrchestrator
 from .registry_service import AdapterRegistryService
 from .validation_service import (
     AdapterValidationService,
@@ -53,7 +53,7 @@ __all__ = [
     "HealthCheckResult",
     "ServiceMetrics",
     # 核心服务
-    "AdapterOrchestrator",
+    "AdapterServiceOrchestrator",
     "AdapterRegistryService",
     # 验证服务
     "AdapterValidationService",

@@ -17,7 +17,6 @@ from .services import (
     ServiceStatus,
     ServiceHealth,
     AdapterServiceOrchestrator,
-    OrchestratorConfig,
     AdapterRegistryService,
     AdapterValidationService,
     AdapterHealthService,
@@ -30,10 +29,6 @@ from .events import (
     Event,
     EventType,
     Priority,
-    AdapterEventHandler,
-    LifecycleEventHandler,
-    HealthEventHandler,
-    ErrorEventHandler,
 )
 
 # 类型定义
@@ -44,8 +39,6 @@ from .types import (
     AdapterStatus,
     LifecycleState,
     HealthCheckResult,
-    ValidationResult,
-    ServiceMetrics,
 )
 
 # 安全模块
@@ -61,7 +54,6 @@ __all__ = [
     "ServiceHealth",
     # 服务组件
     "AdapterServiceOrchestrator",
-    "OrchestratorConfig",
     "AdapterRegistryService",
     "AdapterValidationService",
     "AdapterHealthService",
@@ -82,8 +74,6 @@ __all__ = [
     "AdapterStatus",
     "LifecycleState",
     "HealthCheckResult",
-    "ValidationResult",
-    "ServiceMetrics",
     # 安全模块
     "SecurityManager",
     "SecurityServiceConfig",

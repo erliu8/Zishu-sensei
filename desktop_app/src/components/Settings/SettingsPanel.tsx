@@ -18,57 +18,137 @@ export const SettingsPanel: React.FC<SettingsPanelProps> = ({
             initial={{ opacity: 0, scale: 0.9 }}
             animate={{ opacity: 1, scale: 1 }}
             exit={{ opacity: 0, scale: 0.9 }}
-            className="w-full h-full bg-white dark:bg-gray-900 flex flex-col"
+            style={{
+                width: '100%',
+                height: '100%',
+                display: 'flex',
+                flexDirection: 'column',
+                backgroundColor: 'hsl(var(--color-background))',
+                color: 'hsl(var(--color-foreground))',
+            }}
         >
             {/* 标题栏 */}
-            <div className="flex items-center justify-between p-4 border-b border-gray-200 dark:border-gray-700">
-                <h1 className="text-lg font-semibold text-gray-900 dark:text-white">
+            <div style={{
+                display: 'flex',
+                alignItems: 'center',
+                justifyContent: 'space-between',
+                padding: '16px',
+                borderBottom: '1px solid hsl(var(--color-border))',
+            }}>
+                <h1 style={{
+                    fontSize: '18px',
+                    fontWeight: 600,
+                    color: 'hsl(var(--color-foreground))',
+                }}>
                     设置
                 </h1>
                 <button
                     onClick={onClose}
-                    className="p-2 text-gray-500 hover:text-gray-700 dark:text-gray-400 dark:hover:text-gray-200 rounded-md hover:bg-gray-100 dark:hover:bg-gray-800 transition-colors"
+                    style={{
+                        padding: '8px',
+                        color: 'hsl(var(--color-muted-foreground))',
+                        borderRadius: '6px',
+                        border: 'none',
+                        background: 'transparent',
+                        cursor: 'pointer',
+                    }}
+                    onMouseEnter={(e) => {
+                        e.currentTarget.style.backgroundColor = 'hsl(var(--color-accent))'
+                    }}
+                    onMouseLeave={(e) => {
+                        e.currentTarget.style.backgroundColor = 'transparent'
+                    }}
                 >
                     ✕
                 </button>
             </div>
 
             {/* 设置内容 */}
-            <div className="flex-1 overflow-y-auto p-4">
-                <div className="space-y-6">
+            <div style={{
+                flex: 1,
+                overflowY: 'auto',
+                padding: '16px',
+            }}>
+                <div style={{
+                    display: 'flex',
+                    flexDirection: 'column',
+                    gap: '24px',
+                }}>
                     {/* 基础设置 */}
                     <section>
-                        <h2 className="text-md font-medium text-gray-900 dark:text-white mb-3">
+                        <h2 style={{
+                            fontSize: '16px',
+                            fontWeight: 500,
+                            color: 'hsl(var(--color-foreground))',
+                            marginBottom: '12px',
+                        }}>
                             基础设置
                         </h2>
-                        <div className="space-y-3">
-                            <div className="flex items-center justify-between">
-                                <label className="text-sm text-gray-700 dark:text-gray-300">
+                        <div style={{
+                            display: 'flex',
+                            flexDirection: 'column',
+                            gap: '12px',
+                        }}>
+                            <div style={{
+                                display: 'flex',
+                                alignItems: 'center',
+                                justifyContent: 'space-between',
+                            }}>
+                                <label style={{
+                                    fontSize: '14px',
+                                    color: 'hsl(var(--color-foreground))',
+                                }}>
                                     开机自启动
                                 </label>
                                 <input
                                     type="checkbox"
-                                    className="rounded border-gray-300 text-blue-600 focus:ring-blue-500"
+                                    style={{
+                                        width: '20px',
+                                        height: '20px',
+                                        cursor: 'pointer',
+                                    }}
                                 />
                             </div>
-                            <div className="flex items-center justify-between">
-                                <label className="text-sm text-gray-700 dark:text-gray-300">
+                            <div style={{
+                                display: 'flex',
+                                alignItems: 'center',
+                                justifyContent: 'space-between',
+                            }}>
+                                <label style={{
+                                    fontSize: '14px',
+                                    color: 'hsl(var(--color-foreground))',
+                                }}>
                                     最小化到托盘
                                 </label>
                                 <input
                                     type="checkbox"
                                     defaultChecked
-                                    className="rounded border-gray-300 text-blue-600 focus:ring-blue-500"
+                                    style={{
+                                        width: '20px',
+                                        height: '20px',
+                                        cursor: 'pointer',
+                                    }}
                                 />
                             </div>
-                            <div className="flex items-center justify-between">
-                                <label className="text-sm text-gray-700 dark:text-gray-300">
+                            <div style={{
+                                display: 'flex',
+                                alignItems: 'center',
+                                justifyContent: 'space-between',
+                            }}>
+                                <label style={{
+                                    fontSize: '14px',
+                                    color: 'hsl(var(--color-foreground))',
+                                }}>
                                     启用通知
                                 </label>
                                 <input
                                     type="checkbox"
                                     defaultChecked
-                                    className="rounded border-gray-300 text-blue-600 focus:ring-blue-500"
+                                    style={{
+                                        width: '20px',
+                                        height: '20px',
+                                        cursor: 'pointer',
+                                    }}
                                 />
                             </div>
                         </div>
@@ -76,25 +156,60 @@ export const SettingsPanel: React.FC<SettingsPanelProps> = ({
 
                     {/* 外观设置 */}
                     <section>
-                        <h2 className="text-md font-medium text-gray-900 dark:text-white mb-3">
+                        <h2 style={{
+                            fontSize: '16px',
+                            fontWeight: 500,
+                            color: 'hsl(var(--color-foreground))',
+                            marginBottom: '12px',
+                        }}>
                             外观设置
                         </h2>
-                        <div className="space-y-3">
+                        <div style={{
+                            display: 'flex',
+                            flexDirection: 'column',
+                            gap: '12px',
+                        }}>
                             <div>
-                                <label className="block text-sm text-gray-700 dark:text-gray-300 mb-1">
+                                <label style={{
+                                    display: 'block',
+                                    fontSize: '14px',
+                                    color: 'hsl(var(--color-foreground))',
+                                    marginBottom: '4px',
+                                }}>
                                     主题
                                 </label>
-                                <select className="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-md bg-white dark:bg-gray-800 text-gray-900 dark:text-white">
+                                <select style={{
+                                    width: '100%',
+                                    padding: '8px 12px',
+                                    border: '1px solid hsl(var(--color-border))',
+                                    borderRadius: '6px',
+                                    backgroundColor: 'hsl(var(--color-background))',
+                                    color: 'hsl(var(--color-foreground))',
+                                    cursor: 'pointer',
+                                }}>
                                     <option value="system">跟随系统</option>
                                     <option value="light">浅色主题</option>
                                     <option value="dark">深色主题</option>
                                 </select>
                             </div>
                             <div>
-                                <label className="block text-sm text-gray-700 dark:text-gray-300 mb-1">
+                                <label style={{
+                                    display: 'block',
+                                    fontSize: '14px',
+                                    color: 'hsl(var(--color-foreground))',
+                                    marginBottom: '4px',
+                                }}>
                                     语言
                                 </label>
-                                <select className="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-md bg-white dark:bg-gray-800 text-gray-900 dark:text-white">
+                                <select style={{
+                                    width: '100%',
+                                    padding: '8px 12px',
+                                    border: '1px solid hsl(var(--color-border))',
+                                    borderRadius: '6px',
+                                    backgroundColor: 'hsl(var(--color-background))',
+                                    color: 'hsl(var(--color-foreground))',
+                                    cursor: 'pointer',
+                                }}>
                                     <option value="zh-CN">简体中文</option>
                                     <option value="en-US">English</option>
                                     <option value="ja-JP">日本語</option>
@@ -105,12 +220,26 @@ export const SettingsPanel: React.FC<SettingsPanelProps> = ({
 
                     {/* 角色设置 */}
                     <section>
-                        <h2 className="text-md font-medium text-gray-900 dark:text-white mb-3">
+                        <h2 style={{
+                            fontSize: '16px',
+                            fontWeight: 500,
+                            color: 'hsl(var(--color-foreground))',
+                            marginBottom: '12px',
+                        }}>
                             角色设置
                         </h2>
-                        <div className="space-y-3">
+                        <div style={{
+                            display: 'flex',
+                            flexDirection: 'column',
+                            gap: '12px',
+                        }}>
                             <div>
-                                <label className="block text-sm text-gray-700 dark:text-gray-300 mb-1">
+                                <label style={{
+                                    display: 'block',
+                                    fontSize: '14px',
+                                    color: 'hsl(var(--color-foreground))',
+                                    marginBottom: '4px',
+                                }}>
                                     音量
                                 </label>
                                 <input
@@ -118,11 +247,19 @@ export const SettingsPanel: React.FC<SettingsPanelProps> = ({
                                     min="0"
                                     max="100"
                                     defaultValue="80"
-                                    className="w-full"
+                                    style={{
+                                        width: '100%',
+                                        cursor: 'pointer',
+                                    }}
                                 />
                             </div>
                             <div>
-                                <label className="block text-sm text-gray-700 dark:text-gray-300 mb-1">
+                                <label style={{
+                                    display: 'block',
+                                    fontSize: '14px',
+                                    color: 'hsl(var(--color-foreground))',
+                                    marginBottom: '4px',
+                                }}>
                                     动画速度
                                 </label>
                                 <input
@@ -131,7 +268,10 @@ export const SettingsPanel: React.FC<SettingsPanelProps> = ({
                                     max="2"
                                     step="0.1"
                                     defaultValue="1"
-                                    className="w-full"
+                                    style={{
+                                        width: '100%',
+                                        cursor: 'pointer',
+                                    }}
                                 />
                             </div>
                         </div>
@@ -140,23 +280,70 @@ export const SettingsPanel: React.FC<SettingsPanelProps> = ({
             </div>
 
             {/* 底部按钮 */}
-            <div className="flex items-center justify-between p-4 border-t border-gray-200 dark:border-gray-700">
+            <div style={{
+                display: 'flex',
+                alignItems: 'center',
+                justifyContent: 'space-between',
+                padding: '16px',
+                borderTop: '1px solid hsl(var(--color-border))',
+            }}>
                 <button
                     onClick={onReset}
-                    className="px-4 py-2 text-sm text-gray-600 dark:text-gray-400 hover:text-gray-800 dark:hover:text-gray-200 transition-colors"
+                    style={{
+                        padding: '8px 16px',
+                        fontSize: '14px',
+                        color: 'hsl(var(--color-muted-foreground))',
+                        border: 'none',
+                        background: 'transparent',
+                        cursor: 'pointer',
+                    }}
+                    onMouseEnter={(e) => {
+                        e.currentTarget.style.color = 'hsl(var(--color-foreground))'
+                    }}
+                    onMouseLeave={(e) => {
+                        e.currentTarget.style.color = 'hsl(var(--color-muted-foreground))'
+                    }}
                 >
                     重置设置
                 </button>
-                <div className="flex gap-2">
+                <div style={{ display: 'flex', gap: '8px' }}>
                     <button
                         onClick={onClose}
-                        className="px-4 py-2 text-sm text-gray-600 dark:text-gray-400 hover:text-gray-800 dark:hover:text-gray-200 border border-gray-300 dark:border-gray-600 rounded-md transition-colors"
+                        style={{
+                            padding: '8px 16px',
+                            fontSize: '14px',
+                            color: 'hsl(var(--color-foreground))',
+                            border: '1px solid hsl(var(--color-border))',
+                            borderRadius: '6px',
+                            background: 'transparent',
+                            cursor: 'pointer',
+                        }}
+                        onMouseEnter={(e) => {
+                            e.currentTarget.style.backgroundColor = 'hsl(var(--color-accent))'
+                        }}
+                        onMouseLeave={(e) => {
+                            e.currentTarget.style.backgroundColor = 'transparent'
+                        }}
                     >
                         取消
                     </button>
                     <button
                         onClick={onClose}
-                        className="px-4 py-2 text-sm text-white bg-blue-600 hover:bg-blue-700 rounded-md transition-colors"
+                        style={{
+                            padding: '8px 16px',
+                            fontSize: '14px',
+                            color: 'hsl(var(--color-primary-foreground))',
+                            backgroundColor: 'hsl(var(--color-primary))',
+                            border: 'none',
+                            borderRadius: '6px',
+                            cursor: 'pointer',
+                        }}
+                        onMouseEnter={(e) => {
+                            e.currentTarget.style.opacity = '0.9'
+                        }}
+                        onMouseLeave={(e) => {
+                            e.currentTarget.style.opacity = '1'
+                        }}
                     >
                         保存
                     </button>

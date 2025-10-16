@@ -20,6 +20,7 @@ export const PetWindow: React.FC<PetWindowProps> = ({
   onModeChange,
 }) => {
   const handleRightClick = (event: React.MouseEvent) => {
+    console.log('🖱️ [PetWindow] 右键点击事件触发:', { button: event.button, clientX: event.clientX, clientY: event.clientY })
     event.preventDefault()
     
     const contextOptions: ContextMenuOption[] = [
@@ -48,12 +49,20 @@ export const PetWindow: React.FC<PetWindowProps> = ({
       },
     ]
     
+    console.log('🖱️ [PetWindow] 调用 onContextMenu，选项数量:', contextOptions.length)
     onContextMenu(event, contextOptions)
   }
 
   return (
     <div 
-      className="pet-window h-full w-full flex items-center justify-center bg-transparent"
+      style={{
+        height: '100%',
+        width: '100%',
+        display: 'flex',
+        alignItems: 'center',
+        justifyContent: 'center',
+        backgroundColor: 'transparent',
+      }}
       onContextMenu={handleRightClick}
     >
       <Character

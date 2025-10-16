@@ -923,7 +923,7 @@ class SandboxExecutor(ABC):
 
     def __init__(self, config: SandboxConfiguration):
         self.config = config
-        self.permission_manager = PermissionManager()
+        self.permission_manager = EnhancedPermissionManager()
         self.audit_logger = get_audit_logger()
         self.code_analyzer = CodeAnalyzer()
 

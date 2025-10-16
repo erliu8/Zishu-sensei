@@ -264,7 +264,7 @@ class AdapterHealthService(AsyncService):
 
     async def register_adapter(self, registration: AdapterRegistration) -> None:
         """注册适配器进行健康监控"""
-        adapter_id = registration.identity.id
+        adapter_id = registration.identity.adapter_id
 
         async with self._health_lock:
             self._registered_adapters[adapter_id] = registration
@@ -409,6 +409,63 @@ class AdapterHealthService(AsyncService):
             ),
             "service_uptime": self.metrics.uptime,
         }
+
+    async def get_system_metrics(self) -> Dict[str, Any]:
+        """获取系统健康指标"""
+        try:
+            # 获取基本健康摘要
+            summary = await self.get_health_summary()
+            
+            # 添加详细的系统级指标
+            system_metrics = {
+                "health_service": {
+                    "status": self.status.value,
+                    "uptime": self.metrics.uptime,
+                    "last_activity": self.metrics.last_activity.isoformat() if self.metrics.last_activity else None,
+                },
+                "adapter_health": summary,
+                "monitoring": {
+                    "check_interval": self._check_interval,
+                    "active_monitors": len([m for m in self._health_monitors.values() if m.enabled]),
+                    "total_monitors": len(self._health_monitors),
+                    "monitor_names": list(self._health_monitors.keys()),
+                },
+                "thresholds": {
+                    "adapters_with_thresholds": len(self._health_thresholds),
+                    "total_thresholds": sum(len(thresholds) for thresholds in self._health_thresholds.values()),
+                },
+                "history": {
+                    "adapters_with_history": len(self._health_history),
+                    "total_history_entries": sum(len(history) for history in self._health_history.values()),
+                    "retention_seconds": self._history_retention,
+                    "max_history_size": self._max_history_size,
+                },
+            }
+            
+            # 添加每个适配器的详细健康状态
+            adapter_details = {}
+            for adapter_id, status in self._health_status.items():
+                adapter_details[adapter_id] = {
+                    "health": status.overall_health.value,
+                    "last_check": status.last_check.isoformat(),
+                    "check_count": status.check_count,
+                    "consecutive_failures": status.consecutive_failures,
+                    "uptime": status.uptime,
+                    "issues_count": len(status.issues),
+                    "metrics_count": len(status.metrics),
+                }
+            
+            system_metrics["adapter_details"] = adapter_details
+            
+            return system_metrics
+            
+        except Exception as e:
+            logger.error(f"Failed to get system metrics: {e}")
+            return {
+                "error": str(e),
+                "health_service_status": self.status.value,
+                "timestamp": datetime.now(timezone.utc).isoformat(),
+            }
 
     # 内部方法
 

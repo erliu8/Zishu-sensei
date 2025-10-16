@@ -53,19 +53,61 @@ class AdapterTestUtils:
         priority: Priority = Priority.MEDIUM
     ):
         """创建测试用适配器配置"""
-        from zishu.adapters.core.types import AdapterConfiguration
+        from zishu.adapters.core.types import AdapterConfiguration, AdapterType
+        
+        # 创建模拟适配器类
+        class MockAdapterClass:
+            def __init__(self, config):
+                self.config = config
+                self.name = "test_adapter"
+                self.adapter_id = "test_adapter_id"
+                self.is_running = False
+            
+            async def initialize(self):
+                return True
+            
+            async def start(self):
+                """启动适配器"""
+                self.is_running = True
+                return True
+            
+            async def stop(self):
+                """停止适配器"""
+                self.is_running = False
+                return True
+            
+            async def process(self, input_data, context):
+                return {"result": "mock_processed", "input": input_data}
+            
+            async def cleanup(self):
+                pass
+            
+            async def health_check(self):
+                from zishu.adapters.core.types import HealthCheckResult, HealthStatus
+                return HealthCheckResult(
+                    status=HealthStatus.HEALTHY,
+                    checks={"connectivity": True, "resources": True},
+                    details={"test": "passed"},
+                    message="Mock adapter is healthy"
+                )
         
         default_config = {
             "test_mode": True,
             "timeout": 30,
             "max_retries": 3,
-            "enable_logging": True
+            "enable_logging": True,
+            "adapter_type": "soft"  # 添加必需的适配器类型
         }
         
         if config:
             default_config.update(config)
         
         return AdapterConfiguration(
+            identity=f"test_adapter_{id(default_config)}",  # 生成唯一ID
+            name="Test Adapter",
+            version="1.0.0",
+            adapter_type=AdapterType.SOFT,
+            adapter_class=MockAdapterClass,  # 添加适配器类
             config=default_config,
             environment={"TEST_ENV": "true"},
             resources={"memory_limit": "512MB", "cpu_limit": "1"},
