@@ -10,6 +10,7 @@ anime-offline-database/
 
 # 环境变量文件
 .env
+.env.dev
 .env.local
 .env.*.local
 
