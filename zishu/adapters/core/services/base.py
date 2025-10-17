@@ -59,6 +59,7 @@ class HealthCheckResult:
 
     is_healthy: bool
     status: ServiceHealth
+    service_name: Optional[str] = None
     message: Optional[str] = None
     details: Dict[str, Any] = field(default_factory=dict)
     timestamp: datetime = field(default_factory=lambda: datetime.now(timezone.utc))
@@ -136,9 +137,9 @@ class AsyncService(ABC):
     async def initialize(self) -> None:
         """初始化服务"""
         async with self._lock:
-            if self._status != ServiceStatus.CREATED:
+            if self._status not in [ServiceStatus.CREATED, ServiceStatus.FAILED]:
                 logger.warning(
-                    f"Service '{self.name}' already initialized, current status: {self._status}"
+                    f"Service '{self.name}' cannot be initialized from current status: {self._status}"
                 )
                 return
 
@@ -186,7 +187,7 @@ class AsyncService(ABC):
 
             except Exception as e:
                 logger.error(f"Failed to start service '{self.name}': {e}")
-                await self._set_status(ServiceStatus.ERROR)
+                await self._set_status(ServiceStatus.FAILED)
                 await self._set_health(ServiceHealth.UNHEALTHY)
                 await self._handle_error(e)
                 raise
@@ -196,6 +197,13 @@ class AsyncService(ABC):
         async with self._lock:
             if self._status == ServiceStatus.STOPPED:
                 logger.warning(f"Service '{self.name}' is already stopped")
+                return
+
+            # 如果服务还没有启动，直接设置为停止状态
+            if self._status == ServiceStatus.CREATED:
+                await self._set_status(ServiceStatus.STOPPED)
+                await self._set_health(ServiceHealth.UNKNOWN)
+                logger.info(f"Service '{self.name}' stopped (was not started)")
                 return
 
             try:

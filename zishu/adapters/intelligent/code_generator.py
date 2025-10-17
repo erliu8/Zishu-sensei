@@ -199,6 +199,13 @@ class CodeGenerationRequest:
     allowed_imports: Optional[List[str]] = None
     forbidden_patterns: List[str] = field(default_factory=list)
 
+    # 新增属性以兼容测试
+    style_preferences: Dict[str, Any] = field(default_factory=dict)
+    include_comments: bool = True
+    include_tests: bool = False
+    target_framework: Optional[str] = None
+    dependencies: List[str] = field(default_factory=list)
+
     # 元数据
     created_at: datetime = field(default_factory=lambda: datetime.now(timezone.utc))
     user_id: Optional[str] = None
@@ -246,6 +253,27 @@ class CodeGenerationResult:
 
     # 元数据
     metadata: Dict[str, Any] = field(default_factory=dict)
+    
+    # 兼容属性
+    @property
+    def code(self) -> str:
+        """兼容旧接口的代码属性"""
+        return self.generated_code
+    
+    @property
+    def explanation(self) -> str:
+        """代码解释"""
+        return self.metadata.get("explanation", "Code generated successfully")
+    
+    @property
+    def confidence(self) -> float:
+        """置信度"""
+        return self.quality_score
+    
+    # 兼容旧构造参数
+    success: bool = True
+    error_message: Optional[str] = None
+    template_used: Optional[str] = None
 
 
 @dataclass
@@ -262,6 +290,7 @@ class CodeTemplate:
     # 模板参数
     parameters: Dict[str, Any] = field(default_factory=dict)
     required_imports: List[str] = field(default_factory=list)
+    complexity: CodeComplexity = CodeComplexity.MEDIUM
 
     # 使用统计
     usage_count: int = 0
@@ -1264,10 +1293,10 @@ class IntelligentCodeGenerator:
                 generated_code=generated_code,
                 language=processed_request.language,
                 quality_score=quality_result.overall_score,
-                generation_time=0.0,  # 实际实现中会计算时间
+                generation_time_ms=0.0,  # 实际实现中会计算时间
                 template_used=template.template_id if template else None,
-                optimization_applied=processed_request.optimization_level,
-                patterns_detected=self.pattern_engine._detect_code_patterns(
+                optimization_applied=processed_request.optimization_level != OptimizationLevel.NONE,
+                detected_patterns=self.pattern_engine._detect_code_patterns(
                     generated_code, processed_request.language
                 ),
                 metadata={
@@ -1275,6 +1304,7 @@ class IntelligentCodeGenerator:
                     "quality_details": quality_result.details,
                     "warnings": quality_result.warnings,
                     "suggestions": quality_result.suggestions,
+                    "explanation": f"Generated {processed_request.language.value} code for: {processed_request.description}",
                 },
             )
 
@@ -1292,7 +1322,7 @@ class IntelligentCodeGenerator:
                 generated_code="",
                 language=request.language,
                 quality_score=0.0,
-                generation_time=0.0,
+                generation_time_ms=0.0,
                 success=False,
                 error_message=str(e),
                 metadata={"error_type": type(e).__name__},

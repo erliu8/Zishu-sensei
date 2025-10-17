@@ -6,7 +6,7 @@
 
 import asyncio
 import logging
-from typing import Dict, List, Optional, Any, Set, Callable, Tuple
+from typing import Dict, List, Optional, Any, Set, Callable, Tuple, Union
 from datetime import datetime, timezone, timedelta
 from dataclasses import dataclass, field
 from enum import Enum
@@ -38,6 +38,7 @@ class HealthMetricType(str, Enum):
     MEMORY_USAGE = "memory_usage"
     CPU_USAGE = "cpu_usage"
     AVAILABILITY = "availability"
+    PERFORMANCE = "performance"  # 综合性能指标
     CUSTOM = "custom"
 
 
@@ -57,12 +58,31 @@ class HealthMetric:
 class HealthThreshold:
     """健康阈值"""
 
-    metric_name: str
+    metric_name: str = ""
+    metric_type: Optional[HealthMetricType] = None  # 支持按类型设置阈值
     warning_threshold: Optional[float] = None
     critical_threshold: Optional[float] = None
     comparison: str = "greater"  # greater, less, equal
     enabled: bool = True
+    
+    def __post_init__(self):
+        """初始化后处理"""
+        # 如果提供了metric_type，从metric_type生成metric_name
+        if self.metric_type and not self.metric_name:
+            self.metric_name = self.metric_type.value
 
+
+@dataclass
+class HealthMetricsInfo:
+    """健康指标统计信息"""
+    
+    adapter_id: str
+    total_checks: int = 0
+    successful_checks: int = 0
+    failed_checks: int = 0
+    last_check_time: Optional[datetime] = None
+    average_check_duration: float = 0.0
+    
 
 @dataclass
 class AdapterHealthStatus:
@@ -75,7 +95,15 @@ class AdapterHealthStatus:
     issues: List[str] = field(default_factory=list)
     uptime: float = 0.0
     check_count: int = 0
+    successful_checks: int = 0  # 成功检查次数
+    failed_checks: int = 0  # 失败检查次数
     consecutive_failures: int = 0
+    message: str = ""  # 健康状态描述信息
+    
+    @property
+    def status(self) -> ServiceHealth:
+        """状态属性（兼容性别名）"""
+        return self.overall_health
 
 
 class HealthMonitor:
@@ -117,8 +145,10 @@ class AdapterHealthService(AsyncService):
         self._event_bus = event_bus
         self._health_status: Dict[str, AdapterHealthStatus] = {}
         self._health_monitors: Dict[str, HealthMonitor] = {}
-        self._health_thresholds: Dict[str, List[HealthThreshold]] = {}
+        self._health_thresholds: Dict[str, List[HealthThreshold]] = {}  # 按适配器ID存储
+        self._global_thresholds: Dict[str, HealthThreshold] = {}  # 全局命名阈值
         self._health_history: Dict[str, List[HealthMetric]] = {}
+        self._health_status_history: Dict[str, List[AdapterHealthStatus]] = {}  # 健康状态历史
         self._health_lock = asyncio.Lock()
 
         # 配置参数
@@ -220,6 +250,7 @@ class AdapterHealthService(AsyncService):
                 return HealthCheckResult(
                     is_healthy=False,
                     status=ServiceHealth.UNHEALTHY,
+                    service_name=self.name,
                     message="Service is not running",
                 )
 
@@ -235,6 +266,7 @@ class AdapterHealthService(AsyncService):
                 return HealthCheckResult(
                     is_healthy=False,
                     status=ServiceHealth.DEGRADED,
+                    service_name=self.name,
                     message=f"Too many unhealthy adapters: {unhealthy_count}/{monitored_count}",
                 )
 
@@ -246,9 +278,11 @@ class AdapterHealthService(AsyncService):
             return HealthCheckResult(
                 is_healthy=True,
                 status=ServiceHealth.HEALTHY,
+                service_name=self.name,
                 message=f"Health service monitoring {monitored_count} adapters",
                 details={
-                    "monitored_adapters": monitored_count,
+                    "monitored_adapters_count": monitored_count,  # 修改键名以匹配测试期望
+                    "monitored_adapters": monitored_count,  # 保留旧键名以兼容
                     "unhealthy_adapters": unhealthy_count,
                     "active_monitors": len(self._health_monitors) - disabled_monitors,
                     "total_monitors": len(self._health_monitors),
@@ -259,15 +293,62 @@ class AdapterHealthService(AsyncService):
             return HealthCheckResult(
                 is_healthy=False,
                 status=ServiceHealth.UNHEALTHY,
+                service_name=self.name,
                 message=f"Health check failed: {str(e)}",
             )
 
-    async def register_adapter(self, registration: AdapterRegistration) -> None:
-        """注册适配器进行健康监控"""
-        adapter_id = registration.identity.adapter_id
+    async def register_adapter(
+        self, 
+        registration: Union[str, AdapterRegistration],
+        adapter_instance: Optional[Any] = None
+    ) -> None:
+        """注册适配器进行健康监控
+        
+        支持两种调用方式：
+        1. register_adapter(registration: AdapterRegistration)
+        2. register_adapter(adapter_id: str, adapter_instance: Any)
+        """
+        # 处理两种调用方式
+        if isinstance(registration, str):
+            # 方式2: adapter_id + adapter_instance
+            adapter_id = registration
+            if adapter_instance is None:
+                raise ValueError("adapter_instance is required when using adapter_id")
+            
+            # 从 adapter_instance 创建临时 registration
+            from ..types import AdapterIdentity, AdapterConfiguration, AdapterType
+            
+            # 获取适配器名称
+            adapter_name = getattr(adapter_instance, 'name', type(adapter_instance).__name__)
+            
+            # 尝试获取适配器类型，默认为 SOFT
+            adapter_type = AdapterType.SOFT
+            if hasattr(adapter_instance, 'adapter_type'):
+                adapter_type = adapter_instance.adapter_type
+            
+            identity = AdapterIdentity(
+                adapter_id=adapter_id,
+                name=adapter_name,
+                version="1.0.0",
+                adapter_type=adapter_type
+            )
+            config = AdapterConfiguration(
+                identity=adapter_id,
+                adapter_type=adapter_type
+            )
+            registration_obj = AdapterRegistration(
+                identity=identity,
+                adapter_class=type(adapter_instance),
+                configuration=config,
+                instance=adapter_instance
+            )
+        else:
+            # 方式1: AdapterRegistration
+            registration_obj = registration
+            adapter_id = registration_obj.identity.adapter_id
 
         async with self._health_lock:
-            self._registered_adapters[adapter_id] = registration
+            self._registered_adapters[adapter_id] = registration_obj
 
             # 初始化健康状态
             if adapter_id not in self._health_status:
@@ -292,12 +373,20 @@ class AdapterHealthService(AsyncService):
         self, adapter_id: str
     ) -> Optional[AdapterHealthStatus]:
         """检查单个适配器健康状态"""
+        # 检查服务是否正在运行
+        if self.status != ServiceStatus.RUNNING:
+            raise RuntimeError(f"Health service is not running (status: {self.status})")
+        
         if adapter_id not in self._registered_adapters:
             return None
 
         registration = self._registered_adapters[adapter_id]
 
         try:
+            # 增加请求计数和更新最后活动时间
+            self._metrics.request_count += 1
+            self._metrics.last_activity = datetime.now(timezone.utc)
+            
             # 执行健康检查
             all_metrics = []
             for monitor in self._health_monitors.values():
@@ -312,6 +401,7 @@ class AdapterHealthService(AsyncService):
 
         except Exception as e:
             logger.error(f"Health check failed for adapter '{adapter_id}': {e}")
+            self._metrics.error_count += 1
             await self._record_health_failure(adapter_id, str(e))
             return self._health_status.get(adapter_id)
 
@@ -324,6 +414,18 @@ class AdapterHealthService(AsyncService):
     async def get_all_health_status(self) -> Dict[str, AdapterHealthStatus]:
         """获取所有适配器健康状态"""
         return self._health_status.copy()
+
+    async def check_all_adapters_health(self) -> List[AdapterHealthStatus]:
+        """检查所有适配器的健康状态"""
+        results = []
+        for adapter_id in list(self._registered_adapters.keys()):
+            try:
+                status = await self.check_adapter_health(adapter_id)
+                if status:
+                    results.append(status)
+            except Exception as e:
+                logger.error(f"Failed to check health for adapter '{adapter_id}': {e}")
+        return results
 
     async def add_health_monitor(self, monitor: HealthMonitor) -> None:
         """添加健康监控器"""
@@ -341,7 +443,7 @@ class AdapterHealthService(AsyncService):
     async def add_health_threshold(
         self, adapter_id: str, threshold: HealthThreshold
     ) -> None:
-        """添加健康阈值"""
+        """添加健康阈值（按适配器ID）"""
         async with self._health_lock:
             if adapter_id not in self._health_thresholds:
                 self._health_thresholds[adapter_id] = []
@@ -350,6 +452,53 @@ class AdapterHealthService(AsyncService):
             logger.info(
                 f"Added health threshold for adapter '{adapter_id}': {threshold.metric_name}"
             )
+
+    async def register_health_threshold(
+        self, name: str, threshold: HealthThreshold
+    ) -> None:
+        """注册全局命名健康阈值"""
+        async with self._health_lock:
+            self._global_thresholds[name] = threshold
+            logger.info(f"Registered global health threshold '{name}': {threshold.metric_name}")
+
+    async def get_health_thresholds(self) -> Dict[str, HealthThreshold]:
+        """获取所有全局命名阈值"""
+        async with self._health_lock:
+            return self._global_thresholds.copy()
+
+    async def get_health_metrics(self, adapter_id: str) -> Optional[HealthMetricsInfo]:
+        """获取适配器的健康指标统计信息"""
+        async with self._health_lock:
+            if adapter_id not in self._health_status:
+                return None
+            
+            status = self._health_status[adapter_id]
+            return HealthMetricsInfo(
+                adapter_id=adapter_id,
+                total_checks=status.check_count,
+                successful_checks=status.successful_checks,
+                failed_checks=status.failed_checks,
+                last_check_time=status.last_check,
+            )
+
+    async def get_health_history(
+        self, adapter_id: str, limit: Optional[int] = None
+    ) -> List[AdapterHealthStatus]:
+        """获取适配器的健康状态历史
+        
+        Args:
+            adapter_id: 适配器ID
+            limit: 限制返回的记录数
+            
+        Returns:
+            健康状态历史列表（按时间排序）
+        """
+        history = self._health_status_history.get(adapter_id, [])
+        
+        if limit:
+            history = history[-limit:]
+        
+        return history
 
     async def get_health_metrics_history(
         self, adapter_id: str, metric_name: Optional[str] = None, hours: int = 1
@@ -410,6 +559,10 @@ class AdapterHealthService(AsyncService):
             "service_uptime": self.metrics.uptime,
         }
 
+    def get_metrics(self):
+        """获取服务指标（同步方法，用于兼容测试）"""
+        return self.metrics
+    
     async def get_system_metrics(self) -> Dict[str, Any]:
         """获取系统健康指标"""
         try:
@@ -564,6 +717,7 @@ class AdapterHealthService(AsyncService):
                             source="adapter_health_service",
                             data={
                                 "adapter_id": adapter_id,
+                                "status": overall_health.value,  # 当前健康状态
                                 "old_health": old_health,
                                 "new_health": overall_health,
                                 "timestamp": current_time,
@@ -577,12 +731,46 @@ class AdapterHealthService(AsyncService):
 
             if overall_health == ServiceHealth.UNHEALTHY:
                 status.consecutive_failures += 1
+                status.failed_checks += 1
+                # 设置不健康状态的消息
+                if issues:
+                    status.message = "; ".join(issues)
+                else:
+                    # 尝试从 metrics 的 metadata 中提取错误详情
+                    error_details = []
+                    for metric in metrics:
+                        if metric.metadata and "error_details" in metric.metadata:
+                            detail = metric.metadata["error_details"]
+                            if detail:  # 只添加非None和非空的错误详情
+                                error_details.append(detail)
+                    status.message = "; ".join(error_details) if error_details else "Adapter is unhealthy"
             else:
                 status.consecutive_failures = 0
+                status.successful_checks += 1
+                # 设置健康状态的消息
+                if overall_health == ServiceHealth.DEGRADED:
+                    status.message = "Service is degraded"
+                else:
+                    status.message = "Service is healthy"
 
             # 计算运行时间
             if hasattr(status, "start_time"):
                 status.uptime = (current_time - status.start_time).total_seconds()
+
+            # 保存健康状态历史
+            if adapter_id not in self._health_status_history:
+                self._health_status_history[adapter_id] = []
+            
+            # 创建状态快照（浅拷贝）
+            import copy
+            status_snapshot = copy.copy(status)
+            status_snapshot.metrics = status.metrics.copy()
+            status_snapshot.issues = status.issues.copy()
+            self._health_status_history[adapter_id].append(status_snapshot)
+            
+            # 限制历史记录大小
+            if len(self._health_status_history[adapter_id]) > self._max_history_size:
+                self._health_status_history[adapter_id] = self._health_status_history[adapter_id][-self._max_history_size:]
 
     async def _check_thresholds(
         self, adapter_id: str, metrics: List[HealthMetric]
@@ -659,10 +847,11 @@ class AdapterHealthService(AsyncService):
         ]
         if availability_metrics:
             avg_availability = statistics.mean(m.value for m in availability_metrics)
-            if avg_availability < 0.95:  # 95%可用性阈值
-                return ServiceHealth.DEGRADED
-            elif avg_availability < 0.90:  # 90%可用性阈值
+            # 先检查更严重的条件（< 0.90），再检查较轻的条件（< 0.95）
+            if avg_availability < 0.90:  # 90%可用性阈值
                 return ServiceHealth.UNHEALTHY
+            elif avg_availability < 0.95:  # 95%可用性阈值
+                return ServiceHealth.DEGRADED
 
         return ServiceHealth.HEALTHY
 
@@ -679,6 +868,7 @@ class AdapterHealthService(AsyncService):
             status = self._health_status[adapter_id]
             status.overall_health = ServiceHealth.UNHEALTHY
             status.issues = [f"Health check failed: {error_message}"]
+            status.message = error_message  # 设置错误消息
             status.consecutive_failures += 1
             status.last_check = datetime.now(timezone.utc)
 
@@ -748,21 +938,28 @@ class AvailabilityMonitor(HealthMonitor):
 
             # 尝试多种健康检查方法
             try:
-                # 1. 检查适配器类是否有健康检查方法
-                if hasattr(registration.adapter_class, "health_check"):
+                # 优先使用实例，如果没有则使用类
+                adapter_target = registration.instance if registration.instance else registration.adapter_class
+                
+                # 1. 检查适配器是否有健康检查方法
+                if hasattr(adapter_target, "health_check"):
                     health_result = await asyncio.wait_for(
-                        registration.adapter_class.health_check(), timeout=5.0
+                        adapter_target.health_check(), timeout=5.0
                     )
-                    is_available = bool(health_result)
+                    # 正确解析 HealthCheckResult
+                    if isinstance(health_result, HealthCheckResult):
+                        is_available = health_result.is_healthy
+                    else:
+                        is_available = bool(health_result)
 
                 # 2. 检查适配器状态
-                elif hasattr(registration.adapter_class, "is_ready"):
-                    is_available = await registration.adapter_class.is_ready()
+                elif hasattr(adapter_target, "is_ready"):
+                    is_available = await adapter_target.is_ready()
 
                 # 3. 尝试基本连接测试
-                elif hasattr(registration.adapter_class, "ping"):
+                elif hasattr(adapter_target, "ping"):
                     await asyncio.wait_for(
-                        registration.adapter_class.ping(), timeout=3.0
+                        adapter_target.ping(), timeout=3.0
                     )
                     is_available = True
 
@@ -1092,36 +1289,38 @@ class ErrorRateMonitor(HealthMonitor):
                         error_details = stats.get("error_details", {})
 
                 # 检查适配器健康状态来推断错误
-                elif hasattr(registration.adapter_class, "health_check"):
-                    try:
-                        health_result = await registration.adapter_class.health_check()
-                        if not health_result:
-                            current_errors = 1
-                            error_details["health_check_failed"] = 1
-                    except Exception as e:
-                        current_errors = 1
-                        error_details[type(e).__name__] = 1
-
-                # 尝试执行简单操作来检测错误
                 else:
-                    test_operations = ["ping", "status", "__init__"]
-                    for op in test_operations:
-                        if hasattr(registration.adapter_class, op):
-                            try:
-                                if asyncio.iscoroutinefunction(
-                                    getattr(registration.adapter_class, op)
-                                ):
-                                    await getattr(registration.adapter_class, op)()
-                                else:
-                                    getattr(registration.adapter_class, op)()
-                                current_total += 1
-                            except Exception as e:
-                                current_errors += 1
-                                current_total += 1
-                                error_type = type(e).__name__
-                                error_details[error_type] = (
-                                    error_details.get(error_type, 0) + 1
-                                )
+                    adapter_target = registration.instance if registration.instance else registration.adapter_class
+                    if hasattr(adapter_target, "health_check"):
+                        try:
+                            health_result = await adapter_target.health_check()
+                            if not health_result:
+                                current_errors = 1
+                                error_details["health_check_failed"] = 1
+                        except Exception as e:
+                            current_errors = 1
+                            error_details[type(e).__name__] = 1
+                    
+                    # 尝试执行简单操作来检测错误
+                    else:
+                        test_operations = ["ping", "status", "__init__"]
+                        for op in test_operations:
+                            if hasattr(registration.adapter_class, op):
+                                try:
+                                    if asyncio.iscoroutinefunction(
+                                        getattr(registration.adapter_class, op)
+                                    ):
+                                        await getattr(registration.adapter_class, op)()
+                                    else:
+                                        getattr(registration.adapter_class, op)()
+                                    current_total += 1
+                                except Exception as e:
+                                    current_errors += 1
+                                    current_total += 1
+                                    error_type = type(e).__name__
+                                    error_details[error_type] = (
+                                        error_details.get(error_type, 0) + 1
+                                    )
 
             except Exception as e:
                 current_errors = 1

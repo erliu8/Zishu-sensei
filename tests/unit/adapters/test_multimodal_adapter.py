@@ -458,8 +458,8 @@ class TestMultimodalAdapter:
         # Assert
         assert isinstance(health, HealthCheckResult)
         assert health.is_healthy is True
-        assert "supported_modalities" in health.metadata
-        assert "processor_status" in health.metadata
+        assert "supported_modalities" in health.metrics
+        assert "processor_status" in health.metrics
 
 
 class TestModalityProcessors:
@@ -628,7 +628,7 @@ def create_mock_audio_data():
 
 
 @pytest.mark.performance
-class TestMultimodalPerformance:
+class TestMultimodalPerformance(TestMultimodalAdapter):
     """多模态性能测试"""
     
     @pytest.mark.asyncio

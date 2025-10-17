@@ -1,0 +1,187 @@
+<?xml version="1.0" encoding="utf-8"?><testsuites name="pytest tests"><testsuite name="pytest" errors="23" failures="0" skipped="0" tests="23" time="110.644" timestamp="2025-10-17T17:54:37.060968+08:00" hostname="VM-4-9-ubuntu"><testcase classname="" name="integration.test_full_system_integration" time="0.000"><error message="collection failure">ImportError while importing test module '/opt/zishu-sensei/tests/integration/test_full_system_integration.py'.
+Hint: make sure your test modules/packages have valid Python names.
+Traceback:
+/usr/lib/python3.12/importlib/__init__.py:90: in import_module
+    return _bootstrap._gcd_import(name[level:], package, level)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+tests/integration/test_full_system_integration.py:21: in &lt;module&gt;
+    from zishu.core.registry import ServiceRegistry, RegistryConfig
+E   ModuleNotFoundError: No module named 'zishu.core.registry'</error></testcase><testcase classname="" name="integration.test_lifecycle_integration" time="0.000"><error message="collection failure">ImportError while importing test module '/opt/zishu-sensei/tests/integration/test_lifecycle_integration.py'.
+Hint: make sure your test modules/packages have valid Python names.
+Traceback:
+/usr/lib/python3.12/importlib/__init__.py:90: in import_module
+    return _bootstrap._gcd_import(name[level:], package, level)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+tests/integration/test_lifecycle_integration.py:19: in &lt;module&gt;
+    from zishu.core.lifecycle import LifecycleManager, LifecycleConfig, LifecyclePhase
+E   ModuleNotFoundError: No module named 'zishu.core.lifecycle'</error></testcase><testcase classname="" name="integration.test_metrics_integration" time="0.000"><error message="collection failure">ImportError while importing test module '/opt/zishu-sensei/tests/integration/test_metrics_integration.py'.
+Hint: make sure your test modules/packages have valid Python names.
+Traceback:
+/usr/lib/python3.12/importlib/__init__.py:90: in import_module
+    return _bootstrap._gcd_import(name[level:], package, level)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+tests/integration/test_metrics_integration.py:17: in &lt;module&gt;
+    from zishu.metrics.manager import MetricsManager, MetricsConfig
+E   ModuleNotFoundError: No module named 'zishu.metrics'</error></testcase><testcase classname="" name="integration.test_microservice_integration" time="0.000"><error message="collection failure">ImportError while importing test module '/opt/zishu-sensei/tests/integration/test_microservice_integration.py'.
+Hint: make sure your test modules/packages have valid Python names.
+Traceback:
+/usr/lib/python3.12/importlib/__init__.py:90: in import_module
+    return _bootstrap._gcd_import(name[level:], package, level)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+tests/integration/test_microservice_integration.py:17: in &lt;module&gt;
+    from zishu.core.microservice import MicroserviceManager, MicroserviceConfig
+E   ModuleNotFoundError: No module named 'zishu.core.microservice'</error></testcase><testcase classname="" name="integration.test_security_integration" time="0.000"><error message="collection failure">ImportError while importing test module '/opt/zishu-sensei/tests/integration/test_security_integration.py'.
+Hint: make sure your test modules/packages have valid Python names.
+Traceback:
+/usr/lib/python3.12/importlib/__init__.py:90: in import_module
+    return _bootstrap._gcd_import(name[level:], package, level)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+tests/integration/test_security_integration.py:13: in &lt;module&gt;
+    import jwt
+E   ModuleNotFoundError: No module named 'jwt'</error></testcase><testcase classname="" name="integration.test_storage_integration" time="0.000"><error message="collection failure">ImportError while importing test module '/opt/zishu-sensei/tests/integration/test_storage_integration.py'.
+Hint: make sure your test modules/packages have valid Python names.
+Traceback:
+/usr/lib/python3.12/importlib/__init__.py:90: in import_module
+    return _bootstrap._gcd_import(name[level:], package, level)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+tests/integration/test_storage_integration.py:17: in &lt;module&gt;
+    from zishu.storage.manager import StorageManager, StorageManagerConfig
+E   ModuleNotFoundError: No module named 'zishu.storage'</error></testcase><testcase classname="" name="performance.test_adapter_benchmarks" time="0.000"><error message="collection failure">ImportError while importing test module '/opt/zishu-sensei/tests/performance/test_adapter_benchmarks.py'.
+Hint: make sure your test modules/packages have valid Python names.
+Traceback:
+/usr/lib/python3.12/importlib/__init__.py:90: in import_module
+    return _bootstrap._gcd_import(name[level:], package, level)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+tests/performance/test_adapter_benchmarks.py:26: in &lt;module&gt;
+    from tests.unit.adapters.test_soft_adapter import MockAdapterA, MockAdapterB, MockAdapterC
+E   ImportError: cannot import name 'MockAdapterA' from 'tests.unit.adapters.test_soft_adapter' (/opt/zishu-sensei/tests/unit/adapters/test_soft_adapter.py)</error></testcase><testcase classname="" name="unit.api.test_chat_routes" time="0.000"><error message="collection failure">ImportError while importing test module '/opt/zishu-sensei/tests/unit/api/test_chat_routes.py'.
+Hint: make sure your test modules/packages have valid Python names.
+Traceback:
+/usr/lib/python3.12/importlib/__init__.py:90: in import_module
+    return _bootstrap._gcd_import(name[level:], package, level)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+tests/unit/api/test_chat_routes.py:18: in &lt;module&gt;
+    from zishu.api.routes.chat import (
+zishu/api/routes/chat.py:31: in &lt;module&gt;
+    from zishu.models.inference import get_inference_engine
+E   ModuleNotFoundError: No module named 'zishu.models.inference'</error></testcase><testcase classname="" name="unit.metrics.test_aggregators" time="0.000"><error message="collection failure">ImportError while importing test module '/opt/zishu-sensei/tests/unit/metrics/test_aggregators.py'.
+Hint: make sure your test modules/packages have valid Python names.
+Traceback:
+/usr/lib/python3.12/importlib/__init__.py:90: in import_module
+    return _bootstrap._gcd_import(name[level:], package, level)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+tests/unit/metrics/test_aggregators.py:15: in &lt;module&gt;
+    from zishu.metrics.aggregators.base import BaseAggregator, AggregatorConfig
+E   ModuleNotFoundError: No module named 'zishu.metrics'</error></testcase><testcase classname="" name="unit.metrics.test_collectors" time="0.000"><error message="collection failure">ImportError while importing test module '/opt/zishu-sensei/tests/unit/metrics/test_collectors.py'.
+Hint: make sure your test modules/packages have valid Python names.
+Traceback:
+/usr/lib/python3.12/importlib/__init__.py:90: in import_module
+    return _bootstrap._gcd_import(name[level:], package, level)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+tests/unit/metrics/test_collectors.py:16: in &lt;module&gt;
+    from zishu.metrics.collectors.base import BaseCollector, CollectorConfig
+E   ModuleNotFoundError: No module named 'zishu.metrics'</error></testcase><testcase classname="" name="unit.metrics.test_exporters" time="0.000"><error message="collection failure">ImportError while importing test module '/opt/zishu-sensei/tests/unit/metrics/test_exporters.py'.
+Hint: make sure your test modules/packages have valid Python names.
+Traceback:
+/usr/lib/python3.12/importlib/__init__.py:90: in import_module
+    return _bootstrap._gcd_import(name[level:], package, level)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+tests/unit/metrics/test_exporters.py:17: in &lt;module&gt;
+    from zishu.metrics.exporters.base import BaseExporter, ExporterConfig
+E   ModuleNotFoundError: No module named 'zishu.metrics'</error></testcase><testcase classname="" name="unit.metrics.test_manager" time="0.000"><error message="collection failure">ImportError while importing test module '/opt/zishu-sensei/tests/unit/metrics/test_manager.py'.
+Hint: make sure your test modules/packages have valid Python names.
+Traceback:
+/usr/lib/python3.12/importlib/__init__.py:90: in import_module
+    return _bootstrap._gcd_import(name[level:], package, level)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+tests/unit/metrics/test_manager.py:14: in &lt;module&gt;
+    from zishu.metrics.manager import MetricsManager, MetricsConfig
+E   ModuleNotFoundError: No module named 'zishu.metrics'</error></testcase><testcase classname="" name="unit.metrics.test_metrics_core" time="0.000"><error message="collection failure">ImportError while importing test module '/opt/zishu-sensei/tests/unit/metrics/test_metrics_core.py'.
+Hint: make sure your test modules/packages have valid Python names.
+Traceback:
+/usr/lib/python3.12/importlib/__init__.py:90: in import_module
+    return _bootstrap._gcd_import(name[level:], package, level)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+tests/unit/metrics/test_metrics_core.py:15: in &lt;module&gt;
+    from zishu.metrics.core.manager import MetricsManager, MetricsManagerConfig
+E   ModuleNotFoundError: No module named 'zishu.metrics'</error></testcase><testcase classname="" name="unit.metrics.test_storage" time="0.000"><error message="collection failure">ImportError while importing test module '/opt/zishu-sensei/tests/unit/metrics/test_storage.py'.
+Hint: make sure your test modules/packages have valid Python names.
+Traceback:
+/usr/lib/python3.12/importlib/__init__.py:90: in import_module
+    return _bootstrap._gcd_import(name[level:], package, level)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+tests/unit/metrics/test_storage.py:18: in &lt;module&gt;
+    from zishu.metrics.storage.base import BaseStorage, StorageConfig
+E   ModuleNotFoundError: No module named 'zishu.metrics'</error></testcase><testcase classname="" name="unit.security.test_audit" time="0.000"><error message="collection failure">ImportError while importing test module '/opt/zishu-sensei/tests/unit/security/test_audit.py'.
+Hint: make sure your test modules/packages have valid Python names.
+Traceback:
+/usr/lib/python3.12/importlib/__init__.py:90: in import_module
+    return _bootstrap._gcd_import(name[level:], package, level)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+tests/unit/security/test_audit.py:15: in &lt;module&gt;
+    from zishu.security.core.audit import (
+E   ModuleNotFoundError: No module named 'zishu.security'</error></testcase><testcase classname="" name="unit.security.test_permissions" time="0.000"><error message="collection failure">ImportError while importing test module '/opt/zishu-sensei/tests/unit/security/test_permissions.py'.
+Hint: make sure your test modules/packages have valid Python names.
+Traceback:
+/usr/lib/python3.12/importlib/__init__.py:90: in import_module
+    return _bootstrap._gcd_import(name[level:], package, level)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+tests/unit/security/test_permissions.py:14: in &lt;module&gt;
+    from zishu.security.core.permissions import (
+E   ModuleNotFoundError: No module named 'zishu.security'</error></testcase><testcase classname="" name="unit.security.test_sandbox" time="0.000"><error message="collection failure">ImportError while importing test module '/opt/zishu-sensei/tests/unit/security/test_sandbox.py'.
+Hint: make sure your test modules/packages have valid Python names.
+Traceback:
+/usr/lib/python3.12/importlib/__init__.py:90: in import_module
+    return _bootstrap._gcd_import(name[level:], package, level)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+tests/unit/security/test_sandbox.py:17: in &lt;module&gt;
+    from zishu.security.core.sandbox import (
+E   ModuleNotFoundError: No module named 'zishu.security'</error></testcase><testcase classname="" name="unit.security.test_security_manager" time="0.000"><error message="collection failure">ImportError while importing test module '/opt/zishu-sensei/tests/unit/security/test_security_manager.py'.
+Hint: make sure your test modules/packages have valid Python names.
+Traceback:
+/usr/lib/python3.12/importlib/__init__.py:90: in import_module
+    return _bootstrap._gcd_import(name[level:], package, level)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+tests/unit/security/test_security_manager.py:14: in &lt;module&gt;
+    from zishu.security.core.manager import SecurityManager, SecurityManagerConfig
+E   ModuleNotFoundError: No module named 'zishu.security'</error></testcase><testcase classname="" name="unit.security.test_threat_detector" time="0.000"><error message="collection failure">ImportError while importing test module '/opt/zishu-sensei/tests/unit/security/test_threat_detector.py'.
+Hint: make sure your test modules/packages have valid Python names.
+Traceback:
+/usr/lib/python3.12/importlib/__init__.py:90: in import_module
+    return _bootstrap._gcd_import(name[level:], package, level)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+tests/unit/security/test_threat_detector.py:15: in &lt;module&gt;
+    from zishu.security.core.threat_detector import (
+E   ModuleNotFoundError: No module named 'zishu.security'</error></testcase><testcase classname="" name="unit.storage.test_backends" time="0.000"><error message="collection failure">ImportError while importing test module '/opt/zishu-sensei/tests/unit/storage/test_backends.py'.
+Hint: make sure your test modules/packages have valid Python names.
+Traceback:
+/usr/lib/python3.12/importlib/__init__.py:90: in import_module
+    return _bootstrap._gcd_import(name[level:], package, level)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+tests/unit/storage/test_backends.py:19: in &lt;module&gt;
+    from zishu.storage.backends.base import BaseStorageBackend, StorageConfig, StorageOperation
+E   ModuleNotFoundError: No module named 'zishu.storage'</error></testcase><testcase classname="" name="unit.storage.test_factory" time="0.000"><error message="collection failure">ImportError while importing test module '/opt/zishu-sensei/tests/unit/storage/test_factory.py'.
+Hint: make sure your test modules/packages have valid Python names.
+Traceback:
+/usr/lib/python3.12/importlib/__init__.py:90: in import_module
+    return _bootstrap._gcd_import(name[level:], package, level)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+tests/unit/storage/test_factory.py:15: in &lt;module&gt;
+    from zishu.storage.factory import StorageFactory, StorageBackendRegistry
+E   ModuleNotFoundError: No module named 'zishu.storage'</error></testcase><testcase classname="" name="unit.storage.test_manager" time="0.000"><error message="collection failure">ImportError while importing test module '/opt/zishu-sensei/tests/unit/storage/test_manager.py'.
+Hint: make sure your test modules/packages have valid Python names.
+Traceback:
+/usr/lib/python3.12/importlib/__init__.py:90: in import_module
+    return _bootstrap._gcd_import(name[level:], package, level)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+tests/unit/storage/test_manager.py:17: in &lt;module&gt;
+    from zishu.storage.manager import StorageManager, StorageManagerConfig
+E   ModuleNotFoundError: No module named 'zishu.storage'</error></testcase><testcase classname="" name="unit.storage.test_migration" time="0.000"><error message="collection failure">ImportError while importing test module '/opt/zishu-sensei/tests/unit/storage/test_migration.py'.
+Hint: make sure your test modules/packages have valid Python names.
+Traceback:
+/usr/lib/python3.12/importlib/__init__.py:90: in import_module
+    return _bootstrap._gcd_import(name[level:], package, level)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+tests/unit/storage/test_migration.py:18: in &lt;module&gt;
+    from zishu.storage.migration import (
+E   ModuleNotFoundError: No module named 'zishu.storage'</error></testcase></testsuite></testsuites>

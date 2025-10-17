@@ -1,0 +1,1334 @@
+<!DOCTYPE html>
+<html class="writer-html5" lang="zh-CN" data-content_root="../">
+<head>
+  <meta charset="utf-8" /><meta name="viewport" content="width=device-width, initial-scale=1" />
+
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>编码规范 &mdash; Zishu-Sensei Documentation</title>
+      <link rel="stylesheet" type="text/css" href="../_static/pygments.css?v=b86133f3" />
+      <link rel="stylesheet" type="text/css" href="../_static/css/theme.css?v=19f00094" />
+      <link rel="stylesheet" type="text/css" href="../_static/copybutton.css?v=76b2166b" />
+      <link rel="stylesheet" type="text/css" href="../_static/tabs.css?v=a5c4661c" />
+      <link rel="stylesheet" type="text/css" href="../_static/custom.css?v=fcc5c311" />
+
+  
+  <!--[if lt IE 9]>
+    <script src="../_static/js/html5shiv.min.js"></script>
+  <![endif]-->
+  
+        <script src="../_static/jquery.js?v=5d32c60e"></script>
+        <script src="../_static/_sphinx_javascript_frameworks_compat.js?v=2cd50e6c"></script>
+        <script src="../_static/documentation_options.js?v=34088549"></script>
+        <script src="../_static/doctools.js?v=888ff710"></script>
+        <script src="../_static/sphinx_highlight.js?v=dc90522c"></script>
+        <script src="../_static/clipboard.min.js?v=a7894cd8"></script>
+        <script src="../_static/copybutton.js?v=30646c52"></script>
+        <script src="../_static/translations.js?v=beaddf03"></script>
+    <script src="../_static/js/theme.js"></script>
+    <link rel="index" title="索引" href="../genindex.html" />
+    <link rel="search" title="搜索" href="../search.html" />
+    <link rel="next" title="核心模块 API" href="../api/core.html" />
+    <link rel="prev" title="开发环境配置" href="development_setup.html" /> 
+</head>
+
+<body class="wy-body-for-nav"> 
+  <div class="wy-grid-for-nav">
+    <nav data-toggle="wy-nav-shift" class="wy-nav-side">
+      <div class="wy-side-scroll">
+        <div class="wy-side-nav-search"  style="background: #2980B9" >
+
+          
+          
+          <a href="../index.html" class="icon icon-home">
+            Zishu-Sensei
+          </a>
+              <div class="version">
+                1.0
+              </div>
+<div role="search">
+  <form id="rtd-search-form" class="wy-form" action="../search.html" method="get">
+    <input type="text" name="q" placeholder="搜索文档" aria-label="搜索文档" />
+    <input type="hidden" name="check_keywords" value="yes" />
+    <input type="hidden" name="area" value="default" />
+  </form>
+</div>
+        </div><div class="wy-menu wy-menu-vertical" data-spy="affix" role="navigation" aria-label="导航菜单">
+              <p class="caption" role="heading"><span class="caption-text">用户指南</span></p>
+<ul>
+<li class="toctree-l1"><a class="reference internal" href="../user_guide/introduction.html">项目简介</a><ul>
+<li class="toctree-l2"><a class="reference internal" href="../user_guide/introduction.html#zishu-sensei">什么是 Zishu-Sensei？</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../user_guide/introduction.html#id2">核心功能</a><ul>
+<li class="toctree-l3"><a class="reference internal" href="../user_guide/introduction.html#id3">智能对话</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../user_guide/introduction.html#id4">知识检索</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../user_guide/introduction.html#id5">学习辅助</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../user_guide/introduction.html#id6">知识管理</a></li>
+</ul>
+</li>
+<li class="toctree-l2"><a class="reference internal" href="../user_guide/introduction.html#id7">系统架构</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../user_guide/introduction.html#id8">技术特点</a><ul>
+<li class="toctree-l3"><a class="reference internal" href="../user_guide/introduction.html#id9">高性能</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../user_guide/introduction.html#id10">可扩展</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../user_guide/introduction.html#id11">安全可靠</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../user_guide/introduction.html#id12">易于部署</a></li>
+</ul>
+</li>
+<li class="toctree-l2"><a class="reference internal" href="../user_guide/introduction.html#id13">应用场景</a><ul>
+<li class="toctree-l3"><a class="reference internal" href="../user_guide/introduction.html#id14">教育机构</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../user_guide/introduction.html#id15">个人学习</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../user_guide/introduction.html#id16">企业培训</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../user_guide/introduction.html#id17">研究辅助</a></li>
+</ul>
+</li>
+<li class="toctree-l2"><a class="reference internal" href="../user_guide/introduction.html#id18">开发团队</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../user_guide/introduction.html#id19">下一步</a></li>
+</ul>
+</li>
+<li class="toctree-l1"><a class="reference internal" href="../user_guide/installation.html">安装指南</a><ul>
+<li class="toctree-l2"><a class="reference internal" href="../user_guide/installation.html#id2">系统要求</a><ul>
+<li class="toctree-l3"><a class="reference internal" href="../user_guide/installation.html#id3">硬件要求</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../user_guide/installation.html#id4">软件要求</a></li>
+</ul>
+</li>
+<li class="toctree-l2"><a class="reference internal" href="../user_guide/installation.html#id5">安装方式</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../user_guide/installation.html#docker">方式一: Docker 部署 (推荐)</a><ul>
+<li class="toctree-l3"><a class="reference internal" href="../user_guide/installation.html#id6">步骤 1: 安装 Docker</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../user_guide/installation.html#id7">步骤 2: 克隆项目</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../user_guide/installation.html#id8">步骤 3: 配置环境变量</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../user_guide/installation.html#id9">步骤 4: 启动服务</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../user_guide/installation.html#id10">步骤 5: 验证安装</a></li>
+</ul>
+</li>
+<li class="toctree-l2"><a class="reference internal" href="../user_guide/installation.html#id11">方式二: 本地开发安装</a><ul>
+<li class="toctree-l3"><a class="reference internal" href="../user_guide/installation.html#python">步骤 1: 安装 Python 依赖</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../user_guide/installation.html#id12">步骤 2: 安装数据库</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../user_guide/installation.html#id13">步骤 3: 配置数据库</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../user_guide/installation.html#id14">步骤 4: 运行数据库迁移</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../user_guide/installation.html#id15">步骤 5: 启动应用</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../user_guide/installation.html#id16">步骤 6: 验证安装</a></li>
+</ul>
+</li>
+<li class="toctree-l2"><a class="reference internal" href="../user_guide/installation.html#id17">方式三: 云平台部署</a><ul>
+<li class="toctree-l3"><a class="reference internal" href="../user_guide/installation.html#id18">云硬盘环境 (推荐用于生产)</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../user_guide/installation.html#id19">云服务器部署</a></li>
+</ul>
+</li>
+<li class="toctree-l2"><a class="reference internal" href="../user_guide/installation.html#id20">常见问题</a><ul>
+<li class="toctree-l3"><a class="reference internal" href="../user_guide/installation.html#id21">端口冲突</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../user_guide/installation.html#id22">权限问题</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../user_guide/installation.html#id23">数据库连接失败</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../user_guide/installation.html#id24">模型下载慢</a></li>
+</ul>
+</li>
+<li class="toctree-l2"><a class="reference internal" href="../user_guide/installation.html#id25">卸载</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../user_guide/installation.html#id26">下一步</a></li>
+</ul>
+</li>
+<li class="toctree-l1"><a class="reference internal" href="../user_guide/quickstart.html">快速开始</a><ul>
+<li class="toctree-l2"><a class="reference internal" href="../user_guide/quickstart.html#id2">安装</a><ul>
+<li class="toctree-l3"><a class="reference internal" href="../user_guide/quickstart.html#docker">使用 Docker (推荐)</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../user_guide/quickstart.html#id3">本地安装</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../user_guide/quickstart.html#id4">验证安装</a></li>
+</ul>
+</li>
+<li class="toctree-l2"><a class="reference internal" href="../user_guide/quickstart.html#id5">基本使用</a><ul>
+<li class="toctree-l3"><a class="reference internal" href="../user_guide/quickstart.html#id6">1. 创建用户</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../user_guide/quickstart.html#id7">2. 登录获取令牌</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../user_guide/quickstart.html#id8">3. 开始对话</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../user_guide/quickstart.html#id9">4. 发送消息</a></li>
+</ul>
+</li>
+<li class="toctree-l2"><a class="reference internal" href="../user_guide/quickstart.html#id10">使用桌面应用</a><ul>
+<li class="toctree-l3"><a class="reference internal" href="../user_guide/quickstart.html#id11">启动应用</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../user_guide/quickstart.html#id12">配置连接</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../user_guide/quickstart.html#id13">开始对话</a></li>
+</ul>
+</li>
+<li class="toctree-l2"><a class="reference internal" href="../user_guide/quickstart.html#id14">上传文档</a><ul>
+<li class="toctree-l3"><a class="reference internal" href="../user_guide/quickstart.html#id15">准备文档</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../user_guide/quickstart.html#id16">上传文档</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../user_guide/quickstart.html#id17">查看处理状态</a></li>
+</ul>
+</li>
+<li class="toctree-l2"><a class="reference internal" href="../user_guide/quickstart.html#rag">使用 RAG 查询</a><ul>
+<li class="toctree-l3"><a class="reference internal" href="../user_guide/quickstart.html#id18">启用 RAG</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../user_guide/quickstart.html#id19">查看引用来源</a></li>
+</ul>
+</li>
+<li class="toctree-l2"><a class="reference internal" href="../user_guide/quickstart.html#id20">配置选项</a><ul>
+<li class="toctree-l3"><a class="reference internal" href="../user_guide/quickstart.html#id21">基本配置</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../user_guide/quickstart.html#llm">LLM 提供商</a></li>
+</ul>
+</li>
+<li class="toctree-l2"><a class="reference internal" href="../user_guide/quickstart.html#id22">常见任务</a><ul>
+<li class="toctree-l3"><a class="reference internal" href="../user_guide/quickstart.html#id23">管理对话</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../user_guide/quickstart.html#id24">管理文档</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../user_guide/quickstart.html#id25">搜索文档</a></li>
+</ul>
+</li>
+<li class="toctree-l2"><a class="reference internal" href="../user_guide/quickstart.html#id26">故障排除</a><ul>
+<li class="toctree-l3"><a class="reference internal" href="../user_guide/quickstart.html#api">API 无法访问</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../user_guide/quickstart.html#id27">数据库连接失败</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../user_guide/quickstart.html#id28">上传文档失败</a></li>
+</ul>
+</li>
+<li class="toctree-l2"><a class="reference internal" href="../user_guide/quickstart.html#id29">下一步</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../user_guide/quickstart.html#id30">需要帮助？</a></li>
+</ul>
+</li>
+<li class="toctree-l1"><a class="reference internal" href="../user_guide/configuration.html">配置指南</a><ul>
+<li class="toctree-l2"><a class="reference internal" href="../user_guide/configuration.html#id2">配置文件结构</a><ul>
+<li class="toctree-l3"><a class="reference internal" href="../user_guide/configuration.html#id3">主要配置文件</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../user_guide/configuration.html#id4">环境变量</a></li>
+</ul>
+</li>
+<li class="toctree-l2"><a class="reference internal" href="../user_guide/configuration.html#id5">主配置文件</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../user_guide/configuration.html#llm">LLM 模型配置</a><ul>
+<li class="toctree-l3"><a class="reference internal" href="../user_guide/configuration.html#openai">OpenAI 配置</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../user_guide/configuration.html#claude-anthropic">Claude (Anthropic) 配置</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../user_guide/configuration.html#id6">本地模型配置</a></li>
+</ul>
+</li>
+<li class="toctree-l2"><a class="reference internal" href="../user_guide/configuration.html#rag">RAG 配置</a><ul>
+<li class="toctree-l3"><a class="reference internal" href="../user_guide/configuration.html#id7">基础配置</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../user_guide/configuration.html#id8">重排序配置</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../user_guide/configuration.html#id9">文档解析配置</a></li>
+</ul>
+</li>
+<li class="toctree-l2"><a class="reference internal" href="../user_guide/configuration.html#id10">适配器配置</a><ul>
+<li class="toctree-l3"><a class="reference internal" href="../user_guide/configuration.html#core-adapter">Core Adapter</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../user_guide/configuration.html#soft-adapter">Soft Adapter</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../user_guide/configuration.html#hard-adapter">Hard Adapter</a></li>
+</ul>
+</li>
+<li class="toctree-l2"><a class="reference internal" href="../user_guide/configuration.html#id11">日志配置</a><ul>
+<li class="toctree-l3"><a class="reference internal" href="../user_guide/configuration.html#id12">基础日志配置</a></li>
+</ul>
+</li>
+<li class="toctree-l2"><a class="reference internal" href="../user_guide/configuration.html#id13">性能优化配置</a><ul>
+<li class="toctree-l3"><a class="reference internal" href="../user_guide/configuration.html#id14">数据库连接池</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../user_guide/configuration.html#id15">缓存策略</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../user_guide/configuration.html#id16">并发控制</a></li>
+</ul>
+</li>
+<li class="toctree-l2"><a class="reference internal" href="../user_guide/configuration.html#id17">安全配置</a><ul>
+<li class="toctree-l3"><a class="reference internal" href="../user_guide/configuration.html#id18">认证和授权</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../user_guide/configuration.html#id19">数据加密</a></li>
+</ul>
+</li>
+<li class="toctree-l2"><a class="reference internal" href="../user_guide/configuration.html#id20">监控配置</a><ul>
+<li class="toctree-l3"><a class="reference internal" href="../user_guide/configuration.html#prometheus">Prometheus 指标</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../user_guide/configuration.html#id21">健康检查</a></li>
+</ul>
+</li>
+<li class="toctree-l2"><a class="reference internal" href="../user_guide/configuration.html#id22">环境特定配置</a><ul>
+<li class="toctree-l3"><a class="reference internal" href="../user_guide/configuration.html#id23">开发环境</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../user_guide/configuration.html#id24">生产环境</a></li>
+</ul>
+</li>
+<li class="toctree-l2"><a class="reference internal" href="../user_guide/configuration.html#id25">配置加载优先级</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../user_guide/configuration.html#id26">配置验证</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../user_guide/configuration.html#id27">最佳实践</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../user_guide/configuration.html#id28">下一步</a></li>
+</ul>
+</li>
+<li class="toctree-l1"><a class="reference internal" href="../user_guide/deployment.html">部署指南</a><ul>
+<li class="toctree-l2"><a class="reference internal" href="../user_guide/deployment.html#id2">部署架构</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../user_guide/deployment.html#docker">Docker 部署</a><ul>
+<li class="toctree-l3"><a class="reference internal" href="../user_guide/deployment.html#docker-compose">生产环境 Docker Compose</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../user_guide/deployment.html#id3">启动生产环境</a></li>
+</ul>
+</li>
+<li class="toctree-l2"><a class="reference internal" href="../user_guide/deployment.html#kubernetes">Kubernetes 部署</a><ul>
+<li class="toctree-l3"><a class="reference internal" href="../user_guide/deployment.html#id4">准备工作</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../user_guide/deployment.html#id5">创建命名空间</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../user_guide/deployment.html#id6">部署配置</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../user_guide/deployment.html#id7">服务配置</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../user_guide/deployment.html#ingress">Ingress 配置</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../user_guide/deployment.html#k8s">部署到 K8s</a></li>
+</ul>
+</li>
+<li class="toctree-l2"><a class="reference internal" href="../user_guide/deployment.html#id8">云平台部署</a><ul>
+<li class="toctree-l3"><a class="reference internal" href="../user_guide/deployment.html#aws">AWS 部署</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../user_guide/deployment.html#azure">Azure 部署</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../user_guide/deployment.html#gcp">GCP 部署</a></li>
+</ul>
+</li>
+<li class="toctree-l2"><a class="reference internal" href="../user_guide/deployment.html#nginx">Nginx 配置</a><ul>
+<li class="toctree-l3"><a class="reference internal" href="../user_guide/deployment.html#id9">生产环境 Nginx 配置</a></li>
+</ul>
+</li>
+<li class="toctree-l2"><a class="reference internal" href="../user_guide/deployment.html#ssl">SSL 证书配置</a><ul>
+<li class="toctree-l3"><a class="reference internal" href="../user_guide/deployment.html#let-s-encrypt">使用 Let’s Encrypt</a></li>
+</ul>
+</li>
+<li class="toctree-l2"><a class="reference internal" href="../user_guide/deployment.html#id10">数据库优化</a><ul>
+<li class="toctree-l3"><a class="reference internal" href="../user_guide/deployment.html#postgresql">PostgreSQL 优化</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../user_guide/deployment.html#id11">主从复制</a></li>
+</ul>
+</li>
+<li class="toctree-l2"><a class="reference internal" href="../user_guide/deployment.html#id12">监控和日志</a><ul>
+<li class="toctree-l3"><a class="reference internal" href="../user_guide/deployment.html#prometheus-grafana">Prometheus + Grafana</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../user_guide/deployment.html#id13">日志聚合</a></li>
+</ul>
+</li>
+<li class="toctree-l2"><a class="reference internal" href="../user_guide/deployment.html#id14">备份策略</a><ul>
+<li class="toctree-l3"><a class="reference internal" href="../user_guide/deployment.html#id15">数据库备份</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../user_guide/deployment.html#id16">自动备份</a></li>
+</ul>
+</li>
+<li class="toctree-l2"><a class="reference internal" href="../user_guide/deployment.html#id17">故障恢复</a><ul>
+<li class="toctree-l3"><a class="reference internal" href="../user_guide/deployment.html#id18">数据恢复</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../user_guide/deployment.html#id19">灾难恢复计划</a></li>
+</ul>
+</li>
+<li class="toctree-l2"><a class="reference internal" href="../user_guide/deployment.html#id20">性能调优</a><ul>
+<li class="toctree-l3"><a class="reference internal" href="../user_guide/deployment.html#id21">应用层优化</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../user_guide/deployment.html#id22">负载均衡</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../user_guide/deployment.html#id23">扩展策略</a></li>
+</ul>
+</li>
+<li class="toctree-l2"><a class="reference internal" href="../user_guide/deployment.html#id24">安全加固</a><ul>
+<li class="toctree-l3"><a class="reference internal" href="../user_guide/deployment.html#id25">防火墙规则</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../user_guide/deployment.html#id26">定期更新</a></li>
+</ul>
+</li>
+<li class="toctree-l2"><a class="reference internal" href="../user_guide/deployment.html#id27">检查清单</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../user_guide/deployment.html#id28">下一步</a></li>
+</ul>
+</li>
+</ul>
+<p class="caption" role="heading"><span class="caption-text">开发文档</span></p>
+<ul class="current">
+<li class="toctree-l1"><a class="reference internal" href="architecture.html">系统架构</a><ul>
+<li class="toctree-l2"><a class="reference internal" href="architecture.html#id2">整体架构</a></li>
+<li class="toctree-l2"><a class="reference internal" href="architecture.html#id3">核心设计原则</a><ul>
+<li class="toctree-l3"><a class="reference internal" href="architecture.html#srp">1. 单一职责原则 (SRP)</a></li>
+<li class="toctree-l3"><a class="reference internal" href="architecture.html#ocp">2. 开闭原则 (OCP)</a></li>
+<li class="toctree-l3"><a class="reference internal" href="architecture.html#dip">3. 依赖倒置原则 (DIP)</a></li>
+</ul>
+</li>
+<li class="toctree-l2"><a class="reference internal" href="architecture.html#id4">适配器架构</a><ul>
+<li class="toctree-l3"><a class="reference internal" href="architecture.html#id5">适配器模式详解</a></li>
+<li class="toctree-l3"><a class="reference internal" href="architecture.html#core-adapter">Core Adapter</a></li>
+<li class="toctree-l3"><a class="reference internal" href="architecture.html#soft-adapter">Soft Adapter</a></li>
+<li class="toctree-l3"><a class="reference internal" href="architecture.html#hard-adapter">Hard Adapter</a></li>
+</ul>
+</li>
+<li class="toctree-l2"><a class="reference internal" href="architecture.html#id6">数据流架构</a><ul>
+<li class="toctree-l3"><a class="reference internal" href="architecture.html#id7">请求处理流程</a></li>
+<li class="toctree-l3"><a class="reference internal" href="architecture.html#id8">对话处理流程</a></li>
+</ul>
+</li>
+<li class="toctree-l2"><a class="reference internal" href="architecture.html#id9">数据模型设计</a><ul>
+<li class="toctree-l3"><a class="reference internal" href="architecture.html#id10">核心实体关系</a></li>
+<li class="toctree-l3"><a class="reference internal" href="architecture.html#id11">用户模型</a></li>
+<li class="toctree-l3"><a class="reference internal" href="architecture.html#id12">对话模型</a></li>
+</ul>
+</li>
+<li class="toctree-l2"><a class="reference internal" href="architecture.html#id13">缓存策略</a><ul>
+<li class="toctree-l3"><a class="reference internal" href="architecture.html#id14">多层缓存架构</a></li>
+<li class="toctree-l3"><a class="reference internal" href="architecture.html#id15">缓存实现</a></li>
+</ul>
+</li>
+<li class="toctree-l2"><a class="reference internal" href="architecture.html#id16">异步处理</a><ul>
+<li class="toctree-l3"><a class="reference internal" href="architecture.html#id17">任务队列</a></li>
+</ul>
+</li>
+<li class="toctree-l2"><a class="reference internal" href="architecture.html#id18">错误处理</a><ul>
+<li class="toctree-l3"><a class="reference internal" href="architecture.html#id19">统一异常处理</a></li>
+</ul>
+</li>
+<li class="toctree-l2"><a class="reference internal" href="architecture.html#id20">安全架构</a><ul>
+<li class="toctree-l3"><a class="reference internal" href="architecture.html#id21">认证和授权</a></li>
+</ul>
+</li>
+<li class="toctree-l2"><a class="reference internal" href="architecture.html#id22">扩展性设计</a><ul>
+<li class="toctree-l3"><a class="reference internal" href="architecture.html#id23">水平扩展</a></li>
+<li class="toctree-l3"><a class="reference internal" href="architecture.html#id24">垂直扩展</a></li>
+</ul>
+</li>
+<li class="toctree-l2"><a class="reference internal" href="architecture.html#id25">性能优化</a><ul>
+<li class="toctree-l3"><a class="reference internal" href="architecture.html#id26">数据库优化</a></li>
+<li class="toctree-l3"><a class="reference internal" href="architecture.html#api">API 优化</a></li>
+</ul>
+</li>
+<li class="toctree-l2"><a class="reference internal" href="architecture.html#id27">下一步</a></li>
+</ul>
+</li>
+<li class="toctree-l1"><a class="reference internal" href="development_setup.html">开发环境配置</a><ul>
+<li class="toctree-l2"><a class="reference internal" href="development_setup.html#id2">前置要求</a><ul>
+<li class="toctree-l3"><a class="reference internal" href="development_setup.html#id3">开发工具</a></li>
+</ul>
+</li>
+<li class="toctree-l2"><a class="reference internal" href="development_setup.html#id4">环境配置</a><ul>
+<li class="toctree-l3"><a class="reference internal" href="development_setup.html#id5">1. 克隆仓库</a></li>
+<li class="toctree-l3"><a class="reference internal" href="development_setup.html#id6">2. 创建虚拟环境</a></li>
+<li class="toctree-l3"><a class="reference internal" href="development_setup.html#id7">3. 安装依赖</a></li>
+<li class="toctree-l3"><a class="reference internal" href="development_setup.html#id8">4. 配置环境变量</a></li>
+<li class="toctree-l3"><a class="reference internal" href="development_setup.html#id9">5. 初始化数据库</a></li>
+</ul>
+</li>
+<li class="toctree-l2"><a class="reference internal" href="development_setup.html#id10">开发工作流</a><ul>
+<li class="toctree-l3"><a class="reference internal" href="development_setup.html#id11">启动开发服务</a></li>
+<li class="toctree-l3"><a class="reference internal" href="development_setup.html#id12">代码编辑</a></li>
+<li class="toctree-l3"><a class="reference internal" href="development_setup.html#id13">代码质量检查</a></li>
+</ul>
+</li>
+<li class="toctree-l2"><a class="reference internal" href="development_setup.html#id14">开发工具</a><ul>
+<li class="toctree-l3"><a class="reference internal" href="development_setup.html#vs-code">VS Code 配置</a></li>
+<li class="toctree-l3"><a class="reference internal" href="development_setup.html#id15">调试配置</a></li>
+</ul>
+</li>
+<li class="toctree-l2"><a class="reference internal" href="development_setup.html#id16">数据库管理</a><ul>
+<li class="toctree-l3"><a class="reference internal" href="development_setup.html#pgadmin">使用 pgAdmin</a></li>
+<li class="toctree-l3"><a class="reference internal" href="development_setup.html#id17">数据库迁移</a></li>
+</ul>
+</li>
+<li class="toctree-l2"><a class="reference internal" href="development_setup.html#redis">Redis 管理</a><ul>
+<li class="toctree-l3"><a class="reference internal" href="development_setup.html#redis-commander">使用 Redis Commander</a></li>
+<li class="toctree-l3"><a class="reference internal" href="development_setup.html#redis-cli">使用 Redis CLI</a></li>
+</ul>
+</li>
+<li class="toctree-l2"><a class="reference internal" href="development_setup.html#id18">前端开发</a><ul>
+<li class="toctree-l3"><a class="reference internal" href="development_setup.html#desktop-app">Desktop App 开发</a></li>
+</ul>
+</li>
+<li class="toctree-l2"><a class="reference internal" href="development_setup.html#id19">测试</a><ul>
+<li class="toctree-l3"><a class="reference internal" href="development_setup.html#id20">运行测试</a></li>
+<li class="toctree-l3"><a class="reference internal" href="development_setup.html#id21">编写测试</a></li>
+</ul>
+</li>
+<li class="toctree-l2"><a class="reference internal" href="development_setup.html#id22">性能分析</a><ul>
+<li class="toctree-l3"><a class="reference internal" href="development_setup.html#profiling">Profiling</a></li>
+<li class="toctree-l3"><a class="reference internal" href="development_setup.html#id23">监控</a></li>
+</ul>
+</li>
+<li class="toctree-l2"><a class="reference internal" href="development_setup.html#id24">调试技巧</a><ul>
+<li class="toctree-l3"><a class="reference internal" href="development_setup.html#id25">日志调试</a></li>
+<li class="toctree-l3"><a class="reference internal" href="development_setup.html#id26">断点调试</a></li>
+<li class="toctree-l3"><a class="reference internal" href="development_setup.html#id27">远程调试</a></li>
+</ul>
+</li>
+<li class="toctree-l2"><a class="reference internal" href="development_setup.html#id28">常见问题</a><ul>
+<li class="toctree-l3"><a class="reference internal" href="development_setup.html#id29">依赖冲突</a></li>
+<li class="toctree-l3"><a class="reference internal" href="development_setup.html#id30">数据库连接失败</a></li>
+<li class="toctree-l3"><a class="reference internal" href="development_setup.html#id31">端口占用</a></li>
+</ul>
+</li>
+<li class="toctree-l2"><a class="reference internal" href="development_setup.html#id32">最佳实践</a></li>
+<li class="toctree-l2"><a class="reference internal" href="development_setup.html#id33">下一步</a></li>
+</ul>
+</li>
+<li class="toctree-l1 current"><a class="current reference internal" href="#">编码规范</a><ul>
+<li class="toctree-l2"><a class="reference internal" href="#python">Python 代码规范</a><ul>
+<li class="toctree-l3"><a class="reference internal" href="#id2">风格指南</a><ul>
+<li class="toctree-l4"><a class="reference internal" href="#id3">命名约定</a></li>
+<li class="toctree-l4"><a class="reference internal" href="#id4">导入顺序</a></li>
+</ul>
+</li>
+<li class="toctree-l3"><a class="reference internal" href="#id5">类型注解</a></li>
+<li class="toctree-l3"><a class="reference internal" href="#id6">文档字符串</a></li>
+<li class="toctree-l3"><a class="reference internal" href="#id7">错误处理</a></li>
+<li class="toctree-l3"><a class="reference internal" href="#id8">异步编程</a></li>
+<li class="toctree-l3"><a class="reference internal" href="#id9">代码组织</a></li>
+</ul>
+</li>
+<li class="toctree-l2"><a class="reference internal" href="#id10">性能优化</a><ul>
+<li class="toctree-l3"><a class="reference internal" href="#id11">数据库查询</a></li>
+<li class="toctree-l3"><a class="reference internal" href="#id12">缓存策略</a></li>
+<li class="toctree-l3"><a class="reference internal" href="#id13">批处理</a></li>
+</ul>
+</li>
+<li class="toctree-l2"><a class="reference internal" href="#id14">测试规范</a><ul>
+<li class="toctree-l3"><a class="reference internal" href="#id15">单元测试</a></li>
+<li class="toctree-l3"><a class="reference internal" href="#id16">集成测试</a></li>
+<li class="toctree-l3"><a class="reference internal" href="#id17">测试覆盖率</a></li>
+</ul>
+</li>
+<li class="toctree-l2"><a class="reference internal" href="#id18">安全规范</a><ul>
+<li class="toctree-l3"><a class="reference internal" href="#id19">输入验证</a></li>
+<li class="toctree-l3"><a class="reference internal" href="#id20">密码处理</a></li>
+<li class="toctree-l3"><a class="reference internal" href="#sql">SQL 注入防护</a></li>
+<li class="toctree-l3"><a class="reference internal" href="#id21">敏感数据</a></li>
+</ul>
+</li>
+<li class="toctree-l2"><a class="reference internal" href="#id22">代码审查</a><ul>
+<li class="toctree-l3"><a class="reference internal" href="#id23">审查清单</a></li>
+</ul>
+</li>
+<li class="toctree-l2"><a class="reference internal" href="#git">Git 提交规范</a><ul>
+<li class="toctree-l3"><a class="reference internal" href="#id24">提交消息格式</a></li>
+<li class="toctree-l3"><a class="reference internal" href="#id25">分支策略</a></li>
+</ul>
+</li>
+<li class="toctree-l2"><a class="reference internal" href="#id26">工具配置</a><ul>
+<li class="toctree-l3"><a class="reference internal" href="#black">Black (代码格式化)</a></li>
+<li class="toctree-l3"><a class="reference internal" href="#pylint">Pylint (代码检查)</a></li>
+<li class="toctree-l3"><a class="reference internal" href="#mypy">MyPy (类型检查)</a></li>
+</ul>
+</li>
+<li class="toctree-l2"><a class="reference internal" href="#id27">参考资源</a></li>
+</ul>
+</li>
+</ul>
+<p class="caption" role="heading"><span class="caption-text">API 参考</span></p>
+<ul>
+<li class="toctree-l1"><a class="reference internal" href="../api/core.html">核心模块 API</a><ul>
+<li class="toctree-l2"><a class="reference internal" href="../api/core.html#id1">核心配置</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../api/core.html#id2">核心异常</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../api/core.html#id3">核心基类</a></li>
+</ul>
+</li>
+<li class="toctree-l1"><a class="reference internal" href="../api/adapters.html">适配器 API</a><ul>
+<li class="toctree-l2"><a class="reference internal" href="../api/adapters.html#id1">适配器概述</a><ul>
+<li class="toctree-l3"><a class="reference internal" href="../api/adapters.html#module-zishu.adapters.base">适配器基类</a><ul>
+<li class="toctree-l4"><a class="reference internal" href="../api/adapters.html#id3">适配器系统 - 基础模块</a></li>
+<li class="toctree-l4"><a class="reference internal" href="../api/adapters.html#zishu.adapters.base.BaseAdapter"><code class="docutils literal notranslate"><span class="pre">BaseAdapter</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="../api/adapters.html#zishu.adapters.base.ExecutionContext"><code class="docutils literal notranslate"><span class="pre">ExecutionContext</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="../api/adapters.html#zishu.adapters.base.ExecutionResult"><code class="docutils literal notranslate"><span class="pre">ExecutionResult</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="../api/adapters.html#zishu.adapters.base.HealthCheckResult"><code class="docutils literal notranslate"><span class="pre">HealthCheckResult</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="../api/adapters.html#zishu.adapters.base.AdapterMetadata"><code class="docutils literal notranslate"><span class="pre">AdapterMetadata</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="../api/adapters.html#zishu.adapters.base.AdapterCapability"><code class="docutils literal notranslate"><span class="pre">AdapterCapability</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="../api/adapters.html#zishu.adapters.base.AdapterDependency"><code class="docutils literal notranslate"><span class="pre">AdapterDependency</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="../api/adapters.html#zishu.adapters.base.AdapterPermissions"><code class="docutils literal notranslate"><span class="pre">AdapterPermissions</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="../api/adapters.html#zishu.adapters.base.BaseAdapterException"><code class="docutils literal notranslate"><span class="pre">BaseAdapterException</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="../api/adapters.html#zishu.adapters.base.AdapterRegistrationError"><code class="docutils literal notranslate"><span class="pre">AdapterRegistrationError</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="../api/adapters.html#zishu.adapters.base.AdapterNotFoundError"><code class="docutils literal notranslate"><span class="pre">AdapterNotFoundError</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="../api/adapters.html#zishu.adapters.base.AdapterAlreadyExistsError"><code class="docutils literal notranslate"><span class="pre">AdapterAlreadyExistsError</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="../api/adapters.html#zishu.adapters.base.AdapterLoadingError"><code class="docutils literal notranslate"><span class="pre">AdapterLoadingError</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="../api/adapters.html#zishu.adapters.base.AdapterExecutionError"><code class="docutils literal notranslate"><span class="pre">AdapterExecutionError</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="../api/adapters.html#zishu.adapters.base.AdapterValidationError"><code class="docutils literal notranslate"><span class="pre">AdapterValidationError</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="../api/adapters.html#zishu.adapters.base.AdapterConfigurationError"><code class="docutils literal notranslate"><span class="pre">AdapterConfigurationError</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="../api/adapters.html#zishu.adapters.base.AdapterTimeoutError"><code class="docutils literal notranslate"><span class="pre">AdapterTimeoutError</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="../api/adapters.html#zishu.adapters.base.DependencyMissingError"><code class="docutils literal notranslate"><span class="pre">DependencyMissingError</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="../api/adapters.html#zishu.adapters.base.SoftAdapterError"><code class="docutils literal notranslate"><span class="pre">SoftAdapterError</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="../api/adapters.html#zishu.adapters.base.RAGEngineError"><code class="docutils literal notranslate"><span class="pre">RAGEngineError</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="../api/adapters.html#zishu.adapters.base.PromptTemplateError"><code class="docutils literal notranslate"><span class="pre">PromptTemplateError</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="../api/adapters.html#zishu.adapters.base.KnowledgeBaseError"><code class="docutils literal notranslate"><span class="pre">KnowledgeBaseError</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="../api/adapters.html#zishu.adapters.base.RetrievalFailedError"><code class="docutils literal notranslate"><span class="pre">RetrievalFailedError</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="../api/adapters.html#zishu.adapters.base.AdapterType"><code class="docutils literal notranslate"><span class="pre">AdapterType</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="../api/adapters.html#zishu.adapters.base.AdapterStatus"><code class="docutils literal notranslate"><span class="pre">AdapterStatus</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="../api/adapters.html#zishu.adapters.base.SecurityLevel"><code class="docutils literal notranslate"><span class="pre">SecurityLevel</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="../api/adapters.html#zishu.adapters.base.ErrorCode"><code class="docutils literal notranslate"><span class="pre">ErrorCode</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="../api/adapters.html#zishu.adapters.base.ExceptionSeverity"><code class="docutils literal notranslate"><span class="pre">ExceptionSeverity</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="../api/adapters.html#zishu.adapters.base.AdapterRegistry"><code class="docutils literal notranslate"><span class="pre">AdapterRegistry</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="../api/adapters.html#zishu.adapters.base.HealthMonitor"><code class="docutils literal notranslate"><span class="pre">HealthMonitor</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="../api/adapters.html#zishu.adapters.base.SecurityManager"><code class="docutils literal notranslate"><span class="pre">SecurityManager</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="../api/adapters.html#zishu.adapters.base.PerformanceMonitor"><code class="docutils literal notranslate"><span class="pre">PerformanceMonitor</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="../api/adapters.html#zishu.adapters.base.create_adapter_registry"><code class="docutils literal notranslate"><span class="pre">create_adapter_registry()</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="../api/adapters.html#zishu.adapters.base.get_default_registry"><code class="docutils literal notranslate"><span class="pre">get_default_registry()</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="../api/adapters.html#zishu.adapters.base.set_default_registry"><code class="docutils literal notranslate"><span class="pre">set_default_registry()</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="../api/adapters.html#zishu.adapters.base.handle_adapter_exceptions"><code class="docutils literal notranslate"><span class="pre">handle_adapter_exceptions()</span></code></a></li>
+</ul>
+</li>
+</ul>
+</li>
+<li class="toctree-l2"><a class="reference internal" href="../api/adapters.html#core-adapter">Core Adapter</a><ul>
+<li class="toctree-l3"><a class="reference internal" href="../api/adapters.html#id12">核心适配器主类</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../api/adapters.html#module-zishu.adapters.core.services.health_service">健康检查服务</a><ul>
+<li class="toctree-l4"><a class="reference internal" href="../api/adapters.html#zishu.adapters.core.services.health_service.HealthMetricType"><code class="docutils literal notranslate"><span class="pre">HealthMetricType</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="../api/adapters.html#zishu.adapters.core.services.health_service.HealthMetric"><code class="docutils literal notranslate"><span class="pre">HealthMetric</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="../api/adapters.html#zishu.adapters.core.services.health_service.HealthThreshold"><code class="docutils literal notranslate"><span class="pre">HealthThreshold</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="../api/adapters.html#zishu.adapters.core.services.health_service.HealthMetricsInfo"><code class="docutils literal notranslate"><span class="pre">HealthMetricsInfo</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="../api/adapters.html#zishu.adapters.core.services.health_service.AdapterHealthStatus"><code class="docutils literal notranslate"><span class="pre">AdapterHealthStatus</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="../api/adapters.html#zishu.adapters.core.services.health_service.HealthMonitor"><code class="docutils literal notranslate"><span class="pre">HealthMonitor</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="../api/adapters.html#zishu.adapters.core.services.health_service.AdapterHealthService"><code class="docutils literal notranslate"><span class="pre">AdapterHealthService</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="../api/adapters.html#zishu.adapters.core.services.health_service.AvailabilityMonitor"><code class="docutils literal notranslate"><span class="pre">AvailabilityMonitor</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="../api/adapters.html#zishu.adapters.core.services.health_service.ResponseTimeMonitor"><code class="docutils literal notranslate"><span class="pre">ResponseTimeMonitor</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="../api/adapters.html#zishu.adapters.core.services.health_service.ErrorRateMonitor"><code class="docutils literal notranslate"><span class="pre">ErrorRateMonitor</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="../api/adapters.html#zishu.adapters.core.services.health_service.MemoryUsageMonitor"><code class="docutils literal notranslate"><span class="pre">MemoryUsageMonitor</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="../api/adapters.html#zishu.adapters.core.services.health_service.ThroughputMonitor"><code class="docutils literal notranslate"><span class="pre">ThroughputMonitor</span></code></a></li>
+</ul>
+</li>
+<li class="toctree-l3"><a class="reference internal" href="../api/adapters.html#module-zishu.adapters.core.services.event_service">事件服务</a><ul>
+<li class="toctree-l4"><a class="reference internal" href="../api/adapters.html#zishu.adapters.core.services.event_service.EventDeliveryMode"><code class="docutils literal notranslate"><span class="pre">EventDeliveryMode</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="../api/adapters.html#zishu.adapters.core.services.event_service.EventPersistenceMode"><code class="docutils literal notranslate"><span class="pre">EventPersistenceMode</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="../api/adapters.html#zishu.adapters.core.services.event_service.EventSubscription"><code class="docutils literal notranslate"><span class="pre">EventSubscription</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="../api/adapters.html#zishu.adapters.core.services.event_service.EventDeliveryResult"><code class="docutils literal notranslate"><span class="pre">EventDeliveryResult</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="../api/adapters.html#zishu.adapters.core.services.event_service.EventMetrics"><code class="docutils literal notranslate"><span class="pre">EventMetrics</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="../api/adapters.html#zishu.adapters.core.services.event_service.AdapterEventService"><code class="docutils literal notranslate"><span class="pre">AdapterEventService</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="../api/adapters.html#zishu.adapters.core.services.event_service.LoggingEventHandler"><code class="docutils literal notranslate"><span class="pre">LoggingEventHandler</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="../api/adapters.html#zishu.adapters.core.services.event_service.MetricsEventHandler"><code class="docutils literal notranslate"><span class="pre">MetricsEventHandler</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="../api/adapters.html#zishu.adapters.core.services.event_service.FilterEventHandler"><code class="docutils literal notranslate"><span class="pre">FilterEventHandler</span></code></a></li>
+</ul>
+</li>
+</ul>
+</li>
+<li class="toctree-l2"><a class="reference internal" href="../api/adapters.html#soft-adapter">Soft Adapter</a><ul>
+<li class="toctree-l3"><a class="reference internal" href="../api/adapters.html#id15">软适配器主类</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../api/adapters.html#module-zishu.adapters.soft.rag_engine">RAG 引擎</a><ul>
+<li class="toctree-l4"><a class="reference internal" href="../api/adapters.html#zishu.adapters.soft.rag_engine.RAGEngine"><code class="docutils literal notranslate"><span class="pre">RAGEngine</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="../api/adapters.html#zishu.adapters.soft.rag_engine.RAGConfig"><code class="docutils literal notranslate"><span class="pre">RAGConfig</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="../api/adapters.html#zishu.adapters.soft.rag_engine.RetrievalConfig"><code class="docutils literal notranslate"><span class="pre">RetrievalConfig</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="../api/adapters.html#zishu.adapters.soft.rag_engine.GenerationConfig"><code class="docutils literal notranslate"><span class="pre">GenerationConfig</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="../api/adapters.html#zishu.adapters.soft.rag_engine.RerankingConfig"><code class="docutils literal notranslate"><span class="pre">RerankingConfig</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="../api/adapters.html#zishu.adapters.soft.rag_engine.RAGResult"><code class="docutils literal notranslate"><span class="pre">RAGResult</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="../api/adapters.html#zishu.adapters.soft.rag_engine.RetrievalResult"><code class="docutils literal notranslate"><span class="pre">RetrievalResult</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="../api/adapters.html#zishu.adapters.soft.rag_engine.QueryResult"><code class="docutils literal notranslate"><span class="pre">QueryResult</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="../api/adapters.html#zishu.adapters.soft.rag_engine.RAGEngineError"><code class="docutils literal notranslate"><span class="pre">RAGEngineError</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="../api/adapters.html#zishu.adapters.soft.rag_engine.DocumentStore"><code class="docutils literal notranslate"><span class="pre">DocumentStore</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="../api/adapters.html#zishu.adapters.soft.rag_engine.VectorStore"><code class="docutils literal notranslate"><span class="pre">VectorStore</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="../api/adapters.html#zishu.adapters.soft.rag_engine.EmbeddingService"><code class="docutils literal notranslate"><span class="pre">EmbeddingService</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="../api/adapters.html#zishu.adapters.soft.rag_engine.RetrievalService"><code class="docutils literal notranslate"><span class="pre">RetrievalService</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="../api/adapters.html#zishu.adapters.soft.rag_engine.RerankingService"><code class="docutils literal notranslate"><span class="pre">RerankingService</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="../api/adapters.html#zishu.adapters.soft.rag_engine.MemoryDocumentStore"><code class="docutils literal notranslate"><span class="pre">MemoryDocumentStore</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="../api/adapters.html#zishu.adapters.soft.rag_engine.MemoryVectorStore"><code class="docutils literal notranslate"><span class="pre">MemoryVectorStore</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="../api/adapters.html#zishu.adapters.soft.rag_engine.MockEmbeddingService"><code class="docutils literal notranslate"><span class="pre">MockEmbeddingService</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="../api/adapters.html#zishu.adapters.soft.rag_engine.RAGMode"><code class="docutils literal notranslate"><span class="pre">RAGMode</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="../api/adapters.html#zishu.adapters.soft.rag_engine.RetrievalStrategy"><code class="docutils literal notranslate"><span class="pre">RetrievalStrategy</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="../api/adapters.html#zishu.adapters.soft.rag_engine.RankingMethod"><code class="docutils literal notranslate"><span class="pre">RankingMethod</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="../api/adapters.html#zishu.adapters.soft.rag_engine.GenerationMode"><code class="docutils literal notranslate"><span class="pre">GenerationMode</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="../api/adapters.html#zishu.adapters.soft.rag_engine.Retriever"><code class="docutils literal notranslate"><span class="pre">Retriever</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="../api/adapters.html#zishu.adapters.soft.rag_engine.SimilarityRetriever"><code class="docutils literal notranslate"><span class="pre">SimilarityRetriever</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="../api/adapters.html#zishu.adapters.soft.rag_engine.HybridRetriever"><code class="docutils literal notranslate"><span class="pre">HybridRetriever</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="../api/adapters.html#zishu.adapters.soft.rag_engine.KeywordRetriever"><code class="docutils literal notranslate"><span class="pre">KeywordRetriever</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="../api/adapters.html#zishu.adapters.soft.rag_engine.Reranker"><code class="docutils literal notranslate"><span class="pre">Reranker</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="../api/adapters.html#zishu.adapters.soft.rag_engine.CosineSimilarityReranker"><code class="docutils literal notranslate"><span class="pre">CosineSimilarityReranker</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="../api/adapters.html#zishu.adapters.soft.rag_engine.BM25Reranker"><code class="docutils literal notranslate"><span class="pre">BM25Reranker</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="../api/adapters.html#zishu.adapters.soft.rag_engine.HybridReranker"><code class="docutils literal notranslate"><span class="pre">HybridReranker</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="../api/adapters.html#zishu.adapters.soft.rag_engine.ReciprocalRankFusionReranker"><code class="docutils literal notranslate"><span class="pre">ReciprocalRankFusionReranker</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="../api/adapters.html#zishu.adapters.soft.rag_engine.Generator"><code class="docutils literal notranslate"><span class="pre">Generator</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="../api/adapters.html#zishu.adapters.soft.rag_engine.PromptBasedGenerator"><code class="docutils literal notranslate"><span class="pre">PromptBasedGenerator</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="../api/adapters.html#zishu.adapters.soft.rag_engine.ChainOfThoughtGenerator"><code class="docutils literal notranslate"><span class="pre">ChainOfThoughtGenerator</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="../api/adapters.html#zishu.adapters.soft.rag_engine.HybridGenerator"><code class="docutils literal notranslate"><span class="pre">HybridGenerator</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="../api/adapters.html#zishu.adapters.soft.rag_engine.FactCheckingGenerator"><code class="docutils literal notranslate"><span class="pre">FactCheckingGenerator</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="../api/adapters.html#zishu.adapters.soft.rag_engine.RAGEngineFactory"><code class="docutils literal notranslate"><span class="pre">RAGEngineFactory</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="../api/adapters.html#zishu.adapters.soft.rag_engine.RAGPerformanceOptimizer"><code class="docutils literal notranslate"><span class="pre">RAGPerformanceOptimizer</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="../api/adapters.html#zishu.adapters.soft.rag_engine.RAGUtils"><code class="docutils literal notranslate"><span class="pre">RAGUtils</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="../api/adapters.html#id16">主要类和方法</a></li>
+</ul>
+</li>
+<li class="toctree-l3"><a class="reference internal" href="../api/adapters.html#module-zishu.adapters.soft.prompt_engine">Prompt 引擎</a><ul>
+<li class="toctree-l4"><a class="reference internal" href="../api/adapters.html#zishu.adapters.soft.prompt_engine.DynamicPromptEngine"><code class="docutils literal notranslate"><span class="pre">DynamicPromptEngine</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="../api/adapters.html#zishu.adapters.soft.prompt_engine.PromptEngine"><code class="docutils literal notranslate"><span class="pre">PromptEngine</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="../api/adapters.html#zishu.adapters.soft.prompt_engine.PromptTemplate"><code class="docutils literal notranslate"><span class="pre">PromptTemplate</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="../api/adapters.html#zishu.adapters.soft.prompt_engine.PromptVariable"><code class="docutils literal notranslate"><span class="pre">PromptVariable</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="../api/adapters.html#zishu.adapters.soft.prompt_engine.PromptContext"><code class="docutils literal notranslate"><span class="pre">PromptContext</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="../api/adapters.html#zishu.adapters.soft.prompt_engine.TemplateLoader"><code class="docutils literal notranslate"><span class="pre">TemplateLoader</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="../api/adapters.html#zishu.adapters.soft.prompt_engine.PromptValidator"><code class="docutils literal notranslate"><span class="pre">PromptValidator</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="../api/adapters.html#zishu.adapters.soft.prompt_engine.PromptCache"><code class="docutils literal notranslate"><span class="pre">PromptCache</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="../api/adapters.html#zishu.adapters.soft.prompt_engine.PromptOptimizer"><code class="docutils literal notranslate"><span class="pre">PromptOptimizer</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="../api/adapters.html#zishu.adapters.soft.prompt_engine.PromptEngineError"><code class="docutils literal notranslate"><span class="pre">PromptEngineError</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="../api/adapters.html#zishu.adapters.soft.prompt_engine.PromptTemplateError"><code class="docutils literal notranslate"><span class="pre">PromptTemplateError</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="../api/adapters.html#zishu.adapters.soft.prompt_engine.PromptValidationError"><code class="docutils literal notranslate"><span class="pre">PromptValidationError</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="../api/adapters.html#zishu.adapters.soft.prompt_engine.create_prompt_engine"><code class="docutils literal notranslate"><span class="pre">create_prompt_engine()</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="../api/adapters.html#zishu.adapters.soft.prompt_engine.get_global_engine"><code class="docutils literal notranslate"><span class="pre">get_global_engine()</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="../api/adapters.html#zishu.adapters.soft.prompt_engine.render"><code class="docutils literal notranslate"><span class="pre">render()</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="../api/adapters.html#id40">主要类和方法</a></li>
+</ul>
+</li>
+</ul>
+</li>
+<li class="toctree-l2"><a class="reference internal" href="../api/adapters.html#hard-adapter">Hard Adapter</a><ul>
+<li class="toctree-l3"><a class="reference internal" href="../api/adapters.html#id62">硬适配器主类</a></li>
+</ul>
+</li>
+<li class="toctree-l2"><a class="reference internal" href="../api/adapters.html#id63">适配器工厂</a></li>
+</ul>
+</li>
+<li class="toctree-l1"><a class="reference internal" href="../api/services.html">服务层 API</a><ul>
+<li class="toctree-l2"><a class="reference internal" href="../api/services.html#id1">服务层概述</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../api/services.html#id2">用户服务</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../api/services.html#id3">认证服务</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../api/services.html#id4">对话服务</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../api/services.html#id5">文档服务</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../api/services.html#id6">知识库服务</a></li>
+</ul>
+</li>
+<li class="toctree-l1"><a class="reference internal" href="../api/models.html">数据模型 API</a><ul>
+<li class="toctree-l2"><a class="reference internal" href="../api/models.html#id1">数据库模型</a><ul>
+<li class="toctree-l3"><a class="reference internal" href="../api/models.html#id2">用户模型</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../api/models.html#id3">对话模型</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../api/models.html#id4">消息模型</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../api/models.html#id5">文档模型</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../api/models.html#id6">知识库模型</a></li>
+</ul>
+</li>
+<li class="toctree-l2"><a class="reference internal" href="../api/models.html#pydantic">Pydantic 模型</a><ul>
+<li class="toctree-l3"><a class="reference internal" href="../api/models.html#id7">请求模型</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../api/models.html#id8">响应模型</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../api/models.html#id9">通用模型</a></li>
+</ul>
+</li>
+</ul>
+</li>
+<li class="toctree-l1"><a class="reference internal" href="../api/utils.html">工具函数 API</a><ul>
+<li class="toctree-l2"><a class="reference internal" href="../api/utils.html#id1">通用工具</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../api/utils.html#id2">文本处理</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../api/utils.html#id3">日期时间</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../api/utils.html#id4">加密工具</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../api/utils.html#id5">验证工具</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../api/utils.html#id6">日志工具</a></li>
+</ul>
+</li>
+</ul>
+
+        </div>
+      </div>
+    </nav>
+
+    <section data-toggle="wy-nav-shift" class="wy-nav-content-wrap"><nav class="wy-nav-top" aria-label="移动版导航菜单"  style="background: #2980B9" >
+          <i data-toggle="wy-nav-top" class="fa fa-bars"></i>
+          <a href="../index.html">Zishu-Sensei</a>
+      </nav>
+
+      <div class="wy-nav-content">
+        <div class="rst-content">
+          <div role="navigation" aria-label="页面导航">
+  <ul class="wy-breadcrumbs">
+      <li><a href="../index.html" class="icon icon-home" aria-label="Home"></a></li>
+      <li class="breadcrumb-item active">编码规范</li>
+      <li class="wy-breadcrumbs-aside">
+            <a href="../_sources/developer_guide/coding_standards.rst.txt" rel="nofollow"> 查看页面源码</a>
+      </li>
+  </ul>
+  <hr/>
+</div>
+          <div role="main" class="document" itemscope="itemscope" itemtype="http://schema.org/Article">
+           <div itemprop="articleBody">
+             
+  <section id="id1">
+<h1>编码规范<a class="headerlink" href="#id1" title="Link to this heading"></a></h1>
+<p>本文档定义了 Zishu-Sensei 项目的编码规范和最佳实践。</p>
+<section id="python">
+<h2>Python 代码规范<a class="headerlink" href="#python" title="Link to this heading"></a></h2>
+<section id="id2">
+<h3>风格指南<a class="headerlink" href="#id2" title="Link to this heading"></a></h3>
+<p>遵循 <strong>PEP 8</strong> 和 <strong>Google Python Style Guide</strong>。</p>
+<section id="id3">
+<h4>命名约定<a class="headerlink" href="#id3" title="Link to this heading"></a></h4>
+<div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="c1"># 类名：大驼峰命名法</span>
+<span class="k">class</span><span class="w"> </span><span class="nc">UserService</span><span class="p">:</span>
+    <span class="k">pass</span>
+
+<span class="c1"># 函数和变量：蛇形命名法</span>
+<span class="k">def</span><span class="w"> </span><span class="nf">get_user_by_id</span><span class="p">(</span><span class="n">user_id</span><span class="p">:</span> <span class="nb">int</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">User</span><span class="p">:</span>
+    <span class="k">pass</span>
+
+<span class="c1"># 常量：全大写 + 下划线</span>
+<span class="n">MAX_RETRY_COUNT</span> <span class="o">=</span> <span class="mi">3</span>
+<span class="n">DEFAULT_TIMEOUT</span> <span class="o">=</span> <span class="mi">30</span>
+
+<span class="c1"># 私有成员：前缀单下划线</span>
+<span class="k">class</span><span class="w"> </span><span class="nc">MyClass</span><span class="p">:</span>
+    <span class="k">def</span><span class="w"> </span><span class="fm">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">_private_var</span> <span class="o">=</span> <span class="kc">None</span>
+
+    <span class="k">def</span><span class="w"> </span><span class="nf">_private_method</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="k">pass</span>
+
+<span class="c1"># 内部使用：前缀双下划线</span>
+<span class="k">class</span><span class="w"> </span><span class="nc">MyClass</span><span class="p">:</span>
+    <span class="k">def</span><span class="w"> </span><span class="fm">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">__internal_var</span> <span class="o">=</span> <span class="kc">None</span>
+</pre></div>
+</div>
+</section>
+<section id="id4">
+<h4>导入顺序<a class="headerlink" href="#id4" title="Link to this heading"></a></h4>
+<div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="c1"># 1. 标准库</span>
+<span class="kn">import</span><span class="w"> </span><span class="nn">os</span>
+<span class="kn">import</span><span class="w"> </span><span class="nn">sys</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">typing</span><span class="w"> </span><span class="kn">import</span> <span class="n">Dict</span><span class="p">,</span> <span class="n">List</span><span class="p">,</span> <span class="n">Optional</span>
+
+<span class="c1"># 2. 第三方库</span>
+<span class="kn">import</span><span class="w"> </span><span class="nn">numpy</span><span class="w"> </span><span class="k">as</span><span class="w"> </span><span class="nn">np</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">fastapi</span><span class="w"> </span><span class="kn">import</span> <span class="n">FastAPI</span><span class="p">,</span> <span class="n">HTTPException</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">sqlalchemy</span><span class="w"> </span><span class="kn">import</span> <span class="n">Column</span><span class="p">,</span> <span class="n">Integer</span><span class="p">,</span> <span class="n">String</span>
+
+<span class="c1"># 3. 本地模块</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">zishu.core.config</span><span class="w"> </span><span class="kn">import</span> <span class="n">settings</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">zishu.adapters.base</span><span class="w"> </span><span class="kn">import</span> <span class="n">BaseAdapter</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">zishu.utils.logger</span><span class="w"> </span><span class="kn">import</span> <span class="n">logger</span>
+</pre></div>
+</div>
+</section>
+</section>
+<section id="id5">
+<h3>类型注解<a class="headerlink" href="#id5" title="Link to this heading"></a></h3>
+<p><strong>强制要求</strong>：所有公共函数和方法必须有类型注解。</p>
+<div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="kn">from</span><span class="w"> </span><span class="nn">typing</span><span class="w"> </span><span class="kn">import</span> <span class="n">Dict</span><span class="p">,</span> <span class="n">List</span><span class="p">,</span> <span class="n">Optional</span><span class="p">,</span> <span class="n">Union</span><span class="p">,</span> <span class="n">Any</span>
+
+<span class="c1"># 函数参数和返回值</span>
+<span class="k">def</span><span class="w"> </span><span class="nf">process_data</span><span class="p">(</span>
+    <span class="n">data</span><span class="p">:</span> <span class="n">List</span><span class="p">[</span><span class="n">Dict</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="n">Any</span><span class="p">]],</span>
+    <span class="n">options</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="n">Dict</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="nb">str</span><span class="p">]]</span> <span class="o">=</span> <span class="kc">None</span>
+<span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Dict</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="n">Union</span><span class="p">[</span><span class="nb">int</span><span class="p">,</span> <span class="nb">str</span><span class="p">]]:</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;处理数据</span>
+
+<span class="sd">    Args:</span>
+<span class="sd">        data: 输入数据列表</span>
+<span class="sd">        options: 可选的配置选项</span>
+
+<span class="sd">    Returns:</span>
+<span class="sd">        处理结果字典</span>
+
+<span class="sd">    Raises:</span>
+<span class="sd">        ValueError: 当数据格式不正确时</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+    <span class="k">if</span> <span class="n">options</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">:</span>
+        <span class="n">options</span> <span class="o">=</span> <span class="p">{}</span>
+
+    <span class="n">result</span> <span class="o">=</span> <span class="p">{</span><span class="s2">&quot;count&quot;</span><span class="p">:</span> <span class="nb">len</span><span class="p">(</span><span class="n">data</span><span class="p">),</span> <span class="s2">&quot;status&quot;</span><span class="p">:</span> <span class="s2">&quot;success&quot;</span><span class="p">}</span>
+    <span class="k">return</span> <span class="n">result</span>
+
+<span class="c1"># 类属性注解</span>
+<span class="k">class</span><span class="w"> </span><span class="nc">UserService</span><span class="p">:</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;用户服务&quot;&quot;&quot;</span>
+
+    <span class="n">db_session</span><span class="p">:</span> <span class="n">Any</span>
+    <span class="n">cache_timeout</span><span class="p">:</span> <span class="nb">int</span> <span class="o">=</span> <span class="mi">3600</span>
+
+    <span class="k">def</span><span class="w"> </span><span class="fm">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">db_session</span><span class="p">:</span> <span class="n">Any</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="kc">None</span><span class="p">:</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">db_session</span> <span class="o">=</span> <span class="n">db_session</span>
+</pre></div>
+</div>
+</section>
+<section id="id6">
+<h3>文档字符串<a class="headerlink" href="#id6" title="Link to this heading"></a></h3>
+<p>使用 <strong>Google 风格</strong> 的 docstring：</p>
+<div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="k">def</span><span class="w"> </span><span class="nf">retrieve_documents</span><span class="p">(</span>
+    <span class="n">query</span><span class="p">:</span> <span class="nb">str</span><span class="p">,</span>
+    <span class="n">top_k</span><span class="p">:</span> <span class="nb">int</span> <span class="o">=</span> <span class="mi">5</span><span class="p">,</span>
+    <span class="n">filters</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="n">Dict</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="n">Any</span><span class="p">]]</span> <span class="o">=</span> <span class="kc">None</span>
+<span class="p">)</span> <span class="o">-&gt;</span> <span class="n">List</span><span class="p">[</span><span class="n">Document</span><span class="p">]:</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;检索相关文档</span>
+
+<span class="sd">    使用向量相似度检索与查询最相关的文档。</span>
+
+<span class="sd">    Args:</span>
+<span class="sd">        query: 查询字符串</span>
+<span class="sd">        top_k: 返回的文档数量，默认为 5</span>
+<span class="sd">        filters: 可选的过滤条件，如 {&quot;category&quot;: &quot;tech&quot;}</span>
+
+<span class="sd">    Returns:</span>
+<span class="sd">        文档对象列表，按相关性降序排列</span>
+
+<span class="sd">    Raises:</span>
+<span class="sd">        ValueError: 当 top_k 小于 1 时</span>
+<span class="sd">        ConnectionError: 当无法连接向量数据库时</span>
+
+<span class="sd">    Example:</span>
+<span class="sd">        &gt;&gt;&gt; docs = retrieve_documents(&quot;Python 教程&quot;, top_k=3)</span>
+<span class="sd">        &gt;&gt;&gt; print(docs[0].title)</span>
+<span class="sd">        &#39;Python 入门指南&#39;</span>
+
+<span class="sd">    Note:</span>
+<span class="sd">        检索结果会被自动缓存 1 小时</span>
+
+<span class="sd">    Warning:</span>
+<span class="sd">        大量并发请求可能导致性能下降</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+    <span class="k">if</span> <span class="n">top_k</span> <span class="o">&lt;</span> <span class="mi">1</span><span class="p">:</span>
+        <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span><span class="s2">&quot;top_k must be at least 1&quot;</span><span class="p">)</span>
+
+    <span class="c1"># 实现代码...</span>
+    <span class="k">return</span> <span class="p">[]</span>
+</pre></div>
+</div>
+</section>
+<section id="id7">
+<h3>错误处理<a class="headerlink" href="#id7" title="Link to this heading"></a></h3>
+<div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="kn">from</span><span class="w"> </span><span class="nn">typing</span><span class="w"> </span><span class="kn">import</span> <span class="n">Optional</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">loguru</span><span class="w"> </span><span class="kn">import</span> <span class="n">logger</span>
+
+<span class="k">class</span><span class="w"> </span><span class="nc">UserNotFoundError</span><span class="p">(</span><span class="ne">Exception</span><span class="p">):</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;用户未找到异常&quot;&quot;&quot;</span>
+    <span class="k">pass</span>
+
+<span class="k">class</span><span class="w"> </span><span class="nc">DatabaseError</span><span class="p">(</span><span class="ne">Exception</span><span class="p">):</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;数据库错误&quot;&quot;&quot;</span>
+    <span class="k">pass</span>
+
+<span class="k">async</span> <span class="k">def</span><span class="w"> </span><span class="nf">get_user</span><span class="p">(</span><span class="n">user_id</span><span class="p">:</span> <span class="nb">int</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Optional</span><span class="p">[</span><span class="n">User</span><span class="p">]:</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;获取用户</span>
+
+<span class="sd">    Args:</span>
+<span class="sd">        user_id: 用户 ID</span>
+
+<span class="sd">    Returns:</span>
+<span class="sd">        用户对象，如果未找到返回 None</span>
+
+<span class="sd">    Raises:</span>
+<span class="sd">        DatabaseError: 数据库操作失败时</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+    <span class="k">try</span><span class="p">:</span>
+        <span class="n">user</span> <span class="o">=</span> <span class="k">await</span> <span class="n">db</span><span class="o">.</span><span class="n">query</span><span class="p">(</span><span class="n">User</span><span class="p">)</span><span class="o">.</span><span class="n">filter</span><span class="p">(</span><span class="n">User</span><span class="o">.</span><span class="n">id</span> <span class="o">==</span> <span class="n">user_id</span><span class="p">)</span><span class="o">.</span><span class="n">first</span><span class="p">()</span>
+        <span class="k">if</span> <span class="n">user</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">:</span>
+            <span class="n">logger</span><span class="o">.</span><span class="n">warning</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;User not found: </span><span class="si">{</span><span class="n">user_id</span><span class="si">}</span><span class="s2">&quot;</span><span class="p">)</span>
+            <span class="k">return</span> <span class="kc">None</span>
+        <span class="k">return</span> <span class="n">user</span>
+    <span class="k">except</span> <span class="n">SQLAlchemyError</span> <span class="k">as</span> <span class="n">e</span><span class="p">:</span>
+        <span class="n">logger</span><span class="o">.</span><span class="n">error</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;Database error when fetching user </span><span class="si">{</span><span class="n">user_id</span><span class="si">}</span><span class="s2">: </span><span class="si">{</span><span class="n">e</span><span class="si">}</span><span class="s2">&quot;</span><span class="p">)</span>
+        <span class="k">raise</span> <span class="n">DatabaseError</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;Failed to fetch user: </span><span class="si">{</span><span class="n">e</span><span class="si">}</span><span class="s2">&quot;</span><span class="p">)</span> <span class="kn">from</span><span class="w"> </span><span class="nn">e</span>
+    <span class="k">except</span> <span class="ne">Exception</span> <span class="k">as</span> <span class="n">e</span><span class="p">:</span>
+        <span class="n">logger</span><span class="o">.</span><span class="n">exception</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;Unexpected error: </span><span class="si">{</span><span class="n">e</span><span class="si">}</span><span class="s2">&quot;</span><span class="p">)</span>
+        <span class="k">raise</span>
+</pre></div>
+</div>
+</section>
+<section id="id8">
+<h3>异步编程<a class="headerlink" href="#id8" title="Link to this heading"></a></h3>
+<div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="kn">import</span><span class="w"> </span><span class="nn">asyncio</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">typing</span><span class="w"> </span><span class="kn">import</span> <span class="n">List</span>
+
+<span class="c1"># 使用 async/await</span>
+<span class="k">async</span> <span class="k">def</span><span class="w"> </span><span class="nf">fetch_data</span><span class="p">(</span><span class="n">url</span><span class="p">:</span> <span class="nb">str</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">dict</span><span class="p">:</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;异步获取数据&quot;&quot;&quot;</span>
+    <span class="k">async</span> <span class="k">with</span> <span class="n">aiohttp</span><span class="o">.</span><span class="n">ClientSession</span><span class="p">()</span> <span class="k">as</span> <span class="n">session</span><span class="p">:</span>
+        <span class="k">async</span> <span class="k">with</span> <span class="n">session</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="n">url</span><span class="p">)</span> <span class="k">as</span> <span class="n">response</span><span class="p">:</span>
+            <span class="k">return</span> <span class="k">await</span> <span class="n">response</span><span class="o">.</span><span class="n">json</span><span class="p">()</span>
+
+<span class="c1"># 并发执行</span>
+<span class="k">async</span> <span class="k">def</span><span class="w"> </span><span class="nf">fetch_multiple</span><span class="p">(</span><span class="n">urls</span><span class="p">:</span> <span class="n">List</span><span class="p">[</span><span class="nb">str</span><span class="p">])</span> <span class="o">-&gt;</span> <span class="n">List</span><span class="p">[</span><span class="nb">dict</span><span class="p">]:</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;并发获取多个 URL&quot;&quot;&quot;</span>
+    <span class="n">tasks</span> <span class="o">=</span> <span class="p">[</span><span class="n">fetch_data</span><span class="p">(</span><span class="n">url</span><span class="p">)</span> <span class="k">for</span> <span class="n">url</span> <span class="ow">in</span> <span class="n">urls</span><span class="p">]</span>
+    <span class="k">return</span> <span class="k">await</span> <span class="n">asyncio</span><span class="o">.</span><span class="n">gather</span><span class="p">(</span><span class="o">*</span><span class="n">tasks</span><span class="p">)</span>
+
+<span class="c1"># 超时控制</span>
+<span class="k">async</span> <span class="k">def</span><span class="w"> </span><span class="nf">fetch_with_timeout</span><span class="p">(</span><span class="n">url</span><span class="p">:</span> <span class="nb">str</span><span class="p">,</span> <span class="n">timeout</span><span class="p">:</span> <span class="nb">int</span> <span class="o">=</span> <span class="mi">30</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">dict</span><span class="p">:</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;带超时的获取&quot;&quot;&quot;</span>
+    <span class="k">try</span><span class="p">:</span>
+        <span class="k">return</span> <span class="k">await</span> <span class="n">asyncio</span><span class="o">.</span><span class="n">wait_for</span><span class="p">(</span>
+            <span class="n">fetch_data</span><span class="p">(</span><span class="n">url</span><span class="p">),</span>
+            <span class="n">timeout</span><span class="o">=</span><span class="n">timeout</span>
+        <span class="p">)</span>
+    <span class="k">except</span> <span class="n">asyncio</span><span class="o">.</span><span class="n">TimeoutError</span><span class="p">:</span>
+        <span class="n">logger</span><span class="o">.</span><span class="n">error</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;Timeout fetching </span><span class="si">{</span><span class="n">url</span><span class="si">}</span><span class="s2">&quot;</span><span class="p">)</span>
+        <span class="k">raise</span>
+</pre></div>
+</div>
+</section>
+<section id="id9">
+<h3>代码组织<a class="headerlink" href="#id9" title="Link to this heading"></a></h3>
+<p><strong>模块结构</strong>：</p>
+<div class="highlight-text notranslate"><div class="highlight"><pre><span></span>zishu/
+├── __init__.py
+├── api/
+│   ├── __init__.py
+│   ├── main.py          # FastAPI 应用入口
+│   ├── routes/          # API 路由
+│   ├── schemas/         # Pydantic 模型
+│   └── services/        # 业务逻辑
+├── adapters/
+│   ├── __init__.py
+│   ├── base.py          # 基类
+│   ├── core/
+│   ├── soft/
+│   └── hard/
+├── models/              # ORM 模型
+├── core/                # 核心模块
+└── utils/               # 工具函数
+</pre></div>
+</div>
+<p><strong>单一职责原则</strong>：</p>
+<div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="c1"># ❌ 不好：一个类做太多事情</span>
+<span class="k">class</span><span class="w"> </span><span class="nc">UserManager</span><span class="p">:</span>
+    <span class="k">def</span><span class="w"> </span><span class="nf">create_user</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">data</span><span class="p">):</span>
+        <span class="k">pass</span>
+
+    <span class="k">def</span><span class="w"> </span><span class="nf">send_email</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">user</span><span class="p">):</span>
+        <span class="k">pass</span>
+
+    <span class="k">def</span><span class="w"> </span><span class="nf">generate_report</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">user</span><span class="p">):</span>
+        <span class="k">pass</span>
+
+<span class="c1"># ✅ 好：职责分离</span>
+<span class="k">class</span><span class="w"> </span><span class="nc">UserService</span><span class="p">:</span>
+    <span class="k">def</span><span class="w"> </span><span class="nf">create_user</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">data</span><span class="p">:</span> <span class="n">UserCreate</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">User</span><span class="p">:</span>
+<span class="w">        </span><span class="sd">&quot;&quot;&quot;创建用户&quot;&quot;&quot;</span>
+        <span class="k">pass</span>
+
+<span class="k">class</span><span class="w"> </span><span class="nc">EmailService</span><span class="p">:</span>
+    <span class="k">def</span><span class="w"> </span><span class="nf">send_welcome_email</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">user</span><span class="p">:</span> <span class="n">User</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="kc">None</span><span class="p">:</span>
+<span class="w">        </span><span class="sd">&quot;&quot;&quot;发送欢迎邮件&quot;&quot;&quot;</span>
+        <span class="k">pass</span>
+
+<span class="k">class</span><span class="w"> </span><span class="nc">ReportService</span><span class="p">:</span>
+    <span class="k">def</span><span class="w"> </span><span class="nf">generate_user_report</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">user</span><span class="p">:</span> <span class="n">User</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Report</span><span class="p">:</span>
+<span class="w">        </span><span class="sd">&quot;&quot;&quot;生成用户报告&quot;&quot;&quot;</span>
+        <span class="k">pass</span>
+</pre></div>
+</div>
+</section>
+</section>
+<section id="id10">
+<h2>性能优化<a class="headerlink" href="#id10" title="Link to this heading"></a></h2>
+<section id="id11">
+<h3>数据库查询<a class="headerlink" href="#id11" title="Link to this heading"></a></h3>
+<div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="c1"># ❌ N+1 查询问题</span>
+<span class="n">users</span> <span class="o">=</span> <span class="k">await</span> <span class="n">db</span><span class="o">.</span><span class="n">query</span><span class="p">(</span><span class="n">User</span><span class="p">)</span><span class="o">.</span><span class="n">all</span><span class="p">()</span>
+<span class="k">for</span> <span class="n">user</span> <span class="ow">in</span> <span class="n">users</span><span class="p">:</span>
+    <span class="c1"># 每次循环都查询数据库</span>
+    <span class="n">posts</span> <span class="o">=</span> <span class="k">await</span> <span class="n">db</span><span class="o">.</span><span class="n">query</span><span class="p">(</span><span class="n">Post</span><span class="p">)</span><span class="o">.</span><span class="n">filter</span><span class="p">(</span><span class="n">Post</span><span class="o">.</span><span class="n">user_id</span> <span class="o">==</span> <span class="n">user</span><span class="o">.</span><span class="n">id</span><span class="p">)</span><span class="o">.</span><span class="n">all</span><span class="p">()</span>
+
+<span class="c1"># ✅ 使用 join 或 eager loading</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">sqlalchemy.orm</span><span class="w"> </span><span class="kn">import</span> <span class="n">joinedload</span>
+
+<span class="n">users</span> <span class="o">=</span> <span class="k">await</span> <span class="n">db</span><span class="o">.</span><span class="n">query</span><span class="p">(</span><span class="n">User</span><span class="p">)</span><span class="o">.</span><span class="n">options</span><span class="p">(</span>
+    <span class="n">joinedload</span><span class="p">(</span><span class="n">User</span><span class="o">.</span><span class="n">posts</span><span class="p">)</span>
+<span class="p">)</span><span class="o">.</span><span class="n">all</span><span class="p">()</span>
+<span class="k">for</span> <span class="n">user</span> <span class="ow">in</span> <span class="n">users</span><span class="p">:</span>
+    <span class="n">posts</span> <span class="o">=</span> <span class="n">user</span><span class="o">.</span><span class="n">posts</span>  <span class="c1"># 已加载，无需额外查询</span>
+</pre></div>
+</div>
+</section>
+<section id="id12">
+<h3>缓存策略<a class="headerlink" href="#id12" title="Link to this heading"></a></h3>
+<div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="kn">from</span><span class="w"> </span><span class="nn">functools</span><span class="w"> </span><span class="kn">import</span> <span class="n">lru_cache</span>
+<span class="kn">import</span><span class="w"> </span><span class="nn">hashlib</span>
+
+<span class="nd">@lru_cache</span><span class="p">(</span><span class="n">maxsize</span><span class="o">=</span><span class="mi">128</span><span class="p">)</span>
+<span class="k">def</span><span class="w"> </span><span class="nf">expensive_computation</span><span class="p">(</span><span class="n">x</span><span class="p">:</span> <span class="nb">int</span><span class="p">,</span> <span class="n">y</span><span class="p">:</span> <span class="nb">int</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">int</span><span class="p">:</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;缓存计算结果&quot;&quot;&quot;</span>
+    <span class="k">return</span> <span class="n">x</span> <span class="o">**</span> <span class="n">y</span>
+
+<span class="c1"># 异步缓存</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">aiocache</span><span class="w"> </span><span class="kn">import</span> <span class="n">cached</span>
+
+<span class="nd">@cached</span><span class="p">(</span><span class="n">ttl</span><span class="o">=</span><span class="mi">3600</span><span class="p">)</span>  <span class="c1"># 缓存 1 小时</span>
+<span class="k">async</span> <span class="k">def</span><span class="w"> </span><span class="nf">get_user_profile</span><span class="p">(</span><span class="n">user_id</span><span class="p">:</span> <span class="nb">int</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">dict</span><span class="p">:</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;获取用户资料（带缓存）&quot;&quot;&quot;</span>
+    <span class="k">return</span> <span class="k">await</span> <span class="n">db</span><span class="o">.</span><span class="n">query</span><span class="p">(</span><span class="n">User</span><span class="p">)</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="n">user_id</span><span class="p">)</span>
+</pre></div>
+</div>
+</section>
+<section id="id13">
+<h3>批处理<a class="headerlink" href="#id13" title="Link to this heading"></a></h3>
+<div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="c1"># ❌ 逐个处理</span>
+<span class="k">for</span> <span class="n">item</span> <span class="ow">in</span> <span class="n">items</span><span class="p">:</span>
+    <span class="k">await</span> <span class="n">process_item</span><span class="p">(</span><span class="n">item</span><span class="p">)</span>
+
+<span class="c1"># ✅ 批量处理</span>
+<span class="n">batch_size</span> <span class="o">=</span> <span class="mi">100</span>
+<span class="k">for</span> <span class="n">i</span> <span class="ow">in</span> <span class="nb">range</span><span class="p">(</span><span class="mi">0</span><span class="p">,</span> <span class="nb">len</span><span class="p">(</span><span class="n">items</span><span class="p">),</span> <span class="n">batch_size</span><span class="p">):</span>
+    <span class="n">batch</span> <span class="o">=</span> <span class="n">items</span><span class="p">[</span><span class="n">i</span><span class="p">:</span><span class="n">i</span> <span class="o">+</span> <span class="n">batch_size</span><span class="p">]</span>
+    <span class="k">await</span> <span class="n">process_batch</span><span class="p">(</span><span class="n">batch</span><span class="p">)</span>
+</pre></div>
+</div>
+</section>
+</section>
+<section id="id14">
+<h2>测试规范<a class="headerlink" href="#id14" title="Link to this heading"></a></h2>
+<section id="id15">
+<h3>单元测试<a class="headerlink" href="#id15" title="Link to this heading"></a></h3>
+<div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="kn">import</span><span class="w"> </span><span class="nn">pytest</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">unittest.mock</span><span class="w"> </span><span class="kn">import</span> <span class="n">Mock</span><span class="p">,</span> <span class="n">patch</span><span class="p">,</span> <span class="n">AsyncMock</span>
+
+<span class="nd">@pytest</span><span class="o">.</span><span class="n">fixture</span>
+<span class="k">def</span><span class="w"> </span><span class="nf">mock_db</span><span class="p">():</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;模拟数据库会话&quot;&quot;&quot;</span>
+    <span class="k">return</span> <span class="n">Mock</span><span class="p">()</span>
+
+<span class="nd">@pytest</span><span class="o">.</span><span class="n">mark</span><span class="o">.</span><span class="n">asyncio</span>
+<span class="k">async</span> <span class="k">def</span><span class="w"> </span><span class="nf">test_create_user</span><span class="p">(</span><span class="n">mock_db</span><span class="p">):</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;测试创建用户&quot;&quot;&quot;</span>
+    <span class="c1"># Arrange</span>
+    <span class="n">service</span> <span class="o">=</span> <span class="n">UserService</span><span class="p">(</span><span class="n">mock_db</span><span class="p">)</span>
+    <span class="n">user_data</span> <span class="o">=</span> <span class="n">UserCreate</span><span class="p">(</span>
+        <span class="n">username</span><span class="o">=</span><span class="s2">&quot;test&quot;</span><span class="p">,</span>
+        <span class="n">email</span><span class="o">=</span><span class="s2">&quot;test@example.com&quot;</span>
+    <span class="p">)</span>
+
+    <span class="c1"># Act</span>
+    <span class="n">user</span> <span class="o">=</span> <span class="k">await</span> <span class="n">service</span><span class="o">.</span><span class="n">create_user</span><span class="p">(</span><span class="n">user_data</span><span class="p">)</span>
+
+    <span class="c1"># Assert</span>
+    <span class="k">assert</span> <span class="n">user</span><span class="o">.</span><span class="n">username</span> <span class="o">==</span> <span class="s2">&quot;test&quot;</span>
+    <span class="k">assert</span> <span class="n">user</span><span class="o">.</span><span class="n">email</span> <span class="o">==</span> <span class="s2">&quot;test@example.com&quot;</span>
+    <span class="n">mock_db</span><span class="o">.</span><span class="n">add</span><span class="o">.</span><span class="n">assert_called_once</span><span class="p">()</span>
+    <span class="n">mock_db</span><span class="o">.</span><span class="n">commit</span><span class="o">.</span><span class="n">assert_called_once</span><span class="p">()</span>
+</pre></div>
+</div>
+</section>
+<section id="id16">
+<h3>集成测试<a class="headerlink" href="#id16" title="Link to this heading"></a></h3>
+<div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="nd">@pytest</span><span class="o">.</span><span class="n">mark</span><span class="o">.</span><span class="n">integration</span>
+<span class="k">async</span> <span class="k">def</span><span class="w"> </span><span class="nf">test_user_registration_flow</span><span class="p">():</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;测试用户注册流程（集成测试）&quot;&quot;&quot;</span>
+    <span class="k">async</span> <span class="k">with</span> <span class="n">AsyncClient</span><span class="p">(</span><span class="n">app</span><span class="o">=</span><span class="n">app</span><span class="p">,</span> <span class="n">base_url</span><span class="o">=</span><span class="s2">&quot;http://test&quot;</span><span class="p">)</span> <span class="k">as</span> <span class="n">client</span><span class="p">:</span>
+        <span class="c1"># 1. 注册用户</span>
+        <span class="n">response</span> <span class="o">=</span> <span class="k">await</span> <span class="n">client</span><span class="o">.</span><span class="n">post</span><span class="p">(</span><span class="s2">&quot;/api/v1/auth/register&quot;</span><span class="p">,</span> <span class="n">json</span><span class="o">=</span><span class="p">{</span>
+            <span class="s2">&quot;username&quot;</span><span class="p">:</span> <span class="s2">&quot;newuser&quot;</span><span class="p">,</span>
+            <span class="s2">&quot;email&quot;</span><span class="p">:</span> <span class="s2">&quot;new@example.com&quot;</span><span class="p">,</span>
+            <span class="s2">&quot;password&quot;</span><span class="p">:</span> <span class="s2">&quot;secure_password&quot;</span>
+        <span class="p">})</span>
+        <span class="k">assert</span> <span class="n">response</span><span class="o">.</span><span class="n">status_code</span> <span class="o">==</span> <span class="mi">201</span>
+
+        <span class="c1"># 2. 验证可以登录</span>
+        <span class="n">response</span> <span class="o">=</span> <span class="k">await</span> <span class="n">client</span><span class="o">.</span><span class="n">post</span><span class="p">(</span><span class="s2">&quot;/api/v1/auth/login&quot;</span><span class="p">,</span> <span class="n">json</span><span class="o">=</span><span class="p">{</span>
+            <span class="s2">&quot;username&quot;</span><span class="p">:</span> <span class="s2">&quot;newuser&quot;</span><span class="p">,</span>
+            <span class="s2">&quot;password&quot;</span><span class="p">:</span> <span class="s2">&quot;secure_password&quot;</span>
+        <span class="p">})</span>
+        <span class="k">assert</span> <span class="n">response</span><span class="o">.</span><span class="n">status_code</span> <span class="o">==</span> <span class="mi">200</span>
+        <span class="k">assert</span> <span class="s2">&quot;access_token&quot;</span> <span class="ow">in</span> <span class="n">response</span><span class="o">.</span><span class="n">json</span><span class="p">()</span>
+</pre></div>
+</div>
+</section>
+<section id="id17">
+<h3>测试覆盖率<a class="headerlink" href="#id17" title="Link to this heading"></a></h3>
+<p>目标：<strong>80% 以上的代码覆盖率</strong></p>
+<div class="highlight-bash notranslate"><div class="highlight"><pre><span></span><span class="c1"># 运行测试并生成覆盖率报告</span>
+pytest<span class="w"> </span>--cov<span class="o">=</span>zishu<span class="w"> </span>--cov-report<span class="o">=</span>html<span class="w"> </span>--cov-report<span class="o">=</span>term
+
+<span class="c1"># 查看报告</span>
+open<span class="w"> </span>htmlcov/index.html
+</pre></div>
+</div>
+</section>
+</section>
+<section id="id18">
+<h2>安全规范<a class="headerlink" href="#id18" title="Link to this heading"></a></h2>
+<section id="id19">
+<h3>输入验证<a class="headerlink" href="#id19" title="Link to this heading"></a></h3>
+<div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="kn">from</span><span class="w"> </span><span class="nn">pydantic</span><span class="w"> </span><span class="kn">import</span> <span class="n">BaseModel</span><span class="p">,</span> <span class="n">validator</span><span class="p">,</span> <span class="n">constr</span>
+
+<span class="k">class</span><span class="w"> </span><span class="nc">UserCreate</span><span class="p">(</span><span class="n">BaseModel</span><span class="p">):</span>
+    <span class="n">username</span><span class="p">:</span> <span class="n">constr</span><span class="p">(</span><span class="n">min_length</span><span class="o">=</span><span class="mi">3</span><span class="p">,</span> <span class="n">max_length</span><span class="o">=</span><span class="mi">50</span><span class="p">)</span>
+    <span class="n">email</span><span class="p">:</span> <span class="nb">str</span>
+    <span class="n">password</span><span class="p">:</span> <span class="n">constr</span><span class="p">(</span><span class="n">min_length</span><span class="o">=</span><span class="mi">8</span><span class="p">)</span>
+
+    <span class="nd">@validator</span><span class="p">(</span><span class="s1">&#39;email&#39;</span><span class="p">)</span>
+    <span class="k">def</span><span class="w"> </span><span class="nf">validate_email</span><span class="p">(</span><span class="bp">cls</span><span class="p">,</span> <span class="n">v</span><span class="p">):</span>
+<span class="w">        </span><span class="sd">&quot;&quot;&quot;验证邮箱格式&quot;&quot;&quot;</span>
+        <span class="kn">import</span><span class="w"> </span><span class="nn">re</span>
+        <span class="n">pattern</span> <span class="o">=</span> <span class="sa">r</span><span class="s1">&#39;^[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,}$&#39;</span>
+        <span class="k">if</span> <span class="ow">not</span> <span class="n">re</span><span class="o">.</span><span class="n">match</span><span class="p">(</span><span class="n">pattern</span><span class="p">,</span> <span class="n">v</span><span class="p">):</span>
+            <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span><span class="s1">&#39;Invalid email format&#39;</span><span class="p">)</span>
+        <span class="k">return</span> <span class="n">v</span>
+
+    <span class="nd">@validator</span><span class="p">(</span><span class="s1">&#39;password&#39;</span><span class="p">)</span>
+    <span class="k">def</span><span class="w"> </span><span class="nf">validate_password</span><span class="p">(</span><span class="bp">cls</span><span class="p">,</span> <span class="n">v</span><span class="p">):</span>
+<span class="w">        </span><span class="sd">&quot;&quot;&quot;验证密码强度&quot;&quot;&quot;</span>
+        <span class="k">if</span> <span class="ow">not</span> <span class="nb">any</span><span class="p">(</span><span class="n">c</span><span class="o">.</span><span class="n">isupper</span><span class="p">()</span> <span class="k">for</span> <span class="n">c</span> <span class="ow">in</span> <span class="n">v</span><span class="p">):</span>
+            <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span><span class="s1">&#39;Password must contain uppercase letter&#39;</span><span class="p">)</span>
+        <span class="k">if</span> <span class="ow">not</span> <span class="nb">any</span><span class="p">(</span><span class="n">c</span><span class="o">.</span><span class="n">isdigit</span><span class="p">()</span> <span class="k">for</span> <span class="n">c</span> <span class="ow">in</span> <span class="n">v</span><span class="p">):</span>
+            <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span><span class="s1">&#39;Password must contain digit&#39;</span><span class="p">)</span>
+        <span class="k">return</span> <span class="n">v</span>
+</pre></div>
+</div>
+</section>
+<section id="id20">
+<h3>密码处理<a class="headerlink" href="#id20" title="Link to this heading"></a></h3>
+<div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="kn">from</span><span class="w"> </span><span class="nn">passlib.context</span><span class="w"> </span><span class="kn">import</span> <span class="n">CryptContext</span>
+
+<span class="n">pwd_context</span> <span class="o">=</span> <span class="n">CryptContext</span><span class="p">(</span><span class="n">schemes</span><span class="o">=</span><span class="p">[</span><span class="s2">&quot;bcrypt&quot;</span><span class="p">],</span> <span class="n">deprecated</span><span class="o">=</span><span class="s2">&quot;auto&quot;</span><span class="p">)</span>
+
+<span class="k">def</span><span class="w"> </span><span class="nf">hash_password</span><span class="p">(</span><span class="n">password</span><span class="p">:</span> <span class="nb">str</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">str</span><span class="p">:</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;哈希密码&quot;&quot;&quot;</span>
+    <span class="k">return</span> <span class="n">pwd_context</span><span class="o">.</span><span class="n">hash</span><span class="p">(</span><span class="n">password</span><span class="p">)</span>
+
+<span class="k">def</span><span class="w"> </span><span class="nf">verify_password</span><span class="p">(</span><span class="n">plain_password</span><span class="p">:</span> <span class="nb">str</span><span class="p">,</span> <span class="n">hashed_password</span><span class="p">:</span> <span class="nb">str</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">bool</span><span class="p">:</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;验证密码&quot;&quot;&quot;</span>
+    <span class="k">return</span> <span class="n">pwd_context</span><span class="o">.</span><span class="n">verify</span><span class="p">(</span><span class="n">plain_password</span><span class="p">,</span> <span class="n">hashed_password</span><span class="p">)</span>
+</pre></div>
+</div>
+</section>
+<section id="sql">
+<h3>SQL 注入防护<a class="headerlink" href="#sql" title="Link to this heading"></a></h3>
+<div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="c1"># ❌ 不安全：字符串拼接</span>
+<span class="n">query</span> <span class="o">=</span> <span class="sa">f</span><span class="s2">&quot;SELECT * FROM users WHERE id = </span><span class="si">{</span><span class="n">user_id</span><span class="si">}</span><span class="s2">&quot;</span>
+
+<span class="c1"># ✅ 安全：使用参数化查询</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">sqlalchemy</span><span class="w"> </span><span class="kn">import</span> <span class="n">text</span>
+
+<span class="n">query</span> <span class="o">=</span> <span class="n">text</span><span class="p">(</span><span class="s2">&quot;SELECT * FROM users WHERE id = :user_id&quot;</span><span class="p">)</span>
+<span class="n">result</span> <span class="o">=</span> <span class="k">await</span> <span class="n">db</span><span class="o">.</span><span class="n">execute</span><span class="p">(</span><span class="n">query</span><span class="p">,</span> <span class="p">{</span><span class="s2">&quot;user_id&quot;</span><span class="p">:</span> <span class="n">user_id</span><span class="p">})</span>
+</pre></div>
+</div>
+</section>
+<section id="id21">
+<h3>敏感数据<a class="headerlink" href="#id21" title="Link to this heading"></a></h3>
+<div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="c1"># ❌ 不要在日志中记录敏感信息</span>
+<span class="n">logger</span><span class="o">.</span><span class="n">info</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;User password: </span><span class="si">{</span><span class="n">password</span><span class="si">}</span><span class="s2">&quot;</span><span class="p">)</span>
+
+<span class="c1"># ✅ 脱敏处理</span>
+<span class="n">logger</span><span class="o">.</span><span class="n">info</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;User email: </span><span class="si">{</span><span class="n">email</span><span class="p">[:</span><span class="mi">3</span><span class="p">]</span><span class="si">}</span><span class="s2">***@</span><span class="si">{</span><span class="n">email</span><span class="o">.</span><span class="n">split</span><span class="p">(</span><span class="s1">&#39;@&#39;</span><span class="p">)[</span><span class="mi">1</span><span class="p">]</span><span class="si">}</span><span class="s2">&quot;</span><span class="p">)</span>
+
+<span class="c1"># 使用环境变量存储密钥</span>
+<span class="kn">import</span><span class="w"> </span><span class="nn">os</span>
+<span class="n">SECRET_KEY</span> <span class="o">=</span> <span class="n">os</span><span class="o">.</span><span class="n">getenv</span><span class="p">(</span><span class="s2">&quot;SECRET_KEY&quot;</span><span class="p">)</span>
+<span class="k">if</span> <span class="ow">not</span> <span class="n">SECRET_KEY</span><span class="p">:</span>
+    <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span><span class="s2">&quot;SECRET_KEY must be set&quot;</span><span class="p">)</span>
+</pre></div>
+</div>
+</section>
+</section>
+<section id="id22">
+<h2>代码审查<a class="headerlink" href="#id22" title="Link to this heading"></a></h2>
+<section id="id23">
+<h3>审查清单<a class="headerlink" href="#id23" title="Link to this heading"></a></h3>
+<p><strong>功能性</strong>：</p>
+<ul class="simple">
+<li><p>[ ] 代码实现了需求</p></li>
+<li><p>[ ] 边界条件已处理</p></li>
+<li><p>[ ] 错误处理完善</p></li>
+</ul>
+<p><strong>可维护性</strong>：</p>
+<ul class="simple">
+<li><p>[ ] 代码清晰易读</p></li>
+<li><p>[ ] 命名有意义</p></li>
+<li><p>[ ] 适当的注释</p></li>
+<li><p>[ ] 文档字符串完整</p></li>
+</ul>
+<p><strong>性能</strong>：</p>
+<ul class="simple">
+<li><p>[ ] 无明显性能问题</p></li>
+<li><p>[ ] 数据库查询优化</p></li>
+<li><p>[ ] 适当使用缓存</p></li>
+</ul>
+<p><strong>安全性</strong>：</p>
+<ul class="simple">
+<li><p>[ ] 输入验证</p></li>
+<li><p>[ ] 权限检查</p></li>
+<li><p>[ ] 敏感数据保护</p></li>
+</ul>
+<p><strong>测试</strong>：</p>
+<ul class="simple">
+<li><p>[ ] 有对应的单元测试</p></li>
+<li><p>[ ] 测试覆盖核心逻辑</p></li>
+<li><p>[ ] 边界条件有测试</p></li>
+</ul>
+</section>
+</section>
+<section id="git">
+<h2>Git 提交规范<a class="headerlink" href="#git" title="Link to this heading"></a></h2>
+<section id="id24">
+<h3>提交消息格式<a class="headerlink" href="#id24" title="Link to this heading"></a></h3>
+<p>使用 <strong>Conventional Commits</strong> 规范：</p>
+<div class="highlight-text notranslate"><div class="highlight"><pre><span></span>&lt;type&gt;(&lt;scope&gt;): &lt;subject&gt;
+
+&lt;body&gt;
+
+&lt;footer&gt;
+</pre></div>
+</div>
+<p><strong>类型 (type)</strong>：</p>
+<ul class="simple">
+<li><p><code class="docutils literal notranslate"><span class="pre">feat</span></code>: 新功能</p></li>
+<li><p><code class="docutils literal notranslate"><span class="pre">fix</span></code>: 修复 bug</p></li>
+<li><p><code class="docutils literal notranslate"><span class="pre">docs</span></code>: 文档更新</p></li>
+<li><p><code class="docutils literal notranslate"><span class="pre">style</span></code>: 代码格式调整（不影响功能）</p></li>
+<li><p><code class="docutils literal notranslate"><span class="pre">refactor</span></code>: 重构</p></li>
+<li><p><code class="docutils literal notranslate"><span class="pre">perf</span></code>: 性能优化</p></li>
+<li><p><code class="docutils literal notranslate"><span class="pre">test</span></code>: 测试相关</p></li>
+<li><p><code class="docutils literal notranslate"><span class="pre">chore</span></code>: 构建/工具配置</p></li>
+</ul>
+<p><strong>示例</strong>：</p>
+<div class="highlight-text notranslate"><div class="highlight"><pre><span></span>feat(api): add user authentication endpoint
+
+- Implement JWT token generation
+- Add login and register endpoints
+- Add authentication middleware
+
+Closes #123
+</pre></div>
+</div>
+</section>
+<section id="id25">
+<h3>分支策略<a class="headerlink" href="#id25" title="Link to this heading"></a></h3>
+<div class="highlight-text notranslate"><div class="highlight"><pre><span></span>main                 # 生产环境
+  ├── develop        # 开发环境
+  │   ├── feature/user-auth
+  │   ├── feature/rag-engine
+  │   └── bugfix/login-error
+  └── hotfix/critical-bug
+</pre></div>
+</div>
+</section>
+</section>
+<section id="id26">
+<h2>工具配置<a class="headerlink" href="#id26" title="Link to this heading"></a></h2>
+<section id="black">
+<h3>Black (代码格式化)<a class="headerlink" href="#black" title="Link to this heading"></a></h3>
+<p><code class="docutils literal notranslate"><span class="pre">pyproject.toml</span></code>:</p>
+<div class="highlight-toml notranslate"><div class="highlight"><pre><span></span><span class="k">[tool.black]</span>
+<span class="n">line-length</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="mi">88</span>
+<span class="n">target-version</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="p">[</span><span class="s1">&#39;py38&#39;</span><span class="p">]</span>
+<span class="n">include</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="s1">&#39;\.pyi?$&#39;</span>
+<span class="n">extend-exclude</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="s1">&#39;&#39;&#39;</span>
+<span class="s1">/(</span>
+<span class="s1">  \.eggs</span>
+<span class="s1">  | \.git</span>
+<span class="s1">  | \.venv</span>
+<span class="s1">  | build</span>
+<span class="s1">  | dist</span>
+<span class="s1">)/</span>
+<span class="s1">&#39;&#39;&#39;</span>
+</pre></div>
+</div>
+</section>
+<section id="pylint">
+<h3>Pylint (代码检查)<a class="headerlink" href="#pylint" title="Link to this heading"></a></h3>
+<p><code class="docutils literal notranslate"><span class="pre">.pylintrc</span></code>:</p>
+<div class="highlight-ini notranslate"><div class="highlight"><pre><span></span><span class="k">[MESSAGES CONTROL]</span>
+<span class="na">disable</span><span class="o">=</span><span class="s">C0111,C0103,R0903</span>
+
+<span class="k">[FORMAT]</span>
+<span class="na">max-line-length</span><span class="o">=</span><span class="s">88</span>
+
+<span class="k">[BASIC]</span>
+<span class="na">good-names</span><span class="o">=</span><span class="s">i,j,k,ex,_,id</span>
+</pre></div>
+</div>
+</section>
+<section id="mypy">
+<h3>MyPy (类型检查)<a class="headerlink" href="#mypy" title="Link to this heading"></a></h3>
+<p><code class="docutils literal notranslate"><span class="pre">mypy.ini</span></code>:</p>
+<div class="highlight-ini notranslate"><div class="highlight"><pre><span></span><span class="k">[mypy]</span>
+<span class="na">python_version</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="s">3.8</span>
+<span class="na">warn_return_any</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="s">True</span>
+<span class="na">warn_unused_configs</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="s">True</span>
+<span class="na">disallow_untyped_defs</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="s">True</span>
+
+<span class="k">[mypy-tests.*]</span>
+<span class="na">disallow_untyped_defs</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="s">False</span>
+</pre></div>
+</div>
+</section>
+</section>
+<section id="id27">
+<h2>参考资源<a class="headerlink" href="#id27" title="Link to this heading"></a></h2>
+<ul class="simple">
+<li><p><a class="reference external" href="https://peps.python.org/pep-0008/">PEP 8</a></p></li>
+<li><p><a class="reference external" href="https://google.github.io/styleguide/pyguide.html">Google Python Style Guide</a></p></li>
+<li><p><a class="reference external" href="https://www.conventionalcommits.org/">Conventional Commits</a></p></li>
+<li><p><a class="reference external" href="https://fastapi.tiangolo.com/tutorial/">FastAPI Best Practices</a></p></li>
+</ul>
+</section>
+</section>
+
+
+           </div>
+          </div>
+          <footer><div class="rst-footer-buttons" role="navigation" aria-label="页脚">
+        <a href="development_setup.html" class="btn btn-neutral float-left" title="开发环境配置" accesskey="p" rel="prev"><span class="fa fa-arrow-circle-left" aria-hidden="true"></span> 上一页</a>
+        <a href="../api/core.html" class="btn btn-neutral float-right" title="核心模块 API" accesskey="n" rel="next">下一页 <span class="fa fa-arrow-circle-right" aria-hidden="true"></span></a>
+    </div>
+
+  <hr/>
+
+  <div role="contentinfo">
+    <p>&#169; 版权所有 2025, Zishu-Sensei Team。
+      <span class="lastupdated">最后更新于 2025-10-17 21:21:36.
+      </span></p>
+  </div>
+
+  利用 <a href="https://www.sphinx-doc.org/">Sphinx</a> 构建，使用的 
+    <a href="https://github.com/readthedocs/sphinx_rtd_theme">主题</a>
+    由 <a href="https://readthedocs.org">Read the Docs</a> 开发.
+   
+
+</footer>
+        </div>
+      </div>
+    </section>
+  </div>
+  <script>
+      jQuery(function () {
+          SphinxRtdTheme.Navigation.enable(true);
+      });
+  </script> 
+
+</body>
+</html>

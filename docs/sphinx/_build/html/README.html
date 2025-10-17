@@ -1,0 +1,973 @@
+<!DOCTYPE html>
+<html class="writer-html5" lang="zh-CN" data-content_root="./">
+<head>
+  <meta charset="utf-8" /><meta name="viewport" content="width=device-width, initial-scale=1" />
+
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Zishu-Sensei 文档 &mdash; Zishu-Sensei Documentation</title>
+      <link rel="stylesheet" type="text/css" href="_static/pygments.css?v=b86133f3" />
+      <link rel="stylesheet" type="text/css" href="_static/css/theme.css?v=19f00094" />
+      <link rel="stylesheet" type="text/css" href="_static/copybutton.css?v=76b2166b" />
+      <link rel="stylesheet" type="text/css" href="_static/tabs.css?v=a5c4661c" />
+      <link rel="stylesheet" type="text/css" href="_static/custom.css?v=fcc5c311" />
+
+  
+  <!--[if lt IE 9]>
+    <script src="_static/js/html5shiv.min.js"></script>
+  <![endif]-->
+  
+        <script src="_static/jquery.js?v=5d32c60e"></script>
+        <script src="_static/_sphinx_javascript_frameworks_compat.js?v=2cd50e6c"></script>
+        <script src="_static/documentation_options.js?v=34088549"></script>
+        <script src="_static/doctools.js?v=888ff710"></script>
+        <script src="_static/sphinx_highlight.js?v=dc90522c"></script>
+        <script src="_static/clipboard.min.js?v=a7894cd8"></script>
+        <script src="_static/copybutton.js?v=30646c52"></script>
+        <script src="_static/translations.js?v=beaddf03"></script>
+    <script src="_static/js/theme.js"></script>
+    <link rel="index" title="索引" href="genindex.html" />
+    <link rel="search" title="搜索" href="search.html" /> 
+</head>
+
+<body class="wy-body-for-nav"> 
+  <div class="wy-grid-for-nav">
+    <nav data-toggle="wy-nav-shift" class="wy-nav-side">
+      <div class="wy-side-scroll">
+        <div class="wy-side-nav-search"  style="background: #2980B9" >
+
+          
+          
+          <a href="index.html" class="icon icon-home">
+            Zishu-Sensei
+          </a>
+              <div class="version">
+                1.0
+              </div>
+<div role="search">
+  <form id="rtd-search-form" class="wy-form" action="search.html" method="get">
+    <input type="text" name="q" placeholder="搜索文档" aria-label="搜索文档" />
+    <input type="hidden" name="check_keywords" value="yes" />
+    <input type="hidden" name="area" value="default" />
+  </form>
+</div>
+        </div><div class="wy-menu wy-menu-vertical" data-spy="affix" role="navigation" aria-label="导航菜单">
+              <p class="caption" role="heading"><span class="caption-text">用户指南</span></p>
+<ul>
+<li class="toctree-l1"><a class="reference internal" href="user_guide/introduction.html">项目简介</a><ul>
+<li class="toctree-l2"><a class="reference internal" href="user_guide/introduction.html#zishu-sensei">什么是 Zishu-Sensei？</a></li>
+<li class="toctree-l2"><a class="reference internal" href="user_guide/introduction.html#id2">核心功能</a><ul>
+<li class="toctree-l3"><a class="reference internal" href="user_guide/introduction.html#id3">智能对话</a></li>
+<li class="toctree-l3"><a class="reference internal" href="user_guide/introduction.html#id4">知识检索</a></li>
+<li class="toctree-l3"><a class="reference internal" href="user_guide/introduction.html#id5">学习辅助</a></li>
+<li class="toctree-l3"><a class="reference internal" href="user_guide/introduction.html#id6">知识管理</a></li>
+</ul>
+</li>
+<li class="toctree-l2"><a class="reference internal" href="user_guide/introduction.html#id7">系统架构</a></li>
+<li class="toctree-l2"><a class="reference internal" href="user_guide/introduction.html#id8">技术特点</a><ul>
+<li class="toctree-l3"><a class="reference internal" href="user_guide/introduction.html#id9">高性能</a></li>
+<li class="toctree-l3"><a class="reference internal" href="user_guide/introduction.html#id10">可扩展</a></li>
+<li class="toctree-l3"><a class="reference internal" href="user_guide/introduction.html#id11">安全可靠</a></li>
+<li class="toctree-l3"><a class="reference internal" href="user_guide/introduction.html#id12">易于部署</a></li>
+</ul>
+</li>
+<li class="toctree-l2"><a class="reference internal" href="user_guide/introduction.html#id13">应用场景</a><ul>
+<li class="toctree-l3"><a class="reference internal" href="user_guide/introduction.html#id14">教育机构</a></li>
+<li class="toctree-l3"><a class="reference internal" href="user_guide/introduction.html#id15">个人学习</a></li>
+<li class="toctree-l3"><a class="reference internal" href="user_guide/introduction.html#id16">企业培训</a></li>
+<li class="toctree-l3"><a class="reference internal" href="user_guide/introduction.html#id17">研究辅助</a></li>
+</ul>
+</li>
+<li class="toctree-l2"><a class="reference internal" href="user_guide/introduction.html#id18">开发团队</a></li>
+<li class="toctree-l2"><a class="reference internal" href="user_guide/introduction.html#id19">下一步</a></li>
+</ul>
+</li>
+<li class="toctree-l1"><a class="reference internal" href="user_guide/installation.html">安装指南</a><ul>
+<li class="toctree-l2"><a class="reference internal" href="user_guide/installation.html#id2">系统要求</a><ul>
+<li class="toctree-l3"><a class="reference internal" href="user_guide/installation.html#id3">硬件要求</a></li>
+<li class="toctree-l3"><a class="reference internal" href="user_guide/installation.html#id4">软件要求</a></li>
+</ul>
+</li>
+<li class="toctree-l2"><a class="reference internal" href="user_guide/installation.html#id5">安装方式</a></li>
+<li class="toctree-l2"><a class="reference internal" href="user_guide/installation.html#docker">方式一: Docker 部署 (推荐)</a><ul>
+<li class="toctree-l3"><a class="reference internal" href="user_guide/installation.html#id6">步骤 1: 安装 Docker</a></li>
+<li class="toctree-l3"><a class="reference internal" href="user_guide/installation.html#id7">步骤 2: 克隆项目</a></li>
+<li class="toctree-l3"><a class="reference internal" href="user_guide/installation.html#id8">步骤 3: 配置环境变量</a></li>
+<li class="toctree-l3"><a class="reference internal" href="user_guide/installation.html#id9">步骤 4: 启动服务</a></li>
+<li class="toctree-l3"><a class="reference internal" href="user_guide/installation.html#id10">步骤 5: 验证安装</a></li>
+</ul>
+</li>
+<li class="toctree-l2"><a class="reference internal" href="user_guide/installation.html#id11">方式二: 本地开发安装</a><ul>
+<li class="toctree-l3"><a class="reference internal" href="user_guide/installation.html#python">步骤 1: 安装 Python 依赖</a></li>
+<li class="toctree-l3"><a class="reference internal" href="user_guide/installation.html#id12">步骤 2: 安装数据库</a></li>
+<li class="toctree-l3"><a class="reference internal" href="user_guide/installation.html#id13">步骤 3: 配置数据库</a></li>
+<li class="toctree-l3"><a class="reference internal" href="user_guide/installation.html#id14">步骤 4: 运行数据库迁移</a></li>
+<li class="toctree-l3"><a class="reference internal" href="user_guide/installation.html#id15">步骤 5: 启动应用</a></li>
+<li class="toctree-l3"><a class="reference internal" href="user_guide/installation.html#id16">步骤 6: 验证安装</a></li>
+</ul>
+</li>
+<li class="toctree-l2"><a class="reference internal" href="user_guide/installation.html#id17">方式三: 云平台部署</a><ul>
+<li class="toctree-l3"><a class="reference internal" href="user_guide/installation.html#id18">云硬盘环境 (推荐用于生产)</a></li>
+<li class="toctree-l3"><a class="reference internal" href="user_guide/installation.html#id19">云服务器部署</a></li>
+</ul>
+</li>
+<li class="toctree-l2"><a class="reference internal" href="user_guide/installation.html#id20">常见问题</a><ul>
+<li class="toctree-l3"><a class="reference internal" href="user_guide/installation.html#id21">端口冲突</a></li>
+<li class="toctree-l3"><a class="reference internal" href="user_guide/installation.html#id22">权限问题</a></li>
+<li class="toctree-l3"><a class="reference internal" href="user_guide/installation.html#id23">数据库连接失败</a></li>
+<li class="toctree-l3"><a class="reference internal" href="user_guide/installation.html#id24">模型下载慢</a></li>
+</ul>
+</li>
+<li class="toctree-l2"><a class="reference internal" href="user_guide/installation.html#id25">卸载</a></li>
+<li class="toctree-l2"><a class="reference internal" href="user_guide/installation.html#id26">下一步</a></li>
+</ul>
+</li>
+<li class="toctree-l1"><a class="reference internal" href="user_guide/quickstart.html">快速开始</a><ul>
+<li class="toctree-l2"><a class="reference internal" href="user_guide/quickstart.html#id2">安装</a><ul>
+<li class="toctree-l3"><a class="reference internal" href="user_guide/quickstart.html#docker">使用 Docker (推荐)</a></li>
+<li class="toctree-l3"><a class="reference internal" href="user_guide/quickstart.html#id3">本地安装</a></li>
+<li class="toctree-l3"><a class="reference internal" href="user_guide/quickstart.html#id4">验证安装</a></li>
+</ul>
+</li>
+<li class="toctree-l2"><a class="reference internal" href="user_guide/quickstart.html#id5">基本使用</a><ul>
+<li class="toctree-l3"><a class="reference internal" href="user_guide/quickstart.html#id6">1. 创建用户</a></li>
+<li class="toctree-l3"><a class="reference internal" href="user_guide/quickstart.html#id7">2. 登录获取令牌</a></li>
+<li class="toctree-l3"><a class="reference internal" href="user_guide/quickstart.html#id8">3. 开始对话</a></li>
+<li class="toctree-l3"><a class="reference internal" href="user_guide/quickstart.html#id9">4. 发送消息</a></li>
+</ul>
+</li>
+<li class="toctree-l2"><a class="reference internal" href="user_guide/quickstart.html#id10">使用桌面应用</a><ul>
+<li class="toctree-l3"><a class="reference internal" href="user_guide/quickstart.html#id11">启动应用</a></li>
+<li class="toctree-l3"><a class="reference internal" href="user_guide/quickstart.html#id12">配置连接</a></li>
+<li class="toctree-l3"><a class="reference internal" href="user_guide/quickstart.html#id13">开始对话</a></li>
+</ul>
+</li>
+<li class="toctree-l2"><a class="reference internal" href="user_guide/quickstart.html#id14">上传文档</a><ul>
+<li class="toctree-l3"><a class="reference internal" href="user_guide/quickstart.html#id15">准备文档</a></li>
+<li class="toctree-l3"><a class="reference internal" href="user_guide/quickstart.html#id16">上传文档</a></li>
+<li class="toctree-l3"><a class="reference internal" href="user_guide/quickstart.html#id17">查看处理状态</a></li>
+</ul>
+</li>
+<li class="toctree-l2"><a class="reference internal" href="user_guide/quickstart.html#rag">使用 RAG 查询</a><ul>
+<li class="toctree-l3"><a class="reference internal" href="user_guide/quickstart.html#id18">启用 RAG</a></li>
+<li class="toctree-l3"><a class="reference internal" href="user_guide/quickstart.html#id19">查看引用来源</a></li>
+</ul>
+</li>
+<li class="toctree-l2"><a class="reference internal" href="user_guide/quickstart.html#id20">配置选项</a><ul>
+<li class="toctree-l3"><a class="reference internal" href="user_guide/quickstart.html#id21">基本配置</a></li>
+<li class="toctree-l3"><a class="reference internal" href="user_guide/quickstart.html#llm">LLM 提供商</a></li>
+</ul>
+</li>
+<li class="toctree-l2"><a class="reference internal" href="user_guide/quickstart.html#id22">常见任务</a><ul>
+<li class="toctree-l3"><a class="reference internal" href="user_guide/quickstart.html#id23">管理对话</a></li>
+<li class="toctree-l3"><a class="reference internal" href="user_guide/quickstart.html#id24">管理文档</a></li>
+<li class="toctree-l3"><a class="reference internal" href="user_guide/quickstart.html#id25">搜索文档</a></li>
+</ul>
+</li>
+<li class="toctree-l2"><a class="reference internal" href="user_guide/quickstart.html#id26">故障排除</a><ul>
+<li class="toctree-l3"><a class="reference internal" href="user_guide/quickstart.html#api">API 无法访问</a></li>
+<li class="toctree-l3"><a class="reference internal" href="user_guide/quickstart.html#id27">数据库连接失败</a></li>
+<li class="toctree-l3"><a class="reference internal" href="user_guide/quickstart.html#id28">上传文档失败</a></li>
+</ul>
+</li>
+<li class="toctree-l2"><a class="reference internal" href="user_guide/quickstart.html#id29">下一步</a></li>
+<li class="toctree-l2"><a class="reference internal" href="user_guide/quickstart.html#id30">需要帮助？</a></li>
+</ul>
+</li>
+<li class="toctree-l1"><a class="reference internal" href="user_guide/configuration.html">配置指南</a><ul>
+<li class="toctree-l2"><a class="reference internal" href="user_guide/configuration.html#id2">配置文件结构</a><ul>
+<li class="toctree-l3"><a class="reference internal" href="user_guide/configuration.html#id3">主要配置文件</a></li>
+<li class="toctree-l3"><a class="reference internal" href="user_guide/configuration.html#id4">环境变量</a></li>
+</ul>
+</li>
+<li class="toctree-l2"><a class="reference internal" href="user_guide/configuration.html#id5">主配置文件</a></li>
+<li class="toctree-l2"><a class="reference internal" href="user_guide/configuration.html#llm">LLM 模型配置</a><ul>
+<li class="toctree-l3"><a class="reference internal" href="user_guide/configuration.html#openai">OpenAI 配置</a></li>
+<li class="toctree-l3"><a class="reference internal" href="user_guide/configuration.html#claude-anthropic">Claude (Anthropic) 配置</a></li>
+<li class="toctree-l3"><a class="reference internal" href="user_guide/configuration.html#id6">本地模型配置</a></li>
+</ul>
+</li>
+<li class="toctree-l2"><a class="reference internal" href="user_guide/configuration.html#rag">RAG 配置</a><ul>
+<li class="toctree-l3"><a class="reference internal" href="user_guide/configuration.html#id7">基础配置</a></li>
+<li class="toctree-l3"><a class="reference internal" href="user_guide/configuration.html#id8">重排序配置</a></li>
+<li class="toctree-l3"><a class="reference internal" href="user_guide/configuration.html#id9">文档解析配置</a></li>
+</ul>
+</li>
+<li class="toctree-l2"><a class="reference internal" href="user_guide/configuration.html#id10">适配器配置</a><ul>
+<li class="toctree-l3"><a class="reference internal" href="user_guide/configuration.html#core-adapter">Core Adapter</a></li>
+<li class="toctree-l3"><a class="reference internal" href="user_guide/configuration.html#soft-adapter">Soft Adapter</a></li>
+<li class="toctree-l3"><a class="reference internal" href="user_guide/configuration.html#hard-adapter">Hard Adapter</a></li>
+</ul>
+</li>
+<li class="toctree-l2"><a class="reference internal" href="user_guide/configuration.html#id11">日志配置</a><ul>
+<li class="toctree-l3"><a class="reference internal" href="user_guide/configuration.html#id12">基础日志配置</a></li>
+</ul>
+</li>
+<li class="toctree-l2"><a class="reference internal" href="user_guide/configuration.html#id13">性能优化配置</a><ul>
+<li class="toctree-l3"><a class="reference internal" href="user_guide/configuration.html#id14">数据库连接池</a></li>
+<li class="toctree-l3"><a class="reference internal" href="user_guide/configuration.html#id15">缓存策略</a></li>
+<li class="toctree-l3"><a class="reference internal" href="user_guide/configuration.html#id16">并发控制</a></li>
+</ul>
+</li>
+<li class="toctree-l2"><a class="reference internal" href="user_guide/configuration.html#id17">安全配置</a><ul>
+<li class="toctree-l3"><a class="reference internal" href="user_guide/configuration.html#id18">认证和授权</a></li>
+<li class="toctree-l3"><a class="reference internal" href="user_guide/configuration.html#id19">数据加密</a></li>
+</ul>
+</li>
+<li class="toctree-l2"><a class="reference internal" href="user_guide/configuration.html#id20">监控配置</a><ul>
+<li class="toctree-l3"><a class="reference internal" href="user_guide/configuration.html#prometheus">Prometheus 指标</a></li>
+<li class="toctree-l3"><a class="reference internal" href="user_guide/configuration.html#id21">健康检查</a></li>
+</ul>
+</li>
+<li class="toctree-l2"><a class="reference internal" href="user_guide/configuration.html#id22">环境特定配置</a><ul>
+<li class="toctree-l3"><a class="reference internal" href="user_guide/configuration.html#id23">开发环境</a></li>
+<li class="toctree-l3"><a class="reference internal" href="user_guide/configuration.html#id24">生产环境</a></li>
+</ul>
+</li>
+<li class="toctree-l2"><a class="reference internal" href="user_guide/configuration.html#id25">配置加载优先级</a></li>
+<li class="toctree-l2"><a class="reference internal" href="user_guide/configuration.html#id26">配置验证</a></li>
+<li class="toctree-l2"><a class="reference internal" href="user_guide/configuration.html#id27">最佳实践</a></li>
+<li class="toctree-l2"><a class="reference internal" href="user_guide/configuration.html#id28">下一步</a></li>
+</ul>
+</li>
+<li class="toctree-l1"><a class="reference internal" href="user_guide/deployment.html">部署指南</a><ul>
+<li class="toctree-l2"><a class="reference internal" href="user_guide/deployment.html#id2">部署架构</a></li>
+<li class="toctree-l2"><a class="reference internal" href="user_guide/deployment.html#docker">Docker 部署</a><ul>
+<li class="toctree-l3"><a class="reference internal" href="user_guide/deployment.html#docker-compose">生产环境 Docker Compose</a></li>
+<li class="toctree-l3"><a class="reference internal" href="user_guide/deployment.html#id3">启动生产环境</a></li>
+</ul>
+</li>
+<li class="toctree-l2"><a class="reference internal" href="user_guide/deployment.html#kubernetes">Kubernetes 部署</a><ul>
+<li class="toctree-l3"><a class="reference internal" href="user_guide/deployment.html#id4">准备工作</a></li>
+<li class="toctree-l3"><a class="reference internal" href="user_guide/deployment.html#id5">创建命名空间</a></li>
+<li class="toctree-l3"><a class="reference internal" href="user_guide/deployment.html#id6">部署配置</a></li>
+<li class="toctree-l3"><a class="reference internal" href="user_guide/deployment.html#id7">服务配置</a></li>
+<li class="toctree-l3"><a class="reference internal" href="user_guide/deployment.html#ingress">Ingress 配置</a></li>
+<li class="toctree-l3"><a class="reference internal" href="user_guide/deployment.html#k8s">部署到 K8s</a></li>
+</ul>
+</li>
+<li class="toctree-l2"><a class="reference internal" href="user_guide/deployment.html#id8">云平台部署</a><ul>
+<li class="toctree-l3"><a class="reference internal" href="user_guide/deployment.html#aws">AWS 部署</a></li>
+<li class="toctree-l3"><a class="reference internal" href="user_guide/deployment.html#azure">Azure 部署</a></li>
+<li class="toctree-l3"><a class="reference internal" href="user_guide/deployment.html#gcp">GCP 部署</a></li>
+</ul>
+</li>
+<li class="toctree-l2"><a class="reference internal" href="user_guide/deployment.html#nginx">Nginx 配置</a><ul>
+<li class="toctree-l3"><a class="reference internal" href="user_guide/deployment.html#id9">生产环境 Nginx 配置</a></li>
+</ul>
+</li>
+<li class="toctree-l2"><a class="reference internal" href="user_guide/deployment.html#ssl">SSL 证书配置</a><ul>
+<li class="toctree-l3"><a class="reference internal" href="user_guide/deployment.html#let-s-encrypt">使用 Let’s Encrypt</a></li>
+</ul>
+</li>
+<li class="toctree-l2"><a class="reference internal" href="user_guide/deployment.html#id10">数据库优化</a><ul>
+<li class="toctree-l3"><a class="reference internal" href="user_guide/deployment.html#postgresql">PostgreSQL 优化</a></li>
+<li class="toctree-l3"><a class="reference internal" href="user_guide/deployment.html#id11">主从复制</a></li>
+</ul>
+</li>
+<li class="toctree-l2"><a class="reference internal" href="user_guide/deployment.html#id12">监控和日志</a><ul>
+<li class="toctree-l3"><a class="reference internal" href="user_guide/deployment.html#prometheus-grafana">Prometheus + Grafana</a></li>
+<li class="toctree-l3"><a class="reference internal" href="user_guide/deployment.html#id13">日志聚合</a></li>
+</ul>
+</li>
+<li class="toctree-l2"><a class="reference internal" href="user_guide/deployment.html#id14">备份策略</a><ul>
+<li class="toctree-l3"><a class="reference internal" href="user_guide/deployment.html#id15">数据库备份</a></li>
+<li class="toctree-l3"><a class="reference internal" href="user_guide/deployment.html#id16">自动备份</a></li>
+</ul>
+</li>
+<li class="toctree-l2"><a class="reference internal" href="user_guide/deployment.html#id17">故障恢复</a><ul>
+<li class="toctree-l3"><a class="reference internal" href="user_guide/deployment.html#id18">数据恢复</a></li>
+<li class="toctree-l3"><a class="reference internal" href="user_guide/deployment.html#id19">灾难恢复计划</a></li>
+</ul>
+</li>
+<li class="toctree-l2"><a class="reference internal" href="user_guide/deployment.html#id20">性能调优</a><ul>
+<li class="toctree-l3"><a class="reference internal" href="user_guide/deployment.html#id21">应用层优化</a></li>
+<li class="toctree-l3"><a class="reference internal" href="user_guide/deployment.html#id22">负载均衡</a></li>
+<li class="toctree-l3"><a class="reference internal" href="user_guide/deployment.html#id23">扩展策略</a></li>
+</ul>
+</li>
+<li class="toctree-l2"><a class="reference internal" href="user_guide/deployment.html#id24">安全加固</a><ul>
+<li class="toctree-l3"><a class="reference internal" href="user_guide/deployment.html#id25">防火墙规则</a></li>
+<li class="toctree-l3"><a class="reference internal" href="user_guide/deployment.html#id26">定期更新</a></li>
+</ul>
+</li>
+<li class="toctree-l2"><a class="reference internal" href="user_guide/deployment.html#id27">检查清单</a></li>
+<li class="toctree-l2"><a class="reference internal" href="user_guide/deployment.html#id28">下一步</a></li>
+</ul>
+</li>
+</ul>
+<p class="caption" role="heading"><span class="caption-text">开发文档</span></p>
+<ul>
+<li class="toctree-l1"><a class="reference internal" href="developer_guide/architecture.html">系统架构</a><ul>
+<li class="toctree-l2"><a class="reference internal" href="developer_guide/architecture.html#id2">整体架构</a></li>
+<li class="toctree-l2"><a class="reference internal" href="developer_guide/architecture.html#id3">核心设计原则</a><ul>
+<li class="toctree-l3"><a class="reference internal" href="developer_guide/architecture.html#srp">1. 单一职责原则 (SRP)</a></li>
+<li class="toctree-l3"><a class="reference internal" href="developer_guide/architecture.html#ocp">2. 开闭原则 (OCP)</a></li>
+<li class="toctree-l3"><a class="reference internal" href="developer_guide/architecture.html#dip">3. 依赖倒置原则 (DIP)</a></li>
+</ul>
+</li>
+<li class="toctree-l2"><a class="reference internal" href="developer_guide/architecture.html#id4">适配器架构</a><ul>
+<li class="toctree-l3"><a class="reference internal" href="developer_guide/architecture.html#id5">适配器模式详解</a></li>
+<li class="toctree-l3"><a class="reference internal" href="developer_guide/architecture.html#core-adapter">Core Adapter</a></li>
+<li class="toctree-l3"><a class="reference internal" href="developer_guide/architecture.html#soft-adapter">Soft Adapter</a></li>
+<li class="toctree-l3"><a class="reference internal" href="developer_guide/architecture.html#hard-adapter">Hard Adapter</a></li>
+</ul>
+</li>
+<li class="toctree-l2"><a class="reference internal" href="developer_guide/architecture.html#id6">数据流架构</a><ul>
+<li class="toctree-l3"><a class="reference internal" href="developer_guide/architecture.html#id7">请求处理流程</a></li>
+<li class="toctree-l3"><a class="reference internal" href="developer_guide/architecture.html#id8">对话处理流程</a></li>
+</ul>
+</li>
+<li class="toctree-l2"><a class="reference internal" href="developer_guide/architecture.html#id9">数据模型设计</a><ul>
+<li class="toctree-l3"><a class="reference internal" href="developer_guide/architecture.html#id10">核心实体关系</a></li>
+<li class="toctree-l3"><a class="reference internal" href="developer_guide/architecture.html#id11">用户模型</a></li>
+<li class="toctree-l3"><a class="reference internal" href="developer_guide/architecture.html#id12">对话模型</a></li>
+</ul>
+</li>
+<li class="toctree-l2"><a class="reference internal" href="developer_guide/architecture.html#id13">缓存策略</a><ul>
+<li class="toctree-l3"><a class="reference internal" href="developer_guide/architecture.html#id14">多层缓存架构</a></li>
+<li class="toctree-l3"><a class="reference internal" href="developer_guide/architecture.html#id15">缓存实现</a></li>
+</ul>
+</li>
+<li class="toctree-l2"><a class="reference internal" href="developer_guide/architecture.html#id16">异步处理</a><ul>
+<li class="toctree-l3"><a class="reference internal" href="developer_guide/architecture.html#id17">任务队列</a></li>
+</ul>
+</li>
+<li class="toctree-l2"><a class="reference internal" href="developer_guide/architecture.html#id18">错误处理</a><ul>
+<li class="toctree-l3"><a class="reference internal" href="developer_guide/architecture.html#id19">统一异常处理</a></li>
+</ul>
+</li>
+<li class="toctree-l2"><a class="reference internal" href="developer_guide/architecture.html#id20">安全架构</a><ul>
+<li class="toctree-l3"><a class="reference internal" href="developer_guide/architecture.html#id21">认证和授权</a></li>
+</ul>
+</li>
+<li class="toctree-l2"><a class="reference internal" href="developer_guide/architecture.html#id22">扩展性设计</a><ul>
+<li class="toctree-l3"><a class="reference internal" href="developer_guide/architecture.html#id23">水平扩展</a></li>
+<li class="toctree-l3"><a class="reference internal" href="developer_guide/architecture.html#id24">垂直扩展</a></li>
+</ul>
+</li>
+<li class="toctree-l2"><a class="reference internal" href="developer_guide/architecture.html#id25">性能优化</a><ul>
+<li class="toctree-l3"><a class="reference internal" href="developer_guide/architecture.html#id26">数据库优化</a></li>
+<li class="toctree-l3"><a class="reference internal" href="developer_guide/architecture.html#api">API 优化</a></li>
+</ul>
+</li>
+<li class="toctree-l2"><a class="reference internal" href="developer_guide/architecture.html#id27">下一步</a></li>
+</ul>
+</li>
+<li class="toctree-l1"><a class="reference internal" href="developer_guide/development_setup.html">开发环境配置</a><ul>
+<li class="toctree-l2"><a class="reference internal" href="developer_guide/development_setup.html#id2">前置要求</a><ul>
+<li class="toctree-l3"><a class="reference internal" href="developer_guide/development_setup.html#id3">开发工具</a></li>
+</ul>
+</li>
+<li class="toctree-l2"><a class="reference internal" href="developer_guide/development_setup.html#id4">环境配置</a><ul>
+<li class="toctree-l3"><a class="reference internal" href="developer_guide/development_setup.html#id5">1. 克隆仓库</a></li>
+<li class="toctree-l3"><a class="reference internal" href="developer_guide/development_setup.html#id6">2. 创建虚拟环境</a></li>
+<li class="toctree-l3"><a class="reference internal" href="developer_guide/development_setup.html#id7">3. 安装依赖</a></li>
+<li class="toctree-l3"><a class="reference internal" href="developer_guide/development_setup.html#id8">4. 配置环境变量</a></li>
+<li class="toctree-l3"><a class="reference internal" href="developer_guide/development_setup.html#id9">5. 初始化数据库</a></li>
+</ul>
+</li>
+<li class="toctree-l2"><a class="reference internal" href="developer_guide/development_setup.html#id10">开发工作流</a><ul>
+<li class="toctree-l3"><a class="reference internal" href="developer_guide/development_setup.html#id11">启动开发服务</a></li>
+<li class="toctree-l3"><a class="reference internal" href="developer_guide/development_setup.html#id12">代码编辑</a></li>
+<li class="toctree-l3"><a class="reference internal" href="developer_guide/development_setup.html#id13">代码质量检查</a></li>
+</ul>
+</li>
+<li class="toctree-l2"><a class="reference internal" href="developer_guide/development_setup.html#id14">开发工具</a><ul>
+<li class="toctree-l3"><a class="reference internal" href="developer_guide/development_setup.html#vs-code">VS Code 配置</a></li>
+<li class="toctree-l3"><a class="reference internal" href="developer_guide/development_setup.html#id15">调试配置</a></li>
+</ul>
+</li>
+<li class="toctree-l2"><a class="reference internal" href="developer_guide/development_setup.html#id16">数据库管理</a><ul>
+<li class="toctree-l3"><a class="reference internal" href="developer_guide/development_setup.html#pgadmin">使用 pgAdmin</a></li>
+<li class="toctree-l3"><a class="reference internal" href="developer_guide/development_setup.html#id17">数据库迁移</a></li>
+</ul>
+</li>
+<li class="toctree-l2"><a class="reference internal" href="developer_guide/development_setup.html#redis">Redis 管理</a><ul>
+<li class="toctree-l3"><a class="reference internal" href="developer_guide/development_setup.html#redis-commander">使用 Redis Commander</a></li>
+<li class="toctree-l3"><a class="reference internal" href="developer_guide/development_setup.html#redis-cli">使用 Redis CLI</a></li>
+</ul>
+</li>
+<li class="toctree-l2"><a class="reference internal" href="developer_guide/development_setup.html#id18">前端开发</a><ul>
+<li class="toctree-l3"><a class="reference internal" href="developer_guide/development_setup.html#desktop-app">Desktop App 开发</a></li>
+</ul>
+</li>
+<li class="toctree-l2"><a class="reference internal" href="developer_guide/development_setup.html#id19">测试</a><ul>
+<li class="toctree-l3"><a class="reference internal" href="developer_guide/development_setup.html#id20">运行测试</a></li>
+<li class="toctree-l3"><a class="reference internal" href="developer_guide/development_setup.html#id21">编写测试</a></li>
+</ul>
+</li>
+<li class="toctree-l2"><a class="reference internal" href="developer_guide/development_setup.html#id22">性能分析</a><ul>
+<li class="toctree-l3"><a class="reference internal" href="developer_guide/development_setup.html#profiling">Profiling</a></li>
+<li class="toctree-l3"><a class="reference internal" href="developer_guide/development_setup.html#id23">监控</a></li>
+</ul>
+</li>
+<li class="toctree-l2"><a class="reference internal" href="developer_guide/development_setup.html#id24">调试技巧</a><ul>
+<li class="toctree-l3"><a class="reference internal" href="developer_guide/development_setup.html#id25">日志调试</a></li>
+<li class="toctree-l3"><a class="reference internal" href="developer_guide/development_setup.html#id26">断点调试</a></li>
+<li class="toctree-l3"><a class="reference internal" href="developer_guide/development_setup.html#id27">远程调试</a></li>
+</ul>
+</li>
+<li class="toctree-l2"><a class="reference internal" href="developer_guide/development_setup.html#id28">常见问题</a><ul>
+<li class="toctree-l3"><a class="reference internal" href="developer_guide/development_setup.html#id29">依赖冲突</a></li>
+<li class="toctree-l3"><a class="reference internal" href="developer_guide/development_setup.html#id30">数据库连接失败</a></li>
+<li class="toctree-l3"><a class="reference internal" href="developer_guide/development_setup.html#id31">端口占用</a></li>
+</ul>
+</li>
+<li class="toctree-l2"><a class="reference internal" href="developer_guide/development_setup.html#id32">最佳实践</a></li>
+<li class="toctree-l2"><a class="reference internal" href="developer_guide/development_setup.html#id33">下一步</a></li>
+</ul>
+</li>
+<li class="toctree-l1"><a class="reference internal" href="developer_guide/coding_standards.html">编码规范</a><ul>
+<li class="toctree-l2"><a class="reference internal" href="developer_guide/coding_standards.html#python">Python 代码规范</a><ul>
+<li class="toctree-l3"><a class="reference internal" href="developer_guide/coding_standards.html#id2">风格指南</a><ul>
+<li class="toctree-l4"><a class="reference internal" href="developer_guide/coding_standards.html#id3">命名约定</a></li>
+<li class="toctree-l4"><a class="reference internal" href="developer_guide/coding_standards.html#id4">导入顺序</a></li>
+</ul>
+</li>
+<li class="toctree-l3"><a class="reference internal" href="developer_guide/coding_standards.html#id5">类型注解</a></li>
+<li class="toctree-l3"><a class="reference internal" href="developer_guide/coding_standards.html#id6">文档字符串</a></li>
+<li class="toctree-l3"><a class="reference internal" href="developer_guide/coding_standards.html#id7">错误处理</a></li>
+<li class="toctree-l3"><a class="reference internal" href="developer_guide/coding_standards.html#id8">异步编程</a></li>
+<li class="toctree-l3"><a class="reference internal" href="developer_guide/coding_standards.html#id9">代码组织</a></li>
+</ul>
+</li>
+<li class="toctree-l2"><a class="reference internal" href="developer_guide/coding_standards.html#id10">性能优化</a><ul>
+<li class="toctree-l3"><a class="reference internal" href="developer_guide/coding_standards.html#id11">数据库查询</a></li>
+<li class="toctree-l3"><a class="reference internal" href="developer_guide/coding_standards.html#id12">缓存策略</a></li>
+<li class="toctree-l3"><a class="reference internal" href="developer_guide/coding_standards.html#id13">批处理</a></li>
+</ul>
+</li>
+<li class="toctree-l2"><a class="reference internal" href="developer_guide/coding_standards.html#id14">测试规范</a><ul>
+<li class="toctree-l3"><a class="reference internal" href="developer_guide/coding_standards.html#id15">单元测试</a></li>
+<li class="toctree-l3"><a class="reference internal" href="developer_guide/coding_standards.html#id16">集成测试</a></li>
+<li class="toctree-l3"><a class="reference internal" href="developer_guide/coding_standards.html#id17">测试覆盖率</a></li>
+</ul>
+</li>
+<li class="toctree-l2"><a class="reference internal" href="developer_guide/coding_standards.html#id18">安全规范</a><ul>
+<li class="toctree-l3"><a class="reference internal" href="developer_guide/coding_standards.html#id19">输入验证</a></li>
+<li class="toctree-l3"><a class="reference internal" href="developer_guide/coding_standards.html#id20">密码处理</a></li>
+<li class="toctree-l3"><a class="reference internal" href="developer_guide/coding_standards.html#sql">SQL 注入防护</a></li>
+<li class="toctree-l3"><a class="reference internal" href="developer_guide/coding_standards.html#id21">敏感数据</a></li>
+</ul>
+</li>
+<li class="toctree-l2"><a class="reference internal" href="developer_guide/coding_standards.html#id22">代码审查</a><ul>
+<li class="toctree-l3"><a class="reference internal" href="developer_guide/coding_standards.html#id23">审查清单</a></li>
+</ul>
+</li>
+<li class="toctree-l2"><a class="reference internal" href="developer_guide/coding_standards.html#git">Git 提交规范</a><ul>
+<li class="toctree-l3"><a class="reference internal" href="developer_guide/coding_standards.html#id24">提交消息格式</a></li>
+<li class="toctree-l3"><a class="reference internal" href="developer_guide/coding_standards.html#id25">分支策略</a></li>
+</ul>
+</li>
+<li class="toctree-l2"><a class="reference internal" href="developer_guide/coding_standards.html#id26">工具配置</a><ul>
+<li class="toctree-l3"><a class="reference internal" href="developer_guide/coding_standards.html#black">Black (代码格式化)</a></li>
+<li class="toctree-l3"><a class="reference internal" href="developer_guide/coding_standards.html#pylint">Pylint (代码检查)</a></li>
+<li class="toctree-l3"><a class="reference internal" href="developer_guide/coding_standards.html#mypy">MyPy (类型检查)</a></li>
+</ul>
+</li>
+<li class="toctree-l2"><a class="reference internal" href="developer_guide/coding_standards.html#id27">参考资源</a></li>
+</ul>
+</li>
+</ul>
+<p class="caption" role="heading"><span class="caption-text">API 参考</span></p>
+<ul>
+<li class="toctree-l1"><a class="reference internal" href="api/core.html">核心模块 API</a><ul>
+<li class="toctree-l2"><a class="reference internal" href="api/core.html#id1">核心配置</a></li>
+<li class="toctree-l2"><a class="reference internal" href="api/core.html#id2">核心异常</a></li>
+<li class="toctree-l2"><a class="reference internal" href="api/core.html#id3">核心基类</a></li>
+</ul>
+</li>
+<li class="toctree-l1"><a class="reference internal" href="api/adapters.html">适配器 API</a><ul>
+<li class="toctree-l2"><a class="reference internal" href="api/adapters.html#id1">适配器概述</a><ul>
+<li class="toctree-l3"><a class="reference internal" href="api/adapters.html#module-zishu.adapters.base">适配器基类</a><ul>
+<li class="toctree-l4"><a class="reference internal" href="api/adapters.html#id3">适配器系统 - 基础模块</a></li>
+<li class="toctree-l4"><a class="reference internal" href="api/adapters.html#zishu.adapters.base.BaseAdapter"><code class="docutils literal notranslate"><span class="pre">BaseAdapter</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="api/adapters.html#zishu.adapters.base.ExecutionContext"><code class="docutils literal notranslate"><span class="pre">ExecutionContext</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="api/adapters.html#zishu.adapters.base.ExecutionResult"><code class="docutils literal notranslate"><span class="pre">ExecutionResult</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="api/adapters.html#zishu.adapters.base.HealthCheckResult"><code class="docutils literal notranslate"><span class="pre">HealthCheckResult</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="api/adapters.html#zishu.adapters.base.AdapterMetadata"><code class="docutils literal notranslate"><span class="pre">AdapterMetadata</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="api/adapters.html#zishu.adapters.base.AdapterCapability"><code class="docutils literal notranslate"><span class="pre">AdapterCapability</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="api/adapters.html#zishu.adapters.base.AdapterDependency"><code class="docutils literal notranslate"><span class="pre">AdapterDependency</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="api/adapters.html#zishu.adapters.base.AdapterPermissions"><code class="docutils literal notranslate"><span class="pre">AdapterPermissions</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="api/adapters.html#zishu.adapters.base.BaseAdapterException"><code class="docutils literal notranslate"><span class="pre">BaseAdapterException</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="api/adapters.html#zishu.adapters.base.AdapterRegistrationError"><code class="docutils literal notranslate"><span class="pre">AdapterRegistrationError</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="api/adapters.html#zishu.adapters.base.AdapterNotFoundError"><code class="docutils literal notranslate"><span class="pre">AdapterNotFoundError</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="api/adapters.html#zishu.adapters.base.AdapterAlreadyExistsError"><code class="docutils literal notranslate"><span class="pre">AdapterAlreadyExistsError</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="api/adapters.html#zishu.adapters.base.AdapterLoadingError"><code class="docutils literal notranslate"><span class="pre">AdapterLoadingError</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="api/adapters.html#zishu.adapters.base.AdapterExecutionError"><code class="docutils literal notranslate"><span class="pre">AdapterExecutionError</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="api/adapters.html#zishu.adapters.base.AdapterValidationError"><code class="docutils literal notranslate"><span class="pre">AdapterValidationError</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="api/adapters.html#zishu.adapters.base.AdapterConfigurationError"><code class="docutils literal notranslate"><span class="pre">AdapterConfigurationError</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="api/adapters.html#zishu.adapters.base.AdapterTimeoutError"><code class="docutils literal notranslate"><span class="pre">AdapterTimeoutError</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="api/adapters.html#zishu.adapters.base.DependencyMissingError"><code class="docutils literal notranslate"><span class="pre">DependencyMissingError</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="api/adapters.html#zishu.adapters.base.SoftAdapterError"><code class="docutils literal notranslate"><span class="pre">SoftAdapterError</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="api/adapters.html#zishu.adapters.base.RAGEngineError"><code class="docutils literal notranslate"><span class="pre">RAGEngineError</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="api/adapters.html#zishu.adapters.base.PromptTemplateError"><code class="docutils literal notranslate"><span class="pre">PromptTemplateError</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="api/adapters.html#zishu.adapters.base.KnowledgeBaseError"><code class="docutils literal notranslate"><span class="pre">KnowledgeBaseError</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="api/adapters.html#zishu.adapters.base.RetrievalFailedError"><code class="docutils literal notranslate"><span class="pre">RetrievalFailedError</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="api/adapters.html#zishu.adapters.base.AdapterType"><code class="docutils literal notranslate"><span class="pre">AdapterType</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="api/adapters.html#zishu.adapters.base.AdapterStatus"><code class="docutils literal notranslate"><span class="pre">AdapterStatus</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="api/adapters.html#zishu.adapters.base.SecurityLevel"><code class="docutils literal notranslate"><span class="pre">SecurityLevel</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="api/adapters.html#zishu.adapters.base.ErrorCode"><code class="docutils literal notranslate"><span class="pre">ErrorCode</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="api/adapters.html#zishu.adapters.base.ExceptionSeverity"><code class="docutils literal notranslate"><span class="pre">ExceptionSeverity</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="api/adapters.html#zishu.adapters.base.AdapterRegistry"><code class="docutils literal notranslate"><span class="pre">AdapterRegistry</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="api/adapters.html#zishu.adapters.base.HealthMonitor"><code class="docutils literal notranslate"><span class="pre">HealthMonitor</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="api/adapters.html#zishu.adapters.base.SecurityManager"><code class="docutils literal notranslate"><span class="pre">SecurityManager</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="api/adapters.html#zishu.adapters.base.PerformanceMonitor"><code class="docutils literal notranslate"><span class="pre">PerformanceMonitor</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="api/adapters.html#zishu.adapters.base.create_adapter_registry"><code class="docutils literal notranslate"><span class="pre">create_adapter_registry()</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="api/adapters.html#zishu.adapters.base.get_default_registry"><code class="docutils literal notranslate"><span class="pre">get_default_registry()</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="api/adapters.html#zishu.adapters.base.set_default_registry"><code class="docutils literal notranslate"><span class="pre">set_default_registry()</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="api/adapters.html#zishu.adapters.base.handle_adapter_exceptions"><code class="docutils literal notranslate"><span class="pre">handle_adapter_exceptions()</span></code></a></li>
+</ul>
+</li>
+</ul>
+</li>
+<li class="toctree-l2"><a class="reference internal" href="api/adapters.html#core-adapter">Core Adapter</a><ul>
+<li class="toctree-l3"><a class="reference internal" href="api/adapters.html#id12">核心适配器主类</a></li>
+<li class="toctree-l3"><a class="reference internal" href="api/adapters.html#module-zishu.adapters.core.services.health_service">健康检查服务</a><ul>
+<li class="toctree-l4"><a class="reference internal" href="api/adapters.html#zishu.adapters.core.services.health_service.HealthMetricType"><code class="docutils literal notranslate"><span class="pre">HealthMetricType</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="api/adapters.html#zishu.adapters.core.services.health_service.HealthMetric"><code class="docutils literal notranslate"><span class="pre">HealthMetric</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="api/adapters.html#zishu.adapters.core.services.health_service.HealthThreshold"><code class="docutils literal notranslate"><span class="pre">HealthThreshold</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="api/adapters.html#zishu.adapters.core.services.health_service.HealthMetricsInfo"><code class="docutils literal notranslate"><span class="pre">HealthMetricsInfo</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="api/adapters.html#zishu.adapters.core.services.health_service.AdapterHealthStatus"><code class="docutils literal notranslate"><span class="pre">AdapterHealthStatus</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="api/adapters.html#zishu.adapters.core.services.health_service.HealthMonitor"><code class="docutils literal notranslate"><span class="pre">HealthMonitor</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="api/adapters.html#zishu.adapters.core.services.health_service.AdapterHealthService"><code class="docutils literal notranslate"><span class="pre">AdapterHealthService</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="api/adapters.html#zishu.adapters.core.services.health_service.AvailabilityMonitor"><code class="docutils literal notranslate"><span class="pre">AvailabilityMonitor</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="api/adapters.html#zishu.adapters.core.services.health_service.ResponseTimeMonitor"><code class="docutils literal notranslate"><span class="pre">ResponseTimeMonitor</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="api/adapters.html#zishu.adapters.core.services.health_service.ErrorRateMonitor"><code class="docutils literal notranslate"><span class="pre">ErrorRateMonitor</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="api/adapters.html#zishu.adapters.core.services.health_service.MemoryUsageMonitor"><code class="docutils literal notranslate"><span class="pre">MemoryUsageMonitor</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="api/adapters.html#zishu.adapters.core.services.health_service.ThroughputMonitor"><code class="docutils literal notranslate"><span class="pre">ThroughputMonitor</span></code></a></li>
+</ul>
+</li>
+<li class="toctree-l3"><a class="reference internal" href="api/adapters.html#module-zishu.adapters.core.services.event_service">事件服务</a><ul>
+<li class="toctree-l4"><a class="reference internal" href="api/adapters.html#zishu.adapters.core.services.event_service.EventDeliveryMode"><code class="docutils literal notranslate"><span class="pre">EventDeliveryMode</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="api/adapters.html#zishu.adapters.core.services.event_service.EventPersistenceMode"><code class="docutils literal notranslate"><span class="pre">EventPersistenceMode</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="api/adapters.html#zishu.adapters.core.services.event_service.EventSubscription"><code class="docutils literal notranslate"><span class="pre">EventSubscription</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="api/adapters.html#zishu.adapters.core.services.event_service.EventDeliveryResult"><code class="docutils literal notranslate"><span class="pre">EventDeliveryResult</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="api/adapters.html#zishu.adapters.core.services.event_service.EventMetrics"><code class="docutils literal notranslate"><span class="pre">EventMetrics</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="api/adapters.html#zishu.adapters.core.services.event_service.AdapterEventService"><code class="docutils literal notranslate"><span class="pre">AdapterEventService</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="api/adapters.html#zishu.adapters.core.services.event_service.LoggingEventHandler"><code class="docutils literal notranslate"><span class="pre">LoggingEventHandler</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="api/adapters.html#zishu.adapters.core.services.event_service.MetricsEventHandler"><code class="docutils literal notranslate"><span class="pre">MetricsEventHandler</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="api/adapters.html#zishu.adapters.core.services.event_service.FilterEventHandler"><code class="docutils literal notranslate"><span class="pre">FilterEventHandler</span></code></a></li>
+</ul>
+</li>
+</ul>
+</li>
+<li class="toctree-l2"><a class="reference internal" href="api/adapters.html#soft-adapter">Soft Adapter</a><ul>
+<li class="toctree-l3"><a class="reference internal" href="api/adapters.html#id15">软适配器主类</a></li>
+<li class="toctree-l3"><a class="reference internal" href="api/adapters.html#module-zishu.adapters.soft.rag_engine">RAG 引擎</a><ul>
+<li class="toctree-l4"><a class="reference internal" href="api/adapters.html#zishu.adapters.soft.rag_engine.RAGEngine"><code class="docutils literal notranslate"><span class="pre">RAGEngine</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="api/adapters.html#zishu.adapters.soft.rag_engine.RAGConfig"><code class="docutils literal notranslate"><span class="pre">RAGConfig</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="api/adapters.html#zishu.adapters.soft.rag_engine.RetrievalConfig"><code class="docutils literal notranslate"><span class="pre">RetrievalConfig</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="api/adapters.html#zishu.adapters.soft.rag_engine.GenerationConfig"><code class="docutils literal notranslate"><span class="pre">GenerationConfig</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="api/adapters.html#zishu.adapters.soft.rag_engine.RerankingConfig"><code class="docutils literal notranslate"><span class="pre">RerankingConfig</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="api/adapters.html#zishu.adapters.soft.rag_engine.RAGResult"><code class="docutils literal notranslate"><span class="pre">RAGResult</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="api/adapters.html#zishu.adapters.soft.rag_engine.RetrievalResult"><code class="docutils literal notranslate"><span class="pre">RetrievalResult</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="api/adapters.html#zishu.adapters.soft.rag_engine.QueryResult"><code class="docutils literal notranslate"><span class="pre">QueryResult</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="api/adapters.html#zishu.adapters.soft.rag_engine.RAGEngineError"><code class="docutils literal notranslate"><span class="pre">RAGEngineError</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="api/adapters.html#zishu.adapters.soft.rag_engine.DocumentStore"><code class="docutils literal notranslate"><span class="pre">DocumentStore</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="api/adapters.html#zishu.adapters.soft.rag_engine.VectorStore"><code class="docutils literal notranslate"><span class="pre">VectorStore</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="api/adapters.html#zishu.adapters.soft.rag_engine.EmbeddingService"><code class="docutils literal notranslate"><span class="pre">EmbeddingService</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="api/adapters.html#zishu.adapters.soft.rag_engine.RetrievalService"><code class="docutils literal notranslate"><span class="pre">RetrievalService</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="api/adapters.html#zishu.adapters.soft.rag_engine.RerankingService"><code class="docutils literal notranslate"><span class="pre">RerankingService</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="api/adapters.html#zishu.adapters.soft.rag_engine.MemoryDocumentStore"><code class="docutils literal notranslate"><span class="pre">MemoryDocumentStore</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="api/adapters.html#zishu.adapters.soft.rag_engine.MemoryVectorStore"><code class="docutils literal notranslate"><span class="pre">MemoryVectorStore</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="api/adapters.html#zishu.adapters.soft.rag_engine.MockEmbeddingService"><code class="docutils literal notranslate"><span class="pre">MockEmbeddingService</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="api/adapters.html#zishu.adapters.soft.rag_engine.RAGMode"><code class="docutils literal notranslate"><span class="pre">RAGMode</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="api/adapters.html#zishu.adapters.soft.rag_engine.RetrievalStrategy"><code class="docutils literal notranslate"><span class="pre">RetrievalStrategy</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="api/adapters.html#zishu.adapters.soft.rag_engine.RankingMethod"><code class="docutils literal notranslate"><span class="pre">RankingMethod</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="api/adapters.html#zishu.adapters.soft.rag_engine.GenerationMode"><code class="docutils literal notranslate"><span class="pre">GenerationMode</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="api/adapters.html#zishu.adapters.soft.rag_engine.Retriever"><code class="docutils literal notranslate"><span class="pre">Retriever</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="api/adapters.html#zishu.adapters.soft.rag_engine.SimilarityRetriever"><code class="docutils literal notranslate"><span class="pre">SimilarityRetriever</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="api/adapters.html#zishu.adapters.soft.rag_engine.HybridRetriever"><code class="docutils literal notranslate"><span class="pre">HybridRetriever</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="api/adapters.html#zishu.adapters.soft.rag_engine.KeywordRetriever"><code class="docutils literal notranslate"><span class="pre">KeywordRetriever</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="api/adapters.html#zishu.adapters.soft.rag_engine.Reranker"><code class="docutils literal notranslate"><span class="pre">Reranker</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="api/adapters.html#zishu.adapters.soft.rag_engine.CosineSimilarityReranker"><code class="docutils literal notranslate"><span class="pre">CosineSimilarityReranker</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="api/adapters.html#zishu.adapters.soft.rag_engine.BM25Reranker"><code class="docutils literal notranslate"><span class="pre">BM25Reranker</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="api/adapters.html#zishu.adapters.soft.rag_engine.HybridReranker"><code class="docutils literal notranslate"><span class="pre">HybridReranker</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="api/adapters.html#zishu.adapters.soft.rag_engine.ReciprocalRankFusionReranker"><code class="docutils literal notranslate"><span class="pre">ReciprocalRankFusionReranker</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="api/adapters.html#zishu.adapters.soft.rag_engine.Generator"><code class="docutils literal notranslate"><span class="pre">Generator</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="api/adapters.html#zishu.adapters.soft.rag_engine.PromptBasedGenerator"><code class="docutils literal notranslate"><span class="pre">PromptBasedGenerator</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="api/adapters.html#zishu.adapters.soft.rag_engine.ChainOfThoughtGenerator"><code class="docutils literal notranslate"><span class="pre">ChainOfThoughtGenerator</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="api/adapters.html#zishu.adapters.soft.rag_engine.HybridGenerator"><code class="docutils literal notranslate"><span class="pre">HybridGenerator</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="api/adapters.html#zishu.adapters.soft.rag_engine.FactCheckingGenerator"><code class="docutils literal notranslate"><span class="pre">FactCheckingGenerator</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="api/adapters.html#zishu.adapters.soft.rag_engine.RAGEngineFactory"><code class="docutils literal notranslate"><span class="pre">RAGEngineFactory</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="api/adapters.html#zishu.adapters.soft.rag_engine.RAGPerformanceOptimizer"><code class="docutils literal notranslate"><span class="pre">RAGPerformanceOptimizer</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="api/adapters.html#zishu.adapters.soft.rag_engine.RAGUtils"><code class="docutils literal notranslate"><span class="pre">RAGUtils</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="api/adapters.html#id16">主要类和方法</a></li>
+</ul>
+</li>
+<li class="toctree-l3"><a class="reference internal" href="api/adapters.html#module-zishu.adapters.soft.prompt_engine">Prompt 引擎</a><ul>
+<li class="toctree-l4"><a class="reference internal" href="api/adapters.html#zishu.adapters.soft.prompt_engine.DynamicPromptEngine"><code class="docutils literal notranslate"><span class="pre">DynamicPromptEngine</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="api/adapters.html#zishu.adapters.soft.prompt_engine.PromptEngine"><code class="docutils literal notranslate"><span class="pre">PromptEngine</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="api/adapters.html#zishu.adapters.soft.prompt_engine.PromptTemplate"><code class="docutils literal notranslate"><span class="pre">PromptTemplate</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="api/adapters.html#zishu.adapters.soft.prompt_engine.PromptVariable"><code class="docutils literal notranslate"><span class="pre">PromptVariable</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="api/adapters.html#zishu.adapters.soft.prompt_engine.PromptContext"><code class="docutils literal notranslate"><span class="pre">PromptContext</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="api/adapters.html#zishu.adapters.soft.prompt_engine.TemplateLoader"><code class="docutils literal notranslate"><span class="pre">TemplateLoader</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="api/adapters.html#zishu.adapters.soft.prompt_engine.PromptValidator"><code class="docutils literal notranslate"><span class="pre">PromptValidator</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="api/adapters.html#zishu.adapters.soft.prompt_engine.PromptCache"><code class="docutils literal notranslate"><span class="pre">PromptCache</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="api/adapters.html#zishu.adapters.soft.prompt_engine.PromptOptimizer"><code class="docutils literal notranslate"><span class="pre">PromptOptimizer</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="api/adapters.html#zishu.adapters.soft.prompt_engine.PromptEngineError"><code class="docutils literal notranslate"><span class="pre">PromptEngineError</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="api/adapters.html#zishu.adapters.soft.prompt_engine.PromptTemplateError"><code class="docutils literal notranslate"><span class="pre">PromptTemplateError</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="api/adapters.html#zishu.adapters.soft.prompt_engine.PromptValidationError"><code class="docutils literal notranslate"><span class="pre">PromptValidationError</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="api/adapters.html#zishu.adapters.soft.prompt_engine.create_prompt_engine"><code class="docutils literal notranslate"><span class="pre">create_prompt_engine()</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="api/adapters.html#zishu.adapters.soft.prompt_engine.get_global_engine"><code class="docutils literal notranslate"><span class="pre">get_global_engine()</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="api/adapters.html#zishu.adapters.soft.prompt_engine.render"><code class="docutils literal notranslate"><span class="pre">render()</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="api/adapters.html#id40">主要类和方法</a></li>
+</ul>
+</li>
+</ul>
+</li>
+<li class="toctree-l2"><a class="reference internal" href="api/adapters.html#hard-adapter">Hard Adapter</a><ul>
+<li class="toctree-l3"><a class="reference internal" href="api/adapters.html#id62">硬适配器主类</a></li>
+</ul>
+</li>
+<li class="toctree-l2"><a class="reference internal" href="api/adapters.html#id63">适配器工厂</a></li>
+</ul>
+</li>
+<li class="toctree-l1"><a class="reference internal" href="api/services.html">服务层 API</a><ul>
+<li class="toctree-l2"><a class="reference internal" href="api/services.html#id1">服务层概述</a></li>
+<li class="toctree-l2"><a class="reference internal" href="api/services.html#id2">用户服务</a></li>
+<li class="toctree-l2"><a class="reference internal" href="api/services.html#id3">认证服务</a></li>
+<li class="toctree-l2"><a class="reference internal" href="api/services.html#id4">对话服务</a></li>
+<li class="toctree-l2"><a class="reference internal" href="api/services.html#id5">文档服务</a></li>
+<li class="toctree-l2"><a class="reference internal" href="api/services.html#id6">知识库服务</a></li>
+</ul>
+</li>
+<li class="toctree-l1"><a class="reference internal" href="api/models.html">数据模型 API</a><ul>
+<li class="toctree-l2"><a class="reference internal" href="api/models.html#id1">数据库模型</a><ul>
+<li class="toctree-l3"><a class="reference internal" href="api/models.html#id2">用户模型</a></li>
+<li class="toctree-l3"><a class="reference internal" href="api/models.html#id3">对话模型</a></li>
+<li class="toctree-l3"><a class="reference internal" href="api/models.html#id4">消息模型</a></li>
+<li class="toctree-l3"><a class="reference internal" href="api/models.html#id5">文档模型</a></li>
+<li class="toctree-l3"><a class="reference internal" href="api/models.html#id6">知识库模型</a></li>
+</ul>
+</li>
+<li class="toctree-l2"><a class="reference internal" href="api/models.html#pydantic">Pydantic 模型</a><ul>
+<li class="toctree-l3"><a class="reference internal" href="api/models.html#id7">请求模型</a></li>
+<li class="toctree-l3"><a class="reference internal" href="api/models.html#id8">响应模型</a></li>
+<li class="toctree-l3"><a class="reference internal" href="api/models.html#id9">通用模型</a></li>
+</ul>
+</li>
+</ul>
+</li>
+<li class="toctree-l1"><a class="reference internal" href="api/utils.html">工具函数 API</a><ul>
+<li class="toctree-l2"><a class="reference internal" href="api/utils.html#id1">通用工具</a></li>
+<li class="toctree-l2"><a class="reference internal" href="api/utils.html#id2">文本处理</a></li>
+<li class="toctree-l2"><a class="reference internal" href="api/utils.html#id3">日期时间</a></li>
+<li class="toctree-l2"><a class="reference internal" href="api/utils.html#id4">加密工具</a></li>
+<li class="toctree-l2"><a class="reference internal" href="api/utils.html#id5">验证工具</a></li>
+<li class="toctree-l2"><a class="reference internal" href="api/utils.html#id6">日志工具</a></li>
+</ul>
+</li>
+</ul>
+
+        </div>
+      </div>
+    </nav>
+
+    <section data-toggle="wy-nav-shift" class="wy-nav-content-wrap"><nav class="wy-nav-top" aria-label="移动版导航菜单"  style="background: #2980B9" >
+          <i data-toggle="wy-nav-top" class="fa fa-bars"></i>
+          <a href="index.html">Zishu-Sensei</a>
+      </nav>
+
+      <div class="wy-nav-content">
+        <div class="rst-content">
+          <div role="navigation" aria-label="页面导航">
+  <ul class="wy-breadcrumbs">
+      <li><a href="index.html" class="icon icon-home" aria-label="Home"></a></li>
+      <li class="breadcrumb-item active">Zishu-Sensei 文档</li>
+      <li class="wy-breadcrumbs-aside">
+            <a href="_sources/README.md.txt" rel="nofollow"> 查看页面源码</a>
+      </li>
+  </ul>
+  <hr/>
+</div>
+          <div role="main" class="document" itemscope="itemscope" itemtype="http://schema.org/Article">
+           <div itemprop="articleBody">
+             
+  <section class="tex2jax_ignore mathjax_ignore" id="zishu-sensei">
+<h1>Zishu-Sensei 文档<a class="headerlink" href="#zishu-sensei" title="Link to this heading"></a></h1>
+<p>本目录包含 Zishu-Sensei 项目的完整文档，使用 Sphinx 构建。</p>
+<section id="id1">
+<h2>快速开始<a class="headerlink" href="#id1" title="Link to this heading"></a></h2>
+<section id="id2">
+<h3>构建文档<a class="headerlink" href="#id2" title="Link to this heading"></a></h3>
+<div class="highlight-bash notranslate"><div class="highlight"><pre><span></span><span class="c1"># 从项目根目录运行</span>
+make<span class="w"> </span>docs-build
+
+<span class="c1"># 或者直接使用 Sphinx</span>
+<span class="nb">cd</span><span class="w"> </span>docs/sphinx
+bash<span class="w"> </span>../../scripts/run_with_cloud_env.sh<span class="w"> </span>-m<span class="w"> </span>sphinx.cmd.build<span class="w"> </span>-b<span class="w"> </span>html<span class="w"> </span>.<span class="w"> </span>_build/html
+</pre></div>
+</div>
+</section>
+<section id="id3">
+<h3>查看文档<a class="headerlink" href="#id3" title="Link to this heading"></a></h3>
+<p>构建完成后，打开 <code class="docutils literal notranslate"><span class="pre">docs/sphinx/_build/html/index.html</span></code> 在浏览器中查看。</p>
+<p>或者启动本地 HTTP 服务器：</p>
+<div class="highlight-bash notranslate"><div class="highlight"><pre><span></span>make<span class="w"> </span>docs-serve
+<span class="c1"># 访问 http://localhost:8080</span>
+</pre></div>
+</div>
+</section>
+<section id="id4">
+<h3>实时预览<a class="headerlink" href="#id4" title="Link to this heading"></a></h3>
+<p>开发时可以使用自动重建功能：</p>
+<div class="highlight-bash notranslate"><div class="highlight"><pre><span></span>make<span class="w"> </span>docs-live
+<span class="c1"># 访问 http://localhost:8080</span>
+<span class="c1"># 修改 .rst 文件时会自动重新构建</span>
+</pre></div>
+</div>
+</section>
+</section>
+<section id="id5">
+<h2>文档结构<a class="headerlink" href="#id5" title="Link to this heading"></a></h2>
+<div class="highlight-default notranslate"><div class="highlight"><pre><span></span>docs/sphinx/
+├── conf.py                  # Sphinx 配置文件
+├── index.rst               # 文档首页
+├── api/                    # API 参考文档
+│   ├── adapters.rst
+│   ├── core.rst
+│   ├── models.rst
+│   ├── services.rst
+│   └── utils.rst
+├── user_guide/             # 用户指南
+│   ├── introduction.rst
+│   ├── installation.rst
+│   ├── quickstart.rst
+│   ├── configuration.rst
+│   └── deployment.rst
+├── developer_guide/        # 开发者指南
+│   ├── architecture.rst
+│   ├── development_setup.rst
+│   └── coding_standards.rst
+├── _static/               # 静态文件（CSS, JS, 图片等）
+│   └── custom.css
+├── _templates/            # 自定义模板
+└── _build/               # 构建输出（不提交到 Git）
+</pre></div>
+</div>
+</section>
+<section id="id6">
+<h2>编写文档<a class="headerlink" href="#id6" title="Link to this heading"></a></h2>
+<section id="restructuredtext">
+<h3>reStructuredText 基础<a class="headerlink" href="#restructuredtext" title="Link to this heading"></a></h3>
+<p>文档使用 reStructuredText (rST) 格式编写。</p>
+<section id="id7">
+<h4>标题<a class="headerlink" href="#id7" title="Link to this heading"></a></h4>
+<div class="highlight-rst notranslate"><div class="highlight"><pre><span></span><span class="gh">================</span>
+<span class="gh">一级标题</span>
+<span class="gh">================</span>
+
+<span class="gh">二级标题</span>
+<span class="gh">========</span>
+
+<span class="gh">三级标题</span>
+<span class="gh">--------</span>
+
+<span class="gh">四级标题</span>
+<span class="gh">~~~~~~~~</span>
+</pre></div>
+</div>
+</section>
+<section id="id8">
+<h4>代码块<a class="headerlink" href="#id8" title="Link to this heading"></a></h4>
+<div class="highlight-rst notranslate"><div class="highlight"><pre><span></span><span class="p">..</span> <span class="ow">code-block</span><span class="p">::</span> <span class="k">python</span>
+
+    <span class="k">def</span><span class="w"> </span><span class="nf">hello</span><span class="p">():</span>
+        <span class="nb">print</span><span class="p">(</span><span class="s2">&quot;Hello, World!&quot;</span><span class="p">)</span>
+</pre></div>
+</div>
+</section>
+<section id="id9">
+<h4>链接<a class="headerlink" href="#id9" title="Link to this heading"></a></h4>
+<div class="highlight-rst notranslate"><div class="highlight"><pre><span></span># 外部链接
+<span class="s">`Python </span><span class="si">&lt;https://www.python.org/&gt;</span><span class="s">`_</span>
+
+# 内部链接
+<span class="na">:doc:</span><span class="nv">`quickstart`</span>
+<span class="na">:ref:</span><span class="nv">`section-label`</span>
+</pre></div>
+</div>
+</section>
+<section id="id10">
+<h4>警告框<a class="headerlink" href="#id10" title="Link to this heading"></a></h4>
+<div class="highlight-rst notranslate"><div class="highlight"><pre><span></span><span class="p">..</span> <span class="ow">note</span><span class="p">::</span>
+   这是一个提示框
+
+<span class="p">..</span> <span class="ow">warning</span><span class="p">::</span>
+   这是一个警告框
+
+<span class="p">..</span> <span class="ow">danger</span><span class="p">::</span>
+   这是一个危险警告框
+</pre></div>
+</div>
+</section>
+</section>
+<section id="api">
+<h3>API 文档<a class="headerlink" href="#api" title="Link to this heading"></a></h3>
+<p>使用 autodoc 自动从代码中生成 API 文档：</p>
+<div class="highlight-rst notranslate"><div class="highlight"><pre><span></span><span class="p">..</span> <span class="ow">automodule</span><span class="p">::</span> zishu.adapters.soft.rag_engine
+   <span class="nc">:members:</span>
+   <span class="nc">:undoc-members:</span>
+   <span class="nc">:show-inheritance:</span>
+</pre></div>
+</div>
+<p>确保代码中有完整的 docstring：</p>
+<div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="k">def</span><span class="w"> </span><span class="nf">retrieve_documents</span><span class="p">(</span><span class="n">query</span><span class="p">:</span> <span class="nb">str</span><span class="p">,</span> <span class="n">top_k</span><span class="p">:</span> <span class="nb">int</span> <span class="o">=</span> <span class="mi">5</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">List</span><span class="p">[</span><span class="n">Document</span><span class="p">]:</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;检索相关文档</span>
+<span class="sd">    </span>
+<span class="sd">    使用向量相似度检索与查询最相关的文档。</span>
+<span class="sd">    </span>
+<span class="sd">    Args:</span>
+<span class="sd">        query: 查询字符串</span>
+<span class="sd">        top_k: 返回的文档数量，默认为 5</span>
+<span class="sd">        </span>
+<span class="sd">    Returns:</span>
+<span class="sd">        文档对象列表，按相关性降序排列</span>
+<span class="sd">        </span>
+<span class="sd">    Raises:</span>
+<span class="sd">        ValueError: 当 top_k 小于 1 时</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+    <span class="k">pass</span>
+</pre></div>
+</div>
+</section>
+</section>
+<section id="id11">
+<h2>文档主题<a class="headerlink" href="#id11" title="Link to this heading"></a></h2>
+<p>当前使用 <code class="docutils literal notranslate"><span class="pre">sphinx_rtd_theme</span></code> (Read the Docs) 主题。</p>
+<p>自定义样式在 <code class="docutils literal notranslate"><span class="pre">_static/custom.css</span></code> 中定义。</p>
+</section>
+<section id="id12">
+<h2>扩展插件<a class="headerlink" href="#id12" title="Link to this heading"></a></h2>
+<p>已启用的 Sphinx 扩展：</p>
+<ul class="simple">
+<li><p><code class="docutils literal notranslate"><span class="pre">sphinx.ext.autodoc</span></code> - 自动从代码生成文档</p></li>
+<li><p><code class="docutils literal notranslate"><span class="pre">sphinx.ext.autosummary</span></code> - 生成摘要表</p></li>
+<li><p><code class="docutils literal notranslate"><span class="pre">sphinx.ext.napoleon</span></code> - 支持 Google/NumPy 风格的 docstring</p></li>
+<li><p><code class="docutils literal notranslate"><span class="pre">sphinx.ext.viewcode</span></code> - 添加源代码链接</p></li>
+<li><p><code class="docutils literal notranslate"><span class="pre">sphinx.ext.intersphinx</span></code> - 链接到其他项目的文档</p></li>
+<li><p><code class="docutils literal notranslate"><span class="pre">sphinx.ext.todo</span></code> - TODO 项支持</p></li>
+<li><p><code class="docutils literal notranslate"><span class="pre">sphinx_copybutton</span></code> - 代码块复制按钮</p></li>
+<li><p><code class="docutils literal notranslate"><span class="pre">myst_parser</span></code> - Markdown 支持（可选）</p></li>
+</ul>
+</section>
+<section id="id13">
+<h2>国际化<a class="headerlink" href="#id13" title="Link to this heading"></a></h2>
+<p>文档默认使用中文（zh_CN）。</p>
+<p>要添加其他语言，修改 <code class="docutils literal notranslate"><span class="pre">conf.py</span></code> 中的 <code class="docutils literal notranslate"><span class="pre">language</span></code> 设置。</p>
+</section>
+<section id="id14">
+<h2>清理构建<a class="headerlink" href="#id14" title="Link to this heading"></a></h2>
+<div class="highlight-bash notranslate"><div class="highlight"><pre><span></span><span class="c1"># 清理构建文件</span>
+make<span class="w"> </span>docs-clean
+
+<span class="c1"># 完整重新构建</span>
+make<span class="w"> </span>docs-full
+</pre></div>
+</div>
+</section>
+<section id="id15">
+<h2>常见问题<a class="headerlink" href="#id15" title="Link to this heading"></a></h2>
+<section id="id16">
+<h3>1. 导入错误<a class="headerlink" href="#id16" title="Link to this heading"></a></h3>
+<p>如果看到 “Failed to import” 警告：</p>
+<ul class="simple">
+<li><p>确保所有依赖已安装</p></li>
+<li><p>检查 PYTHONPATH 设置</p></li>
+<li><p>某些模块可能尚未实现（正常情况）</p></li>
+</ul>
+</section>
+<section id="id17">
+<h3>2. 主题不正确<a class="headerlink" href="#id17" title="Link to this heading"></a></h3>
+<div class="highlight-bash notranslate"><div class="highlight"><pre><span></span><span class="c1"># 重新安装主题</span>
+bash<span class="w"> </span>scripts/run_with_cloud_env.sh<span class="w"> </span>-m<span class="w"> </span>pip<span class="w"> </span>install<span class="w"> </span>sphinx-rtd-theme
+</pre></div>
+</div>
+</section>
+<section id="id18">
+<h3>3. 扩展找不到<a class="headerlink" href="#id18" title="Link to this heading"></a></h3>
+<div class="highlight-bash notranslate"><div class="highlight"><pre><span></span><span class="c1"># 安装所有文档依赖</span>
+bash<span class="w"> </span>scripts/run_with_cloud_env.sh<span class="w"> </span>-m<span class="w"> </span>pip<span class="w"> </span>install<span class="w"> </span>-r<span class="w"> </span>requirements-dev.txt
+</pre></div>
+</div>
+</section>
+</section>
+<section id="id19">
+<h2>贡献文档<a class="headerlink" href="#id19" title="Link to this heading"></a></h2>
+<ol class="arabic simple">
+<li><p>创建新的 .rst 文件</p></li>
+<li><p>在 <code class="docutils literal notranslate"><span class="pre">index.rst</span></code> 或相应的 toctree 中添加引用</p></li>
+<li><p>运行 <code class="docutils literal notranslate"><span class="pre">make</span> <span class="pre">docs-build</span></code> 验证</p></li>
+<li><p>提交 Pull Request</p></li>
+</ol>
+</section>
+<section id="id20">
+<h2>发布文档<a class="headerlink" href="#id20" title="Link to this heading"></a></h2>
+<p>文档可以发布到：</p>
+<ul class="simple">
+<li><p><strong>Read the Docs</strong>: 连接 GitHub 仓库自动构建</p></li>
+<li><p><strong>GitHub Pages</strong>: 使用 <code class="docutils literal notranslate"><span class="pre">gh-pages</span></code> 分支</p></li>
+<li><p><strong>自托管</strong>: 部署 <code class="docutils literal notranslate"><span class="pre">_build/html</span></code> 目录</p></li>
+</ul>
+<section id="read-the-docs">
+<h3>发布到 Read the Docs<a class="headerlink" href="#read-the-docs" title="Link to this heading"></a></h3>
+<ol class="arabic simple">
+<li><p>在 <a class="reference external" href="https://readthedocs.org/">https://readthedocs.org/</a> 导入项目</p></li>
+<li><p>配置构建设置（Python 3.8+）</p></li>
+<li><p>推送代码自动触发构建</p></li>
+</ol>
+</section>
+<section id="github-pages">
+<h3>发布到 GitHub Pages<a class="headerlink" href="#github-pages" title="Link to this heading"></a></h3>
+<div class="highlight-bash notranslate"><div class="highlight"><pre><span></span><span class="c1"># 使用 ghp-import</span>
+pip<span class="w"> </span>install<span class="w"> </span>ghp-import
+make<span class="w"> </span>docs-build
+ghp-import<span class="w"> </span>-n<span class="w"> </span>-p<span class="w"> </span>-f<span class="w"> </span>docs/sphinx/_build/html
+</pre></div>
+</div>
+</section>
+</section>
+<section id="id21">
+<h2>参考资源<a class="headerlink" href="#id21" title="Link to this heading"></a></h2>
+<ul class="simple">
+<li><p><a class="reference external" href="https://www.sphinx-doc.org/">Sphinx 文档</a></p></li>
+<li><p><a class="reference external" href="https://www.sphinx-doc.org/en/master/usage/restructuredtext/basics.html">reStructuredText 入门</a></p></li>
+<li><p><a class="reference external" href="https://sphinx-rtd-theme.readthedocs.io/">Read the Docs 主题</a></p></li>
+<li><p><a class="reference external" href="https://google.github.io/styleguide/pyguide.html#38-comments-and-docstrings">Google 风格 Docstring</a></p></li>
+</ul>
+</section>
+</section>
+
+
+           </div>
+          </div>
+          <footer>
+
+  <hr/>
+
+  <div role="contentinfo">
+    <p>&#169; 版权所有 2025, Zishu-Sensei Team。
+      <span class="lastupdated">最后更新于 2025-10-17 21:21:36.
+      </span></p>
+  </div>
+
+  利用 <a href="https://www.sphinx-doc.org/">Sphinx</a> 构建，使用的 
+    <a href="https://github.com/readthedocs/sphinx_rtd_theme">主题</a>
+    由 <a href="https://readthedocs.org">Read the Docs</a> 开发.
+   
+
+</footer>
+        </div>
+      </div>
+    </section>
+  </div>
+  <script>
+      jQuery(function () {
+          SphinxRtdTheme.Navigation.enable(true);
+      });
+  </script> 
+
+</body>
+</html>

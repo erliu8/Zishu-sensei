@@ -37,7 +37,7 @@ class TestRAGEngine:
             retrieval_config=RetrievalConfig(
                 top_k=5,
                 similarity_threshold=0.7,
-                max_distance=0.5
+                min_similarity=0.3
             ),
             reranking_config=RerankingConfig(
                 enabled=True,
@@ -80,6 +80,16 @@ class TestRAGEngine:
     def mock_document_store(self):
         """模拟文档存储"""
         store = Mock()
+        store._documents = {
+            "doc_id_123": Document(
+                id="doc_id_123",
+                content="Sample document content",
+                metadata={"title": "Sample Document", "source": "test"}
+            ),
+            "doc1": Document(id="doc1", content="Content 1", metadata={"title": "Doc 1"}),
+            "doc2": Document(id="doc2", content="Content 2", metadata={"title": "Doc 2"}),
+            "doc3": Document(id="doc3", content="Content 3", metadata={"title": "Doc 3"})
+        }
         store.add_document = AsyncMock(return_value="doc_id_123")
         store.get_document = AsyncMock(return_value=Document(
             id="doc_id_123",
@@ -235,6 +245,15 @@ class TestRAGEngine:
             {"id": "optimization_techniques", "score": 0.79, "metadata": {"title": "Optimization Methods"}}
         ])
         
+        # Mock document store to return matching documents
+        rag_engine._document_store.get_document = AsyncMock(side_effect=lambda doc_id: Document(
+            id=doc_id,
+            content=f"Content for {doc_id}",
+            metadata={"title": "Neural Network Training"} if doc_id == "neural_net_guide"
+                     else {"title": "ML Best Practices"} if doc_id == "ml_best_practices"
+                     else {"title": "Optimization Methods"}
+        ))
+        
         # Act
         results = await rag_engine.search(query, search_type="semantic")
         
@@ -248,19 +267,18 @@ class TestRAGEngine:
         """测试混合搜索"""
         await rag_engine.initialize()
         
-        # Mock hybrid search combining vector and keyword search
-        rag_engine._perform_hybrid_search = AsyncMock(return_value=[
-            QueryResult(
-                document=Document(id="hybrid1", content="Hybrid result 1", metadata={}),
-                score=0.9,
-                retrieval_method="hybrid"
-            ),
-            QueryResult(
-                document=Document(id="hybrid2", content="Hybrid result 2", metadata={}),
-                score=0.85,
-                retrieval_method="hybrid"
-            )
+        # Mock vector search results for hybrid search
+        rag_engine._vector_store.search = AsyncMock(return_value=[
+            {"id": "hybrid1", "score": 0.9, "metadata": {"title": "ML Document"}},
+            {"id": "hybrid2", "score": 0.85, "metadata": {"title": "NN Document"}}
         ])
+        
+        # Mock document store to return matching documents
+        rag_engine._document_store.get_document = AsyncMock(side_effect=lambda doc_id: Document(
+            id=doc_id,
+            content=f"Hybrid result for {doc_id}",
+            metadata={"title": "ML Document"} if doc_id == "hybrid1" else {"title": "NN Document"}
+        ))
         
         # Arrange
         query = "machine learning AND neural networks"
@@ -313,12 +331,39 @@ class TestRAGEngine:
         # Arrange
         reference_document_id = "reference_doc_789"
         
+        # Mock document store to return reference document and similar documents
+        reference_doc = Document(
+            id=reference_document_id,
+            content="Reference document content",
+            metadata={"title": "Reference"}
+        )
+        
+        async def mock_get_document(doc_id):
+            if doc_id == reference_document_id:
+                return reference_doc
+            return Document(
+                id=doc_id,
+                content=f"Content for {doc_id}",
+                metadata={"title": f"Doc {doc_id}"}
+            )
+        
+        rag_engine._document_store.get_document = AsyncMock(side_effect=mock_get_document)
+        
+        # Mock vector store to return similar documents (excluding the reference doc)
+        rag_engine._vector_store.search = AsyncMock(return_value=[
+            {"id": "doc1", "score": 0.9, "metadata": {}},
+            {"id": "doc2", "score": 0.8, "metadata": {}},
+            {"id": "doc3", "score": 0.75, "metadata": {}}
+        ])
+        
         # Act
         similar_docs = await rag_engine.get_similar_documents(reference_document_id, top_k=3)
         
         # Assert
         assert len(similar_docs) <= 3
-        rag_engine._document_store.get_document.assert_called_with(reference_document_id)
+        # Verify that get_document was called with the reference document ID
+        assert any(call.args[0] == reference_document_id 
+                  for call in rag_engine._document_store.get_document.call_args_list)
 
     @pytest.mark.asyncio
     async def test_statistics(self, rag_engine):
@@ -542,10 +587,31 @@ class TestRetrievalService:
     """检索服务测试类"""
     
     @pytest.fixture
+    def rag_config(self):
+        """创建RAG配置"""
+        return RAGConfig(
+            vector_store_type="memory",
+            embedding_model="text-embedding-ada-002",
+            embedding_dimension=1536,
+            retrieval_config=RetrievalConfig(
+                top_k=5,
+                similarity_threshold=0.7,
+                min_similarity=0.3
+            ),
+            reranking_config=RerankingConfig(
+                enabled=True,
+                model_name="cross-encoder/ms-marco-MiniLM-L-6-v2",
+                top_k=3
+            ),
+            max_document_size=10000,
+            batch_size=32
+        )
+    
+    @pytest.fixture
     def retrieval_service(self, rag_config):
         """创建检索服务"""
         from zishu.adapters.soft.rag_engine import RetrievalService
-        return RetrievalService(rag_config.retrieval_config)
+        return RetrievalService(rag_config.retrieval)
     
     @pytest.mark.asyncio
     async def test_query_processing(self, retrieval_service):
@@ -582,6 +648,93 @@ class TestRetrievalService:
 @pytest.mark.performance
 class TestRAGEnginePerformance:
     """RAG引擎性能测试"""
+    
+    @pytest.fixture
+    def rag_config(self):
+        """创建RAG配置"""
+        return RAGConfig(
+            vector_store_type="memory",
+            embedding_model="text-embedding-ada-002",
+            embedding_dimension=1536,
+            retrieval_config=RetrievalConfig(
+                top_k=5,
+                similarity_threshold=0.7,
+                min_similarity=0.3
+            ),
+            reranking_config=RerankingConfig(
+                enabled=True,
+                model_name="cross-encoder/ms-marco-MiniLM-L-6-v2",
+                top_k=3
+            ),
+            max_document_size=10000,
+            batch_size=32
+        )
+
+    @pytest.fixture
+    def mock_embedding_service(self):
+        """模拟嵌入服务"""
+        service = Mock()
+        service.encode = AsyncMock(return_value=np.random.rand(1536))
+        service.encode_batch = AsyncMock(return_value=[
+            np.random.rand(1536) for _ in range(3)
+        ])
+        return service
+
+    @pytest.fixture
+    def mock_vector_store(self):
+        """模拟向量存储"""
+        store = Mock()
+        store.add_vectors = AsyncMock(return_value=True)
+        store.search = AsyncMock(return_value=[
+            {"id": "doc1", "score": 0.9, "metadata": {"title": "Document 1"}},
+            {"id": "doc2", "score": 0.8, "metadata": {"title": "Document 2"}},
+            {"id": "doc3", "score": 0.75, "metadata": {"title": "Document 3"}}
+        ])
+        store.delete = AsyncMock(return_value=True)
+        store.get_statistics = Mock(return_value={
+            "total_vectors": 100,
+            "dimension": 1536,
+            "index_size": 1024000
+        })
+        return store
+
+    @pytest.fixture
+    def mock_document_store(self):
+        """模拟文档存储"""
+        store = Mock()
+        store._documents = {
+            "doc_id_123": Document(
+                id="doc_id_123",
+                content="Sample document content",
+                metadata={"title": "Sample Document", "source": "test"}
+            ),
+            "doc1": Document(id="doc1", content="Content 1", metadata={"title": "Doc 1"}),
+            "doc2": Document(id="doc2", content="Content 2", metadata={"title": "Doc 2"}),
+            "doc3": Document(id="doc3", content="Content 3", metadata={"title": "Doc 3"})
+        }
+        store.add_document = AsyncMock(return_value="doc_id_123")
+        store.get_document = AsyncMock(return_value=Document(
+            id="doc_id_123",
+            content="Sample document content",
+            metadata={"title": "Sample Document", "source": "test"}
+        ))
+        store.get_documents = AsyncMock(return_value=[
+            Document(id="doc1", content="Content 1", metadata={"title": "Doc 1"}),
+            Document(id="doc2", content="Content 2", metadata={"title": "Doc 2"}),
+            Document(id="doc3", content="Content 3", metadata={"title": "Doc 3"})
+        ])
+        store.delete_document = AsyncMock(return_value=True)
+        return store
+
+    @pytest.fixture
+    def rag_engine(self, rag_config, mock_embedding_service, 
+                   mock_vector_store, mock_document_store):
+        """创建RAG引擎实例"""
+        engine = RAGEngine(rag_config)
+        engine._embedding_service = mock_embedding_service
+        engine._vector_store = mock_vector_store
+        engine._document_store = mock_document_store
+        return engine
     
     @pytest.mark.asyncio
     async def test_document_indexing_performance(self, rag_engine):

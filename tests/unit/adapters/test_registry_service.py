@@ -6,6 +6,7 @@
 """
 
 import pytest
+import pytest_asyncio
 import asyncio
 from unittest.mock import Mock, AsyncMock, patch
 from datetime import datetime, timezone
@@ -25,7 +26,7 @@ from tests.utils.adapter_test_utils import AdapterTestUtils
 class TestAdapterRegistryService:
     """适配器注册服务测试类"""
 
-    @pytest.fixture
+    @pytest_asyncio.fixture
     async def event_bus(self):
         """创建事件总线mock"""
         event_bus = Mock(spec=EventBus)
@@ -42,7 +43,7 @@ class TestAdapterRegistryService:
             'cleanup_interval': 60
         }
 
-    @pytest.fixture
+    @pytest_asyncio.fixture
     async def registry_service(self, event_bus, registry_config):
         """创建注册服务实例"""
         service = AdapterRegistryService(event_bus=event_bus, config=registry_config)
@@ -54,32 +55,12 @@ class TestAdapterRegistryService:
     @pytest.fixture
     def test_adapter_config(self):
         """创建测试适配器配置"""
-        identity = AdapterTestUtils.create_test_adapter_identity(
-            adapter_id="test-adapter-001",
-            name="Test Adapter",
-            adapter_type=AdapterType.SOFT
-        )
-        
-        config = AdapterTestUtils.create_test_adapter_configuration(
+        return AdapterTestUtils.create_test_adapter_configuration(
             config={"test_param": "test_value"},
             security_level=SecurityLevel.INTERNAL
         )
-        
-        # 创建适配器配置对象
-        class TestAdapterConfig:
-            def __init__(self):
-                self.identity = identity.adapter_id
-                self.name = identity.name
-                self.version = identity.version
-                self.adapter_type = identity.adapter_type
-                self.description = identity.description
-                self.author = identity.author
-                self.tags = list(identity.tags)
-                self.adapter_class = Mock()
-                self.config = config.config
-                
-        return TestAdapterConfig()
 
+    @pytest.mark.asyncio
     async def test_service_initialization(self, event_bus, registry_config):
         """测试服务初始化"""
         service = AdapterRegistryService(event_bus=event_bus, config=registry_config)
@@ -91,7 +72,7 @@ class TestAdapterRegistryService:
         
         # 初始化服务
         await service.initialize()
-        assert service.status == ServiceStatus.INITIALIZED
+        assert service.status == ServiceStatus.READY
         
         # 启动服务
         await service.start()
@@ -101,8 +82,12 @@ class TestAdapterRegistryService:
         await service.stop()
         assert service.status == ServiceStatus.STOPPED
 
+    @pytest.mark.asyncio
     async def test_register_adapter_success(self, registry_service, test_adapter_config, event_bus):
         """测试成功注册适配器"""
+        # 重置事件总线mock（忽略服务启动时的事件）
+        event_bus.emit.reset_mock()
+        
         # 执行注册
         result = await registry_service.register_adapter(test_adapter_config)
         
@@ -120,6 +105,7 @@ class TestAdapterRegistryService:
         assert call_args.event_type == EventType.ADAPTER_REGISTERED
         assert call_args.data['adapter_id'] == test_adapter_config.identity
 
+    @pytest.mark.asyncio
     async def test_register_duplicate_adapter(self, registry_service, test_adapter_config):
         """测试重复注册适配器"""
         # 首次注册
@@ -134,6 +120,7 @@ class TestAdapterRegistryService:
         registrations = await registry_service.get_all_registrations()
         assert len(registrations) == 1
 
+    @pytest.mark.asyncio
     async def test_register_adapter_max_limit(self, event_bus):
         """测试注册数量限制"""
         # 创建限制为1的配置
@@ -158,8 +145,12 @@ class TestAdapterRegistryService:
         finally:
             await service.stop()
 
+    @pytest.mark.asyncio
     async def test_unregister_adapter(self, registry_service, test_adapter_config, event_bus):
         """测试注销适配器"""
+        # 重置事件总线mock（忽略服务启动时的事件）
+        event_bus.emit.reset_mock()
+        
         # 先注册适配器
         await registry_service.register_adapter(test_adapter_config)
         
@@ -176,11 +167,13 @@ class TestAdapterRegistryService:
         unregister_call = event_bus.emit.call_args_list[1][0][0]
         assert unregister_call.event_type == EventType.ADAPTER_UNREGISTERED
 
+    @pytest.mark.asyncio
     async def test_unregister_nonexistent_adapter(self, registry_service):
         """测试注销不存在的适配器"""
         result = await registry_service.unregister_adapter("nonexistent-adapter")
         assert result is False
 
+    @pytest.mark.asyncio
     async def test_get_adapter_registration(self, registry_service, test_adapter_config):
         """测试获取适配器注册信息"""
         # 注册适配器
@@ -195,6 +188,7 @@ class TestAdapterRegistryService:
         nonexistent = await registry_service.get_registration("nonexistent")
         assert nonexistent is None
 
+    @pytest.mark.asyncio
     async def test_find_adapters_by_type(self, registry_service):
         """测试按类型查找适配器"""
         # 注册不同类型的适配器
@@ -219,6 +213,7 @@ class TestAdapterRegistryService:
         assert len(hard_adapters) == 1
         assert hard_adapters[0].identity.adapter_id == "hard-adapter"
 
+    @pytest.mark.asyncio
     async def test_find_adapters_by_tags(self, registry_service):
         """测试按标签查找适配器"""
         # 注册带标签的适配器
@@ -241,6 +236,7 @@ class TestAdapterRegistryService:
         tag2_adapters = await registry_service.find_adapters_by_tags(["tag2"])
         assert len(tag2_adapters) == 2
 
+    @pytest.mark.asyncio
     async def test_health_check(self, registry_service):
         """测试健康检查"""
         health_result = await registry_service.health_check()
@@ -250,6 +246,7 @@ class TestAdapterRegistryService:
         assert health_result.service_name == "adapter_registry"
         assert "registrations_count" in health_result.details
 
+    @pytest.mark.asyncio
     async def test_service_metrics(self, registry_service, test_adapter_config):
         """测试服务指标"""
         # 执行一些操作
@@ -291,6 +288,7 @@ class TestAdapterRegistryService:
         finally:
             await service.stop()
 
+    @pytest.mark.asyncio
     async def test_validation_enabled(self, event_bus):
         """测试启用验证的注册"""
         config = {'enable_validation': True}
@@ -310,6 +308,7 @@ class TestAdapterRegistryService:
         finally:
             await service.stop()
 
+    @pytest.mark.asyncio
     async def test_auto_cleanup(self, event_bus):
         """测试自动清理功能"""
         config = {
@@ -335,6 +334,7 @@ class TestAdapterRegistryService:
             if service._cleanup_task:
                 assert service._cleanup_task.done()
 
+    @pytest.mark.asyncio
     async def test_error_handling(self, registry_service):
         """测试错误处理"""
         # 测试无效参数

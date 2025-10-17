@@ -9,7 +9,7 @@ import logging
 from typing import Dict, List, Optional, Type, Any, Set
 from datetime import datetime, timezone
 
-from .base import AsyncService, ServiceStatus, ServiceHealth, HealthCheckResult
+from .base import AsyncService, ServiceStatus, ServiceHealth, HealthCheckResult, ServiceMetrics
 from ..types import (
     AdapterRegistration,
     AdapterIdentity,
@@ -131,6 +131,7 @@ class AdapterRegistryService(AsyncService):
                 return HealthCheckResult(
                     is_healthy=False,
                     status=ServiceHealth.UNHEALTHY,
+                    service_name="adapter_registry",
                     message="Service is not running",
                 )
 
@@ -140,6 +141,7 @@ class AdapterRegistryService(AsyncService):
                 return HealthCheckResult(
                     is_healthy=False,
                     status=ServiceHealth.UNHEALTHY,
+                    service_name="adapter_registry",
                     message=f"Too many registrations: {registration_count}/{self._max_registrations}",
                 )
 
@@ -151,15 +153,18 @@ class AdapterRegistryService(AsyncService):
                 return HealthCheckResult(
                     is_healthy=False,
                     status=ServiceHealth.DEGRADED,
+                    service_name="adapter_registry",
                     message=f"High memory usage: {memory_usage / 1024 / 1024:.1f}MB",
                 )
 
             return HealthCheckResult(
                 is_healthy=True,
                 status=ServiceHealth.HEALTHY,
+                service_name="adapter_registry",
                 message=f"Registry healthy with {registration_count} registrations",
                 details={
                     "registration_count": registration_count,
+                    "registrations_count": registration_count,
                     "memory_usage_mb": memory_usage / 1024 / 1024,
                     "types_count": len(self._adapters_by_type),
                     "categories_count": len(self._adapters_by_category),
@@ -170,12 +175,19 @@ class AdapterRegistryService(AsyncService):
             return HealthCheckResult(
                 is_healthy=False,
                 status=ServiceHealth.UNHEALTHY,
+                service_name="adapter_registry",
                 message=f"Health check failed: {str(e)}",
             )
 
     async def register_adapter(self, config: AdapterConfiguration) -> bool:
         """注册适配器"""
         try:
+            # 检查服务是否正在运行
+            if not self.is_running:
+                raise RuntimeError(
+                    f"Service '{self.name}' is not running (current status: {self._status})"
+                )
+            
             async with self._registration_lock:
                 # 检查是否已注册
                 if config.identity in self._registrations:
@@ -235,8 +247,17 @@ class AdapterRegistryService(AsyncService):
 
                 return True
 
+        except (ValueError, TypeError, AttributeError) as e:
+            # 配置验证错误应该抛出异常
+            logger.error(f"Invalid adapter configuration: {e}")
+            raise
+        except RuntimeError as e:
+            # 运行时错误（如超出最大注册数）也应该抛出
+            logger.error(f"Failed to register adapter '{getattr(config, 'identity', 'unknown')}': {e}")
+            raise
         except Exception as e:
-            logger.error(f"Failed to register adapter '{config.identity}': {e}")
+            # 其他错误返回False
+            logger.error(f"Failed to register adapter '{getattr(config, 'identity', 'unknown')}': {e}")
             return False
 
     async def unregister_adapter(self, adapter_id: str) -> bool:
@@ -324,7 +345,7 @@ class AdapterRegistryService(AsyncService):
         result = []
         for registration in self._registrations.values():
             # 检查配置中的能力列表
-            capabilities = registration.configuration.get("capabilities", [])
+            capabilities = registration.configuration.capabilities
             if capability in capabilities:
                 result.append(registration)
 
@@ -344,6 +365,36 @@ class AdapterRegistryService(AsyncService):
                 result.append(registration)
 
         return result
+
+    async def get_registration(self, adapter_id: str) -> Optional[AdapterRegistration]:
+        """获取适配器注册信息 (别名方法，与get_adapter相同)"""
+        return await self.get_adapter(adapter_id)
+
+    async def find_adapters_by_tags(self, tags: List[str]) -> List[AdapterRegistration]:
+        """根据标签查找适配器"""
+        self._metrics.request_count += 1
+
+        result = []
+        for registration in self._registrations.values():
+            # 检查配置中的标签列表
+            adapter_tags = getattr(registration.configuration, 'tags', [])
+            if not adapter_tags:
+                continue
+            
+            # 检查是否有匹配的标签
+            if any(tag in adapter_tags for tag in tags):
+                result.append(registration)
+
+        return result
+
+    async def get_all_registrations(self) -> Dict[str, AdapterRegistration]:
+        """获取所有适配器注册信息"""
+        self._metrics.request_count += 1
+        return dict(self._registrations)
+
+    def get_metrics(self) -> ServiceMetrics:
+        """获取服务指标 (方法形式)"""
+        return self.metrics
 
     async def update_adapter_status(
         self, adapter_id: str, status: AdapterStatus

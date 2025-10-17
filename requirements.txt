@@ -181,3 +181,16 @@ python-magic==0.4.27                # 文件类型检测
 chardet==5.2.0                      # 字符编码检测
 urllib3<3.0.0                      # HTTP库
 certifi==2023.11.17                 # SSL证书
+
+# =============================================================================
+# 文档生成工具 (Sphinx)
+# =============================================================================
+sphinx==7.2.6                       # 文档生成核心
+sphinx-rtd-theme==2.0.0             # ReadTheDocs 主题
+sphinx-autodoc-typehints==1.25.2    # 类型注解支持
+sphinx-autobuild==2021.3.14         # 实时预览
+sphinxcontrib-napoleon==0.7         # Google/NumPy 风格文档
+sphinxcontrib-apidoc==0.4.0         # API 自动文档
+myst-parser==2.0.0                  # Markdown 支持
+sphinx-copybutton==0.5.2            # 代码复制按钮
+sphinx-tabs==3.4.5                  # 标签页支持

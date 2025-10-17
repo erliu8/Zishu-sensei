@@ -8,7 +8,7 @@ import asyncio
 import os
 from datetime import datetime, timezone
 from pathlib import Path
-from typing import Any, Dict, List, Optional, Set, Union, Callable, Tuple
+from typing import Any, Dict, List, Optional, Set, Union, Callable, Tuple, ClassVar
 from enum import Enum
 from dataclasses import dataclass, field
 from contextlib import asynccontextmanager
@@ -141,6 +141,7 @@ class AdapterStatus(str, Enum):
     REGISTERED = "registered"  # 已注册
     LOADING = "loading"  # 加载中
     LOADED = "loaded"  # 已加载
+    READY = "ready"  # 就绪状态，已完成初始化
     RUNNING = "running"  # 运行中
     PAUSED = "paused"  # 暂停
     ERROR = "error"  # 错误状态
@@ -169,6 +170,7 @@ class CapabilityCategory(str, Enum):
     IMAGE_PROCESSING = "image_processing"  # 图像处理
     AUDIO_PROCESSING = "audio_processing"  # 音频处理
     MACHINE_LEARNING = "machine_learning"  # 机器学习
+    MULTIMODAL_PROCESSING = "multimodal_processing"  # 多模态处理
     CUSTOM = "custom"  # 自定义
 
 
@@ -192,6 +194,9 @@ class AdapterCapability(BaseModel):
 
     class Config:
         use_enum_values = True
+    
+    # 为兼容性添加常量
+    MULTIMODAL_PROCESSING: ClassVar[str] = "multimodal_processing"
 
 
 class AdapterDependency(BaseModel):

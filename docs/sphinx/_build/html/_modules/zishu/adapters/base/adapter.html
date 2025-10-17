@@ -1,0 +1,1723 @@
+<!DOCTYPE html>
+<html class="writer-html5" lang="zh-CN" data-content_root="../../../../">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>zishu.adapters.base.adapter &mdash; Zishu-Sensei Documentation</title>
+      <link rel="stylesheet" type="text/css" href="../../../../_static/pygments.css?v=b86133f3" />
+      <link rel="stylesheet" type="text/css" href="../../../../_static/css/theme.css?v=19f00094" />
+      <link rel="stylesheet" type="text/css" href="../../../../_static/copybutton.css?v=76b2166b" />
+      <link rel="stylesheet" type="text/css" href="../../../../_static/tabs.css?v=a5c4661c" />
+      <link rel="stylesheet" type="text/css" href="../../../../_static/custom.css?v=fcc5c311" />
+
+  
+  <!--[if lt IE 9]>
+    <script src="../../../../_static/js/html5shiv.min.js"></script>
+  <![endif]-->
+  
+        <script src="../../../../_static/jquery.js?v=5d32c60e"></script>
+        <script src="../../../../_static/_sphinx_javascript_frameworks_compat.js?v=2cd50e6c"></script>
+        <script src="../../../../_static/documentation_options.js?v=34088549"></script>
+        <script src="../../../../_static/doctools.js?v=888ff710"></script>
+        <script src="../../../../_static/sphinx_highlight.js?v=dc90522c"></script>
+        <script src="../../../../_static/clipboard.min.js?v=a7894cd8"></script>
+        <script src="../../../../_static/copybutton.js?v=30646c52"></script>
+        <script src="../../../../_static/tabs.js?v=3030b3cb"></script>
+        <script src="../../../../_static/translations.js?v=beaddf03"></script>
+    <script src="../../../../_static/js/theme.js"></script>
+    <link rel="index" title="索引" href="../../../../genindex.html" />
+    <link rel="search" title="搜索" href="../../../../search.html" /> 
+</head>
+
+<body class="wy-body-for-nav"> 
+  <div class="wy-grid-for-nav">
+    <nav data-toggle="wy-nav-shift" class="wy-nav-side">
+      <div class="wy-side-scroll">
+        <div class="wy-side-nav-search"  style="background: #2980B9" >
+
+          
+          
+          <a href="../../../../index.html" class="icon icon-home">
+            Zishu-Sensei
+          </a>
+              <div class="version">
+                1.0
+              </div>
+<div role="search">
+  <form id="rtd-search-form" class="wy-form" action="../../../../search.html" method="get">
+    <input type="text" name="q" placeholder="搜索文档" aria-label="搜索文档" />
+    <input type="hidden" name="check_keywords" value="yes" />
+    <input type="hidden" name="area" value="default" />
+  </form>
+</div>
+        </div><div class="wy-menu wy-menu-vertical" data-spy="affix" role="navigation" aria-label="导航菜单">
+              <p class="caption" role="heading"><span class="caption-text">用户指南</span></p>
+<ul>
+<li class="toctree-l1"><a class="reference internal" href="../../../../user_guide/introduction.html">项目简介</a><ul>
+<li class="toctree-l2"><a class="reference internal" href="../../../../user_guide/introduction.html#zishu-sensei">什么是 Zishu-Sensei？</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../../../../user_guide/introduction.html#id2">核心功能</a><ul>
+<li class="toctree-l3"><a class="reference internal" href="../../../../user_guide/introduction.html#id3">智能对话</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../../../../user_guide/introduction.html#id4">知识检索</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../../../../user_guide/introduction.html#id5">学习辅助</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../../../../user_guide/introduction.html#id6">知识管理</a></li>
+</ul>
+</li>
+<li class="toctree-l2"><a class="reference internal" href="../../../../user_guide/introduction.html#id7">系统架构</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../../../../user_guide/introduction.html#id8">技术特点</a><ul>
+<li class="toctree-l3"><a class="reference internal" href="../../../../user_guide/introduction.html#id9">高性能</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../../../../user_guide/introduction.html#id10">可扩展</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../../../../user_guide/introduction.html#id11">安全可靠</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../../../../user_guide/introduction.html#id12">易于部署</a></li>
+</ul>
+</li>
+<li class="toctree-l2"><a class="reference internal" href="../../../../user_guide/introduction.html#id13">应用场景</a><ul>
+<li class="toctree-l3"><a class="reference internal" href="../../../../user_guide/introduction.html#id14">教育机构</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../../../../user_guide/introduction.html#id15">个人学习</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../../../../user_guide/introduction.html#id16">企业培训</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../../../../user_guide/introduction.html#id17">研究辅助</a></li>
+</ul>
+</li>
+<li class="toctree-l2"><a class="reference internal" href="../../../../user_guide/introduction.html#id18">开发团队</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../../../../user_guide/introduction.html#id19">下一步</a></li>
+</ul>
+</li>
+<li class="toctree-l1"><a class="reference internal" href="../../../../user_guide/installation.html">安装指南</a><ul>
+<li class="toctree-l2"><a class="reference internal" href="../../../../user_guide/installation.html#id2">系统要求</a><ul>
+<li class="toctree-l3"><a class="reference internal" href="../../../../user_guide/installation.html#id3">硬件要求</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../../../../user_guide/installation.html#id4">软件要求</a></li>
+</ul>
+</li>
+<li class="toctree-l2"><a class="reference internal" href="../../../../user_guide/installation.html#id5">安装方式</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../../../../user_guide/installation.html#docker">方式一: Docker 部署 (推荐)</a><ul>
+<li class="toctree-l3"><a class="reference internal" href="../../../../user_guide/installation.html#id6">步骤 1: 安装 Docker</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../../../../user_guide/installation.html#id7">步骤 2: 克隆项目</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../../../../user_guide/installation.html#id8">步骤 3: 配置环境变量</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../../../../user_guide/installation.html#id9">步骤 4: 启动服务</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../../../../user_guide/installation.html#id10">步骤 5: 验证安装</a></li>
+</ul>
+</li>
+<li class="toctree-l2"><a class="reference internal" href="../../../../user_guide/installation.html#id11">方式二: 本地开发安装</a><ul>
+<li class="toctree-l3"><a class="reference internal" href="../../../../user_guide/installation.html#python">步骤 1: 安装 Python 依赖</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../../../../user_guide/installation.html#id12">步骤 2: 安装数据库</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../../../../user_guide/installation.html#id13">步骤 3: 配置数据库</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../../../../user_guide/installation.html#id14">步骤 4: 运行数据库迁移</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../../../../user_guide/installation.html#id15">步骤 5: 启动应用</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../../../../user_guide/installation.html#id16">步骤 6: 验证安装</a></li>
+</ul>
+</li>
+<li class="toctree-l2"><a class="reference internal" href="../../../../user_guide/installation.html#id17">方式三: 云平台部署</a><ul>
+<li class="toctree-l3"><a class="reference internal" href="../../../../user_guide/installation.html#id18">云硬盘环境 (推荐用于生产)</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../../../../user_guide/installation.html#id19">云服务器部署</a></li>
+</ul>
+</li>
+<li class="toctree-l2"><a class="reference internal" href="../../../../user_guide/installation.html#id20">常见问题</a><ul>
+<li class="toctree-l3"><a class="reference internal" href="../../../../user_guide/installation.html#id21">端口冲突</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../../../../user_guide/installation.html#id22">权限问题</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../../../../user_guide/installation.html#id23">数据库连接失败</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../../../../user_guide/installation.html#id24">模型下载慢</a></li>
+</ul>
+</li>
+<li class="toctree-l2"><a class="reference internal" href="../../../../user_guide/installation.html#id25">卸载</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../../../../user_guide/installation.html#id26">下一步</a></li>
+</ul>
+</li>
+<li class="toctree-l1"><a class="reference internal" href="../../../../user_guide/quickstart.html">快速开始</a><ul>
+<li class="toctree-l2"><a class="reference internal" href="../../../../user_guide/quickstart.html#id2">安装</a><ul>
+<li class="toctree-l3"><a class="reference internal" href="../../../../user_guide/quickstart.html#docker">使用 Docker (推荐)</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../../../../user_guide/quickstart.html#id3">本地安装</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../../../../user_guide/quickstart.html#id4">验证安装</a></li>
+</ul>
+</li>
+<li class="toctree-l2"><a class="reference internal" href="../../../../user_guide/quickstart.html#id5">基本使用</a><ul>
+<li class="toctree-l3"><a class="reference internal" href="../../../../user_guide/quickstart.html#id6">1. 创建用户</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../../../../user_guide/quickstart.html#id7">2. 登录获取令牌</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../../../../user_guide/quickstart.html#id8">3. 开始对话</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../../../../user_guide/quickstart.html#id9">4. 发送消息</a></li>
+</ul>
+</li>
+<li class="toctree-l2"><a class="reference internal" href="../../../../user_guide/quickstart.html#id10">使用桌面应用</a><ul>
+<li class="toctree-l3"><a class="reference internal" href="../../../../user_guide/quickstart.html#id11">启动应用</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../../../../user_guide/quickstart.html#id12">配置连接</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../../../../user_guide/quickstart.html#id13">开始对话</a></li>
+</ul>
+</li>
+<li class="toctree-l2"><a class="reference internal" href="../../../../user_guide/quickstart.html#id14">上传文档</a><ul>
+<li class="toctree-l3"><a class="reference internal" href="../../../../user_guide/quickstart.html#id15">准备文档</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../../../../user_guide/quickstart.html#id16">上传文档</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../../../../user_guide/quickstart.html#id17">查看处理状态</a></li>
+</ul>
+</li>
+<li class="toctree-l2"><a class="reference internal" href="../../../../user_guide/quickstart.html#rag">使用 RAG 查询</a><ul>
+<li class="toctree-l3"><a class="reference internal" href="../../../../user_guide/quickstart.html#id18">启用 RAG</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../../../../user_guide/quickstart.html#id19">查看引用来源</a></li>
+</ul>
+</li>
+<li class="toctree-l2"><a class="reference internal" href="../../../../user_guide/quickstart.html#id20">配置选项</a><ul>
+<li class="toctree-l3"><a class="reference internal" href="../../../../user_guide/quickstart.html#id21">基本配置</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../../../../user_guide/quickstart.html#llm">LLM 提供商</a></li>
+</ul>
+</li>
+<li class="toctree-l2"><a class="reference internal" href="../../../../user_guide/quickstart.html#id22">常见任务</a><ul>
+<li class="toctree-l3"><a class="reference internal" href="../../../../user_guide/quickstart.html#id23">管理对话</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../../../../user_guide/quickstart.html#id24">管理文档</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../../../../user_guide/quickstart.html#id25">搜索文档</a></li>
+</ul>
+</li>
+<li class="toctree-l2"><a class="reference internal" href="../../../../user_guide/quickstart.html#id26">故障排除</a><ul>
+<li class="toctree-l3"><a class="reference internal" href="../../../../user_guide/quickstart.html#api">API 无法访问</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../../../../user_guide/quickstart.html#id27">数据库连接失败</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../../../../user_guide/quickstart.html#id28">上传文档失败</a></li>
+</ul>
+</li>
+<li class="toctree-l2"><a class="reference internal" href="../../../../user_guide/quickstart.html#id29">下一步</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../../../../user_guide/quickstart.html#id30">需要帮助？</a></li>
+</ul>
+</li>
+<li class="toctree-l1"><a class="reference internal" href="../../../../user_guide/configuration.html">配置指南</a><ul>
+<li class="toctree-l2"><a class="reference internal" href="../../../../user_guide/configuration.html#id2">配置文件结构</a><ul>
+<li class="toctree-l3"><a class="reference internal" href="../../../../user_guide/configuration.html#id3">主要配置文件</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../../../../user_guide/configuration.html#id4">环境变量</a></li>
+</ul>
+</li>
+<li class="toctree-l2"><a class="reference internal" href="../../../../user_guide/configuration.html#id5">主配置文件</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../../../../user_guide/configuration.html#llm">LLM 模型配置</a><ul>
+<li class="toctree-l3"><a class="reference internal" href="../../../../user_guide/configuration.html#openai">OpenAI 配置</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../../../../user_guide/configuration.html#claude-anthropic">Claude (Anthropic) 配置</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../../../../user_guide/configuration.html#id6">本地模型配置</a></li>
+</ul>
+</li>
+<li class="toctree-l2"><a class="reference internal" href="../../../../user_guide/configuration.html#rag">RAG 配置</a><ul>
+<li class="toctree-l3"><a class="reference internal" href="../../../../user_guide/configuration.html#id7">基础配置</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../../../../user_guide/configuration.html#id8">重排序配置</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../../../../user_guide/configuration.html#id9">文档解析配置</a></li>
+</ul>
+</li>
+<li class="toctree-l2"><a class="reference internal" href="../../../../user_guide/configuration.html#id10">适配器配置</a><ul>
+<li class="toctree-l3"><a class="reference internal" href="../../../../user_guide/configuration.html#core-adapter">Core Adapter</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../../../../user_guide/configuration.html#soft-adapter">Soft Adapter</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../../../../user_guide/configuration.html#hard-adapter">Hard Adapter</a></li>
+</ul>
+</li>
+<li class="toctree-l2"><a class="reference internal" href="../../../../user_guide/configuration.html#id11">日志配置</a><ul>
+<li class="toctree-l3"><a class="reference internal" href="../../../../user_guide/configuration.html#id12">基础日志配置</a></li>
+</ul>
+</li>
+<li class="toctree-l2"><a class="reference internal" href="../../../../user_guide/configuration.html#id13">性能优化配置</a><ul>
+<li class="toctree-l3"><a class="reference internal" href="../../../../user_guide/configuration.html#id14">数据库连接池</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../../../../user_guide/configuration.html#id15">缓存策略</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../../../../user_guide/configuration.html#id16">并发控制</a></li>
+</ul>
+</li>
+<li class="toctree-l2"><a class="reference internal" href="../../../../user_guide/configuration.html#id17">安全配置</a><ul>
+<li class="toctree-l3"><a class="reference internal" href="../../../../user_guide/configuration.html#id18">认证和授权</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../../../../user_guide/configuration.html#id19">数据加密</a></li>
+</ul>
+</li>
+<li class="toctree-l2"><a class="reference internal" href="../../../../user_guide/configuration.html#id20">监控配置</a><ul>
+<li class="toctree-l3"><a class="reference internal" href="../../../../user_guide/configuration.html#prometheus">Prometheus 指标</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../../../../user_guide/configuration.html#id21">健康检查</a></li>
+</ul>
+</li>
+<li class="toctree-l2"><a class="reference internal" href="../../../../user_guide/configuration.html#id22">环境特定配置</a><ul>
+<li class="toctree-l3"><a class="reference internal" href="../../../../user_guide/configuration.html#id23">开发环境</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../../../../user_guide/configuration.html#id24">生产环境</a></li>
+</ul>
+</li>
+<li class="toctree-l2"><a class="reference internal" href="../../../../user_guide/configuration.html#id25">配置加载优先级</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../../../../user_guide/configuration.html#id26">配置验证</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../../../../user_guide/configuration.html#id27">最佳实践</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../../../../user_guide/configuration.html#id28">下一步</a></li>
+</ul>
+</li>
+<li class="toctree-l1"><a class="reference internal" href="../../../../user_guide/deployment.html">部署指南</a><ul>
+<li class="toctree-l2"><a class="reference internal" href="../../../../user_guide/deployment.html#id2">部署架构</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../../../../user_guide/deployment.html#docker">Docker 部署</a><ul>
+<li class="toctree-l3"><a class="reference internal" href="../../../../user_guide/deployment.html#docker-compose">生产环境 Docker Compose</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../../../../user_guide/deployment.html#id3">启动生产环境</a></li>
+</ul>
+</li>
+<li class="toctree-l2"><a class="reference internal" href="../../../../user_guide/deployment.html#kubernetes">Kubernetes 部署</a><ul>
+<li class="toctree-l3"><a class="reference internal" href="../../../../user_guide/deployment.html#id4">准备工作</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../../../../user_guide/deployment.html#id5">创建命名空间</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../../../../user_guide/deployment.html#id6">部署配置</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../../../../user_guide/deployment.html#id7">服务配置</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../../../../user_guide/deployment.html#ingress">Ingress 配置</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../../../../user_guide/deployment.html#k8s">部署到 K8s</a></li>
+</ul>
+</li>
+<li class="toctree-l2"><a class="reference internal" href="../../../../user_guide/deployment.html#id8">云平台部署</a><ul>
+<li class="toctree-l3"><a class="reference internal" href="../../../../user_guide/deployment.html#aws">AWS 部署</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../../../../user_guide/deployment.html#azure">Azure 部署</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../../../../user_guide/deployment.html#gcp">GCP 部署</a></li>
+</ul>
+</li>
+<li class="toctree-l2"><a class="reference internal" href="../../../../user_guide/deployment.html#nginx">Nginx 配置</a><ul>
+<li class="toctree-l3"><a class="reference internal" href="../../../../user_guide/deployment.html#id9">生产环境 Nginx 配置</a></li>
+</ul>
+</li>
+<li class="toctree-l2"><a class="reference internal" href="../../../../user_guide/deployment.html#ssl">SSL 证书配置</a><ul>
+<li class="toctree-l3"><a class="reference internal" href="../../../../user_guide/deployment.html#let-s-encrypt">使用 Let’s Encrypt</a></li>
+</ul>
+</li>
+<li class="toctree-l2"><a class="reference internal" href="../../../../user_guide/deployment.html#id10">数据库优化</a><ul>
+<li class="toctree-l3"><a class="reference internal" href="../../../../user_guide/deployment.html#postgresql">PostgreSQL 优化</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../../../../user_guide/deployment.html#id11">主从复制</a></li>
+</ul>
+</li>
+<li class="toctree-l2"><a class="reference internal" href="../../../../user_guide/deployment.html#id12">监控和日志</a><ul>
+<li class="toctree-l3"><a class="reference internal" href="../../../../user_guide/deployment.html#prometheus-grafana">Prometheus + Grafana</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../../../../user_guide/deployment.html#id13">日志聚合</a></li>
+</ul>
+</li>
+<li class="toctree-l2"><a class="reference internal" href="../../../../user_guide/deployment.html#id14">备份策略</a><ul>
+<li class="toctree-l3"><a class="reference internal" href="../../../../user_guide/deployment.html#id15">数据库备份</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../../../../user_guide/deployment.html#id16">自动备份</a></li>
+</ul>
+</li>
+<li class="toctree-l2"><a class="reference internal" href="../../../../user_guide/deployment.html#id17">故障恢复</a><ul>
+<li class="toctree-l3"><a class="reference internal" href="../../../../user_guide/deployment.html#id18">数据恢复</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../../../../user_guide/deployment.html#id19">灾难恢复计划</a></li>
+</ul>
+</li>
+<li class="toctree-l2"><a class="reference internal" href="../../../../user_guide/deployment.html#id20">性能调优</a><ul>
+<li class="toctree-l3"><a class="reference internal" href="../../../../user_guide/deployment.html#id21">应用层优化</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../../../../user_guide/deployment.html#id22">负载均衡</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../../../../user_guide/deployment.html#id23">扩展策略</a></li>
+</ul>
+</li>
+<li class="toctree-l2"><a class="reference internal" href="../../../../user_guide/deployment.html#id24">安全加固</a><ul>
+<li class="toctree-l3"><a class="reference internal" href="../../../../user_guide/deployment.html#id25">防火墙规则</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../../../../user_guide/deployment.html#id26">定期更新</a></li>
+</ul>
+</li>
+<li class="toctree-l2"><a class="reference internal" href="../../../../user_guide/deployment.html#id27">检查清单</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../../../../user_guide/deployment.html#id28">下一步</a></li>
+</ul>
+</li>
+</ul>
+<p class="caption" role="heading"><span class="caption-text">开发文档</span></p>
+<ul>
+<li class="toctree-l1"><a class="reference internal" href="../../../../developer_guide/architecture.html">系统架构</a><ul>
+<li class="toctree-l2"><a class="reference internal" href="../../../../developer_guide/architecture.html#id2">整体架构</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../../../../developer_guide/architecture.html#id3">核心设计原则</a><ul>
+<li class="toctree-l3"><a class="reference internal" href="../../../../developer_guide/architecture.html#srp">1. 单一职责原则 (SRP)</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../../../../developer_guide/architecture.html#ocp">2. 开闭原则 (OCP)</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../../../../developer_guide/architecture.html#dip">3. 依赖倒置原则 (DIP)</a></li>
+</ul>
+</li>
+<li class="toctree-l2"><a class="reference internal" href="../../../../developer_guide/architecture.html#id4">适配器架构</a><ul>
+<li class="toctree-l3"><a class="reference internal" href="../../../../developer_guide/architecture.html#id5">适配器模式详解</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../../../../developer_guide/architecture.html#core-adapter">Core Adapter</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../../../../developer_guide/architecture.html#soft-adapter">Soft Adapter</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../../../../developer_guide/architecture.html#hard-adapter">Hard Adapter</a></li>
+</ul>
+</li>
+<li class="toctree-l2"><a class="reference internal" href="../../../../developer_guide/architecture.html#id6">数据流架构</a><ul>
+<li class="toctree-l3"><a class="reference internal" href="../../../../developer_guide/architecture.html#id7">请求处理流程</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../../../../developer_guide/architecture.html#id8">对话处理流程</a></li>
+</ul>
+</li>
+<li class="toctree-l2"><a class="reference internal" href="../../../../developer_guide/architecture.html#id9">数据模型设计</a><ul>
+<li class="toctree-l3"><a class="reference internal" href="../../../../developer_guide/architecture.html#id10">核心实体关系</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../../../../developer_guide/architecture.html#id11">用户模型</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../../../../developer_guide/architecture.html#id12">对话模型</a></li>
+</ul>
+</li>
+<li class="toctree-l2"><a class="reference internal" href="../../../../developer_guide/architecture.html#id13">缓存策略</a><ul>
+<li class="toctree-l3"><a class="reference internal" href="../../../../developer_guide/architecture.html#id14">多层缓存架构</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../../../../developer_guide/architecture.html#id15">缓存实现</a></li>
+</ul>
+</li>
+<li class="toctree-l2"><a class="reference internal" href="../../../../developer_guide/architecture.html#id16">异步处理</a><ul>
+<li class="toctree-l3"><a class="reference internal" href="../../../../developer_guide/architecture.html#id17">任务队列</a></li>
+</ul>
+</li>
+<li class="toctree-l2"><a class="reference internal" href="../../../../developer_guide/architecture.html#id18">错误处理</a><ul>
+<li class="toctree-l3"><a class="reference internal" href="../../../../developer_guide/architecture.html#id19">统一异常处理</a></li>
+</ul>
+</li>
+<li class="toctree-l2"><a class="reference internal" href="../../../../developer_guide/architecture.html#id20">安全架构</a><ul>
+<li class="toctree-l3"><a class="reference internal" href="../../../../developer_guide/architecture.html#id21">认证和授权</a></li>
+</ul>
+</li>
+<li class="toctree-l2"><a class="reference internal" href="../../../../developer_guide/architecture.html#id22">扩展性设计</a><ul>
+<li class="toctree-l3"><a class="reference internal" href="../../../../developer_guide/architecture.html#id23">水平扩展</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../../../../developer_guide/architecture.html#id24">垂直扩展</a></li>
+</ul>
+</li>
+<li class="toctree-l2"><a class="reference internal" href="../../../../developer_guide/architecture.html#id25">性能优化</a><ul>
+<li class="toctree-l3"><a class="reference internal" href="../../../../developer_guide/architecture.html#id26">数据库优化</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../../../../developer_guide/architecture.html#api">API 优化</a></li>
+</ul>
+</li>
+<li class="toctree-l2"><a class="reference internal" href="../../../../developer_guide/architecture.html#id27">下一步</a></li>
+</ul>
+</li>
+<li class="toctree-l1"><a class="reference internal" href="../../../../developer_guide/development_setup.html">开发环境配置</a><ul>
+<li class="toctree-l2"><a class="reference internal" href="../../../../developer_guide/development_setup.html#id2">前置要求</a><ul>
+<li class="toctree-l3"><a class="reference internal" href="../../../../developer_guide/development_setup.html#id3">开发工具</a></li>
+</ul>
+</li>
+<li class="toctree-l2"><a class="reference internal" href="../../../../developer_guide/development_setup.html#id4">环境配置</a><ul>
+<li class="toctree-l3"><a class="reference internal" href="../../../../developer_guide/development_setup.html#id5">1. 克隆仓库</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../../../../developer_guide/development_setup.html#id6">2. 创建虚拟环境</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../../../../developer_guide/development_setup.html#id7">3. 安装依赖</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../../../../developer_guide/development_setup.html#id8">4. 配置环境变量</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../../../../developer_guide/development_setup.html#id9">5. 初始化数据库</a></li>
+</ul>
+</li>
+<li class="toctree-l2"><a class="reference internal" href="../../../../developer_guide/development_setup.html#id10">开发工作流</a><ul>
+<li class="toctree-l3"><a class="reference internal" href="../../../../developer_guide/development_setup.html#id11">启动开发服务</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../../../../developer_guide/development_setup.html#id12">代码编辑</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../../../../developer_guide/development_setup.html#id13">代码质量检查</a></li>
+</ul>
+</li>
+<li class="toctree-l2"><a class="reference internal" href="../../../../developer_guide/development_setup.html#id14">开发工具</a><ul>
+<li class="toctree-l3"><a class="reference internal" href="../../../../developer_guide/development_setup.html#vs-code">VS Code 配置</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../../../../developer_guide/development_setup.html#id15">调试配置</a></li>
+</ul>
+</li>
+<li class="toctree-l2"><a class="reference internal" href="../../../../developer_guide/development_setup.html#id16">数据库管理</a><ul>
+<li class="toctree-l3"><a class="reference internal" href="../../../../developer_guide/development_setup.html#pgadmin">使用 pgAdmin</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../../../../developer_guide/development_setup.html#id17">数据库迁移</a></li>
+</ul>
+</li>
+<li class="toctree-l2"><a class="reference internal" href="../../../../developer_guide/development_setup.html#redis">Redis 管理</a><ul>
+<li class="toctree-l3"><a class="reference internal" href="../../../../developer_guide/development_setup.html#redis-commander">使用 Redis Commander</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../../../../developer_guide/development_setup.html#redis-cli">使用 Redis CLI</a></li>
+</ul>
+</li>
+<li class="toctree-l2"><a class="reference internal" href="../../../../developer_guide/development_setup.html#id18">前端开发</a><ul>
+<li class="toctree-l3"><a class="reference internal" href="../../../../developer_guide/development_setup.html#desktop-app">Desktop App 开发</a></li>
+</ul>
+</li>
+<li class="toctree-l2"><a class="reference internal" href="../../../../developer_guide/development_setup.html#id19">测试</a><ul>
+<li class="toctree-l3"><a class="reference internal" href="../../../../developer_guide/development_setup.html#id20">运行测试</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../../../../developer_guide/development_setup.html#id21">编写测试</a></li>
+</ul>
+</li>
+<li class="toctree-l2"><a class="reference internal" href="../../../../developer_guide/development_setup.html#id22">性能分析</a><ul>
+<li class="toctree-l3"><a class="reference internal" href="../../../../developer_guide/development_setup.html#profiling">Profiling</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../../../../developer_guide/development_setup.html#id23">监控</a></li>
+</ul>
+</li>
+<li class="toctree-l2"><a class="reference internal" href="../../../../developer_guide/development_setup.html#id24">调试技巧</a><ul>
+<li class="toctree-l3"><a class="reference internal" href="../../../../developer_guide/development_setup.html#id25">日志调试</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../../../../developer_guide/development_setup.html#id26">断点调试</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../../../../developer_guide/development_setup.html#id27">远程调试</a></li>
+</ul>
+</li>
+<li class="toctree-l2"><a class="reference internal" href="../../../../developer_guide/development_setup.html#id28">常见问题</a><ul>
+<li class="toctree-l3"><a class="reference internal" href="../../../../developer_guide/development_setup.html#id29">依赖冲突</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../../../../developer_guide/development_setup.html#id30">数据库连接失败</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../../../../developer_guide/development_setup.html#id31">端口占用</a></li>
+</ul>
+</li>
+<li class="toctree-l2"><a class="reference internal" href="../../../../developer_guide/development_setup.html#id32">最佳实践</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../../../../developer_guide/development_setup.html#id33">下一步</a></li>
+</ul>
+</li>
+<li class="toctree-l1"><a class="reference internal" href="../../../../developer_guide/coding_standards.html">编码规范</a><ul>
+<li class="toctree-l2"><a class="reference internal" href="../../../../developer_guide/coding_standards.html#python">Python 代码规范</a><ul>
+<li class="toctree-l3"><a class="reference internal" href="../../../../developer_guide/coding_standards.html#id2">风格指南</a><ul>
+<li class="toctree-l4"><a class="reference internal" href="../../../../developer_guide/coding_standards.html#id3">命名约定</a></li>
+<li class="toctree-l4"><a class="reference internal" href="../../../../developer_guide/coding_standards.html#id4">导入顺序</a></li>
+</ul>
+</li>
+<li class="toctree-l3"><a class="reference internal" href="../../../../developer_guide/coding_standards.html#id5">类型注解</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../../../../developer_guide/coding_standards.html#id6">文档字符串</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../../../../developer_guide/coding_standards.html#id7">错误处理</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../../../../developer_guide/coding_standards.html#id8">异步编程</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../../../../developer_guide/coding_standards.html#id9">代码组织</a></li>
+</ul>
+</li>
+<li class="toctree-l2"><a class="reference internal" href="../../../../developer_guide/coding_standards.html#id10">性能优化</a><ul>
+<li class="toctree-l3"><a class="reference internal" href="../../../../developer_guide/coding_standards.html#id11">数据库查询</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../../../../developer_guide/coding_standards.html#id12">缓存策略</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../../../../developer_guide/coding_standards.html#id13">批处理</a></li>
+</ul>
+</li>
+<li class="toctree-l2"><a class="reference internal" href="../../../../developer_guide/coding_standards.html#id14">测试规范</a><ul>
+<li class="toctree-l3"><a class="reference internal" href="../../../../developer_guide/coding_standards.html#id15">单元测试</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../../../../developer_guide/coding_standards.html#id16">集成测试</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../../../../developer_guide/coding_standards.html#id17">测试覆盖率</a></li>
+</ul>
+</li>
+<li class="toctree-l2"><a class="reference internal" href="../../../../developer_guide/coding_standards.html#id18">安全规范</a><ul>
+<li class="toctree-l3"><a class="reference internal" href="../../../../developer_guide/coding_standards.html#id19">输入验证</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../../../../developer_guide/coding_standards.html#id20">密码处理</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../../../../developer_guide/coding_standards.html#sql">SQL 注入防护</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../../../../developer_guide/coding_standards.html#id21">敏感数据</a></li>
+</ul>
+</li>
+<li class="toctree-l2"><a class="reference internal" href="../../../../developer_guide/coding_standards.html#id22">代码审查</a><ul>
+<li class="toctree-l3"><a class="reference internal" href="../../../../developer_guide/coding_standards.html#id23">审查清单</a></li>
+</ul>
+</li>
+<li class="toctree-l2"><a class="reference internal" href="../../../../developer_guide/coding_standards.html#git">Git 提交规范</a><ul>
+<li class="toctree-l3"><a class="reference internal" href="../../../../developer_guide/coding_standards.html#id24">提交消息格式</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../../../../developer_guide/coding_standards.html#id25">分支策略</a></li>
+</ul>
+</li>
+<li class="toctree-l2"><a class="reference internal" href="../../../../developer_guide/coding_standards.html#id26">工具配置</a><ul>
+<li class="toctree-l3"><a class="reference internal" href="../../../../developer_guide/coding_standards.html#black">Black (代码格式化)</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../../../../developer_guide/coding_standards.html#pylint">Pylint (代码检查)</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../../../../developer_guide/coding_standards.html#mypy">MyPy (类型检查)</a></li>
+</ul>
+</li>
+<li class="toctree-l2"><a class="reference internal" href="../../../../developer_guide/coding_standards.html#id27">参考资源</a></li>
+</ul>
+</li>
+</ul>
+<p class="caption" role="heading"><span class="caption-text">API 参考</span></p>
+<ul>
+<li class="toctree-l1"><a class="reference internal" href="../../../../api/core.html">核心模块 API</a><ul>
+<li class="toctree-l2"><a class="reference internal" href="../../../../api/core.html#id1">核心配置</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../../../../api/core.html#id2">核心异常</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../../../../api/core.html#id3">核心基类</a></li>
+</ul>
+</li>
+<li class="toctree-l1"><a class="reference internal" href="../../../../api/adapters.html">适配器 API</a><ul>
+<li class="toctree-l2"><a class="reference internal" href="../../../../api/adapters.html#id1">适配器概述</a><ul>
+<li class="toctree-l3"><a class="reference internal" href="../../../../api/adapters.html#module-zishu.adapters.base">适配器基类</a><ul>
+<li class="toctree-l4"><a class="reference internal" href="../../../../api/adapters.html#id3">适配器系统 - 基础模块</a></li>
+<li class="toctree-l4"><a class="reference internal" href="../../../../api/adapters.html#zishu.adapters.base.BaseAdapter"><code class="docutils literal notranslate"><span class="pre">BaseAdapter</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="../../../../api/adapters.html#zishu.adapters.base.ExecutionContext"><code class="docutils literal notranslate"><span class="pre">ExecutionContext</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="../../../../api/adapters.html#zishu.adapters.base.ExecutionResult"><code class="docutils literal notranslate"><span class="pre">ExecutionResult</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="../../../../api/adapters.html#zishu.adapters.base.HealthCheckResult"><code class="docutils literal notranslate"><span class="pre">HealthCheckResult</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="../../../../api/adapters.html#zishu.adapters.base.AdapterMetadata"><code class="docutils literal notranslate"><span class="pre">AdapterMetadata</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="../../../../api/adapters.html#zishu.adapters.base.AdapterCapability"><code class="docutils literal notranslate"><span class="pre">AdapterCapability</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="../../../../api/adapters.html#zishu.adapters.base.AdapterDependency"><code class="docutils literal notranslate"><span class="pre">AdapterDependency</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="../../../../api/adapters.html#zishu.adapters.base.AdapterPermissions"><code class="docutils literal notranslate"><span class="pre">AdapterPermissions</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="../../../../api/adapters.html#zishu.adapters.base.BaseAdapterException"><code class="docutils literal notranslate"><span class="pre">BaseAdapterException</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="../../../../api/adapters.html#zishu.adapters.base.AdapterRegistrationError"><code class="docutils literal notranslate"><span class="pre">AdapterRegistrationError</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="../../../../api/adapters.html#zishu.adapters.base.AdapterNotFoundError"><code class="docutils literal notranslate"><span class="pre">AdapterNotFoundError</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="../../../../api/adapters.html#zishu.adapters.base.AdapterAlreadyExistsError"><code class="docutils literal notranslate"><span class="pre">AdapterAlreadyExistsError</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="../../../../api/adapters.html#zishu.adapters.base.AdapterLoadingError"><code class="docutils literal notranslate"><span class="pre">AdapterLoadingError</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="../../../../api/adapters.html#zishu.adapters.base.AdapterExecutionError"><code class="docutils literal notranslate"><span class="pre">AdapterExecutionError</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="../../../../api/adapters.html#zishu.adapters.base.AdapterValidationError"><code class="docutils literal notranslate"><span class="pre">AdapterValidationError</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="../../../../api/adapters.html#zishu.adapters.base.AdapterConfigurationError"><code class="docutils literal notranslate"><span class="pre">AdapterConfigurationError</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="../../../../api/adapters.html#zishu.adapters.base.AdapterTimeoutError"><code class="docutils literal notranslate"><span class="pre">AdapterTimeoutError</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="../../../../api/adapters.html#zishu.adapters.base.DependencyMissingError"><code class="docutils literal notranslate"><span class="pre">DependencyMissingError</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="../../../../api/adapters.html#zishu.adapters.base.SoftAdapterError"><code class="docutils literal notranslate"><span class="pre">SoftAdapterError</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="../../../../api/adapters.html#zishu.adapters.base.RAGEngineError"><code class="docutils literal notranslate"><span class="pre">RAGEngineError</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="../../../../api/adapters.html#zishu.adapters.base.PromptTemplateError"><code class="docutils literal notranslate"><span class="pre">PromptTemplateError</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="../../../../api/adapters.html#zishu.adapters.base.KnowledgeBaseError"><code class="docutils literal notranslate"><span class="pre">KnowledgeBaseError</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="../../../../api/adapters.html#zishu.adapters.base.RetrievalFailedError"><code class="docutils literal notranslate"><span class="pre">RetrievalFailedError</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="../../../../api/adapters.html#zishu.adapters.base.AdapterType"><code class="docutils literal notranslate"><span class="pre">AdapterType</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="../../../../api/adapters.html#zishu.adapters.base.AdapterStatus"><code class="docutils literal notranslate"><span class="pre">AdapterStatus</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="../../../../api/adapters.html#zishu.adapters.base.SecurityLevel"><code class="docutils literal notranslate"><span class="pre">SecurityLevel</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="../../../../api/adapters.html#zishu.adapters.base.ErrorCode"><code class="docutils literal notranslate"><span class="pre">ErrorCode</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="../../../../api/adapters.html#zishu.adapters.base.ExceptionSeverity"><code class="docutils literal notranslate"><span class="pre">ExceptionSeverity</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="../../../../api/adapters.html#zishu.adapters.base.AdapterRegistry"><code class="docutils literal notranslate"><span class="pre">AdapterRegistry</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="../../../../api/adapters.html#zishu.adapters.base.HealthMonitor"><code class="docutils literal notranslate"><span class="pre">HealthMonitor</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="../../../../api/adapters.html#zishu.adapters.base.SecurityManager"><code class="docutils literal notranslate"><span class="pre">SecurityManager</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="../../../../api/adapters.html#zishu.adapters.base.PerformanceMonitor"><code class="docutils literal notranslate"><span class="pre">PerformanceMonitor</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="../../../../api/adapters.html#zishu.adapters.base.create_adapter_registry"><code class="docutils literal notranslate"><span class="pre">create_adapter_registry()</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="../../../../api/adapters.html#zishu.adapters.base.get_default_registry"><code class="docutils literal notranslate"><span class="pre">get_default_registry()</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="../../../../api/adapters.html#zishu.adapters.base.set_default_registry"><code class="docutils literal notranslate"><span class="pre">set_default_registry()</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="../../../../api/adapters.html#zishu.adapters.base.handle_adapter_exceptions"><code class="docutils literal notranslate"><span class="pre">handle_adapter_exceptions()</span></code></a></li>
+</ul>
+</li>
+</ul>
+</li>
+<li class="toctree-l2"><a class="reference internal" href="../../../../api/adapters.html#core-adapter">Core Adapter</a><ul>
+<li class="toctree-l3"><a class="reference internal" href="../../../../api/adapters.html#id12">核心适配器主类</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../../../../api/adapters.html#module-zishu.adapters.core.services.health_service">健康检查服务</a><ul>
+<li class="toctree-l4"><a class="reference internal" href="../../../../api/adapters.html#zishu.adapters.core.services.health_service.HealthMetricType"><code class="docutils literal notranslate"><span class="pre">HealthMetricType</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="../../../../api/adapters.html#zishu.adapters.core.services.health_service.HealthMetric"><code class="docutils literal notranslate"><span class="pre">HealthMetric</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="../../../../api/adapters.html#zishu.adapters.core.services.health_service.HealthThreshold"><code class="docutils literal notranslate"><span class="pre">HealthThreshold</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="../../../../api/adapters.html#zishu.adapters.core.services.health_service.HealthMetricsInfo"><code class="docutils literal notranslate"><span class="pre">HealthMetricsInfo</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="../../../../api/adapters.html#zishu.adapters.core.services.health_service.AdapterHealthStatus"><code class="docutils literal notranslate"><span class="pre">AdapterHealthStatus</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="../../../../api/adapters.html#zishu.adapters.core.services.health_service.HealthMonitor"><code class="docutils literal notranslate"><span class="pre">HealthMonitor</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="../../../../api/adapters.html#zishu.adapters.core.services.health_service.AdapterHealthService"><code class="docutils literal notranslate"><span class="pre">AdapterHealthService</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="../../../../api/adapters.html#zishu.adapters.core.services.health_service.AvailabilityMonitor"><code class="docutils literal notranslate"><span class="pre">AvailabilityMonitor</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="../../../../api/adapters.html#zishu.adapters.core.services.health_service.ResponseTimeMonitor"><code class="docutils literal notranslate"><span class="pre">ResponseTimeMonitor</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="../../../../api/adapters.html#zishu.adapters.core.services.health_service.ErrorRateMonitor"><code class="docutils literal notranslate"><span class="pre">ErrorRateMonitor</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="../../../../api/adapters.html#zishu.adapters.core.services.health_service.MemoryUsageMonitor"><code class="docutils literal notranslate"><span class="pre">MemoryUsageMonitor</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="../../../../api/adapters.html#zishu.adapters.core.services.health_service.ThroughputMonitor"><code class="docutils literal notranslate"><span class="pre">ThroughputMonitor</span></code></a></li>
+</ul>
+</li>
+<li class="toctree-l3"><a class="reference internal" href="../../../../api/adapters.html#module-zishu.adapters.core.services.event_service">事件服务</a><ul>
+<li class="toctree-l4"><a class="reference internal" href="../../../../api/adapters.html#zishu.adapters.core.services.event_service.EventDeliveryMode"><code class="docutils literal notranslate"><span class="pre">EventDeliveryMode</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="../../../../api/adapters.html#zishu.adapters.core.services.event_service.EventPersistenceMode"><code class="docutils literal notranslate"><span class="pre">EventPersistenceMode</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="../../../../api/adapters.html#zishu.adapters.core.services.event_service.EventSubscription"><code class="docutils literal notranslate"><span class="pre">EventSubscription</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="../../../../api/adapters.html#zishu.adapters.core.services.event_service.EventDeliveryResult"><code class="docutils literal notranslate"><span class="pre">EventDeliveryResult</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="../../../../api/adapters.html#zishu.adapters.core.services.event_service.EventMetrics"><code class="docutils literal notranslate"><span class="pre">EventMetrics</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="../../../../api/adapters.html#zishu.adapters.core.services.event_service.AdapterEventService"><code class="docutils literal notranslate"><span class="pre">AdapterEventService</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="../../../../api/adapters.html#zishu.adapters.core.services.event_service.LoggingEventHandler"><code class="docutils literal notranslate"><span class="pre">LoggingEventHandler</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="../../../../api/adapters.html#zishu.adapters.core.services.event_service.MetricsEventHandler"><code class="docutils literal notranslate"><span class="pre">MetricsEventHandler</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="../../../../api/adapters.html#zishu.adapters.core.services.event_service.FilterEventHandler"><code class="docutils literal notranslate"><span class="pre">FilterEventHandler</span></code></a></li>
+</ul>
+</li>
+</ul>
+</li>
+<li class="toctree-l2"><a class="reference internal" href="../../../../api/adapters.html#soft-adapter">Soft Adapter</a><ul>
+<li class="toctree-l3"><a class="reference internal" href="../../../../api/adapters.html#id15">软适配器主类</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../../../../api/adapters.html#module-zishu.adapters.soft.rag_engine">RAG 引擎</a><ul>
+<li class="toctree-l4"><a class="reference internal" href="../../../../api/adapters.html#zishu.adapters.soft.rag_engine.RAGEngine"><code class="docutils literal notranslate"><span class="pre">RAGEngine</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="../../../../api/adapters.html#zishu.adapters.soft.rag_engine.RAGConfig"><code class="docutils literal notranslate"><span class="pre">RAGConfig</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="../../../../api/adapters.html#zishu.adapters.soft.rag_engine.RetrievalConfig"><code class="docutils literal notranslate"><span class="pre">RetrievalConfig</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="../../../../api/adapters.html#zishu.adapters.soft.rag_engine.GenerationConfig"><code class="docutils literal notranslate"><span class="pre">GenerationConfig</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="../../../../api/adapters.html#zishu.adapters.soft.rag_engine.RerankingConfig"><code class="docutils literal notranslate"><span class="pre">RerankingConfig</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="../../../../api/adapters.html#zishu.adapters.soft.rag_engine.RAGResult"><code class="docutils literal notranslate"><span class="pre">RAGResult</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="../../../../api/adapters.html#zishu.adapters.soft.rag_engine.RetrievalResult"><code class="docutils literal notranslate"><span class="pre">RetrievalResult</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="../../../../api/adapters.html#zishu.adapters.soft.rag_engine.QueryResult"><code class="docutils literal notranslate"><span class="pre">QueryResult</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="../../../../api/adapters.html#zishu.adapters.soft.rag_engine.RAGEngineError"><code class="docutils literal notranslate"><span class="pre">RAGEngineError</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="../../../../api/adapters.html#zishu.adapters.soft.rag_engine.DocumentStore"><code class="docutils literal notranslate"><span class="pre">DocumentStore</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="../../../../api/adapters.html#zishu.adapters.soft.rag_engine.VectorStore"><code class="docutils literal notranslate"><span class="pre">VectorStore</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="../../../../api/adapters.html#zishu.adapters.soft.rag_engine.EmbeddingService"><code class="docutils literal notranslate"><span class="pre">EmbeddingService</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="../../../../api/adapters.html#zishu.adapters.soft.rag_engine.RetrievalService"><code class="docutils literal notranslate"><span class="pre">RetrievalService</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="../../../../api/adapters.html#zishu.adapters.soft.rag_engine.RerankingService"><code class="docutils literal notranslate"><span class="pre">RerankingService</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="../../../../api/adapters.html#zishu.adapters.soft.rag_engine.MemoryDocumentStore"><code class="docutils literal notranslate"><span class="pre">MemoryDocumentStore</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="../../../../api/adapters.html#zishu.adapters.soft.rag_engine.MemoryVectorStore"><code class="docutils literal notranslate"><span class="pre">MemoryVectorStore</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="../../../../api/adapters.html#zishu.adapters.soft.rag_engine.MockEmbeddingService"><code class="docutils literal notranslate"><span class="pre">MockEmbeddingService</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="../../../../api/adapters.html#zishu.adapters.soft.rag_engine.RAGMode"><code class="docutils literal notranslate"><span class="pre">RAGMode</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="../../../../api/adapters.html#zishu.adapters.soft.rag_engine.RetrievalStrategy"><code class="docutils literal notranslate"><span class="pre">RetrievalStrategy</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="../../../../api/adapters.html#zishu.adapters.soft.rag_engine.RankingMethod"><code class="docutils literal notranslate"><span class="pre">RankingMethod</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="../../../../api/adapters.html#zishu.adapters.soft.rag_engine.GenerationMode"><code class="docutils literal notranslate"><span class="pre">GenerationMode</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="../../../../api/adapters.html#zishu.adapters.soft.rag_engine.Retriever"><code class="docutils literal notranslate"><span class="pre">Retriever</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="../../../../api/adapters.html#zishu.adapters.soft.rag_engine.SimilarityRetriever"><code class="docutils literal notranslate"><span class="pre">SimilarityRetriever</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="../../../../api/adapters.html#zishu.adapters.soft.rag_engine.HybridRetriever"><code class="docutils literal notranslate"><span class="pre">HybridRetriever</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="../../../../api/adapters.html#zishu.adapters.soft.rag_engine.KeywordRetriever"><code class="docutils literal notranslate"><span class="pre">KeywordRetriever</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="../../../../api/adapters.html#zishu.adapters.soft.rag_engine.Reranker"><code class="docutils literal notranslate"><span class="pre">Reranker</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="../../../../api/adapters.html#zishu.adapters.soft.rag_engine.CosineSimilarityReranker"><code class="docutils literal notranslate"><span class="pre">CosineSimilarityReranker</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="../../../../api/adapters.html#zishu.adapters.soft.rag_engine.BM25Reranker"><code class="docutils literal notranslate"><span class="pre">BM25Reranker</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="../../../../api/adapters.html#zishu.adapters.soft.rag_engine.HybridReranker"><code class="docutils literal notranslate"><span class="pre">HybridReranker</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="../../../../api/adapters.html#zishu.adapters.soft.rag_engine.ReciprocalRankFusionReranker"><code class="docutils literal notranslate"><span class="pre">ReciprocalRankFusionReranker</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="../../../../api/adapters.html#zishu.adapters.soft.rag_engine.Generator"><code class="docutils literal notranslate"><span class="pre">Generator</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="../../../../api/adapters.html#zishu.adapters.soft.rag_engine.PromptBasedGenerator"><code class="docutils literal notranslate"><span class="pre">PromptBasedGenerator</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="../../../../api/adapters.html#zishu.adapters.soft.rag_engine.ChainOfThoughtGenerator"><code class="docutils literal notranslate"><span class="pre">ChainOfThoughtGenerator</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="../../../../api/adapters.html#zishu.adapters.soft.rag_engine.HybridGenerator"><code class="docutils literal notranslate"><span class="pre">HybridGenerator</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="../../../../api/adapters.html#zishu.adapters.soft.rag_engine.FactCheckingGenerator"><code class="docutils literal notranslate"><span class="pre">FactCheckingGenerator</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="../../../../api/adapters.html#zishu.adapters.soft.rag_engine.RAGEngineFactory"><code class="docutils literal notranslate"><span class="pre">RAGEngineFactory</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="../../../../api/adapters.html#zishu.adapters.soft.rag_engine.RAGPerformanceOptimizer"><code class="docutils literal notranslate"><span class="pre">RAGPerformanceOptimizer</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="../../../../api/adapters.html#zishu.adapters.soft.rag_engine.RAGUtils"><code class="docutils literal notranslate"><span class="pre">RAGUtils</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="../../../../api/adapters.html#id16">主要类和方法</a></li>
+</ul>
+</li>
+<li class="toctree-l3"><a class="reference internal" href="../../../../api/adapters.html#module-zishu.adapters.soft.prompt_engine">Prompt 引擎</a><ul>
+<li class="toctree-l4"><a class="reference internal" href="../../../../api/adapters.html#zishu.adapters.soft.prompt_engine.DynamicPromptEngine"><code class="docutils literal notranslate"><span class="pre">DynamicPromptEngine</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="../../../../api/adapters.html#zishu.adapters.soft.prompt_engine.PromptEngine"><code class="docutils literal notranslate"><span class="pre">PromptEngine</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="../../../../api/adapters.html#zishu.adapters.soft.prompt_engine.PromptTemplate"><code class="docutils literal notranslate"><span class="pre">PromptTemplate</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="../../../../api/adapters.html#zishu.adapters.soft.prompt_engine.PromptVariable"><code class="docutils literal notranslate"><span class="pre">PromptVariable</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="../../../../api/adapters.html#zishu.adapters.soft.prompt_engine.PromptContext"><code class="docutils literal notranslate"><span class="pre">PromptContext</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="../../../../api/adapters.html#zishu.adapters.soft.prompt_engine.TemplateLoader"><code class="docutils literal notranslate"><span class="pre">TemplateLoader</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="../../../../api/adapters.html#zishu.adapters.soft.prompt_engine.PromptValidator"><code class="docutils literal notranslate"><span class="pre">PromptValidator</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="../../../../api/adapters.html#zishu.adapters.soft.prompt_engine.PromptCache"><code class="docutils literal notranslate"><span class="pre">PromptCache</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="../../../../api/adapters.html#zishu.adapters.soft.prompt_engine.PromptOptimizer"><code class="docutils literal notranslate"><span class="pre">PromptOptimizer</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="../../../../api/adapters.html#zishu.adapters.soft.prompt_engine.PromptEngineError"><code class="docutils literal notranslate"><span class="pre">PromptEngineError</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="../../../../api/adapters.html#zishu.adapters.soft.prompt_engine.PromptTemplateError"><code class="docutils literal notranslate"><span class="pre">PromptTemplateError</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="../../../../api/adapters.html#zishu.adapters.soft.prompt_engine.PromptValidationError"><code class="docutils literal notranslate"><span class="pre">PromptValidationError</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="../../../../api/adapters.html#zishu.adapters.soft.prompt_engine.create_prompt_engine"><code class="docutils literal notranslate"><span class="pre">create_prompt_engine()</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="../../../../api/adapters.html#zishu.adapters.soft.prompt_engine.get_global_engine"><code class="docutils literal notranslate"><span class="pre">get_global_engine()</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="../../../../api/adapters.html#zishu.adapters.soft.prompt_engine.render"><code class="docutils literal notranslate"><span class="pre">render()</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="../../../../api/adapters.html#id40">主要类和方法</a></li>
+</ul>
+</li>
+</ul>
+</li>
+<li class="toctree-l2"><a class="reference internal" href="../../../../api/adapters.html#hard-adapter">Hard Adapter</a><ul>
+<li class="toctree-l3"><a class="reference internal" href="../../../../api/adapters.html#id62">硬适配器主类</a></li>
+</ul>
+</li>
+<li class="toctree-l2"><a class="reference internal" href="../../../../api/adapters.html#id63">适配器工厂</a></li>
+</ul>
+</li>
+<li class="toctree-l1"><a class="reference internal" href="../../../../api/services.html">服务层 API</a><ul>
+<li class="toctree-l2"><a class="reference internal" href="../../../../api/services.html#id1">服务层概述</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../../../../api/services.html#id2">用户服务</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../../../../api/services.html#id3">认证服务</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../../../../api/services.html#id4">对话服务</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../../../../api/services.html#id5">文档服务</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../../../../api/services.html#id6">知识库服务</a></li>
+</ul>
+</li>
+<li class="toctree-l1"><a class="reference internal" href="../../../../api/models.html">数据模型 API</a><ul>
+<li class="toctree-l2"><a class="reference internal" href="../../../../api/models.html#id1">数据库模型</a><ul>
+<li class="toctree-l3"><a class="reference internal" href="../../../../api/models.html#id2">用户模型</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../../../../api/models.html#id3">对话模型</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../../../../api/models.html#id4">消息模型</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../../../../api/models.html#id5">文档模型</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../../../../api/models.html#id6">知识库模型</a></li>
+</ul>
+</li>
+<li class="toctree-l2"><a class="reference internal" href="../../../../api/models.html#pydantic">Pydantic 模型</a><ul>
+<li class="toctree-l3"><a class="reference internal" href="../../../../api/models.html#id7">请求模型</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../../../../api/models.html#id8">响应模型</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../../../../api/models.html#id9">通用模型</a></li>
+</ul>
+</li>
+</ul>
+</li>
+<li class="toctree-l1"><a class="reference internal" href="../../../../api/utils.html">工具函数 API</a><ul>
+<li class="toctree-l2"><a class="reference internal" href="../../../../api/utils.html#id1">通用工具</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../../../../api/utils.html#id2">文本处理</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../../../../api/utils.html#id3">日期时间</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../../../../api/utils.html#id4">加密工具</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../../../../api/utils.html#id5">验证工具</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../../../../api/utils.html#id6">日志工具</a></li>
+</ul>
+</li>
+</ul>
+
+        </div>
+      </div>
+    </nav>
+
+    <section data-toggle="wy-nav-shift" class="wy-nav-content-wrap"><nav class="wy-nav-top" aria-label="移动版导航菜单"  style="background: #2980B9" >
+          <i data-toggle="wy-nav-top" class="fa fa-bars"></i>
+          <a href="../../../../index.html">Zishu-Sensei</a>
+      </nav>
+
+      <div class="wy-nav-content">
+        <div class="rst-content">
+          <div role="navigation" aria-label="页面导航">
+  <ul class="wy-breadcrumbs">
+      <li><a href="../../../../index.html" class="icon icon-home" aria-label="Home"></a></li>
+          <li class="breadcrumb-item"><a href="../../../index.html">模块代码</a></li>
+          <li class="breadcrumb-item"><a href="../base.html">zishu.adapters.base</a></li>
+      <li class="breadcrumb-item active">zishu.adapters.base.adapter</li>
+      <li class="wy-breadcrumbs-aside">
+      </li>
+  </ul>
+  <hr/>
+</div>
+          <div role="main" class="document" itemscope="itemscope" itemtype="http://schema.org/Article">
+           <div itemprop="articleBody">
+             
+  <h1>zishu.adapters.base.adapter 源代码</h1><div class="highlight"><pre>
+<span></span><span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">适配器系统 - 基础适配器抽象类</span>
+<span class="sd">&quot;&quot;&quot;</span>
+
+<span class="kn">import</span><span class="w"> </span><span class="nn">uuid</span>
+<span class="kn">import</span><span class="w"> </span><span class="nn">time</span>
+<span class="kn">import</span><span class="w"> </span><span class="nn">asyncio</span>
+<span class="kn">import</span><span class="w"> </span><span class="nn">threading</span>
+<span class="kn">import</span><span class="w"> </span><span class="nn">traceback</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">abc</span><span class="w"> </span><span class="kn">import</span> <span class="n">ABC</span><span class="p">,</span> <span class="n">abstractmethod</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">datetime</span><span class="w"> </span><span class="kn">import</span> <span class="n">datetime</span><span class="p">,</span> <span class="n">timezone</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">typing</span><span class="w"> </span><span class="kn">import</span> <span class="n">Any</span><span class="p">,</span> <span class="n">Dict</span><span class="p">,</span> <span class="n">List</span><span class="p">,</span> <span class="n">Optional</span><span class="p">,</span> <span class="n">Union</span><span class="p">,</span> <span class="n">Callable</span><span class="p">,</span> <span class="n">Tuple</span><span class="p">,</span> <span class="n">Set</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">dataclasses</span><span class="w"> </span><span class="kn">import</span> <span class="n">dataclass</span><span class="p">,</span> <span class="n">field</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">contextlib</span><span class="w"> </span><span class="kn">import</span> <span class="n">asynccontextmanager</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">pathlib</span><span class="w"> </span><span class="kn">import</span> <span class="n">Path</span>
+<span class="kn">import</span><span class="w"> </span><span class="nn">logging</span>
+<span class="kn">import</span><span class="w"> </span><span class="nn">weakref</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">collections</span><span class="w"> </span><span class="kn">import</span> <span class="n">defaultdict</span><span class="p">,</span> <span class="n">deque</span>
+<span class="kn">import</span><span class="w"> </span><span class="nn">json</span>
+
+<span class="c1"># 本地模块导入</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">.exceptions</span><span class="w"> </span><span class="kn">import</span> <span class="p">(</span>
+    <span class="n">BaseAdapterException</span><span class="p">,</span>
+    <span class="n">AdapterConfigurationError</span><span class="p">,</span>
+    <span class="n">AdapterValidationError</span><span class="p">,</span>
+    <span class="n">AdapterExecutionError</span><span class="p">,</span>
+    <span class="n">AdapterLoadingError</span><span class="p">,</span>
+    <span class="n">ErrorCode</span><span class="p">,</span>
+    <span class="n">ExceptionSeverity</span><span class="p">,</span>
+    <span class="n">handle_adapter_exceptions</span><span class="p">,</span>
+<span class="p">)</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">.metadata</span><span class="w"> </span><span class="kn">import</span> <span class="p">(</span>
+    <span class="n">AdapterMetadata</span><span class="p">,</span>
+    <span class="n">AdapterType</span><span class="p">,</span>
+    <span class="n">AdapterStatus</span><span class="p">,</span>
+    <span class="n">AdapterCapability</span><span class="p">,</span>
+    <span class="n">SecurityLevel</span><span class="p">,</span>
+    <span class="n">MetadataManager</span><span class="p">,</span>
+<span class="p">)</span>
+
+<span class="c1"># 配置日志</span>
+<span class="n">logger</span> <span class="o">=</span> <span class="n">logging</span><span class="o">.</span><span class="n">getLogger</span><span class="p">(</span><span class="vm">__name__</span><span class="p">)</span>
+
+<span class="c1"># ================================</span>
+<span class="c1"># 核心数据结构定义</span>
+<span class="c1"># ================================</span>
+
+
+<div class="viewcode-block" id="ExecutionContext">
+<a class="viewcode-back" href="../../../../api/adapters.html#zishu.adapters.base.ExecutionContext">[文档]</a>
+<span class="nd">@dataclass</span>
+<span class="k">class</span><span class="w"> </span><span class="nc">ExecutionContext</span><span class="p">:</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;适配器执行上下文&quot;&quot;&quot;</span>
+
+    <span class="n">execution_id</span><span class="p">:</span> <span class="nb">str</span> <span class="o">=</span> <span class="n">field</span><span class="p">(</span><span class="n">default_factory</span><span class="o">=</span><span class="k">lambda</span><span class="p">:</span> <span class="sa">f</span><span class="s2">&quot;exec_</span><span class="si">{</span><span class="n">uuid</span><span class="o">.</span><span class="n">uuid4</span><span class="p">()</span><span class="o">.</span><span class="n">hex</span><span class="p">[:</span><span class="mi">8</span><span class="p">]</span><span class="si">}</span><span class="s2">&quot;</span><span class="p">)</span>
+    <span class="n">user_id</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="nb">str</span><span class="p">]</span> <span class="o">=</span> <span class="kc">None</span>
+    <span class="n">session_id</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="nb">str</span><span class="p">]</span> <span class="o">=</span> <span class="kc">None</span>
+    <span class="n">request_id</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="nb">str</span><span class="p">]</span> <span class="o">=</span> <span class="kc">None</span>
+    <span class="n">priority</span><span class="p">:</span> <span class="nb">int</span> <span class="o">=</span> <span class="mi">5</span>  <span class="c1"># 1-10, 10为最高优先级</span>
+    <span class="n">timeout</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="nb">float</span><span class="p">]</span> <span class="o">=</span> <span class="kc">None</span>  <span class="c1"># 超时时间(秒)</span>
+    <span class="n">retry_count</span><span class="p">:</span> <span class="nb">int</span> <span class="o">=</span> <span class="mi">0</span>
+    <span class="n">max_retries</span><span class="p">:</span> <span class="nb">int</span> <span class="o">=</span> <span class="mi">3</span>
+    <span class="n">debug_mode</span><span class="p">:</span> <span class="nb">bool</span> <span class="o">=</span> <span class="kc">False</span>
+    <span class="n">trace_enabled</span><span class="p">:</span> <span class="nb">bool</span> <span class="o">=</span> <span class="kc">False</span>
+    <span class="n">metadata</span><span class="p">:</span> <span class="n">Dict</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="n">Any</span><span class="p">]</span> <span class="o">=</span> <span class="n">field</span><span class="p">(</span><span class="n">default_factory</span><span class="o">=</span><span class="nb">dict</span><span class="p">)</span>
+    <span class="n">data</span><span class="p">:</span> <span class="n">Dict</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="n">Any</span><span class="p">]</span> <span class="o">=</span> <span class="n">field</span><span class="p">(</span><span class="n">default_factory</span><span class="o">=</span><span class="nb">dict</span><span class="p">)</span>  <span class="c1"># 为兼容性添加data属性</span>
+    <span class="n">created_at</span><span class="p">:</span> <span class="n">datetime</span> <span class="o">=</span> <span class="n">field</span><span class="p">(</span><span class="n">default_factory</span><span class="o">=</span><span class="k">lambda</span><span class="p">:</span> <span class="n">datetime</span><span class="o">.</span><span class="n">now</span><span class="p">(</span><span class="n">timezone</span><span class="o">.</span><span class="n">utc</span><span class="p">))</span></div>
+
+
+
+<div class="viewcode-block" id="ExecutionResult">
+<a class="viewcode-back" href="../../../../api/adapters.html#zishu.adapters.base.ExecutionResult">[文档]</a>
+<span class="nd">@dataclass</span>
+<span class="k">class</span><span class="w"> </span><span class="nc">ExecutionResult</span><span class="p">:</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;适配器执行结果&quot;&quot;&quot;</span>
+
+    <span class="n">execution_id</span><span class="p">:</span> <span class="nb">str</span>
+    <span class="n">adapter_id</span><span class="p">:</span> <span class="nb">str</span>
+    <span class="n">status</span><span class="p">:</span> <span class="nb">str</span>  <span class="c1"># success, error, timeout, cancelled</span>
+    <span class="n">output</span><span class="p">:</span> <span class="n">Any</span> <span class="o">=</span> <span class="kc">None</span>
+    <span class="n">error</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="nb">str</span><span class="p">]</span> <span class="o">=</span> <span class="kc">None</span>
+    <span class="n">error_details</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="n">Dict</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="n">Any</span><span class="p">]]</span> <span class="o">=</span> <span class="kc">None</span>
+    <span class="n">execution_time</span><span class="p">:</span> <span class="nb">float</span> <span class="o">=</span> <span class="mf">0.0</span>
+    <span class="n">resource_usage</span><span class="p">:</span> <span class="n">Dict</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="n">Any</span><span class="p">]</span> <span class="o">=</span> <span class="n">field</span><span class="p">(</span><span class="n">default_factory</span><span class="o">=</span><span class="nb">dict</span><span class="p">)</span>
+    <span class="n">performance_metrics</span><span class="p">:</span> <span class="n">Dict</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="n">Any</span><span class="p">]</span> <span class="o">=</span> <span class="n">field</span><span class="p">(</span><span class="n">default_factory</span><span class="o">=</span><span class="nb">dict</span><span class="p">)</span>
+    <span class="n">audit_log</span><span class="p">:</span> <span class="n">List</span><span class="p">[</span><span class="n">Dict</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="n">Any</span><span class="p">]]</span> <span class="o">=</span> <span class="n">field</span><span class="p">(</span><span class="n">default_factory</span><span class="o">=</span><span class="nb">list</span><span class="p">)</span>
+    <span class="n">warnings</span><span class="p">:</span> <span class="n">List</span><span class="p">[</span><span class="nb">str</span><span class="p">]</span> <span class="o">=</span> <span class="n">field</span><span class="p">(</span><span class="n">default_factory</span><span class="o">=</span><span class="nb">list</span><span class="p">)</span>
+    <span class="n">metadata</span><span class="p">:</span> <span class="n">Dict</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="n">Any</span><span class="p">]</span> <span class="o">=</span> <span class="n">field</span><span class="p">(</span><span class="n">default_factory</span><span class="o">=</span><span class="nb">dict</span><span class="p">)</span>  <span class="c1"># 为兼容性添加metadata属性</span>
+    <span class="n">created_at</span><span class="p">:</span> <span class="n">datetime</span> <span class="o">=</span> <span class="n">field</span><span class="p">(</span><span class="n">default_factory</span><span class="o">=</span><span class="k">lambda</span><span class="p">:</span> <span class="n">datetime</span><span class="o">.</span><span class="n">now</span><span class="p">(</span><span class="n">timezone</span><span class="o">.</span><span class="n">utc</span><span class="p">))</span>
+    
+    <span class="nd">@property</span>
+    <span class="k">def</span><span class="w"> </span><span class="nf">data</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Any</span><span class="p">:</span>
+<span class="w">        </span><span class="sd">&quot;&quot;&quot;兼容性属性：指向output&quot;&quot;&quot;</span>
+        <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">output</span>
+    
+    <span class="nd">@property</span>
+    <span class="k">def</span><span class="w"> </span><span class="nf">success</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">bool</span><span class="p">:</span>
+<span class="w">        </span><span class="sd">&quot;&quot;&quot;兼容性属性：判断是否成功&quot;&quot;&quot;</span>
+        <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">status</span> <span class="o">==</span> <span class="s2">&quot;success&quot;</span>
+    
+    <span class="nd">@property</span>
+    <span class="k">def</span><span class="w"> </span><span class="nf">error_message</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Optional</span><span class="p">[</span><span class="nb">str</span><span class="p">]:</span>
+<span class="w">        </span><span class="sd">&quot;&quot;&quot;兼容性属性：指向error&quot;&quot;&quot;</span>
+        <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">error</span>
+
+<div class="viewcode-block" id="ExecutionResult.to_dict">
+<a class="viewcode-back" href="../../../../api/adapters.html#zishu.adapters.base.ExecutionResult.to_dict">[文档]</a>
+    <span class="k">def</span><span class="w"> </span><span class="nf">to_dict</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Dict</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="n">Any</span><span class="p">]:</span>
+<span class="w">        </span><span class="sd">&quot;&quot;&quot;转换为字典格式&quot;&quot;&quot;</span>
+        <span class="k">return</span> <span class="p">{</span>
+            <span class="s2">&quot;execution_id&quot;</span><span class="p">:</span> <span class="bp">self</span><span class="o">.</span><span class="n">execution_id</span><span class="p">,</span>
+            <span class="s2">&quot;adapter_id&quot;</span><span class="p">:</span> <span class="bp">self</span><span class="o">.</span><span class="n">adapter_id</span><span class="p">,</span>
+            <span class="s2">&quot;status&quot;</span><span class="p">:</span> <span class="bp">self</span><span class="o">.</span><span class="n">status</span><span class="p">,</span>
+            <span class="s2">&quot;output&quot;</span><span class="p">:</span> <span class="bp">self</span><span class="o">.</span><span class="n">output</span><span class="p">,</span>
+            <span class="s2">&quot;error&quot;</span><span class="p">:</span> <span class="bp">self</span><span class="o">.</span><span class="n">error</span><span class="p">,</span>
+            <span class="s2">&quot;error_details&quot;</span><span class="p">:</span> <span class="bp">self</span><span class="o">.</span><span class="n">error_details</span><span class="p">,</span>
+            <span class="s2">&quot;execution_time&quot;</span><span class="p">:</span> <span class="bp">self</span><span class="o">.</span><span class="n">execution_time</span><span class="p">,</span>
+            <span class="s2">&quot;resource_usage&quot;</span><span class="p">:</span> <span class="bp">self</span><span class="o">.</span><span class="n">resource_usage</span><span class="p">,</span>
+            <span class="s2">&quot;performance_metrics&quot;</span><span class="p">:</span> <span class="bp">self</span><span class="o">.</span><span class="n">performance_metrics</span><span class="p">,</span>
+            <span class="s2">&quot;audit_log&quot;</span><span class="p">:</span> <span class="bp">self</span><span class="o">.</span><span class="n">audit_log</span><span class="p">,</span>
+            <span class="s2">&quot;warnings&quot;</span><span class="p">:</span> <span class="bp">self</span><span class="o">.</span><span class="n">warnings</span><span class="p">,</span>
+            <span class="s2">&quot;created_at&quot;</span><span class="p">:</span> <span class="bp">self</span><span class="o">.</span><span class="n">created_at</span><span class="o">.</span><span class="n">isoformat</span><span class="p">(),</span>
+        <span class="p">}</span></div>
+</div>
+
+
+
+<div class="viewcode-block" id="HealthCheckResult">
+<a class="viewcode-back" href="../../../../api/adapters.html#zishu.adapters.base.HealthCheckResult">[文档]</a>
+<span class="nd">@dataclass</span>
+<span class="k">class</span><span class="w"> </span><span class="nc">HealthCheckResult</span><span class="p">:</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;健康检查结果&quot;&quot;&quot;</span>
+
+    <span class="n">is_healthy</span><span class="p">:</span> <span class="nb">bool</span>
+    <span class="n">status</span><span class="p">:</span> <span class="nb">str</span>  <span class="c1"># healthy, degraded, unhealthy, unknown</span>
+    <span class="n">message</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="nb">str</span><span class="p">]</span> <span class="o">=</span> <span class="kc">None</span>
+    <span class="n">checks</span><span class="p">:</span> <span class="n">Dict</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="nb">bool</span><span class="p">]</span> <span class="o">=</span> <span class="n">field</span><span class="p">(</span><span class="n">default_factory</span><span class="o">=</span><span class="nb">dict</span><span class="p">)</span>
+    <span class="n">metrics</span><span class="p">:</span> <span class="n">Dict</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="n">Any</span><span class="p">]</span> <span class="o">=</span> <span class="n">field</span><span class="p">(</span><span class="n">default_factory</span><span class="o">=</span><span class="nb">dict</span><span class="p">)</span>
+    <span class="n">issues</span><span class="p">:</span> <span class="n">List</span><span class="p">[</span><span class="nb">str</span><span class="p">]</span> <span class="o">=</span> <span class="n">field</span><span class="p">(</span><span class="n">default_factory</span><span class="o">=</span><span class="nb">list</span><span class="p">)</span>
+    <span class="n">recommendations</span><span class="p">:</span> <span class="n">List</span><span class="p">[</span><span class="nb">str</span><span class="p">]</span> <span class="o">=</span> <span class="n">field</span><span class="p">(</span><span class="n">default_factory</span><span class="o">=</span><span class="nb">list</span><span class="p">)</span>
+    <span class="n">timestamp</span><span class="p">:</span> <span class="n">datetime</span> <span class="o">=</span> <span class="n">field</span><span class="p">(</span><span class="n">default_factory</span><span class="o">=</span><span class="k">lambda</span><span class="p">:</span> <span class="n">datetime</span><span class="o">.</span><span class="n">now</span><span class="p">(</span><span class="n">timezone</span><span class="o">.</span><span class="n">utc</span><span class="p">))</span>
+    <span class="n">last_check_time</span><span class="p">:</span> <span class="n">datetime</span> <span class="o">=</span> <span class="n">field</span><span class="p">(</span>
+        <span class="n">default_factory</span><span class="o">=</span><span class="k">lambda</span><span class="p">:</span> <span class="n">datetime</span><span class="o">.</span><span class="n">now</span><span class="p">(</span><span class="n">timezone</span><span class="o">.</span><span class="n">utc</span><span class="p">)</span>
+    <span class="p">)</span></div>
+
+
+
+<span class="c1"># ================================</span>
+<span class="c1"># 性能监控和指标收集</span>
+<span class="c1"># ================================</span>
+
+
+<span class="k">class</span><span class="w"> </span><span class="nc">PerformanceMonitor</span><span class="p">:</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;性能监控器&quot;&quot;&quot;</span>
+
+    <span class="k">def</span><span class="w"> </span><span class="fm">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">max_history</span><span class="p">:</span> <span class="nb">int</span> <span class="o">=</span> <span class="mi">1000</span><span class="p">):</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">max_history</span> <span class="o">=</span> <span class="n">max_history</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">execution_history</span> <span class="o">=</span> <span class="n">deque</span><span class="p">(</span><span class="n">maxlen</span><span class="o">=</span><span class="n">max_history</span><span class="p">)</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">metrics</span> <span class="o">=</span> <span class="n">defaultdict</span><span class="p">(</span><span class="nb">list</span><span class="p">)</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">_lock</span> <span class="o">=</span> <span class="n">threading</span><span class="o">.</span><span class="n">RLock</span><span class="p">()</span>
+
+    <span class="k">def</span><span class="w"> </span><span class="nf">record_execution</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">execution_result</span><span class="p">:</span> <span class="n">ExecutionResult</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="kc">None</span><span class="p">:</span>
+<span class="w">        </span><span class="sd">&quot;&quot;&quot;记录执行结果&quot;&quot;&quot;</span>
+        <span class="k">with</span> <span class="bp">self</span><span class="o">.</span><span class="n">_lock</span><span class="p">:</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">execution_history</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">execution_result</span><span class="p">)</span>
+
+            <span class="c1"># 更新性能指标</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">metrics</span><span class="p">[</span><span class="s2">&quot;execution_time&quot;</span><span class="p">]</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">execution_result</span><span class="o">.</span><span class="n">execution_time</span><span class="p">)</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">metrics</span><span class="p">[</span><span class="s2">&quot;success_rate&quot;</span><span class="p">]</span><span class="o">.</span><span class="n">append</span><span class="p">(</span>
+                <span class="mi">1</span> <span class="k">if</span> <span class="n">execution_result</span><span class="o">.</span><span class="n">status</span> <span class="o">==</span> <span class="s2">&quot;success&quot;</span> <span class="k">else</span> <span class="mi">0</span>
+            <span class="p">)</span>
+
+            <span class="c1"># 限制指标历史长度</span>
+            <span class="k">for</span> <span class="n">key</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">metrics</span><span class="p">:</span>
+                <span class="k">if</span> <span class="nb">len</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">metrics</span><span class="p">[</span><span class="n">key</span><span class="p">])</span> <span class="o">&gt;</span> <span class="bp">self</span><span class="o">.</span><span class="n">max_history</span><span class="p">:</span>
+                    <span class="bp">self</span><span class="o">.</span><span class="n">metrics</span><span class="p">[</span><span class="n">key</span><span class="p">]</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">metrics</span><span class="p">[</span><span class="n">key</span><span class="p">][</span><span class="o">-</span><span class="bp">self</span><span class="o">.</span><span class="n">max_history</span> <span class="p">:]</span>
+
+    <span class="k">def</span><span class="w"> </span><span class="nf">get_performance_summary</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Dict</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="n">Any</span><span class="p">]:</span>
+<span class="w">        </span><span class="sd">&quot;&quot;&quot;获取性能摘要&quot;&quot;&quot;</span>
+        <span class="k">with</span> <span class="bp">self</span><span class="o">.</span><span class="n">_lock</span><span class="p">:</span>
+            <span class="k">if</span> <span class="ow">not</span> <span class="bp">self</span><span class="o">.</span><span class="n">execution_history</span><span class="p">:</span>
+                <span class="k">return</span> <span class="p">{</span><span class="s2">&quot;status&quot;</span><span class="p">:</span> <span class="s2">&quot;no_data&quot;</span><span class="p">}</span>
+
+            <span class="n">recent_executions</span> <span class="o">=</span> <span class="nb">list</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">execution_history</span><span class="p">)[</span><span class="o">-</span><span class="mi">100</span><span class="p">:]</span>  <span class="c1"># 最近100次执行</span>
+
+            <span class="n">success_count</span> <span class="o">=</span> <span class="nb">sum</span><span class="p">(</span><span class="mi">1</span> <span class="k">for</span> <span class="n">r</span> <span class="ow">in</span> <span class="n">recent_executions</span> <span class="k">if</span> <span class="n">r</span><span class="o">.</span><span class="n">status</span> <span class="o">==</span> <span class="s2">&quot;success&quot;</span><span class="p">)</span>
+            <span class="n">total_count</span> <span class="o">=</span> <span class="nb">len</span><span class="p">(</span><span class="n">recent_executions</span><span class="p">)</span>
+            <span class="n">avg_execution_time</span> <span class="o">=</span> <span class="p">(</span>
+                <span class="nb">sum</span><span class="p">(</span><span class="n">r</span><span class="o">.</span><span class="n">execution_time</span> <span class="k">for</span> <span class="n">r</span> <span class="ow">in</span> <span class="n">recent_executions</span><span class="p">)</span> <span class="o">/</span> <span class="n">total_count</span>
+            <span class="p">)</span>
+
+            <span class="k">return</span> <span class="p">{</span>
+                <span class="s2">&quot;total_executions&quot;</span><span class="p">:</span> <span class="nb">len</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">execution_history</span><span class="p">),</span>
+                <span class="s2">&quot;recent_success_rate&quot;</span><span class="p">:</span> <span class="n">success_count</span> <span class="o">/</span> <span class="n">total_count</span>
+                <span class="k">if</span> <span class="n">total_count</span> <span class="o">&gt;</span> <span class="mi">0</span>
+                <span class="k">else</span> <span class="mi">0</span><span class="p">,</span>
+                <span class="s2">&quot;average_execution_time&quot;</span><span class="p">:</span> <span class="n">avg_execution_time</span><span class="p">,</span>
+                <span class="s2">&quot;last_execution&quot;</span><span class="p">:</span> <span class="n">recent_executions</span><span class="p">[</span><span class="o">-</span><span class="mi">1</span><span class="p">]</span><span class="o">.</span><span class="n">created_at</span><span class="o">.</span><span class="n">isoformat</span><span class="p">()</span>
+                <span class="k">if</span> <span class="n">recent_executions</span>
+                <span class="k">else</span> <span class="kc">None</span><span class="p">,</span>
+                <span class="s2">&quot;performance_trend&quot;</span><span class="p">:</span> <span class="bp">self</span><span class="o">.</span><span class="n">_calculate_trend</span><span class="p">(),</span>
+            <span class="p">}</span>
+
+    <span class="k">def</span><span class="w"> </span><span class="nf">_calculate_trend</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">str</span><span class="p">:</span>
+<span class="w">        </span><span class="sd">&quot;&quot;&quot;计算性能趋势&quot;&quot;&quot;</span>
+        <span class="k">if</span> <span class="nb">len</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">metrics</span><span class="p">[</span><span class="s2">&quot;execution_time&quot;</span><span class="p">])</span> <span class="o">&lt;</span> <span class="mi">10</span><span class="p">:</span>
+            <span class="k">return</span> <span class="s2">&quot;insufficient_data&quot;</span>
+
+        <span class="n">recent_times</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">metrics</span><span class="p">[</span><span class="s2">&quot;execution_time&quot;</span><span class="p">][</span><span class="o">-</span><span class="mi">10</span><span class="p">:]</span>
+        <span class="n">older_times</span> <span class="o">=</span> <span class="p">(</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">metrics</span><span class="p">[</span><span class="s2">&quot;execution_time&quot;</span><span class="p">][</span><span class="o">-</span><span class="mi">20</span><span class="p">:</span><span class="o">-</span><span class="mi">10</span><span class="p">]</span>
+            <span class="k">if</span> <span class="nb">len</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">metrics</span><span class="p">[</span><span class="s2">&quot;execution_time&quot;</span><span class="p">])</span> <span class="o">&gt;=</span> <span class="mi">20</span>
+            <span class="k">else</span> <span class="p">[]</span>
+        <span class="p">)</span>
+
+        <span class="k">if</span> <span class="ow">not</span> <span class="n">older_times</span><span class="p">:</span>
+            <span class="k">return</span> <span class="s2">&quot;stable&quot;</span>
+
+        <span class="n">recent_avg</span> <span class="o">=</span> <span class="nb">sum</span><span class="p">(</span><span class="n">recent_times</span><span class="p">)</span> <span class="o">/</span> <span class="nb">len</span><span class="p">(</span><span class="n">recent_times</span><span class="p">)</span>
+        <span class="n">older_avg</span> <span class="o">=</span> <span class="nb">sum</span><span class="p">(</span><span class="n">older_times</span><span class="p">)</span> <span class="o">/</span> <span class="nb">len</span><span class="p">(</span><span class="n">older_times</span><span class="p">)</span>
+
+        <span class="k">if</span> <span class="n">recent_avg</span> <span class="o">&lt;</span> <span class="n">older_avg</span> <span class="o">*</span> <span class="mf">0.9</span><span class="p">:</span>
+            <span class="k">return</span> <span class="s2">&quot;improving&quot;</span>
+        <span class="k">elif</span> <span class="n">recent_avg</span> <span class="o">&gt;</span> <span class="n">older_avg</span> <span class="o">*</span> <span class="mf">1.1</span><span class="p">:</span>
+            <span class="k">return</span> <span class="s2">&quot;degrading&quot;</span>
+        <span class="k">else</span><span class="p">:</span>
+            <span class="k">return</span> <span class="s2">&quot;stable&quot;</span>
+
+
+<span class="c1"># ================================</span>
+<span class="c1"># 基础适配器抽象类</span>
+<span class="c1"># ================================</span>
+
+
+<div class="viewcode-block" id="BaseAdapter">
+<a class="viewcode-back" href="../../../../api/adapters.html#zishu.adapters.base.BaseAdapter">[文档]</a>
+<span class="k">class</span><span class="w"> </span><span class="nc">BaseAdapter</span><span class="p">(</span><span class="n">ABC</span><span class="p">):</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">    适配器框架基础抽象类</span>
+
+<span class="sd">    这个类定义了所有适配器必须实现的核心接口，包括：</span>
+<span class="sd">    - 生命周期管理（初始化、执行、清理）</span>
+<span class="sd">    - 元数据和能力声明</span>
+<span class="sd">    - 健康检查和监控</span>
+<span class="sd">    - 异常处理和日志记录</span>
+<span class="sd">    - 安全和权限控制</span>
+
+<span class="sd">    设计原则：</span>
+<span class="sd">    1. 单一职责：每个方法只负责一个明确的功能</span>
+<span class="sd">    2. 开放封闭：对扩展开放，对修改封闭</span>
+<span class="sd">    3. 里氏替换：子类可以完全替换父类</span>
+<span class="sd">    4. 接口隔离：提供细粒度的接口定义</span>
+<span class="sd">    5. 依赖倒置：依赖抽象而非具体实现</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+
+<div class="viewcode-block" id="BaseAdapter.__init__">
+<a class="viewcode-back" href="../../../../api/adapters.html#zishu.adapters.base.BaseAdapter.__init__">[文档]</a>
+    <span class="k">def</span><span class="w"> </span><span class="fm">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">config</span><span class="p">:</span> <span class="n">Dict</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="n">Any</span><span class="p">]):</span>
+<span class="w">        </span><span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">        初始化基础适配器</span>
+
+<span class="sd">        Args:</span>
+<span class="sd">            config: 适配器配置字典，必须包含适配器的基本配置信息</span>
+
+<span class="sd">        Raises:</span>
+<span class="sd">            AdapterConfigurationError: 配置验证失败时抛出</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="c1"># 基础属性初始化</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">config</span> <span class="o">=</span> <span class="n">config</span><span class="o">.</span><span class="n">copy</span><span class="p">()</span>  <span class="c1"># 防止外部修改配置</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">adapter_id</span> <span class="o">=</span> <span class="n">config</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s2">&quot;adapter_id&quot;</span><span class="p">,</span> <span class="sa">f</span><span class="s2">&quot;adapter_</span><span class="si">{</span><span class="n">uuid</span><span class="o">.</span><span class="n">uuid4</span><span class="p">()</span><span class="o">.</span><span class="n">hex</span><span class="p">[:</span><span class="mi">8</span><span class="p">]</span><span class="si">}</span><span class="s2">&quot;</span><span class="p">)</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">name</span> <span class="o">=</span> <span class="n">config</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s2">&quot;name&quot;</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">adapter_id</span><span class="p">)</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">version</span> <span class="o">=</span> <span class="n">config</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s2">&quot;version&quot;</span><span class="p">,</span> <span class="s2">&quot;1.0.0&quot;</span><span class="p">)</span>
+
+        <span class="c1"># 状态管理</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">status</span> <span class="o">=</span> <span class="n">AdapterStatus</span><span class="o">.</span><span class="n">UNREGISTERED</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">is_initialized</span> <span class="o">=</span> <span class="kc">False</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">is_running</span> <span class="o">=</span> <span class="kc">False</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">initialization_time</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="n">datetime</span><span class="p">]</span> <span class="o">=</span> <span class="kc">None</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">last_activity_time</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="n">datetime</span><span class="p">]</span> <span class="o">=</span> <span class="kc">None</span>
+
+        <span class="c1"># 元数据和能力</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">metadata</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="n">AdapterMetadata</span><span class="p">]</span> <span class="o">=</span> <span class="kc">None</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">capabilities</span><span class="p">:</span> <span class="n">List</span><span class="p">[</span><span class="n">AdapterCapability</span><span class="p">]</span> <span class="o">=</span> <span class="p">[]</span>
+
+        <span class="c1"># 性能监控</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">performance_monitor</span> <span class="o">=</span> <span class="n">PerformanceMonitor</span><span class="p">()</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">execution_count</span> <span class="o">=</span> <span class="mi">0</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">error_count</span> <span class="o">=</span> <span class="mi">0</span>
+
+        <span class="c1"># 线程安全</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">_lock</span> <span class="o">=</span> <span class="n">threading</span><span class="o">.</span><span class="n">RLock</span><span class="p">()</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">_initialization_lock</span> <span class="o">=</span> <span class="n">threading</span><span class="o">.</span><span class="n">Lock</span><span class="p">()</span>
+
+        <span class="c1"># 日志记录器</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">logger</span> <span class="o">=</span> <span class="n">logging</span><span class="o">.</span><span class="n">getLogger</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;</span><span class="si">{</span><span class="vm">__name__</span><span class="si">}</span><span class="s2">.</span><span class="si">{</span><span class="bp">self</span><span class="o">.</span><span class="vm">__class__</span><span class="o">.</span><span class="vm">__name__</span><span class="si">}</span><span class="s2">&quot;</span><span class="p">)</span>
+
+        <span class="c1"># 资源管理</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">_resources</span><span class="p">:</span> <span class="n">Dict</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="n">Any</span><span class="p">]</span> <span class="o">=</span> <span class="p">{}</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">_cleanup_callbacks</span><span class="p">:</span> <span class="n">List</span><span class="p">[</span><span class="n">Callable</span><span class="p">]</span> <span class="o">=</span> <span class="p">[]</span>
+
+        <span class="c1"># 验证配置</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">_validate_config</span><span class="p">()</span>
+
+        <span class="c1"># 异步支持</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">_event_loop</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="n">asyncio</span><span class="o">.</span><span class="n">AbstractEventLoop</span><span class="p">]</span> <span class="o">=</span> <span class="kc">None</span>
+
+        <span class="bp">self</span><span class="o">.</span><span class="n">logger</span><span class="o">.</span><span class="n">info</span><span class="p">(</span>
+            <span class="sa">f</span><span class="s2">&quot;Adapter </span><span class="si">{</span><span class="bp">self</span><span class="o">.</span><span class="n">adapter_id</span><span class="si">}</span><span class="s2"> created with config: </span><span class="si">{</span><span class="bp">self</span><span class="o">.</span><span class="n">_safe_config_repr</span><span class="p">()</span><span class="si">}</span><span class="s2">&quot;</span>
+        <span class="p">)</span></div>
+
+
+    <span class="k">def</span><span class="w"> </span><span class="nf">_validate_config</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="kc">None</span><span class="p">:</span>
+<span class="w">        </span><span class="sd">&quot;&quot;&quot;验证适配器配置&quot;&quot;&quot;</span>
+        <span class="n">required_fields</span> <span class="o">=</span> <span class="p">[</span><span class="s2">&quot;adapter_type&quot;</span><span class="p">]</span>
+
+        <span class="k">for</span> <span class="n">field</span> <span class="ow">in</span> <span class="n">required_fields</span><span class="p">:</span>
+            <span class="k">if</span> <span class="n">field</span> <span class="ow">not</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">config</span><span class="p">:</span>
+                <span class="k">raise</span> <span class="n">AdapterConfigurationError</span><span class="p">(</span>
+                    <span class="sa">f</span><span class="s2">&quot;Missing required configuration field: </span><span class="si">{</span><span class="n">field</span><span class="si">}</span><span class="s2">&quot;</span><span class="p">,</span>
+                    <span class="n">adapter_id</span><span class="o">=</span><span class="bp">self</span><span class="o">.</span><span class="n">adapter_id</span><span class="p">,</span>
+                    <span class="n">context</span><span class="o">=</span><span class="p">{</span>
+                        <span class="s2">&quot;missing_field&quot;</span><span class="p">:</span> <span class="n">field</span><span class="p">,</span>
+                        <span class="s2">&quot;config_keys&quot;</span><span class="p">:</span> <span class="nb">list</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">config</span><span class="o">.</span><span class="n">keys</span><span class="p">()),</span>
+                    <span class="p">},</span>
+                <span class="p">)</span>
+
+        <span class="c1"># 验证适配器类型</span>
+        <span class="n">adapter_type</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">config</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s2">&quot;adapter_type&quot;</span><span class="p">)</span>
+        <span class="k">if</span> <span class="n">adapter_type</span> <span class="ow">not</span> <span class="ow">in</span> <span class="p">[</span><span class="n">t</span><span class="o">.</span><span class="n">value</span> <span class="k">for</span> <span class="n">t</span> <span class="ow">in</span> <span class="n">AdapterType</span><span class="p">]:</span>
+            <span class="k">raise</span> <span class="n">AdapterConfigurationError</span><span class="p">(</span>
+                <span class="sa">f</span><span class="s2">&quot;Invalid adapter type: </span><span class="si">{</span><span class="n">adapter_type</span><span class="si">}</span><span class="s2">&quot;</span><span class="p">,</span>
+                <span class="n">adapter_id</span><span class="o">=</span><span class="bp">self</span><span class="o">.</span><span class="n">adapter_id</span><span class="p">,</span>
+                <span class="n">context</span><span class="o">=</span><span class="p">{</span>
+                    <span class="s2">&quot;invalid_type&quot;</span><span class="p">:</span> <span class="n">adapter_type</span><span class="p">,</span>
+                    <span class="s2">&quot;valid_types&quot;</span><span class="p">:</span> <span class="p">[</span><span class="n">t</span><span class="o">.</span><span class="n">value</span> <span class="k">for</span> <span class="n">t</span> <span class="ow">in</span> <span class="n">AdapterType</span><span class="p">],</span>
+                <span class="p">},</span>
+            <span class="p">)</span>
+
+    <span class="k">def</span><span class="w"> </span><span class="nf">_safe_config_repr</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Dict</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="n">Any</span><span class="p">]:</span>
+<span class="w">        </span><span class="sd">&quot;&quot;&quot;安全的配置表示（隐藏敏感信息）&quot;&quot;&quot;</span>
+        <span class="n">safe_config</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">config</span><span class="o">.</span><span class="n">copy</span><span class="p">()</span>
+        <span class="n">sensitive_keys</span> <span class="o">=</span> <span class="p">[</span><span class="s2">&quot;password&quot;</span><span class="p">,</span> <span class="s2">&quot;token&quot;</span><span class="p">,</span> <span class="s2">&quot;secret&quot;</span><span class="p">,</span> <span class="s2">&quot;key&quot;</span><span class="p">,</span> <span class="s2">&quot;credential&quot;</span><span class="p">]</span>
+
+        <span class="k">for</span> <span class="n">key</span> <span class="ow">in</span> <span class="nb">list</span><span class="p">(</span><span class="n">safe_config</span><span class="o">.</span><span class="n">keys</span><span class="p">()):</span>
+            <span class="k">if</span> <span class="nb">any</span><span class="p">(</span><span class="n">sensitive</span> <span class="ow">in</span> <span class="n">key</span><span class="o">.</span><span class="n">lower</span><span class="p">()</span> <span class="k">for</span> <span class="n">sensitive</span> <span class="ow">in</span> <span class="n">sensitive_keys</span><span class="p">):</span>
+                <span class="n">safe_config</span><span class="p">[</span><span class="n">key</span><span class="p">]</span> <span class="o">=</span> <span class="s2">&quot;***HIDDEN***&quot;</span>
+
+        <span class="k">return</span> <span class="n">safe_config</span>
+
+    <span class="c1"># ================================</span>
+    <span class="c1"># 抽象方法 - 子类必须实现</span>
+    <span class="c1"># ================================</span>
+
+    <span class="nd">@abstractmethod</span>
+    <span class="k">def</span><span class="w"> </span><span class="nf">_load_metadata</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">AdapterMetadata</span><span class="p">:</span>
+<span class="w">        </span><span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">        加载适配器元数据</span>
+
+<span class="sd">        子类必须实现此方法来提供适配器的元数据信息，包括：</span>
+<span class="sd">        - 适配器基本信息（名称、版本、描述等）</span>
+<span class="sd">        - 能力声明</span>
+<span class="sd">        - 资源需求</span>
+<span class="sd">        - 安全级别</span>
+<span class="sd">        - 依赖关系</span>
+
+<span class="sd">        Returns:</span>
+<span class="sd">            AdapterMetadata: 适配器元数据对象</span>
+
+<span class="sd">        Raises:</span>
+<span class="sd">            AdapterInitializationError: 元数据加载失败时抛出</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="k">pass</span>
+
+    <span class="nd">@abstractmethod</span>
+    <span class="k">async</span> <span class="k">def</span><span class="w"> </span><span class="nf">_initialize_impl</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">bool</span><span class="p">:</span>
+<span class="w">        </span><span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">        适配器初始化实现</span>
+
+<span class="sd">        子类必须实现此方法来完成适配器的具体初始化逻辑，如：</span>
+<span class="sd">        - 加载模型或数据</span>
+<span class="sd">        - 建立外部连接</span>
+<span class="sd">        - 验证依赖项</span>
+<span class="sd">        - 初始化内部状态</span>
+
+<span class="sd">        Returns:</span>
+<span class="sd">            bool: 初始化是否成功</span>
+
+<span class="sd">        Raises:</span>
+<span class="sd">            AdapterLoadingError: 初始化失败时抛出</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="k">pass</span>
+
+    <span class="nd">@abstractmethod</span>
+    <span class="k">async</span> <span class="k">def</span><span class="w"> </span><span class="nf">_process_impl</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">input_data</span><span class="p">:</span> <span class="n">Any</span><span class="p">,</span> <span class="n">context</span><span class="p">:</span> <span class="n">ExecutionContext</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Any</span><span class="p">:</span>
+<span class="w">        </span><span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">        适配器核心处理逻辑实现</span>
+
+<span class="sd">        子类必须实现此方法来定义适配器的核心功能逻辑。</span>
+
+<span class="sd">        Args:</span>
+<span class="sd">            input_data: 输入数据，类型根据适配器功能而定</span>
+<span class="sd">            context: 执行上下文，包含执行环境信息</span>
+
+<span class="sd">        Returns:</span>
+<span class="sd">            Any: 处理结果，类型根据适配器功能而定</span>
+
+<span class="sd">        Raises:</span>
+<span class="sd">            AdapterExecutionError: 处理失败时抛出</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="k">pass</span>
+
+    <span class="nd">@abstractmethod</span>
+    <span class="k">def</span><span class="w"> </span><span class="nf">_get_capabilities_impl</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">List</span><span class="p">[</span><span class="n">AdapterCapability</span><span class="p">]:</span>
+<span class="w">        </span><span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">        获取适配器能力实现</span>
+
+<span class="sd">        子类必须实现此方法来声明适配器支持的能力。</span>
+
+<span class="sd">        Returns:</span>
+<span class="sd">            List[AdapterCapability]: 适配器能力列表</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="k">pass</span>
+
+    <span class="nd">@abstractmethod</span>
+    <span class="k">async</span> <span class="k">def</span><span class="w"> </span><span class="nf">_health_check_impl</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">HealthCheckResult</span><span class="p">:</span>
+<span class="w">        </span><span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">        健康检查实现</span>
+
+<span class="sd">        子类必须实现此方法来检查适配器的健康状态，包括：</span>
+<span class="sd">        - 核心功能可用性</span>
+<span class="sd">        - 依赖服务状态</span>
+<span class="sd">        - 资源使用情况</span>
+<span class="sd">        - 性能指标</span>
+
+<span class="sd">        Returns:</span>
+<span class="sd">            HealthCheckResult: 健康检查结果</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="k">pass</span>
+
+    <span class="nd">@abstractmethod</span>
+    <span class="k">async</span> <span class="k">def</span><span class="w"> </span><span class="nf">_cleanup_impl</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="kc">None</span><span class="p">:</span>
+<span class="w">        </span><span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">        适配器清理实现</span>
+
+<span class="sd">        子类必须实现此方法来释放适配器占用的资源，如：</span>
+<span class="sd">        - 关闭文件句柄</span>
+<span class="sd">        - 断开网络连接</span>
+<span class="sd">        - 释放内存</span>
+<span class="sd">        - 清理临时文件</span>
+
+<span class="sd">        Raises:</span>
+<span class="sd">            AdapterExecutionError: 清理失败时抛出</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="k">pass</span>
+
+    <span class="c1"># ================================</span>
+    <span class="c1"># 公共接口方法</span>
+    <span class="c1"># ================================</span>
+
+<div class="viewcode-block" id="BaseAdapter.initialize">
+<a class="viewcode-back" href="../../../../api/adapters.html#zishu.adapters.base.BaseAdapter.initialize">[文档]</a>
+    <span class="k">async</span> <span class="k">def</span><span class="w"> </span><span class="nf">initialize</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">bool</span><span class="p">:</span>
+<span class="w">        </span><span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">        初始化适配器</span>
+
+<span class="sd">        这是适配器生命周期的第一个阶段，负责：</span>
+<span class="sd">        1. 加载元数据</span>
+<span class="sd">        2. 验证配置和依赖</span>
+<span class="sd">        3. 执行具体初始化逻辑</span>
+<span class="sd">        4. 更新状态和指标</span>
+
+<span class="sd">        Returns:</span>
+<span class="sd">            bool: 初始化是否成功</span>
+
+<span class="sd">        Raises:</span>
+<span class="sd">            AdapterLoadingError: 初始化失败时抛出</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">is_initialized</span><span class="p">:</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">logger</span><span class="o">.</span><span class="n">warning</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;Adapter </span><span class="si">{</span><span class="bp">self</span><span class="o">.</span><span class="n">adapter_id</span><span class="si">}</span><span class="s2"> is already initialized&quot;</span><span class="p">)</span>
+            <span class="k">return</span> <span class="kc">True</span>
+
+        <span class="k">with</span> <span class="bp">self</span><span class="o">.</span><span class="n">_initialization_lock</span><span class="p">:</span>
+            <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">is_initialized</span><span class="p">:</span>  <span class="c1"># 双重检查</span>
+                <span class="k">return</span> <span class="kc">True</span>
+
+            <span class="k">try</span><span class="p">:</span>
+                <span class="bp">self</span><span class="o">.</span><span class="n">status</span> <span class="o">=</span> <span class="n">AdapterStatus</span><span class="o">.</span><span class="n">LOADING</span>
+                <span class="bp">self</span><span class="o">.</span><span class="n">logger</span><span class="o">.</span><span class="n">info</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;Initializing adapter </span><span class="si">{</span><span class="bp">self</span><span class="o">.</span><span class="n">adapter_id</span><span class="si">}</span><span class="s2">&quot;</span><span class="p">)</span>
+
+                <span class="c1"># 1. 加载元数据</span>
+                <span class="bp">self</span><span class="o">.</span><span class="n">metadata</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_load_metadata</span><span class="p">()</span>
+                <span class="bp">self</span><span class="o">.</span><span class="n">logger</span><span class="o">.</span><span class="n">debug</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;Metadata loaded for adapter </span><span class="si">{</span><span class="bp">self</span><span class="o">.</span><span class="n">adapter_id</span><span class="si">}</span><span class="s2">&quot;</span><span class="p">)</span>
+
+                <span class="c1"># 2. 加载能力</span>
+                <span class="bp">self</span><span class="o">.</span><span class="n">capabilities</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_get_capabilities_impl</span><span class="p">()</span>
+                <span class="bp">self</span><span class="o">.</span><span class="n">logger</span><span class="o">.</span><span class="n">debug</span><span class="p">(</span>
+                    <span class="sa">f</span><span class="s2">&quot;Capabilities loaded: </span><span class="si">{</span><span class="nb">len</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">capabilities</span><span class="p">)</span><span class="si">}</span><span class="s2"> capabilities&quot;</span>
+                <span class="p">)</span>
+
+                <span class="c1"># 3. 执行具体初始化</span>
+                <span class="n">initialization_success</span> <span class="o">=</span> <span class="k">await</span> <span class="bp">self</span><span class="o">.</span><span class="n">_initialize_impl</span><span class="p">()</span>
+
+                <span class="k">if</span> <span class="n">initialization_success</span><span class="p">:</span>
+                    <span class="bp">self</span><span class="o">.</span><span class="n">is_initialized</span> <span class="o">=</span> <span class="kc">True</span>
+                    <span class="bp">self</span><span class="o">.</span><span class="n">status</span> <span class="o">=</span> <span class="n">AdapterStatus</span><span class="o">.</span><span class="n">LOADED</span>
+                    <span class="bp">self</span><span class="o">.</span><span class="n">initialization_time</span> <span class="o">=</span> <span class="n">datetime</span><span class="o">.</span><span class="n">now</span><span class="p">(</span><span class="n">timezone</span><span class="o">.</span><span class="n">utc</span><span class="p">)</span>
+                    <span class="bp">self</span><span class="o">.</span><span class="n">logger</span><span class="o">.</span><span class="n">info</span><span class="p">(</span>
+                        <span class="sa">f</span><span class="s2">&quot;Adapter </span><span class="si">{</span><span class="bp">self</span><span class="o">.</span><span class="n">adapter_id</span><span class="si">}</span><span class="s2"> initialized successfully&quot;</span>
+                    <span class="p">)</span>
+                    <span class="k">return</span> <span class="kc">True</span>
+                <span class="k">else</span><span class="p">:</span>
+                    <span class="bp">self</span><span class="o">.</span><span class="n">status</span> <span class="o">=</span> <span class="n">AdapterStatus</span><span class="o">.</span><span class="n">ERROR</span>
+                    <span class="k">raise</span> <span class="n">AdapterLoadingError</span><span class="p">(</span>
+                        <span class="sa">f</span><span class="s2">&quot;Adapter </span><span class="si">{</span><span class="bp">self</span><span class="o">.</span><span class="n">adapter_id</span><span class="si">}</span><span class="s2"> initialization failed&quot;</span><span class="p">,</span>
+                        <span class="n">adapter_id</span><span class="o">=</span><span class="bp">self</span><span class="o">.</span><span class="n">adapter_id</span><span class="p">,</span>
+                    <span class="p">)</span>
+
+            <span class="k">except</span> <span class="ne">Exception</span> <span class="k">as</span> <span class="n">e</span><span class="p">:</span>
+                <span class="bp">self</span><span class="o">.</span><span class="n">status</span> <span class="o">=</span> <span class="n">AdapterStatus</span><span class="o">.</span><span class="n">ERROR</span>
+                <span class="bp">self</span><span class="o">.</span><span class="n">logger</span><span class="o">.</span><span class="n">error</span><span class="p">(</span>
+                    <span class="sa">f</span><span class="s2">&quot;Failed to initialize adapter </span><span class="si">{</span><span class="bp">self</span><span class="o">.</span><span class="n">adapter_id</span><span class="si">}</span><span class="s2">: </span><span class="si">{</span><span class="n">e</span><span class="si">}</span><span class="s2">&quot;</span>
+                <span class="p">)</span>
+
+                <span class="k">if</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">e</span><span class="p">,</span> <span class="n">BaseAdapterException</span><span class="p">):</span>
+                    <span class="k">raise</span>
+                <span class="k">else</span><span class="p">:</span>
+                    <span class="k">raise</span> <span class="n">AdapterLoadingError</span><span class="p">(</span>
+                        <span class="sa">f</span><span class="s2">&quot;Unexpected error during initialization: </span><span class="si">{</span><span class="nb">str</span><span class="p">(</span><span class="n">e</span><span class="p">)</span><span class="si">}</span><span class="s2">&quot;</span><span class="p">,</span>
+                        <span class="n">adapter_id</span><span class="o">=</span><span class="bp">self</span><span class="o">.</span><span class="n">adapter_id</span><span class="p">,</span>
+                        <span class="n">cause</span><span class="o">=</span><span class="n">e</span><span class="p">,</span>
+                    <span class="p">)</span></div>
+
+
+<div class="viewcode-block" id="BaseAdapter.process">
+<a class="viewcode-back" href="../../../../api/adapters.html#zishu.adapters.base.BaseAdapter.process">[文档]</a>
+    <span class="k">async</span> <span class="k">def</span><span class="w"> </span><span class="nf">process</span><span class="p">(</span>
+        <span class="bp">self</span><span class="p">,</span> <span class="n">input_data</span><span class="p">:</span> <span class="n">Any</span><span class="p">,</span> <span class="n">context</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="n">Union</span><span class="p">[</span><span class="n">Dict</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="n">Any</span><span class="p">],</span> <span class="n">ExecutionContext</span><span class="p">]]</span> <span class="o">=</span> <span class="kc">None</span>
+    <span class="p">)</span> <span class="o">-&gt;</span> <span class="n">ExecutionResult</span><span class="p">:</span>
+<span class="w">        </span><span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">        处理输入数据</span>
+
+<span class="sd">        这是适配器的核心功能入口，负责：</span>
+<span class="sd">        1. 验证输入和状态</span>
+<span class="sd">        2. 创建执行上下文</span>
+<span class="sd">        3. 执行核心处理逻辑</span>
+<span class="sd">        4. 记录性能指标</span>
+<span class="sd">        5. 处理异常和错误</span>
+
+<span class="sd">        Args:</span>
+<span class="sd">            input_data: 输入数据</span>
+<span class="sd">            context: 执行上下文字典或ExecutionContext对象</span>
+
+<span class="sd">        Returns:</span>
+<span class="sd">            ExecutionResult: 执行结果对象</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="c1"># 创建或使用执行上下文</span>
+        <span class="k">if</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">context</span><span class="p">,</span> <span class="n">ExecutionContext</span><span class="p">):</span>
+            <span class="n">exec_context</span> <span class="o">=</span> <span class="n">context</span>
+        <span class="k">else</span><span class="p">:</span>
+            <span class="n">exec_context</span> <span class="o">=</span> <span class="n">ExecutionContext</span><span class="p">()</span>
+            <span class="k">if</span> <span class="n">context</span><span class="p">:</span>
+                <span class="k">for</span> <span class="n">key</span><span class="p">,</span> <span class="n">value</span> <span class="ow">in</span> <span class="n">context</span><span class="o">.</span><span class="n">items</span><span class="p">():</span>
+                    <span class="k">if</span> <span class="nb">hasattr</span><span class="p">(</span><span class="n">exec_context</span><span class="p">,</span> <span class="n">key</span><span class="p">):</span>
+                        <span class="nb">setattr</span><span class="p">(</span><span class="n">exec_context</span><span class="p">,</span> <span class="n">key</span><span class="p">,</span> <span class="n">value</span><span class="p">)</span>
+                    <span class="k">else</span><span class="p">:</span>
+                        <span class="n">exec_context</span><span class="o">.</span><span class="n">metadata</span><span class="p">[</span><span class="n">key</span><span class="p">]</span> <span class="o">=</span> <span class="n">value</span>
+
+        <span class="n">start_time</span> <span class="o">=</span> <span class="n">time</span><span class="o">.</span><span class="n">time</span><span class="p">()</span>
+
+        <span class="k">try</span><span class="p">:</span>
+            <span class="c1"># 验证适配器状态</span>
+            <span class="k">if</span> <span class="ow">not</span> <span class="bp">self</span><span class="o">.</span><span class="n">is_initialized</span><span class="p">:</span>
+                <span class="k">raise</span> <span class="n">AdapterExecutionError</span><span class="p">(</span>
+                    <span class="sa">f</span><span class="s2">&quot;Adapter </span><span class="si">{</span><span class="bp">self</span><span class="o">.</span><span class="n">adapter_id</span><span class="si">}</span><span class="s2"> is not initialized&quot;</span><span class="p">,</span>
+                    <span class="n">error_code</span><span class="o">=</span><span class="n">ErrorCode</span><span class="o">.</span><span class="n">ADAPTER_NOT_INITIALIZED</span><span class="p">,</span>
+                    <span class="n">adapter_id</span><span class="o">=</span><span class="bp">self</span><span class="o">.</span><span class="n">adapter_id</span><span class="p">,</span>
+                <span class="p">)</span>
+
+            <span class="c1"># 更新状态</span>
+            <span class="k">with</span> <span class="bp">self</span><span class="o">.</span><span class="n">_lock</span><span class="p">:</span>
+                <span class="bp">self</span><span class="o">.</span><span class="n">status</span> <span class="o">=</span> <span class="n">AdapterStatus</span><span class="o">.</span><span class="n">RUNNING</span>
+                <span class="bp">self</span><span class="o">.</span><span class="n">is_running</span> <span class="o">=</span> <span class="kc">True</span>
+                <span class="bp">self</span><span class="o">.</span><span class="n">execution_count</span> <span class="o">+=</span> <span class="mi">1</span>
+                <span class="bp">self</span><span class="o">.</span><span class="n">last_activity_time</span> <span class="o">=</span> <span class="n">datetime</span><span class="o">.</span><span class="n">now</span><span class="p">(</span><span class="n">timezone</span><span class="o">.</span><span class="n">utc</span><span class="p">)</span>
+
+            <span class="bp">self</span><span class="o">.</span><span class="n">logger</span><span class="o">.</span><span class="n">debug</span><span class="p">(</span>
+                <span class="sa">f</span><span class="s2">&quot;Processing request </span><span class="si">{</span><span class="n">exec_context</span><span class="o">.</span><span class="n">execution_id</span><span class="si">}</span><span class="s2"> for adapter </span><span class="si">{</span><span class="bp">self</span><span class="o">.</span><span class="n">adapter_id</span><span class="si">}</span><span class="s2">&quot;</span>
+            <span class="p">)</span>
+
+            <span class="c1"># 执行核心处理逻辑</span>
+            <span class="n">result</span> <span class="o">=</span> <span class="k">await</span> <span class="bp">self</span><span class="o">.</span><span class="n">_process_with_timeout</span><span class="p">(</span><span class="n">input_data</span><span class="p">,</span> <span class="n">exec_context</span><span class="p">)</span>
+
+            <span class="c1"># 计算执行时间</span>
+            <span class="n">execution_time</span> <span class="o">=</span> <span class="n">time</span><span class="o">.</span><span class="n">time</span><span class="p">()</span> <span class="o">-</span> <span class="n">start_time</span>
+
+            <span class="c1"># 创建成功结果</span>
+            <span class="n">execution_result</span> <span class="o">=</span> <span class="n">ExecutionResult</span><span class="p">(</span>
+                <span class="n">execution_id</span><span class="o">=</span><span class="n">exec_context</span><span class="o">.</span><span class="n">execution_id</span><span class="p">,</span>
+                <span class="n">adapter_id</span><span class="o">=</span><span class="bp">self</span><span class="o">.</span><span class="n">adapter_id</span><span class="p">,</span>
+                <span class="n">status</span><span class="o">=</span><span class="s2">&quot;success&quot;</span><span class="p">,</span>
+                <span class="n">output</span><span class="o">=</span><span class="n">result</span><span class="p">,</span>
+                <span class="n">execution_time</span><span class="o">=</span><span class="n">execution_time</span><span class="p">,</span>
+                <span class="n">performance_metrics</span><span class="o">=</span><span class="bp">self</span><span class="o">.</span><span class="n">_collect_performance_metrics</span><span class="p">(),</span>
+            <span class="p">)</span>
+
+            <span class="c1"># 记录性能指标</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">performance_monitor</span><span class="o">.</span><span class="n">record_execution</span><span class="p">(</span><span class="n">execution_result</span><span class="p">)</span>
+
+            <span class="bp">self</span><span class="o">.</span><span class="n">logger</span><span class="o">.</span><span class="n">info</span><span class="p">(</span>
+                <span class="sa">f</span><span class="s2">&quot;Successfully processed request </span><span class="si">{</span><span class="n">exec_context</span><span class="o">.</span><span class="n">execution_id</span><span class="si">}</span><span class="s2"> in </span><span class="si">{</span><span class="n">execution_time</span><span class="si">:</span><span class="s2">.3f</span><span class="si">}</span><span class="s2">s&quot;</span>
+            <span class="p">)</span>
+
+            <span class="k">return</span> <span class="n">execution_result</span>
+
+        <span class="k">except</span> <span class="n">asyncio</span><span class="o">.</span><span class="n">TimeoutError</span><span class="p">:</span>
+            <span class="n">execution_time</span> <span class="o">=</span> <span class="n">time</span><span class="o">.</span><span class="n">time</span><span class="p">()</span> <span class="o">-</span> <span class="n">start_time</span>
+            <span class="n">error_msg</span> <span class="o">=</span> <span class="sa">f</span><span class="s2">&quot;Execution timeout after </span><span class="si">{</span><span class="n">execution_time</span><span class="si">:</span><span class="s2">.3f</span><span class="si">}</span><span class="s2">s&quot;</span>
+
+            <span class="n">execution_result</span> <span class="o">=</span> <span class="n">ExecutionResult</span><span class="p">(</span>
+                <span class="n">execution_id</span><span class="o">=</span><span class="n">exec_context</span><span class="o">.</span><span class="n">execution_id</span><span class="p">,</span>
+                <span class="n">adapter_id</span><span class="o">=</span><span class="bp">self</span><span class="o">.</span><span class="n">adapter_id</span><span class="p">,</span>
+                <span class="n">status</span><span class="o">=</span><span class="s2">&quot;timeout&quot;</span><span class="p">,</span>
+                <span class="n">error</span><span class="o">=</span><span class="n">error_msg</span><span class="p">,</span>
+                <span class="n">execution_time</span><span class="o">=</span><span class="n">execution_time</span><span class="p">,</span>
+            <span class="p">)</span>
+
+            <span class="k">with</span> <span class="bp">self</span><span class="o">.</span><span class="n">_lock</span><span class="p">:</span>
+                <span class="bp">self</span><span class="o">.</span><span class="n">error_count</span> <span class="o">+=</span> <span class="mi">1</span>
+
+            <span class="bp">self</span><span class="o">.</span><span class="n">performance_monitor</span><span class="o">.</span><span class="n">record_execution</span><span class="p">(</span><span class="n">execution_result</span><span class="p">)</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">logger</span><span class="o">.</span><span class="n">error</span><span class="p">(</span>
+                <span class="sa">f</span><span class="s2">&quot;Request </span><span class="si">{</span><span class="n">exec_context</span><span class="o">.</span><span class="n">execution_id</span><span class="si">}</span><span class="s2"> timed out after </span><span class="si">{</span><span class="n">execution_time</span><span class="si">:</span><span class="s2">.3f</span><span class="si">}</span><span class="s2">s&quot;</span>
+            <span class="p">)</span>
+
+            <span class="k">return</span> <span class="n">execution_result</span>
+
+        <span class="k">except</span> <span class="ne">Exception</span> <span class="k">as</span> <span class="n">e</span><span class="p">:</span>
+            <span class="n">execution_time</span> <span class="o">=</span> <span class="n">time</span><span class="o">.</span><span class="n">time</span><span class="p">()</span> <span class="o">-</span> <span class="n">start_time</span>
+
+            <span class="c1"># 处理异常</span>
+            <span class="k">if</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">e</span><span class="p">,</span> <span class="n">BaseAdapterException</span><span class="p">):</span>
+                <span class="n">error_details</span> <span class="o">=</span> <span class="n">e</span><span class="o">.</span><span class="n">to_dict</span><span class="p">()</span>
+                <span class="n">error_msg</span> <span class="o">=</span> <span class="n">e</span><span class="o">.</span><span class="n">message</span>
+            <span class="k">else</span><span class="p">:</span>
+                <span class="n">error_details</span> <span class="o">=</span> <span class="p">{</span>
+                    <span class="s2">&quot;exception_type&quot;</span><span class="p">:</span> <span class="nb">type</span><span class="p">(</span><span class="n">e</span><span class="p">)</span><span class="o">.</span><span class="vm">__name__</span><span class="p">,</span>
+                    <span class="s2">&quot;traceback&quot;</span><span class="p">:</span> <span class="n">traceback</span><span class="o">.</span><span class="n">format_exc</span><span class="p">(),</span>
+                <span class="p">}</span>
+                <span class="n">error_msg</span> <span class="o">=</span> <span class="nb">str</span><span class="p">(</span><span class="n">e</span><span class="p">)</span>
+
+            <span class="n">execution_result</span> <span class="o">=</span> <span class="n">ExecutionResult</span><span class="p">(</span>
+                <span class="n">execution_id</span><span class="o">=</span><span class="n">exec_context</span><span class="o">.</span><span class="n">execution_id</span><span class="p">,</span>
+                <span class="n">adapter_id</span><span class="o">=</span><span class="bp">self</span><span class="o">.</span><span class="n">adapter_id</span><span class="p">,</span>
+                <span class="n">status</span><span class="o">=</span><span class="s2">&quot;error&quot;</span><span class="p">,</span>
+                <span class="n">error</span><span class="o">=</span><span class="n">error_msg</span><span class="p">,</span>
+                <span class="n">error_details</span><span class="o">=</span><span class="n">error_details</span><span class="p">,</span>
+                <span class="n">execution_time</span><span class="o">=</span><span class="n">execution_time</span><span class="p">,</span>
+            <span class="p">)</span>
+
+            <span class="k">with</span> <span class="bp">self</span><span class="o">.</span><span class="n">_lock</span><span class="p">:</span>
+                <span class="bp">self</span><span class="o">.</span><span class="n">error_count</span> <span class="o">+=</span> <span class="mi">1</span>
+
+            <span class="bp">self</span><span class="o">.</span><span class="n">performance_monitor</span><span class="o">.</span><span class="n">record_execution</span><span class="p">(</span><span class="n">execution_result</span><span class="p">)</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">logger</span><span class="o">.</span><span class="n">error</span><span class="p">(</span>
+                <span class="sa">f</span><span class="s2">&quot;Request </span><span class="si">{</span><span class="n">exec_context</span><span class="o">.</span><span class="n">execution_id</span><span class="si">}</span><span class="s2"> failed: </span><span class="si">{</span><span class="n">error_msg</span><span class="si">}</span><span class="s2">&quot;</span>
+            <span class="p">)</span>
+
+            <span class="k">return</span> <span class="n">execution_result</span>
+
+        <span class="k">finally</span><span class="p">:</span>
+            <span class="c1"># 恢复状态</span>
+            <span class="k">with</span> <span class="bp">self</span><span class="o">.</span><span class="n">_lock</span><span class="p">:</span>
+                <span class="bp">self</span><span class="o">.</span><span class="n">status</span> <span class="o">=</span> <span class="n">AdapterStatus</span><span class="o">.</span><span class="n">LOADED</span>
+                <span class="bp">self</span><span class="o">.</span><span class="n">is_running</span> <span class="o">=</span> <span class="kc">False</span></div>
+
+
+    <span class="k">async</span> <span class="k">def</span><span class="w"> </span><span class="nf">_process_with_timeout</span><span class="p">(</span>
+        <span class="bp">self</span><span class="p">,</span> <span class="n">input_data</span><span class="p">:</span> <span class="n">Any</span><span class="p">,</span> <span class="n">context</span><span class="p">:</span> <span class="n">ExecutionContext</span>
+    <span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Any</span><span class="p">:</span>
+<span class="w">        </span><span class="sd">&quot;&quot;&quot;带超时的处理方法&quot;&quot;&quot;</span>
+        <span class="k">if</span> <span class="n">context</span><span class="o">.</span><span class="n">timeout</span><span class="p">:</span>
+            <span class="k">return</span> <span class="k">await</span> <span class="n">asyncio</span><span class="o">.</span><span class="n">wait_for</span><span class="p">(</span>
+                <span class="bp">self</span><span class="o">.</span><span class="n">_process_impl</span><span class="p">(</span><span class="n">input_data</span><span class="p">,</span> <span class="n">context</span><span class="p">),</span> <span class="n">timeout</span><span class="o">=</span><span class="n">context</span><span class="o">.</span><span class="n">timeout</span>
+            <span class="p">)</span>
+        <span class="k">else</span><span class="p">:</span>
+            <span class="k">return</span> <span class="k">await</span> <span class="bp">self</span><span class="o">.</span><span class="n">_process_impl</span><span class="p">(</span><span class="n">input_data</span><span class="p">,</span> <span class="n">context</span><span class="p">)</span>
+
+<div class="viewcode-block" id="BaseAdapter.get_capabilities">
+<a class="viewcode-back" href="../../../../api/adapters.html#zishu.adapters.base.BaseAdapter.get_capabilities">[文档]</a>
+    <span class="k">def</span><span class="w"> </span><span class="nf">get_capabilities</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">List</span><span class="p">[</span><span class="n">AdapterCapability</span><span class="p">]:</span>
+<span class="w">        </span><span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">        获取适配器能力列表</span>
+
+<span class="sd">        Returns:</span>
+<span class="sd">            List[AdapterCapability]: 适配器支持的能力列表</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">capabilities</span><span class="o">.</span><span class="n">copy</span><span class="p">()</span></div>
+
+
+<div class="viewcode-block" id="BaseAdapter.health_check">
+<a class="viewcode-back" href="../../../../api/adapters.html#zishu.adapters.base.BaseAdapter.health_check">[文档]</a>
+    <span class="k">async</span> <span class="k">def</span><span class="w"> </span><span class="nf">health_check</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">HealthCheckResult</span><span class="p">:</span>
+<span class="w">        </span><span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">        执行健康检查</span>
+
+<span class="sd">        Returns:</span>
+<span class="sd">            HealthCheckResult: 健康检查结果</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="k">try</span><span class="p">:</span>
+            <span class="c1"># 基础状态检查</span>
+            <span class="n">base_checks</span> <span class="o">=</span> <span class="p">{</span>
+                <span class="s2">&quot;initialized&quot;</span><span class="p">:</span> <span class="bp">self</span><span class="o">.</span><span class="n">is_initialized</span><span class="p">,</span>
+                <span class="s2">&quot;not_running&quot;</span><span class="p">:</span> <span class="ow">not</span> <span class="bp">self</span><span class="o">.</span><span class="n">is_running</span><span class="p">,</span>
+                <span class="s2">&quot;status_healthy&quot;</span><span class="p">:</span> <span class="bp">self</span><span class="o">.</span><span class="n">status</span>
+                <span class="ow">not</span> <span class="ow">in</span> <span class="p">[</span><span class="n">AdapterStatus</span><span class="o">.</span><span class="n">ERROR</span><span class="p">,</span> <span class="n">AdapterStatus</span><span class="o">.</span><span class="n">DEPRECATED</span><span class="p">],</span>
+            <span class="p">}</span>
+
+            <span class="c1"># 执行具体健康检查</span>
+            <span class="n">impl_result</span> <span class="o">=</span> <span class="k">await</span> <span class="bp">self</span><span class="o">.</span><span class="n">_health_check_impl</span><span class="p">()</span>
+
+            <span class="c1"># 合并检查结果</span>
+            <span class="n">all_checks</span> <span class="o">=</span> <span class="p">{</span><span class="o">**</span><span class="n">base_checks</span><span class="p">,</span> <span class="o">**</span><span class="n">impl_result</span><span class="o">.</span><span class="n">checks</span><span class="p">}</span>
+            <span class="n">is_healthy</span> <span class="o">=</span> <span class="nb">all</span><span class="p">(</span><span class="n">all_checks</span><span class="o">.</span><span class="n">values</span><span class="p">())</span>
+
+            <span class="c1"># 确定整体状态</span>
+            <span class="k">if</span> <span class="n">is_healthy</span><span class="p">:</span>
+                <span class="n">status</span> <span class="o">=</span> <span class="s2">&quot;healthy&quot;</span>
+            <span class="k">elif</span> <span class="nb">any</span><span class="p">(</span><span class="n">all_checks</span><span class="o">.</span><span class="n">values</span><span class="p">()):</span>
+                <span class="n">status</span> <span class="o">=</span> <span class="s2">&quot;degraded&quot;</span>
+            <span class="k">else</span><span class="p">:</span>
+                <span class="n">status</span> <span class="o">=</span> <span class="s2">&quot;unhealthy&quot;</span>
+
+            <span class="c1"># 添加性能指标</span>
+            <span class="n">performance_summary</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">performance_monitor</span><span class="o">.</span><span class="n">get_performance_summary</span><span class="p">()</span>
+            <span class="n">metrics</span> <span class="o">=</span> <span class="p">{</span><span class="o">**</span><span class="n">impl_result</span><span class="o">.</span><span class="n">metrics</span><span class="p">,</span> <span class="o">**</span><span class="n">performance_summary</span><span class="p">}</span>
+
+            <span class="k">return</span> <span class="n">HealthCheckResult</span><span class="p">(</span>
+                <span class="n">is_healthy</span><span class="o">=</span><span class="n">is_healthy</span><span class="p">,</span>
+                <span class="n">status</span><span class="o">=</span><span class="n">status</span><span class="p">,</span>
+                <span class="n">checks</span><span class="o">=</span><span class="n">all_checks</span><span class="p">,</span>
+                <span class="n">metrics</span><span class="o">=</span><span class="n">metrics</span><span class="p">,</span>
+                <span class="n">issues</span><span class="o">=</span><span class="n">impl_result</span><span class="o">.</span><span class="n">issues</span><span class="p">,</span>
+                <span class="n">recommendations</span><span class="o">=</span><span class="n">impl_result</span><span class="o">.</span><span class="n">recommendations</span><span class="p">,</span>
+            <span class="p">)</span>
+
+        <span class="k">except</span> <span class="ne">Exception</span> <span class="k">as</span> <span class="n">e</span><span class="p">:</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">logger</span><span class="o">.</span><span class="n">error</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;Health check failed for adapter </span><span class="si">{</span><span class="bp">self</span><span class="o">.</span><span class="n">adapter_id</span><span class="si">}</span><span class="s2">: </span><span class="si">{</span><span class="n">e</span><span class="si">}</span><span class="s2">&quot;</span><span class="p">)</span>
+            <span class="k">return</span> <span class="n">HealthCheckResult</span><span class="p">(</span>
+                <span class="n">is_healthy</span><span class="o">=</span><span class="kc">False</span><span class="p">,</span>
+                <span class="n">status</span><span class="o">=</span><span class="s2">&quot;unknown&quot;</span><span class="p">,</span>
+                <span class="n">checks</span><span class="o">=</span><span class="p">{</span><span class="s2">&quot;health_check_execution&quot;</span><span class="p">:</span> <span class="kc">False</span><span class="p">},</span>
+                <span class="n">issues</span><span class="o">=</span><span class="p">[</span><span class="sa">f</span><span class="s2">&quot;Health check execution failed: </span><span class="si">{</span><span class="nb">str</span><span class="p">(</span><span class="n">e</span><span class="p">)</span><span class="si">}</span><span class="s2">&quot;</span><span class="p">],</span>
+            <span class="p">)</span></div>
+
+
+<div class="viewcode-block" id="BaseAdapter.cleanup">
+<a class="viewcode-back" href="../../../../api/adapters.html#zishu.adapters.base.BaseAdapter.cleanup">[文档]</a>
+    <span class="k">async</span> <span class="k">def</span><span class="w"> </span><span class="nf">cleanup</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="kc">None</span><span class="p">:</span>
+<span class="w">        </span><span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">        清理适配器资源</span>
+
+<span class="sd">        这个方法会：</span>
+<span class="sd">        1. 执行具体的清理逻辑</span>
+<span class="sd">        2. 运行清理回调</span>
+<span class="sd">        3. 释放通用资源</span>
+<span class="sd">        4. 更新状态</span>
+
+<span class="sd">        Raises:</span>
+<span class="sd">            AdapterExecutionError: 清理失败时抛出</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="k">try</span><span class="p">:</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">logger</span><span class="o">.</span><span class="n">info</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;Cleaning up adapter </span><span class="si">{</span><span class="bp">self</span><span class="o">.</span><span class="n">adapter_id</span><span class="si">}</span><span class="s2">&quot;</span><span class="p">)</span>
+
+            <span class="c1"># 执行具体清理逻辑</span>
+            <span class="k">await</span> <span class="bp">self</span><span class="o">.</span><span class="n">_cleanup_impl</span><span class="p">()</span>
+
+            <span class="c1"># 运行清理回调</span>
+            <span class="k">for</span> <span class="n">callback</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">_cleanup_callbacks</span><span class="p">:</span>
+                <span class="k">try</span><span class="p">:</span>
+                    <span class="k">if</span> <span class="n">asyncio</span><span class="o">.</span><span class="n">iscoroutinefunction</span><span class="p">(</span><span class="n">callback</span><span class="p">):</span>
+                        <span class="k">await</span> <span class="n">callback</span><span class="p">()</span>
+                    <span class="k">else</span><span class="p">:</span>
+                        <span class="n">callback</span><span class="p">()</span>
+                <span class="k">except</span> <span class="ne">Exception</span> <span class="k">as</span> <span class="n">e</span><span class="p">:</span>
+                    <span class="bp">self</span><span class="o">.</span><span class="n">logger</span><span class="o">.</span><span class="n">warning</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;Cleanup callback failed: </span><span class="si">{</span><span class="n">e</span><span class="si">}</span><span class="s2">&quot;</span><span class="p">)</span>
+
+            <span class="c1"># 清理通用资源</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">_resources</span><span class="o">.</span><span class="n">clear</span><span class="p">()</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">_cleanup_callbacks</span><span class="o">.</span><span class="n">clear</span><span class="p">()</span>
+
+            <span class="c1"># 更新状态</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">is_initialized</span> <span class="o">=</span> <span class="kc">False</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">is_running</span> <span class="o">=</span> <span class="kc">False</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">status</span> <span class="o">=</span> <span class="n">AdapterStatus</span><span class="o">.</span><span class="n">UNREGISTERED</span>
+
+            <span class="bp">self</span><span class="o">.</span><span class="n">logger</span><span class="o">.</span><span class="n">info</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;Adapter </span><span class="si">{</span><span class="bp">self</span><span class="o">.</span><span class="n">adapter_id</span><span class="si">}</span><span class="s2"> cleaned up successfully&quot;</span><span class="p">)</span>
+
+        <span class="k">except</span> <span class="ne">Exception</span> <span class="k">as</span> <span class="n">e</span><span class="p">:</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">logger</span><span class="o">.</span><span class="n">error</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;Failed to cleanup adapter </span><span class="si">{</span><span class="bp">self</span><span class="o">.</span><span class="n">adapter_id</span><span class="si">}</span><span class="s2">: </span><span class="si">{</span><span class="n">e</span><span class="si">}</span><span class="s2">&quot;</span><span class="p">)</span>
+
+            <span class="k">if</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">e</span><span class="p">,</span> <span class="n">BaseAdapterException</span><span class="p">):</span>
+                <span class="k">raise</span>
+            <span class="k">else</span><span class="p">:</span>
+                <span class="k">raise</span> <span class="n">AdapterExecutionError</span><span class="p">(</span>
+                    <span class="sa">f</span><span class="s2">&quot;Unexpected error during cleanup: </span><span class="si">{</span><span class="nb">str</span><span class="p">(</span><span class="n">e</span><span class="p">)</span><span class="si">}</span><span class="s2">&quot;</span><span class="p">,</span>
+                    <span class="n">adapter_id</span><span class="o">=</span><span class="bp">self</span><span class="o">.</span><span class="n">adapter_id</span><span class="p">,</span>
+                    <span class="n">cause</span><span class="o">=</span><span class="n">e</span><span class="p">,</span>
+                <span class="p">)</span></div>
+
+
+    <span class="c1"># ================================</span>
+    <span class="c1"># 属性访问方法</span>
+    <span class="c1"># ================================</span>
+
+<div class="viewcode-block" id="BaseAdapter.get_metadata">
+<a class="viewcode-back" href="../../../../api/adapters.html#zishu.adapters.base.BaseAdapter.get_metadata">[文档]</a>
+    <span class="k">def</span><span class="w"> </span><span class="nf">get_metadata</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Optional</span><span class="p">[</span><span class="n">AdapterMetadata</span><span class="p">]:</span>
+<span class="w">        </span><span class="sd">&quot;&quot;&quot;获取适配器元数据&quot;&quot;&quot;</span>
+        <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">metadata</span></div>
+
+
+<div class="viewcode-block" id="BaseAdapter.get_status">
+<a class="viewcode-back" href="../../../../api/adapters.html#zishu.adapters.base.BaseAdapter.get_status">[文档]</a>
+    <span class="k">def</span><span class="w"> </span><span class="nf">get_status</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">AdapterStatus</span><span class="p">:</span>
+<span class="w">        </span><span class="sd">&quot;&quot;&quot;获取适配器状态&quot;&quot;&quot;</span>
+        <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">status</span></div>
+
+
+<div class="viewcode-block" id="BaseAdapter.get_performance_metrics">
+<a class="viewcode-back" href="../../../../api/adapters.html#zishu.adapters.base.BaseAdapter.get_performance_metrics">[文档]</a>
+    <span class="k">def</span><span class="w"> </span><span class="nf">get_performance_metrics</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Dict</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="n">Any</span><span class="p">]:</span>
+<span class="w">        </span><span class="sd">&quot;&quot;&quot;获取性能指标&quot;&quot;&quot;</span>
+        <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">performance_monitor</span><span class="o">.</span><span class="n">get_performance_summary</span><span class="p">()</span></div>
+
+
+<div class="viewcode-block" id="BaseAdapter.get_basic_info">
+<a class="viewcode-back" href="../../../../api/adapters.html#zishu.adapters.base.BaseAdapter.get_basic_info">[文档]</a>
+    <span class="k">def</span><span class="w"> </span><span class="nf">get_basic_info</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Dict</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="n">Any</span><span class="p">]:</span>
+<span class="w">        </span><span class="sd">&quot;&quot;&quot;获取基本信息&quot;&quot;&quot;</span>
+        <span class="k">return</span> <span class="p">{</span>
+            <span class="s2">&quot;adapter_id&quot;</span><span class="p">:</span> <span class="bp">self</span><span class="o">.</span><span class="n">adapter_id</span><span class="p">,</span>
+            <span class="s2">&quot;name&quot;</span><span class="p">:</span> <span class="bp">self</span><span class="o">.</span><span class="n">name</span><span class="p">,</span>
+            <span class="s2">&quot;version&quot;</span><span class="p">:</span> <span class="bp">self</span><span class="o">.</span><span class="n">version</span><span class="p">,</span>
+            <span class="s2">&quot;status&quot;</span><span class="p">:</span> <span class="bp">self</span><span class="o">.</span><span class="n">status</span><span class="o">.</span><span class="n">value</span><span class="p">,</span>
+            <span class="s2">&quot;is_initialized&quot;</span><span class="p">:</span> <span class="bp">self</span><span class="o">.</span><span class="n">is_initialized</span><span class="p">,</span>
+            <span class="s2">&quot;is_running&quot;</span><span class="p">:</span> <span class="bp">self</span><span class="o">.</span><span class="n">is_running</span><span class="p">,</span>
+            <span class="s2">&quot;execution_count&quot;</span><span class="p">:</span> <span class="bp">self</span><span class="o">.</span><span class="n">execution_count</span><span class="p">,</span>
+            <span class="s2">&quot;error_count&quot;</span><span class="p">:</span> <span class="bp">self</span><span class="o">.</span><span class="n">error_count</span><span class="p">,</span>
+            <span class="s2">&quot;initialization_time&quot;</span><span class="p">:</span> <span class="bp">self</span><span class="o">.</span><span class="n">initialization_time</span><span class="o">.</span><span class="n">isoformat</span><span class="p">()</span>
+            <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">initialization_time</span>
+            <span class="k">else</span> <span class="kc">None</span><span class="p">,</span>
+            <span class="s2">&quot;last_activity_time&quot;</span><span class="p">:</span> <span class="bp">self</span><span class="o">.</span><span class="n">last_activity_time</span><span class="o">.</span><span class="n">isoformat</span><span class="p">()</span>
+            <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">last_activity_time</span>
+            <span class="k">else</span> <span class="kc">None</span><span class="p">,</span>
+        <span class="p">}</span></div>
+
+
+    <span class="c1"># ================================</span>
+    <span class="c1"># 资源管理方法</span>
+    <span class="c1"># ================================</span>
+
+<div class="viewcode-block" id="BaseAdapter.register_resource">
+<a class="viewcode-back" href="../../../../api/adapters.html#zishu.adapters.base.BaseAdapter.register_resource">[文档]</a>
+    <span class="k">def</span><span class="w"> </span><span class="nf">register_resource</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">name</span><span class="p">:</span> <span class="nb">str</span><span class="p">,</span> <span class="n">resource</span><span class="p">:</span> <span class="n">Any</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="kc">None</span><span class="p">:</span>
+<span class="w">        </span><span class="sd">&quot;&quot;&quot;注册需要清理的资源&quot;&quot;&quot;</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">_resources</span><span class="p">[</span><span class="n">name</span><span class="p">]</span> <span class="o">=</span> <span class="n">resource</span></div>
+
+
+<div class="viewcode-block" id="BaseAdapter.get_resource">
+<a class="viewcode-back" href="../../../../api/adapters.html#zishu.adapters.base.BaseAdapter.get_resource">[文档]</a>
+    <span class="k">def</span><span class="w"> </span><span class="nf">get_resource</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">name</span><span class="p">:</span> <span class="nb">str</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Any</span><span class="p">:</span>
+<span class="w">        </span><span class="sd">&quot;&quot;&quot;获取已注册的资源&quot;&quot;&quot;</span>
+        <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">_resources</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="n">name</span><span class="p">)</span></div>
+
+
+<div class="viewcode-block" id="BaseAdapter.register_cleanup_callback">
+<a class="viewcode-back" href="../../../../api/adapters.html#zishu.adapters.base.BaseAdapter.register_cleanup_callback">[文档]</a>
+    <span class="k">def</span><span class="w"> </span><span class="nf">register_cleanup_callback</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">callback</span><span class="p">:</span> <span class="n">Callable</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="kc">None</span><span class="p">:</span>
+<span class="w">        </span><span class="sd">&quot;&quot;&quot;注册清理回调函数&quot;&quot;&quot;</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">_cleanup_callbacks</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">callback</span><span class="p">)</span></div>
+
+
+    <span class="k">def</span><span class="w"> </span><span class="nf">_collect_performance_metrics</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Dict</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="n">Any</span><span class="p">]:</span>
+<span class="w">        </span><span class="sd">&quot;&quot;&quot;收集性能指标&quot;&quot;&quot;</span>
+        <span class="k">return</span> <span class="p">{</span>
+            <span class="s2">&quot;execution_count&quot;</span><span class="p">:</span> <span class="bp">self</span><span class="o">.</span><span class="n">execution_count</span><span class="p">,</span>
+            <span class="s2">&quot;error_count&quot;</span><span class="p">:</span> <span class="bp">self</span><span class="o">.</span><span class="n">error_count</span><span class="p">,</span>
+            <span class="s2">&quot;error_rate&quot;</span><span class="p">:</span> <span class="bp">self</span><span class="o">.</span><span class="n">error_count</span> <span class="o">/</span> <span class="nb">max</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">execution_count</span><span class="p">,</span> <span class="mi">1</span><span class="p">),</span>
+            <span class="s2">&quot;last_activity&quot;</span><span class="p">:</span> <span class="bp">self</span><span class="o">.</span><span class="n">last_activity_time</span><span class="o">.</span><span class="n">isoformat</span><span class="p">()</span>
+            <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">last_activity_time</span>
+            <span class="k">else</span> <span class="kc">None</span><span class="p">,</span>
+        <span class="p">}</span>
+
+    <span class="c1"># ================================</span>
+    <span class="c1"># 上下文管理器支持</span>
+    <span class="c1"># ================================</span>
+
+<div class="viewcode-block" id="BaseAdapter.__aenter__">
+<a class="viewcode-back" href="../../../../api/adapters.html#zishu.adapters.base.BaseAdapter.__aenter__">[文档]</a>
+    <span class="k">async</span> <span class="k">def</span><span class="w"> </span><span class="fm">__aenter__</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+<span class="w">        </span><span class="sd">&quot;&quot;&quot;异步上下文管理器入口&quot;&quot;&quot;</span>
+        <span class="k">await</span> <span class="bp">self</span><span class="o">.</span><span class="n">initialize</span><span class="p">()</span>
+        <span class="k">return</span> <span class="bp">self</span></div>
+
+
+<div class="viewcode-block" id="BaseAdapter.__aexit__">
+<a class="viewcode-back" href="../../../../api/adapters.html#zishu.adapters.base.BaseAdapter.__aexit__">[文档]</a>
+    <span class="k">async</span> <span class="k">def</span><span class="w"> </span><span class="fm">__aexit__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">exc_type</span><span class="p">,</span> <span class="n">exc_val</span><span class="p">,</span> <span class="n">exc_tb</span><span class="p">):</span>
+<span class="w">        </span><span class="sd">&quot;&quot;&quot;异步上下文管理器出口&quot;&quot;&quot;</span>
+        <span class="k">await</span> <span class="bp">self</span><span class="o">.</span><span class="n">cleanup</span><span class="p">()</span></div>
+
+
+    <span class="c1"># ================================</span>
+    <span class="c1"># 字符串表示</span>
+    <span class="c1"># ================================</span>
+
+    <span class="k">def</span><span class="w"> </span><span class="fm">__str__</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">str</span><span class="p">:</span>
+        <span class="k">return</span> <span class="sa">f</span><span class="s2">&quot;Adapter(id=</span><span class="si">{</span><span class="bp">self</span><span class="o">.</span><span class="n">adapter_id</span><span class="si">}</span><span class="s2">, name=</span><span class="si">{</span><span class="bp">self</span><span class="o">.</span><span class="n">name</span><span class="si">}</span><span class="s2">, status=</span><span class="si">{</span><span class="bp">self</span><span class="o">.</span><span class="n">status</span><span class="o">.</span><span class="n">value</span><span class="si">}</span><span class="s2">)&quot;</span>
+
+    <span class="k">def</span><span class="w"> </span><span class="fm">__repr__</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">str</span><span class="p">:</span>
+        <span class="k">return</span> <span class="p">(</span>
+            <span class="sa">f</span><span class="s2">&quot;</span><span class="si">{</span><span class="bp">self</span><span class="o">.</span><span class="vm">__class__</span><span class="o">.</span><span class="vm">__name__</span><span class="si">}</span><span class="s2">(adapter_id=&#39;</span><span class="si">{</span><span class="bp">self</span><span class="o">.</span><span class="n">adapter_id</span><span class="si">}</span><span class="s2">&#39;, &quot;</span>
+            <span class="sa">f</span><span class="s2">&quot;name=&#39;</span><span class="si">{</span><span class="bp">self</span><span class="o">.</span><span class="n">name</span><span class="si">}</span><span class="s2">&#39;, version=&#39;</span><span class="si">{</span><span class="bp">self</span><span class="o">.</span><span class="n">version</span><span class="si">}</span><span class="s2">&#39;, status=</span><span class="si">{</span><span class="bp">self</span><span class="o">.</span><span class="n">status</span><span class="o">.</span><span class="n">value</span><span class="si">}</span><span class="s2">)&quot;</span>
+        <span class="p">)</span></div>
+
+
+
+<span class="c1"># ================================</span>
+<span class="c1"># 适配器工厂和注册器</span>
+<span class="c1"># ================================</span>
+
+
+<span class="k">class</span><span class="w"> </span><span class="nc">AdapterFactory</span><span class="p">:</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;适配器工厂类&quot;&quot;&quot;</span>
+
+    <span class="n">_registry</span><span class="p">:</span> <span class="n">Dict</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="nb">type</span><span class="p">]</span> <span class="o">=</span> <span class="p">{}</span>
+
+    <span class="nd">@classmethod</span>
+    <span class="k">def</span><span class="w"> </span><span class="nf">register</span><span class="p">(</span><span class="bp">cls</span><span class="p">,</span> <span class="n">adapter_type</span><span class="p">:</span> <span class="nb">str</span><span class="p">,</span> <span class="n">adapter_class</span><span class="p">:</span> <span class="nb">type</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="kc">None</span><span class="p">:</span>
+<span class="w">        </span><span class="sd">&quot;&quot;&quot;注册适配器类&quot;&quot;&quot;</span>
+        <span class="k">if</span> <span class="ow">not</span> <span class="nb">issubclass</span><span class="p">(</span><span class="n">adapter_class</span><span class="p">,</span> <span class="n">BaseAdapter</span><span class="p">):</span>
+            <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;Adapter class must inherit from BaseAdapter&quot;</span><span class="p">)</span>
+
+        <span class="bp">cls</span><span class="o">.</span><span class="n">_registry</span><span class="p">[</span><span class="n">adapter_type</span><span class="p">]</span> <span class="o">=</span> <span class="n">adapter_class</span>
+        <span class="n">logger</span><span class="o">.</span><span class="n">info</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;Registered adapter type: </span><span class="si">{</span><span class="n">adapter_type</span><span class="si">}</span><span class="s2">&quot;</span><span class="p">)</span>
+
+    <span class="nd">@classmethod</span>
+    <span class="k">def</span><span class="w"> </span><span class="nf">create</span><span class="p">(</span><span class="bp">cls</span><span class="p">,</span> <span class="n">adapter_type</span><span class="p">:</span> <span class="nb">str</span><span class="p">,</span> <span class="n">config</span><span class="p">:</span> <span class="n">Dict</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="n">Any</span><span class="p">])</span> <span class="o">-&gt;</span> <span class="n">BaseAdapter</span><span class="p">:</span>
+<span class="w">        </span><span class="sd">&quot;&quot;&quot;创建适配器实例&quot;&quot;&quot;</span>
+        <span class="k">if</span> <span class="n">adapter_type</span> <span class="ow">not</span> <span class="ow">in</span> <span class="bp">cls</span><span class="o">.</span><span class="n">_registry</span><span class="p">:</span>
+            <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;Unknown adapter type: </span><span class="si">{</span><span class="n">adapter_type</span><span class="si">}</span><span class="s2">&quot;</span><span class="p">)</span>
+
+        <span class="n">adapter_class</span> <span class="o">=</span> <span class="bp">cls</span><span class="o">.</span><span class="n">_registry</span><span class="p">[</span><span class="n">adapter_type</span><span class="p">]</span>
+        <span class="k">return</span> <span class="n">adapter_class</span><span class="p">(</span><span class="n">config</span><span class="p">)</span>
+
+    <span class="nd">@classmethod</span>
+    <span class="k">def</span><span class="w"> </span><span class="nf">get_registered_types</span><span class="p">(</span><span class="bp">cls</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">List</span><span class="p">[</span><span class="nb">str</span><span class="p">]:</span>
+<span class="w">        </span><span class="sd">&quot;&quot;&quot;获取已注册的适配器类型&quot;&quot;&quot;</span>
+        <span class="k">return</span> <span class="nb">list</span><span class="p">(</span><span class="bp">cls</span><span class="o">.</span><span class="n">_registry</span><span class="o">.</span><span class="n">keys</span><span class="p">())</span>
+
+
+<span class="c1"># ================================</span>
+<span class="c1"># 装饰器和工具函数</span>
+<span class="c1"># ================================</span>
+
+
+<span class="k">def</span><span class="w"> </span><span class="nf">adapter_method</span><span class="p">(</span><span class="n">func</span><span class="p">:</span> <span class="n">Callable</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Callable</span><span class="p">:</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;适配器方法装饰器，用于统一异常处理和日志记录&quot;&quot;&quot;</span>
+
+    <span class="k">async</span> <span class="k">def</span><span class="w"> </span><span class="nf">wrapper</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="o">*</span><span class="n">args</span><span class="p">,</span> <span class="o">**</span><span class="n">kwargs</span><span class="p">):</span>
+        <span class="n">method_name</span> <span class="o">=</span> <span class="n">func</span><span class="o">.</span><span class="vm">__name__</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">logger</span><span class="o">.</span><span class="n">debug</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;Calling </span><span class="si">{</span><span class="n">method_name</span><span class="si">}</span><span class="s2"> on adapter </span><span class="si">{</span><span class="bp">self</span><span class="o">.</span><span class="n">adapter_id</span><span class="si">}</span><span class="s2">&quot;</span><span class="p">)</span>
+
+        <span class="k">try</span><span class="p">:</span>
+            <span class="n">result</span> <span class="o">=</span> <span class="k">await</span> <span class="n">func</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="o">*</span><span class="n">args</span><span class="p">,</span> <span class="o">**</span><span class="n">kwargs</span><span class="p">)</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">logger</span><span class="o">.</span><span class="n">debug</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;Successfully completed </span><span class="si">{</span><span class="n">method_name</span><span class="si">}</span><span class="s2">&quot;</span><span class="p">)</span>
+            <span class="k">return</span> <span class="n">result</span>
+        <span class="k">except</span> <span class="ne">Exception</span> <span class="k">as</span> <span class="n">e</span><span class="p">:</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">logger</span><span class="o">.</span><span class="n">error</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;Error in </span><span class="si">{</span><span class="n">method_name</span><span class="si">}</span><span class="s2">: </span><span class="si">{</span><span class="n">e</span><span class="si">}</span><span class="s2">&quot;</span><span class="p">)</span>
+            <span class="k">raise</span>
+
+    <span class="k">return</span> <span class="n">wrapper</span>
+
+
+<span class="k">def</span><span class="w"> </span><span class="nf">validate_input</span><span class="p">(</span>
+    <span class="n">validator</span><span class="p">:</span> <span class="n">Callable</span><span class="p">[[</span><span class="n">Any</span><span class="p">],</span> <span class="nb">bool</span><span class="p">],</span> <span class="n">error_message</span><span class="p">:</span> <span class="nb">str</span> <span class="o">=</span> <span class="s2">&quot;Invalid input&quot;</span>
+<span class="p">):</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;输入验证装饰器&quot;&quot;&quot;</span>
+
+    <span class="k">def</span><span class="w"> </span><span class="nf">decorator</span><span class="p">(</span><span class="n">func</span><span class="p">:</span> <span class="n">Callable</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Callable</span><span class="p">:</span>
+        <span class="k">async</span> <span class="k">def</span><span class="w"> </span><span class="nf">wrapper</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">input_data</span><span class="p">:</span> <span class="n">Any</span><span class="p">,</span> <span class="o">*</span><span class="n">args</span><span class="p">,</span> <span class="o">**</span><span class="n">kwargs</span><span class="p">):</span>
+            <span class="k">if</span> <span class="ow">not</span> <span class="n">validator</span><span class="p">(</span><span class="n">input_data</span><span class="p">):</span>
+                <span class="k">raise</span> <span class="n">AdapterValidationError</span><span class="p">(</span>
+                    <span class="n">error_message</span><span class="p">,</span>
+                    <span class="n">adapter_id</span><span class="o">=</span><span class="nb">getattr</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="s2">&quot;adapter_id&quot;</span><span class="p">,</span> <span class="s2">&quot;unknown&quot;</span><span class="p">),</span>
+                    <span class="n">context</span><span class="o">=</span><span class="p">{</span><span class="s2">&quot;input_type&quot;</span><span class="p">:</span> <span class="nb">type</span><span class="p">(</span><span class="n">input_data</span><span class="p">)</span><span class="o">.</span><span class="vm">__name__</span><span class="p">},</span>
+                <span class="p">)</span>
+            <span class="k">return</span> <span class="k">await</span> <span class="n">func</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">input_data</span><span class="p">,</span> <span class="o">*</span><span class="n">args</span><span class="p">,</span> <span class="o">**</span><span class="n">kwargs</span><span class="p">)</span>
+
+        <span class="k">return</span> <span class="n">wrapper</span>
+
+    <span class="k">return</span> <span class="n">decorator</span>
+</pre></div>
+
+           </div>
+          </div>
+          <footer>
+
+  <hr/>
+
+  <div role="contentinfo">
+    <p>&#169; 版权所有 2025, Zishu-Sensei Team。
+      <span class="lastupdated">最后更新于 2025-10-17 21:21:36.
+      </span></p>
+  </div>
+
+  利用 <a href="https://www.sphinx-doc.org/">Sphinx</a> 构建，使用的 
+    <a href="https://github.com/readthedocs/sphinx_rtd_theme">主题</a>
+    由 <a href="https://readthedocs.org">Read the Docs</a> 开发.
+   
+
+</footer>
+        </div>
+      </div>
+    </section>
+  </div>
+  <script>
+      jQuery(function () {
+          SphinxRtdTheme.Navigation.enable(true);
+      });
+  </script> 
+
+</body>
+</html>

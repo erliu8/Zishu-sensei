@@ -47,13 +47,35 @@ class MockAdapterA(BaseAdapter):
         }
     
     def _get_capabilities_impl(self):
-        return [AdapterCapability.TEXT_PROCESSING]
+        from zishu.adapters.base.metadata import AdapterCapability, CapabilityCategory
+        return [
+            AdapterCapability(
+                name="text_processing",
+                category=CapabilityCategory.TEXT_PROCESSING,
+                description="文本预处理功能"
+            )
+        ]
     
     async def _health_check_impl(self):
         return HealthCheckResult(is_healthy=True, status="healthy")
     
     async def _cleanup_impl(self):
         pass
+        
+    def _load_metadata(self):
+        from datetime import datetime, timezone
+        from zishu.adapters.base.metadata import AdapterMetadata, AdapterVersion
+        return AdapterMetadata(
+            adapter_id="mock-a",
+            name="MockAdapterA",
+            description="Mock adapter for testing",
+            version=AdapterVersion(
+                version="1.0.0",
+                release_date=datetime.now(timezone.utc)
+            ),
+            author="Test",
+            adapter_type="soft"
+        )
 
 
 class MockAdapterB(BaseAdapter):
@@ -83,13 +105,35 @@ class MockAdapterB(BaseAdapter):
         }
     
     def _get_capabilities_impl(self):
-        return [AdapterCapability.TEXT_ANALYSIS]
+        from zishu.adapters.base.metadata import AdapterCapability, CapabilityCategory
+        return [
+            AdapterCapability(
+                name="sentiment_analysis",
+                category=CapabilityCategory.MACHINE_LEARNING,
+                description="情感分析功能"
+            )
+        ]
     
     async def _health_check_impl(self):
         return HealthCheckResult(is_healthy=True, status="healthy")
     
     async def _cleanup_impl(self):
         pass
+        
+    def _load_metadata(self):
+        from datetime import datetime, timezone
+        from zishu.adapters.base.metadata import AdapterMetadata, AdapterVersion
+        return AdapterMetadata(
+            adapter_id="mock-b",
+            name="MockAdapterB",
+            description="Mock adapter for sentiment analysis",
+            version=AdapterVersion(
+                version="1.0.0",
+                release_date=datetime.now(timezone.utc)
+            ),
+            author="Test",
+            adapter_type="intelligent"
+        )
 
 
 class MockAdapterC(BaseAdapter):
@@ -124,17 +168,48 @@ class MockAdapterC(BaseAdapter):
         }
     
     def _get_capabilities_impl(self):
-        return [AdapterCapability.TEXT_GENERATION]
+        from zishu.adapters.base.metadata import AdapterCapability, CapabilityCategory
+        return [
+            AdapterCapability(
+                name="response_generation",
+                category=CapabilityCategory.TEXT_PROCESSING,
+                description="响应生成功能"
+            )
+        ]
     
     async def _health_check_impl(self):
         return HealthCheckResult(is_healthy=True, status="healthy")
     
     async def _cleanup_impl(self):
         pass
+        
+    def _load_metadata(self):
+        from datetime import datetime, timezone
+        from zishu.adapters.base.metadata import AdapterMetadata, AdapterVersion
+        return AdapterMetadata(
+            adapter_id="mock-c",
+            name="MockAdapterC",
+            description="Mock adapter for response generation",
+            version=AdapterVersion(
+                version="1.0.0",
+                release_date=datetime.now(timezone.utc)
+            ),
+            author="Test",
+            adapter_type="soft"
+        )
 
 
 class TestAdapterChain:
     """适配器链测试类"""
+    
+    @pytest.fixture
+    def mock_adapters(self):
+        """创建模拟适配器列表"""
+        return [
+            MockAdapterA(),
+            MockAdapterB(), 
+            MockAdapterC()
+        ]
     
     @pytest.fixture
     def adapter_chain_config(self):
@@ -148,18 +223,6 @@ class TestAdapterChain:
             "timeout": 30.0
         }
     
-    @pytest.fixture
-    async def mock_adapters(self):
-        """创建模拟适配器"""
-        adapter_a = MockAdapterA()
-        adapter_b = MockAdapterB()
-        adapter_c = MockAdapterC()
-        
-        await adapter_a.initialize()
-        await adapter_b.initialize()
-        await adapter_c.initialize()
-        
-        return [adapter_a, adapter_b, adapter_c]
     
     @pytest.fixture
     def adapter_chain(self, adapter_chain_config, mock_adapters):
@@ -188,6 +251,13 @@ class TestAdapterChain:
         
         # Act
         result = await adapter_chain.execute(input_data, context)
+        
+        # Debug information
+        print(f"Execution result: success={result.success}, errors={len(result.errors)}")
+        if result.errors:
+            for i, error in enumerate(result.errors):
+                print(f"Error {i}: {type(error).__name__}: {error}")
+        print(f"Results: {len(result.results)}")
         
         # Assert
         assert result.status == "success"
@@ -285,7 +355,8 @@ class TestAdapterChain:
         # Assert
         assert result.status == "partial_success"
         assert len(result.step_results) == 3
-        assert result.step_results[1] is None or isinstance(result.step_results[1], Exception)
+        # 第二个适配器失败，应返回 error 状态的 ExecutionResult
+        assert result.step_results[1].status == "error"
         assert result.step_results[2] is not None  # Third adapter should still execute
     
     @pytest.mark.asyncio
@@ -298,8 +369,8 @@ class TestAdapterChain:
         
         # Assert
         assert health.is_healthy is True
-        assert health.metadata["total_adapters"] == 3
-        assert health.metadata["healthy_adapters"] == 3
+        assert health.metrics["total_adapters"] == 3
+        assert health.metrics["healthy_adapters"] == 3
     
     @pytest.mark.asyncio
     async def test_chain_metrics(self, adapter_chain):
@@ -327,18 +398,24 @@ class TestAdapterPipeline:
     """适配器管道测试类"""
     
     @pytest.fixture
+    def mock_adapters(self):
+        """创建模拟适配器列表"""
+        return [
+            MockAdapterA(),
+            MockAdapterB(), 
+            MockAdapterC()
+        ]
+    
+    @pytest.fixture
     def pipeline_config(self):
         """创建管道配置"""
         return PipelineConfig(
-            pipeline_id="test-pipeline",
             name="测试管道",
-            stages=[
-                {"name": "preprocessing", "parallel": False},
-                {"name": "analysis", "parallel": True},
-                {"name": "postprocessing", "parallel": False}
-            ],
-            buffer_size=100,
-            batch_size=10
+            adapters=["preprocessing", "analysis", "postprocessing"],
+            strategy=CompositionStrategy.SEQUENTIAL,
+            error_handling="stop",
+            max_retries=3,
+            timeout=30.0
         )
     
     @pytest.fixture
@@ -431,9 +508,12 @@ class TestAdapterPipeline:
         
         # Add slow processing adapter
         slow_adapter = MockAdapterA()
-        slow_adapter._process_impl = AsyncMock(
-            side_effect=lambda x, y: asyncio.sleep(0.1) or {"processed": True}
-        )
+        
+        async def slow_process(x, y):
+            await asyncio.sleep(0.1)
+            return {"processed": True}
+        
+        slow_adapter._process_impl = slow_process
         await slow_adapter.initialize()
         
         await adapter_pipeline.add_adapter_to_stage("preprocessing", slow_adapter)
@@ -456,6 +536,15 @@ class TestAdapterPipeline:
 
 class TestAdapterComposer:
     """适配器组合器测试类"""
+    
+    @pytest.fixture
+    def mock_adapters(self):
+        """创建模拟适配器列表"""
+        return [
+            MockAdapterA(),
+            MockAdapterB(), 
+            MockAdapterC()
+        ]
     
     @pytest.fixture
     def composer(self):
@@ -548,6 +637,15 @@ class TestAdapterComposer:
 class TestCompositionStrategies:
     """组合策略测试类"""
     
+    @pytest.fixture
+    def mock_adapters(self):
+        """创建模拟适配器列表"""
+        return [
+            MockAdapterA(),
+            MockAdapterB(), 
+            MockAdapterC()
+        ]
+    
     @pytest.mark.asyncio
     async def test_fan_out_fan_in_pattern(self, mock_adapters):
         """测试扇出扇入模式"""
@@ -625,6 +723,15 @@ class TestCompositionStrategies:
 @pytest.mark.performance
 class TestCompositionPerformance:
     """组合性能测试"""
+    
+    @pytest.fixture
+    def mock_adapters(self):
+        """创建模拟适配器列表"""
+        return [
+            MockAdapterA(),
+            MockAdapterB(), 
+            MockAdapterC()
+        ]
     
     @pytest.mark.asyncio
     async def test_chain_execution_performance(self, mock_adapters):

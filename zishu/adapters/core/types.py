@@ -89,6 +89,7 @@ class EventType(str, Enum):
     HEALTH_CHECK_PASSED = "health.check_passed"
     HEALTH_CHECK_FAILED = "health.check_failed"
     HEALTH_STATUS_CHANGED = "health.status_changed"
+    ADAPTER_HEALTH_CHANGED = "adapter.health_changed"  # 适配器健康状态变化
 
     # 性能事件
     PERFORMANCE_THRESHOLD_EXCEEDED = "performance.threshold_exceeded"
@@ -189,6 +190,27 @@ class AdapterConfiguration:
     def update(self, config: Dict[str, Any]) -> None:
         """更新配置"""
         self.config.update(config)
+    
+    def copy(self) -> "AdapterConfiguration":
+        """创建配置的深拷贝"""
+        import copy as copy_module
+        return AdapterConfiguration(
+            identity=self.identity,
+            name=self.name,
+            version=self.version,
+            adapter_type=self.adapter_type,
+            adapter_class=self.adapter_class,
+            description=self.description,
+            author=self.author,
+            tags=self.tags.copy() if self.tags else None,
+            config=copy_module.deepcopy(self.config),
+            environment=self.environment.copy(),
+            resources=copy_module.deepcopy(self.resources),
+            dependencies=self.dependencies.copy(),
+            capabilities=self.capabilities.copy(),
+            security_level=self.security_level,
+            priority=self.priority,
+        )
 
 
 @dataclass

@@ -74,6 +74,11 @@ class ServiceNode:
         self.start_attempts = 0
         self.last_start_attempt: Optional[datetime] = None
         self.start_task: Optional[asyncio.Task] = None
+    
+    @property
+    def name(self) -> str:
+        """获取服务名称"""
+        return self.service.name
 
 
 class AdapterServiceOrchestrator:
@@ -120,14 +125,54 @@ class AdapterServiceOrchestrator:
     def services(self) -> Dict[str, AsyncService]:
         """获取所有服务"""
         return {name: node.service for name, node in self._services.items()}
+    
+    @property
+    def is_initialized(self) -> bool:
+        """检查协调器是否已初始化"""
+        return self._status in [ServiceStatus.READY, ServiceStatus.RUNNING]
+    
+    @property
+    def is_running(self) -> bool:
+        """检查协调器是否正在运行"""
+        return self._status == ServiceStatus.RUNNING
 
-    def register_service(self, service: AsyncService) -> None:
+    def register_service(self, service: AsyncService) -> bool:
         """注册服务"""
         if service.name in self._services:
-            raise ValueError(f"Service '{service.name}' already registered")
+            logger.warning(f"Service '{service.name}' already registered")
+            return False
 
         self._services[service.name] = ServiceNode(service)
+        # 重新计算启动顺序
+        self._startup_order = self._calculate_startup_order()
         logger.info(f"Service '{service.name}' registered with orchestrator")
+        return True
+    
+    def unregister_service(self, service_name: str) -> bool:
+        """注销服务"""
+        if service_name not in self._services:
+            logger.warning(f"Service '{service_name}' not found for unregistration")
+            return False
+        
+        # 确保服务已停止
+        service_node = self._services[service_name]
+        if service_node.service.is_running:
+            logger.warning(f"Cannot unregister running service '{service_name}'")
+            return False
+        
+        del self._services[service_name]
+        
+        # 清理依赖关系
+        self._dependencies = [
+            dep for dep in self._dependencies 
+            if dep.service_name != service_name and dep.dependency_name != service_name
+        ]
+        
+        # 重新计算启动顺序
+        self._startup_order = self._calculate_startup_order()
+        
+        logger.info(f"Service '{service_name}' unregistered")
+        return True
 
     def add_dependency(
         self,
@@ -135,7 +180,7 @@ class AdapterServiceOrchestrator:
         dependency_name: str,
         is_hard: bool = True,
         is_optional: bool = False,
-    ) -> None:
+    ) -> bool:
         """添加服务依赖"""
         if service_name not in self._services:
             raise ValueError(f"Service '{service_name}' not registered")
@@ -144,7 +189,7 @@ class AdapterServiceOrchestrator:
 
         # 检查循环依赖
         if self._has_circular_dependency(service_name, dependency_name):
-            raise ValueError(
+            raise CircularDependencyError(
                 f"Circular dependency detected: {service_name} -> {dependency_name}"
             )
 
@@ -167,6 +212,13 @@ class AdapterServiceOrchestrator:
             f"Added dependency: {service_name} -> {dependency_name} "
             f"(hard={is_hard}, optional={is_optional})"
         )
+        
+        # 如果协调器已初始化，重新计算启动顺序
+        if self._status != ServiceStatus.CREATED:
+            self._startup_order = self._calculate_startup_order()
+            logger.info(f"Recalculated startup order: {self._startup_order}")
+        
+        return True
 
     async def initialize(self) -> None:
         """初始化协调器"""
@@ -406,6 +458,12 @@ class AdapterServiceOrchestrator:
                         f"Dependencies not satisfied for service '{service_name}'"
                     )
 
+                # 确保服务已初始化
+                if node.service.status in [ServiceStatus.CREATED, ServiceStatus.FAILED]:
+                    await asyncio.wait_for(
+                        node.service.initialize(), timeout=self.config.startup_timeout
+                    )
+
                 # 启动服务
                 node.start_attempts += 1
                 node.last_start_attempt = datetime.now(timezone.utc)
@@ -439,7 +497,8 @@ class AdapterServiceOrchestrator:
         async def stop_single_service(service_name: str):
             try:
                 node = self._services[service_name]
-                if node.service.is_running:
+                # 尝试停止服务，无论当前状态如何（除了已经停止的）
+                if node.service.status != ServiceStatus.STOPPED:
                     await asyncio.wait_for(
                         node.service.stop(), timeout=self.config.shutdown_timeout
                     )
@@ -539,3 +598,126 @@ class AdapterServiceOrchestrator:
             await asyncio.gather(*tasks, return_exceptions=True)
 
         logger.warning("Emergency shutdown completed")
+    
+    # 测试期望的方法
+    
+    def get_registered_services(self) -> Dict[str, AsyncService]:
+        """获取已注册的服务"""
+        return self.services
+    
+    def get_service_dependencies(self) -> Dict[str, Set[str]]:
+        """获取服务依赖关系"""
+        result = {}
+        for service_name, node in self._services.items():
+            result[service_name] = node.dependencies.copy()
+        return result
+    
+    async def start_all_services(self) -> None:
+        """启动所有服务（别名方法）"""
+        await self.start_all()
+    
+    async def stop_all_services(self) -> None:
+        """停止所有服务（别名方法）"""
+        await self.stop_all()
+    
+    async def start_service(self, service_name: str) -> bool:
+        """启动特定服务"""
+        if service_name not in self._services:
+            logger.error(f"Service '{service_name}' not found")
+            return False
+        
+        try:
+            await self._start_service_with_retry(service_name)
+            return True
+        except Exception as e:
+            logger.error(f"Failed to start service '{service_name}': {e}")
+            raise ServiceStartupError(f"Failed to start service '{service_name}': {e}")
+    
+    async def stop_service(self, service_name: str) -> bool:
+        """停止特定服务"""
+        if service_name not in self._services:
+            logger.error(f"Service '{service_name}' not found")
+            return False
+        
+        try:
+            node = self._services[service_name]
+            if node.service.is_running:
+                await asyncio.wait_for(
+                    node.service.stop(), timeout=self.config.shutdown_timeout
+                )
+            return True
+        except Exception as e:
+            logger.error(f"Failed to stop service '{service_name}': {e}")
+            raise ServiceShutdownError(f"Failed to stop service '{service_name}': {e}")
+    
+    async def check_all_services_health(self) -> Dict[str, HealthCheckResult]:
+        """检查所有服务健康状态（别名方法）"""
+        return await self.get_service_health()
+    
+    async def start_health_monitoring(self) -> None:
+        """启动健康监控"""
+        if self._health_check_task is None or self._health_check_task.done():
+            self._health_check_task = asyncio.create_task(self._health_check_loop())
+            logger.info("Health monitoring started")
+    
+    async def stop_health_monitoring(self) -> None:
+        """停止健康监控"""
+        if self._health_check_task and not self._health_check_task.done():
+            self._health_check_task.cancel()
+            try:
+                await self._health_check_task
+            except asyncio.CancelledError:
+                pass
+            logger.info("Health monitoring stopped")
+    
+    def get_service_status(self, service_name: str) -> Optional[ServiceStatus]:
+        """获取特定服务状态"""
+        if service_name not in self._services:
+            return None
+        return self._services[service_name].service.status
+    
+    def get_all_services_status(self) -> Dict[str, ServiceStatus]:
+        """获取所有服务状态"""
+        return {
+            name: node.service.status 
+            for name, node in self._services.items()
+        }
+    
+    async def check_service_health(self, service_name: str) -> Optional[HealthCheckResult]:
+        """检查特定服务健康状态"""
+        if service_name not in self._services:
+            return None
+        
+        try:
+            node = self._services[service_name]
+            return await node.service.health_check()
+        except Exception as e:
+            return HealthCheckResult(
+                is_healthy=False,
+                status=ServiceHealth.UNHEALTHY,
+                message=f"Health check failed: {str(e)}",
+            )
+    
+    def get_orchestrator_metrics(self) -> Dict[str, Any]:
+        """获取协调器指标"""
+        total_services = len(self._services)
+        running_services = sum(
+            1 for node in self._services.values() 
+            if node.service.status == ServiceStatus.RUNNING
+        )
+        failed_services = sum(
+            1 for node in self._services.values() 
+            if node.service.status == ServiceStatus.ERROR
+        )
+        
+        return {
+            "total_services": total_services,
+            "running_services": running_services,
+            "failed_services": failed_services,
+            "orchestrator_status": self._status.value,
+            "dependencies_count": len(self._dependencies)
+        }
+    
+    async def shutdown(self) -> None:
+        """关闭协调器（别名方法）"""
+        await self.stop_all()

@@ -1,0 +1,1451 @@
+<!DOCTYPE html>
+<html class="writer-html5" lang="zh-CN" data-content_root="../../../../">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>zishu.api.schemas.responses &mdash; Zishu-Sensei Documentation</title>
+      <link rel="stylesheet" type="text/css" href="../../../../_static/pygments.css?v=b86133f3" />
+      <link rel="stylesheet" type="text/css" href="../../../../_static/css/theme.css?v=19f00094" />
+      <link rel="stylesheet" type="text/css" href="../../../../_static/copybutton.css?v=76b2166b" />
+      <link rel="stylesheet" type="text/css" href="../../../../_static/tabs.css?v=a5c4661c" />
+      <link rel="stylesheet" type="text/css" href="../../../../_static/custom.css?v=fcc5c311" />
+
+  
+  <!--[if lt IE 9]>
+    <script src="../../../../_static/js/html5shiv.min.js"></script>
+  <![endif]-->
+  
+        <script src="../../../../_static/jquery.js?v=5d32c60e"></script>
+        <script src="../../../../_static/_sphinx_javascript_frameworks_compat.js?v=2cd50e6c"></script>
+        <script src="../../../../_static/documentation_options.js?v=34088549"></script>
+        <script src="../../../../_static/doctools.js?v=888ff710"></script>
+        <script src="../../../../_static/sphinx_highlight.js?v=dc90522c"></script>
+        <script src="../../../../_static/clipboard.min.js?v=a7894cd8"></script>
+        <script src="../../../../_static/copybutton.js?v=30646c52"></script>
+        <script src="../../../../_static/tabs.js?v=3030b3cb"></script>
+        <script src="../../../../_static/translations.js?v=beaddf03"></script>
+    <script src="../../../../_static/js/theme.js"></script>
+    <link rel="index" title="索引" href="../../../../genindex.html" />
+    <link rel="search" title="搜索" href="../../../../search.html" /> 
+</head>
+
+<body class="wy-body-for-nav"> 
+  <div class="wy-grid-for-nav">
+    <nav data-toggle="wy-nav-shift" class="wy-nav-side">
+      <div class="wy-side-scroll">
+        <div class="wy-side-nav-search"  style="background: #2980B9" >
+
+          
+          
+          <a href="../../../../index.html" class="icon icon-home">
+            Zishu-Sensei
+          </a>
+              <div class="version">
+                1.0
+              </div>
+<div role="search">
+  <form id="rtd-search-form" class="wy-form" action="../../../../search.html" method="get">
+    <input type="text" name="q" placeholder="搜索文档" aria-label="搜索文档" />
+    <input type="hidden" name="check_keywords" value="yes" />
+    <input type="hidden" name="area" value="default" />
+  </form>
+</div>
+        </div><div class="wy-menu wy-menu-vertical" data-spy="affix" role="navigation" aria-label="导航菜单">
+              <p class="caption" role="heading"><span class="caption-text">用户指南</span></p>
+<ul>
+<li class="toctree-l1"><a class="reference internal" href="../../../../user_guide/introduction.html">项目简介</a><ul>
+<li class="toctree-l2"><a class="reference internal" href="../../../../user_guide/introduction.html#zishu-sensei">什么是 Zishu-Sensei？</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../../../../user_guide/introduction.html#id2">核心功能</a><ul>
+<li class="toctree-l3"><a class="reference internal" href="../../../../user_guide/introduction.html#id3">智能对话</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../../../../user_guide/introduction.html#id4">知识检索</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../../../../user_guide/introduction.html#id5">学习辅助</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../../../../user_guide/introduction.html#id6">知识管理</a></li>
+</ul>
+</li>
+<li class="toctree-l2"><a class="reference internal" href="../../../../user_guide/introduction.html#id7">系统架构</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../../../../user_guide/introduction.html#id8">技术特点</a><ul>
+<li class="toctree-l3"><a class="reference internal" href="../../../../user_guide/introduction.html#id9">高性能</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../../../../user_guide/introduction.html#id10">可扩展</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../../../../user_guide/introduction.html#id11">安全可靠</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../../../../user_guide/introduction.html#id12">易于部署</a></li>
+</ul>
+</li>
+<li class="toctree-l2"><a class="reference internal" href="../../../../user_guide/introduction.html#id13">应用场景</a><ul>
+<li class="toctree-l3"><a class="reference internal" href="../../../../user_guide/introduction.html#id14">教育机构</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../../../../user_guide/introduction.html#id15">个人学习</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../../../../user_guide/introduction.html#id16">企业培训</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../../../../user_guide/introduction.html#id17">研究辅助</a></li>
+</ul>
+</li>
+<li class="toctree-l2"><a class="reference internal" href="../../../../user_guide/introduction.html#id18">开发团队</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../../../../user_guide/introduction.html#id19">下一步</a></li>
+</ul>
+</li>
+<li class="toctree-l1"><a class="reference internal" href="../../../../user_guide/installation.html">安装指南</a><ul>
+<li class="toctree-l2"><a class="reference internal" href="../../../../user_guide/installation.html#id2">系统要求</a><ul>
+<li class="toctree-l3"><a class="reference internal" href="../../../../user_guide/installation.html#id3">硬件要求</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../../../../user_guide/installation.html#id4">软件要求</a></li>
+</ul>
+</li>
+<li class="toctree-l2"><a class="reference internal" href="../../../../user_guide/installation.html#id5">安装方式</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../../../../user_guide/installation.html#docker">方式一: Docker 部署 (推荐)</a><ul>
+<li class="toctree-l3"><a class="reference internal" href="../../../../user_guide/installation.html#id6">步骤 1: 安装 Docker</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../../../../user_guide/installation.html#id7">步骤 2: 克隆项目</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../../../../user_guide/installation.html#id8">步骤 3: 配置环境变量</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../../../../user_guide/installation.html#id9">步骤 4: 启动服务</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../../../../user_guide/installation.html#id10">步骤 5: 验证安装</a></li>
+</ul>
+</li>
+<li class="toctree-l2"><a class="reference internal" href="../../../../user_guide/installation.html#id11">方式二: 本地开发安装</a><ul>
+<li class="toctree-l3"><a class="reference internal" href="../../../../user_guide/installation.html#python">步骤 1: 安装 Python 依赖</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../../../../user_guide/installation.html#id12">步骤 2: 安装数据库</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../../../../user_guide/installation.html#id13">步骤 3: 配置数据库</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../../../../user_guide/installation.html#id14">步骤 4: 运行数据库迁移</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../../../../user_guide/installation.html#id15">步骤 5: 启动应用</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../../../../user_guide/installation.html#id16">步骤 6: 验证安装</a></li>
+</ul>
+</li>
+<li class="toctree-l2"><a class="reference internal" href="../../../../user_guide/installation.html#id17">方式三: 云平台部署</a><ul>
+<li class="toctree-l3"><a class="reference internal" href="../../../../user_guide/installation.html#id18">云硬盘环境 (推荐用于生产)</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../../../../user_guide/installation.html#id19">云服务器部署</a></li>
+</ul>
+</li>
+<li class="toctree-l2"><a class="reference internal" href="../../../../user_guide/installation.html#id20">常见问题</a><ul>
+<li class="toctree-l3"><a class="reference internal" href="../../../../user_guide/installation.html#id21">端口冲突</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../../../../user_guide/installation.html#id22">权限问题</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../../../../user_guide/installation.html#id23">数据库连接失败</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../../../../user_guide/installation.html#id24">模型下载慢</a></li>
+</ul>
+</li>
+<li class="toctree-l2"><a class="reference internal" href="../../../../user_guide/installation.html#id25">卸载</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../../../../user_guide/installation.html#id26">下一步</a></li>
+</ul>
+</li>
+<li class="toctree-l1"><a class="reference internal" href="../../../../user_guide/quickstart.html">快速开始</a><ul>
+<li class="toctree-l2"><a class="reference internal" href="../../../../user_guide/quickstart.html#id2">安装</a><ul>
+<li class="toctree-l3"><a class="reference internal" href="../../../../user_guide/quickstart.html#docker">使用 Docker (推荐)</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../../../../user_guide/quickstart.html#id3">本地安装</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../../../../user_guide/quickstart.html#id4">验证安装</a></li>
+</ul>
+</li>
+<li class="toctree-l2"><a class="reference internal" href="../../../../user_guide/quickstart.html#id5">基本使用</a><ul>
+<li class="toctree-l3"><a class="reference internal" href="../../../../user_guide/quickstart.html#id6">1. 创建用户</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../../../../user_guide/quickstart.html#id7">2. 登录获取令牌</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../../../../user_guide/quickstart.html#id8">3. 开始对话</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../../../../user_guide/quickstart.html#id9">4. 发送消息</a></li>
+</ul>
+</li>
+<li class="toctree-l2"><a class="reference internal" href="../../../../user_guide/quickstart.html#id10">使用桌面应用</a><ul>
+<li class="toctree-l3"><a class="reference internal" href="../../../../user_guide/quickstart.html#id11">启动应用</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../../../../user_guide/quickstart.html#id12">配置连接</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../../../../user_guide/quickstart.html#id13">开始对话</a></li>
+</ul>
+</li>
+<li class="toctree-l2"><a class="reference internal" href="../../../../user_guide/quickstart.html#id14">上传文档</a><ul>
+<li class="toctree-l3"><a class="reference internal" href="../../../../user_guide/quickstart.html#id15">准备文档</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../../../../user_guide/quickstart.html#id16">上传文档</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../../../../user_guide/quickstart.html#id17">查看处理状态</a></li>
+</ul>
+</li>
+<li class="toctree-l2"><a class="reference internal" href="../../../../user_guide/quickstart.html#rag">使用 RAG 查询</a><ul>
+<li class="toctree-l3"><a class="reference internal" href="../../../../user_guide/quickstart.html#id18">启用 RAG</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../../../../user_guide/quickstart.html#id19">查看引用来源</a></li>
+</ul>
+</li>
+<li class="toctree-l2"><a class="reference internal" href="../../../../user_guide/quickstart.html#id20">配置选项</a><ul>
+<li class="toctree-l3"><a class="reference internal" href="../../../../user_guide/quickstart.html#id21">基本配置</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../../../../user_guide/quickstart.html#llm">LLM 提供商</a></li>
+</ul>
+</li>
+<li class="toctree-l2"><a class="reference internal" href="../../../../user_guide/quickstart.html#id22">常见任务</a><ul>
+<li class="toctree-l3"><a class="reference internal" href="../../../../user_guide/quickstart.html#id23">管理对话</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../../../../user_guide/quickstart.html#id24">管理文档</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../../../../user_guide/quickstart.html#id25">搜索文档</a></li>
+</ul>
+</li>
+<li class="toctree-l2"><a class="reference internal" href="../../../../user_guide/quickstart.html#id26">故障排除</a><ul>
+<li class="toctree-l3"><a class="reference internal" href="../../../../user_guide/quickstart.html#api">API 无法访问</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../../../../user_guide/quickstart.html#id27">数据库连接失败</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../../../../user_guide/quickstart.html#id28">上传文档失败</a></li>
+</ul>
+</li>
+<li class="toctree-l2"><a class="reference internal" href="../../../../user_guide/quickstart.html#id29">下一步</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../../../../user_guide/quickstart.html#id30">需要帮助？</a></li>
+</ul>
+</li>
+<li class="toctree-l1"><a class="reference internal" href="../../../../user_guide/configuration.html">配置指南</a><ul>
+<li class="toctree-l2"><a class="reference internal" href="../../../../user_guide/configuration.html#id2">配置文件结构</a><ul>
+<li class="toctree-l3"><a class="reference internal" href="../../../../user_guide/configuration.html#id3">主要配置文件</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../../../../user_guide/configuration.html#id4">环境变量</a></li>
+</ul>
+</li>
+<li class="toctree-l2"><a class="reference internal" href="../../../../user_guide/configuration.html#id5">主配置文件</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../../../../user_guide/configuration.html#llm">LLM 模型配置</a><ul>
+<li class="toctree-l3"><a class="reference internal" href="../../../../user_guide/configuration.html#openai">OpenAI 配置</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../../../../user_guide/configuration.html#claude-anthropic">Claude (Anthropic) 配置</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../../../../user_guide/configuration.html#id6">本地模型配置</a></li>
+</ul>
+</li>
+<li class="toctree-l2"><a class="reference internal" href="../../../../user_guide/configuration.html#rag">RAG 配置</a><ul>
+<li class="toctree-l3"><a class="reference internal" href="../../../../user_guide/configuration.html#id7">基础配置</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../../../../user_guide/configuration.html#id8">重排序配置</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../../../../user_guide/configuration.html#id9">文档解析配置</a></li>
+</ul>
+</li>
+<li class="toctree-l2"><a class="reference internal" href="../../../../user_guide/configuration.html#id10">适配器配置</a><ul>
+<li class="toctree-l3"><a class="reference internal" href="../../../../user_guide/configuration.html#core-adapter">Core Adapter</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../../../../user_guide/configuration.html#soft-adapter">Soft Adapter</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../../../../user_guide/configuration.html#hard-adapter">Hard Adapter</a></li>
+</ul>
+</li>
+<li class="toctree-l2"><a class="reference internal" href="../../../../user_guide/configuration.html#id11">日志配置</a><ul>
+<li class="toctree-l3"><a class="reference internal" href="../../../../user_guide/configuration.html#id12">基础日志配置</a></li>
+</ul>
+</li>
+<li class="toctree-l2"><a class="reference internal" href="../../../../user_guide/configuration.html#id13">性能优化配置</a><ul>
+<li class="toctree-l3"><a class="reference internal" href="../../../../user_guide/configuration.html#id14">数据库连接池</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../../../../user_guide/configuration.html#id15">缓存策略</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../../../../user_guide/configuration.html#id16">并发控制</a></li>
+</ul>
+</li>
+<li class="toctree-l2"><a class="reference internal" href="../../../../user_guide/configuration.html#id17">安全配置</a><ul>
+<li class="toctree-l3"><a class="reference internal" href="../../../../user_guide/configuration.html#id18">认证和授权</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../../../../user_guide/configuration.html#id19">数据加密</a></li>
+</ul>
+</li>
+<li class="toctree-l2"><a class="reference internal" href="../../../../user_guide/configuration.html#id20">监控配置</a><ul>
+<li class="toctree-l3"><a class="reference internal" href="../../../../user_guide/configuration.html#prometheus">Prometheus 指标</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../../../../user_guide/configuration.html#id21">健康检查</a></li>
+</ul>
+</li>
+<li class="toctree-l2"><a class="reference internal" href="../../../../user_guide/configuration.html#id22">环境特定配置</a><ul>
+<li class="toctree-l3"><a class="reference internal" href="../../../../user_guide/configuration.html#id23">开发环境</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../../../../user_guide/configuration.html#id24">生产环境</a></li>
+</ul>
+</li>
+<li class="toctree-l2"><a class="reference internal" href="../../../../user_guide/configuration.html#id25">配置加载优先级</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../../../../user_guide/configuration.html#id26">配置验证</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../../../../user_guide/configuration.html#id27">最佳实践</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../../../../user_guide/configuration.html#id28">下一步</a></li>
+</ul>
+</li>
+<li class="toctree-l1"><a class="reference internal" href="../../../../user_guide/deployment.html">部署指南</a><ul>
+<li class="toctree-l2"><a class="reference internal" href="../../../../user_guide/deployment.html#id2">部署架构</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../../../../user_guide/deployment.html#docker">Docker 部署</a><ul>
+<li class="toctree-l3"><a class="reference internal" href="../../../../user_guide/deployment.html#docker-compose">生产环境 Docker Compose</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../../../../user_guide/deployment.html#id3">启动生产环境</a></li>
+</ul>
+</li>
+<li class="toctree-l2"><a class="reference internal" href="../../../../user_guide/deployment.html#kubernetes">Kubernetes 部署</a><ul>
+<li class="toctree-l3"><a class="reference internal" href="../../../../user_guide/deployment.html#id4">准备工作</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../../../../user_guide/deployment.html#id5">创建命名空间</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../../../../user_guide/deployment.html#id6">部署配置</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../../../../user_guide/deployment.html#id7">服务配置</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../../../../user_guide/deployment.html#ingress">Ingress 配置</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../../../../user_guide/deployment.html#k8s">部署到 K8s</a></li>
+</ul>
+</li>
+<li class="toctree-l2"><a class="reference internal" href="../../../../user_guide/deployment.html#id8">云平台部署</a><ul>
+<li class="toctree-l3"><a class="reference internal" href="../../../../user_guide/deployment.html#aws">AWS 部署</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../../../../user_guide/deployment.html#azure">Azure 部署</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../../../../user_guide/deployment.html#gcp">GCP 部署</a></li>
+</ul>
+</li>
+<li class="toctree-l2"><a class="reference internal" href="../../../../user_guide/deployment.html#nginx">Nginx 配置</a><ul>
+<li class="toctree-l3"><a class="reference internal" href="../../../../user_guide/deployment.html#id9">生产环境 Nginx 配置</a></li>
+</ul>
+</li>
+<li class="toctree-l2"><a class="reference internal" href="../../../../user_guide/deployment.html#ssl">SSL 证书配置</a><ul>
+<li class="toctree-l3"><a class="reference internal" href="../../../../user_guide/deployment.html#let-s-encrypt">使用 Let’s Encrypt</a></li>
+</ul>
+</li>
+<li class="toctree-l2"><a class="reference internal" href="../../../../user_guide/deployment.html#id10">数据库优化</a><ul>
+<li class="toctree-l3"><a class="reference internal" href="../../../../user_guide/deployment.html#postgresql">PostgreSQL 优化</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../../../../user_guide/deployment.html#id11">主从复制</a></li>
+</ul>
+</li>
+<li class="toctree-l2"><a class="reference internal" href="../../../../user_guide/deployment.html#id12">监控和日志</a><ul>
+<li class="toctree-l3"><a class="reference internal" href="../../../../user_guide/deployment.html#prometheus-grafana">Prometheus + Grafana</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../../../../user_guide/deployment.html#id13">日志聚合</a></li>
+</ul>
+</li>
+<li class="toctree-l2"><a class="reference internal" href="../../../../user_guide/deployment.html#id14">备份策略</a><ul>
+<li class="toctree-l3"><a class="reference internal" href="../../../../user_guide/deployment.html#id15">数据库备份</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../../../../user_guide/deployment.html#id16">自动备份</a></li>
+</ul>
+</li>
+<li class="toctree-l2"><a class="reference internal" href="../../../../user_guide/deployment.html#id17">故障恢复</a><ul>
+<li class="toctree-l3"><a class="reference internal" href="../../../../user_guide/deployment.html#id18">数据恢复</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../../../../user_guide/deployment.html#id19">灾难恢复计划</a></li>
+</ul>
+</li>
+<li class="toctree-l2"><a class="reference internal" href="../../../../user_guide/deployment.html#id20">性能调优</a><ul>
+<li class="toctree-l3"><a class="reference internal" href="../../../../user_guide/deployment.html#id21">应用层优化</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../../../../user_guide/deployment.html#id22">负载均衡</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../../../../user_guide/deployment.html#id23">扩展策略</a></li>
+</ul>
+</li>
+<li class="toctree-l2"><a class="reference internal" href="../../../../user_guide/deployment.html#id24">安全加固</a><ul>
+<li class="toctree-l3"><a class="reference internal" href="../../../../user_guide/deployment.html#id25">防火墙规则</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../../../../user_guide/deployment.html#id26">定期更新</a></li>
+</ul>
+</li>
+<li class="toctree-l2"><a class="reference internal" href="../../../../user_guide/deployment.html#id27">检查清单</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../../../../user_guide/deployment.html#id28">下一步</a></li>
+</ul>
+</li>
+</ul>
+<p class="caption" role="heading"><span class="caption-text">开发文档</span></p>
+<ul>
+<li class="toctree-l1"><a class="reference internal" href="../../../../developer_guide/architecture.html">系统架构</a><ul>
+<li class="toctree-l2"><a class="reference internal" href="../../../../developer_guide/architecture.html#id2">整体架构</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../../../../developer_guide/architecture.html#id3">核心设计原则</a><ul>
+<li class="toctree-l3"><a class="reference internal" href="../../../../developer_guide/architecture.html#srp">1. 单一职责原则 (SRP)</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../../../../developer_guide/architecture.html#ocp">2. 开闭原则 (OCP)</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../../../../developer_guide/architecture.html#dip">3. 依赖倒置原则 (DIP)</a></li>
+</ul>
+</li>
+<li class="toctree-l2"><a class="reference internal" href="../../../../developer_guide/architecture.html#id4">适配器架构</a><ul>
+<li class="toctree-l3"><a class="reference internal" href="../../../../developer_guide/architecture.html#id5">适配器模式详解</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../../../../developer_guide/architecture.html#core-adapter">Core Adapter</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../../../../developer_guide/architecture.html#soft-adapter">Soft Adapter</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../../../../developer_guide/architecture.html#hard-adapter">Hard Adapter</a></li>
+</ul>
+</li>
+<li class="toctree-l2"><a class="reference internal" href="../../../../developer_guide/architecture.html#id6">数据流架构</a><ul>
+<li class="toctree-l3"><a class="reference internal" href="../../../../developer_guide/architecture.html#id7">请求处理流程</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../../../../developer_guide/architecture.html#id8">对话处理流程</a></li>
+</ul>
+</li>
+<li class="toctree-l2"><a class="reference internal" href="../../../../developer_guide/architecture.html#id9">数据模型设计</a><ul>
+<li class="toctree-l3"><a class="reference internal" href="../../../../developer_guide/architecture.html#id10">核心实体关系</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../../../../developer_guide/architecture.html#id11">用户模型</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../../../../developer_guide/architecture.html#id12">对话模型</a></li>
+</ul>
+</li>
+<li class="toctree-l2"><a class="reference internal" href="../../../../developer_guide/architecture.html#id13">缓存策略</a><ul>
+<li class="toctree-l3"><a class="reference internal" href="../../../../developer_guide/architecture.html#id14">多层缓存架构</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../../../../developer_guide/architecture.html#id15">缓存实现</a></li>
+</ul>
+</li>
+<li class="toctree-l2"><a class="reference internal" href="../../../../developer_guide/architecture.html#id16">异步处理</a><ul>
+<li class="toctree-l3"><a class="reference internal" href="../../../../developer_guide/architecture.html#id17">任务队列</a></li>
+</ul>
+</li>
+<li class="toctree-l2"><a class="reference internal" href="../../../../developer_guide/architecture.html#id18">错误处理</a><ul>
+<li class="toctree-l3"><a class="reference internal" href="../../../../developer_guide/architecture.html#id19">统一异常处理</a></li>
+</ul>
+</li>
+<li class="toctree-l2"><a class="reference internal" href="../../../../developer_guide/architecture.html#id20">安全架构</a><ul>
+<li class="toctree-l3"><a class="reference internal" href="../../../../developer_guide/architecture.html#id21">认证和授权</a></li>
+</ul>
+</li>
+<li class="toctree-l2"><a class="reference internal" href="../../../../developer_guide/architecture.html#id22">扩展性设计</a><ul>
+<li class="toctree-l3"><a class="reference internal" href="../../../../developer_guide/architecture.html#id23">水平扩展</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../../../../developer_guide/architecture.html#id24">垂直扩展</a></li>
+</ul>
+</li>
+<li class="toctree-l2"><a class="reference internal" href="../../../../developer_guide/architecture.html#id25">性能优化</a><ul>
+<li class="toctree-l3"><a class="reference internal" href="../../../../developer_guide/architecture.html#id26">数据库优化</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../../../../developer_guide/architecture.html#api">API 优化</a></li>
+</ul>
+</li>
+<li class="toctree-l2"><a class="reference internal" href="../../../../developer_guide/architecture.html#id27">下一步</a></li>
+</ul>
+</li>
+<li class="toctree-l1"><a class="reference internal" href="../../../../developer_guide/development_setup.html">开发环境配置</a><ul>
+<li class="toctree-l2"><a class="reference internal" href="../../../../developer_guide/development_setup.html#id2">前置要求</a><ul>
+<li class="toctree-l3"><a class="reference internal" href="../../../../developer_guide/development_setup.html#id3">开发工具</a></li>
+</ul>
+</li>
+<li class="toctree-l2"><a class="reference internal" href="../../../../developer_guide/development_setup.html#id4">环境配置</a><ul>
+<li class="toctree-l3"><a class="reference internal" href="../../../../developer_guide/development_setup.html#id5">1. 克隆仓库</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../../../../developer_guide/development_setup.html#id6">2. 创建虚拟环境</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../../../../developer_guide/development_setup.html#id7">3. 安装依赖</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../../../../developer_guide/development_setup.html#id8">4. 配置环境变量</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../../../../developer_guide/development_setup.html#id9">5. 初始化数据库</a></li>
+</ul>
+</li>
+<li class="toctree-l2"><a class="reference internal" href="../../../../developer_guide/development_setup.html#id10">开发工作流</a><ul>
+<li class="toctree-l3"><a class="reference internal" href="../../../../developer_guide/development_setup.html#id11">启动开发服务</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../../../../developer_guide/development_setup.html#id12">代码编辑</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../../../../developer_guide/development_setup.html#id13">代码质量检查</a></li>
+</ul>
+</li>
+<li class="toctree-l2"><a class="reference internal" href="../../../../developer_guide/development_setup.html#id14">开发工具</a><ul>
+<li class="toctree-l3"><a class="reference internal" href="../../../../developer_guide/development_setup.html#vs-code">VS Code 配置</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../../../../developer_guide/development_setup.html#id15">调试配置</a></li>
+</ul>
+</li>
+<li class="toctree-l2"><a class="reference internal" href="../../../../developer_guide/development_setup.html#id16">数据库管理</a><ul>
+<li class="toctree-l3"><a class="reference internal" href="../../../../developer_guide/development_setup.html#pgadmin">使用 pgAdmin</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../../../../developer_guide/development_setup.html#id17">数据库迁移</a></li>
+</ul>
+</li>
+<li class="toctree-l2"><a class="reference internal" href="../../../../developer_guide/development_setup.html#redis">Redis 管理</a><ul>
+<li class="toctree-l3"><a class="reference internal" href="../../../../developer_guide/development_setup.html#redis-commander">使用 Redis Commander</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../../../../developer_guide/development_setup.html#redis-cli">使用 Redis CLI</a></li>
+</ul>
+</li>
+<li class="toctree-l2"><a class="reference internal" href="../../../../developer_guide/development_setup.html#id18">前端开发</a><ul>
+<li class="toctree-l3"><a class="reference internal" href="../../../../developer_guide/development_setup.html#desktop-app">Desktop App 开发</a></li>
+</ul>
+</li>
+<li class="toctree-l2"><a class="reference internal" href="../../../../developer_guide/development_setup.html#id19">测试</a><ul>
+<li class="toctree-l3"><a class="reference internal" href="../../../../developer_guide/development_setup.html#id20">运行测试</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../../../../developer_guide/development_setup.html#id21">编写测试</a></li>
+</ul>
+</li>
+<li class="toctree-l2"><a class="reference internal" href="../../../../developer_guide/development_setup.html#id22">性能分析</a><ul>
+<li class="toctree-l3"><a class="reference internal" href="../../../../developer_guide/development_setup.html#profiling">Profiling</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../../../../developer_guide/development_setup.html#id23">监控</a></li>
+</ul>
+</li>
+<li class="toctree-l2"><a class="reference internal" href="../../../../developer_guide/development_setup.html#id24">调试技巧</a><ul>
+<li class="toctree-l3"><a class="reference internal" href="../../../../developer_guide/development_setup.html#id25">日志调试</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../../../../developer_guide/development_setup.html#id26">断点调试</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../../../../developer_guide/development_setup.html#id27">远程调试</a></li>
+</ul>
+</li>
+<li class="toctree-l2"><a class="reference internal" href="../../../../developer_guide/development_setup.html#id28">常见问题</a><ul>
+<li class="toctree-l3"><a class="reference internal" href="../../../../developer_guide/development_setup.html#id29">依赖冲突</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../../../../developer_guide/development_setup.html#id30">数据库连接失败</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../../../../developer_guide/development_setup.html#id31">端口占用</a></li>
+</ul>
+</li>
+<li class="toctree-l2"><a class="reference internal" href="../../../../developer_guide/development_setup.html#id32">最佳实践</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../../../../developer_guide/development_setup.html#id33">下一步</a></li>
+</ul>
+</li>
+<li class="toctree-l1"><a class="reference internal" href="../../../../developer_guide/coding_standards.html">编码规范</a><ul>
+<li class="toctree-l2"><a class="reference internal" href="../../../../developer_guide/coding_standards.html#python">Python 代码规范</a><ul>
+<li class="toctree-l3"><a class="reference internal" href="../../../../developer_guide/coding_standards.html#id2">风格指南</a><ul>
+<li class="toctree-l4"><a class="reference internal" href="../../../../developer_guide/coding_standards.html#id3">命名约定</a></li>
+<li class="toctree-l4"><a class="reference internal" href="../../../../developer_guide/coding_standards.html#id4">导入顺序</a></li>
+</ul>
+</li>
+<li class="toctree-l3"><a class="reference internal" href="../../../../developer_guide/coding_standards.html#id5">类型注解</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../../../../developer_guide/coding_standards.html#id6">文档字符串</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../../../../developer_guide/coding_standards.html#id7">错误处理</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../../../../developer_guide/coding_standards.html#id8">异步编程</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../../../../developer_guide/coding_standards.html#id9">代码组织</a></li>
+</ul>
+</li>
+<li class="toctree-l2"><a class="reference internal" href="../../../../developer_guide/coding_standards.html#id10">性能优化</a><ul>
+<li class="toctree-l3"><a class="reference internal" href="../../../../developer_guide/coding_standards.html#id11">数据库查询</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../../../../developer_guide/coding_standards.html#id12">缓存策略</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../../../../developer_guide/coding_standards.html#id13">批处理</a></li>
+</ul>
+</li>
+<li class="toctree-l2"><a class="reference internal" href="../../../../developer_guide/coding_standards.html#id14">测试规范</a><ul>
+<li class="toctree-l3"><a class="reference internal" href="../../../../developer_guide/coding_standards.html#id15">单元测试</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../../../../developer_guide/coding_standards.html#id16">集成测试</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../../../../developer_guide/coding_standards.html#id17">测试覆盖率</a></li>
+</ul>
+</li>
+<li class="toctree-l2"><a class="reference internal" href="../../../../developer_guide/coding_standards.html#id18">安全规范</a><ul>
+<li class="toctree-l3"><a class="reference internal" href="../../../../developer_guide/coding_standards.html#id19">输入验证</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../../../../developer_guide/coding_standards.html#id20">密码处理</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../../../../developer_guide/coding_standards.html#sql">SQL 注入防护</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../../../../developer_guide/coding_standards.html#id21">敏感数据</a></li>
+</ul>
+</li>
+<li class="toctree-l2"><a class="reference internal" href="../../../../developer_guide/coding_standards.html#id22">代码审查</a><ul>
+<li class="toctree-l3"><a class="reference internal" href="../../../../developer_guide/coding_standards.html#id23">审查清单</a></li>
+</ul>
+</li>
+<li class="toctree-l2"><a class="reference internal" href="../../../../developer_guide/coding_standards.html#git">Git 提交规范</a><ul>
+<li class="toctree-l3"><a class="reference internal" href="../../../../developer_guide/coding_standards.html#id24">提交消息格式</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../../../../developer_guide/coding_standards.html#id25">分支策略</a></li>
+</ul>
+</li>
+<li class="toctree-l2"><a class="reference internal" href="../../../../developer_guide/coding_standards.html#id26">工具配置</a><ul>
+<li class="toctree-l3"><a class="reference internal" href="../../../../developer_guide/coding_standards.html#black">Black (代码格式化)</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../../../../developer_guide/coding_standards.html#pylint">Pylint (代码检查)</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../../../../developer_guide/coding_standards.html#mypy">MyPy (类型检查)</a></li>
+</ul>
+</li>
+<li class="toctree-l2"><a class="reference internal" href="../../../../developer_guide/coding_standards.html#id27">参考资源</a></li>
+</ul>
+</li>
+</ul>
+<p class="caption" role="heading"><span class="caption-text">API 参考</span></p>
+<ul>
+<li class="toctree-l1"><a class="reference internal" href="../../../../api/core.html">核心模块 API</a><ul>
+<li class="toctree-l2"><a class="reference internal" href="../../../../api/core.html#id1">核心配置</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../../../../api/core.html#id2">核心异常</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../../../../api/core.html#id3">核心基类</a></li>
+</ul>
+</li>
+<li class="toctree-l1"><a class="reference internal" href="../../../../api/adapters.html">适配器 API</a><ul>
+<li class="toctree-l2"><a class="reference internal" href="../../../../api/adapters.html#id1">适配器概述</a><ul>
+<li class="toctree-l3"><a class="reference internal" href="../../../../api/adapters.html#module-zishu.adapters.base">适配器基类</a><ul>
+<li class="toctree-l4"><a class="reference internal" href="../../../../api/adapters.html#id3">适配器系统 - 基础模块</a></li>
+<li class="toctree-l4"><a class="reference internal" href="../../../../api/adapters.html#zishu.adapters.base.BaseAdapter"><code class="docutils literal notranslate"><span class="pre">BaseAdapter</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="../../../../api/adapters.html#zishu.adapters.base.ExecutionContext"><code class="docutils literal notranslate"><span class="pre">ExecutionContext</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="../../../../api/adapters.html#zishu.adapters.base.ExecutionResult"><code class="docutils literal notranslate"><span class="pre">ExecutionResult</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="../../../../api/adapters.html#zishu.adapters.base.HealthCheckResult"><code class="docutils literal notranslate"><span class="pre">HealthCheckResult</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="../../../../api/adapters.html#zishu.adapters.base.AdapterMetadata"><code class="docutils literal notranslate"><span class="pre">AdapterMetadata</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="../../../../api/adapters.html#zishu.adapters.base.AdapterCapability"><code class="docutils literal notranslate"><span class="pre">AdapterCapability</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="../../../../api/adapters.html#zishu.adapters.base.AdapterDependency"><code class="docutils literal notranslate"><span class="pre">AdapterDependency</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="../../../../api/adapters.html#zishu.adapters.base.AdapterPermissions"><code class="docutils literal notranslate"><span class="pre">AdapterPermissions</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="../../../../api/adapters.html#zishu.adapters.base.BaseAdapterException"><code class="docutils literal notranslate"><span class="pre">BaseAdapterException</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="../../../../api/adapters.html#zishu.adapters.base.AdapterRegistrationError"><code class="docutils literal notranslate"><span class="pre">AdapterRegistrationError</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="../../../../api/adapters.html#zishu.adapters.base.AdapterNotFoundError"><code class="docutils literal notranslate"><span class="pre">AdapterNotFoundError</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="../../../../api/adapters.html#zishu.adapters.base.AdapterAlreadyExistsError"><code class="docutils literal notranslate"><span class="pre">AdapterAlreadyExistsError</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="../../../../api/adapters.html#zishu.adapters.base.AdapterLoadingError"><code class="docutils literal notranslate"><span class="pre">AdapterLoadingError</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="../../../../api/adapters.html#zishu.adapters.base.AdapterExecutionError"><code class="docutils literal notranslate"><span class="pre">AdapterExecutionError</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="../../../../api/adapters.html#zishu.adapters.base.AdapterValidationError"><code class="docutils literal notranslate"><span class="pre">AdapterValidationError</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="../../../../api/adapters.html#zishu.adapters.base.AdapterConfigurationError"><code class="docutils literal notranslate"><span class="pre">AdapterConfigurationError</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="../../../../api/adapters.html#zishu.adapters.base.AdapterTimeoutError"><code class="docutils literal notranslate"><span class="pre">AdapterTimeoutError</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="../../../../api/adapters.html#zishu.adapters.base.DependencyMissingError"><code class="docutils literal notranslate"><span class="pre">DependencyMissingError</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="../../../../api/adapters.html#zishu.adapters.base.SoftAdapterError"><code class="docutils literal notranslate"><span class="pre">SoftAdapterError</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="../../../../api/adapters.html#zishu.adapters.base.RAGEngineError"><code class="docutils literal notranslate"><span class="pre">RAGEngineError</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="../../../../api/adapters.html#zishu.adapters.base.PromptTemplateError"><code class="docutils literal notranslate"><span class="pre">PromptTemplateError</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="../../../../api/adapters.html#zishu.adapters.base.KnowledgeBaseError"><code class="docutils literal notranslate"><span class="pre">KnowledgeBaseError</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="../../../../api/adapters.html#zishu.adapters.base.RetrievalFailedError"><code class="docutils literal notranslate"><span class="pre">RetrievalFailedError</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="../../../../api/adapters.html#zishu.adapters.base.AdapterType"><code class="docutils literal notranslate"><span class="pre">AdapterType</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="../../../../api/adapters.html#zishu.adapters.base.AdapterStatus"><code class="docutils literal notranslate"><span class="pre">AdapterStatus</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="../../../../api/adapters.html#zishu.adapters.base.SecurityLevel"><code class="docutils literal notranslate"><span class="pre">SecurityLevel</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="../../../../api/adapters.html#zishu.adapters.base.ErrorCode"><code class="docutils literal notranslate"><span class="pre">ErrorCode</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="../../../../api/adapters.html#zishu.adapters.base.ExceptionSeverity"><code class="docutils literal notranslate"><span class="pre">ExceptionSeverity</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="../../../../api/adapters.html#zishu.adapters.base.AdapterRegistry"><code class="docutils literal notranslate"><span class="pre">AdapterRegistry</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="../../../../api/adapters.html#zishu.adapters.base.HealthMonitor"><code class="docutils literal notranslate"><span class="pre">HealthMonitor</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="../../../../api/adapters.html#zishu.adapters.base.SecurityManager"><code class="docutils literal notranslate"><span class="pre">SecurityManager</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="../../../../api/adapters.html#zishu.adapters.base.PerformanceMonitor"><code class="docutils literal notranslate"><span class="pre">PerformanceMonitor</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="../../../../api/adapters.html#zishu.adapters.base.create_adapter_registry"><code class="docutils literal notranslate"><span class="pre">create_adapter_registry()</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="../../../../api/adapters.html#zishu.adapters.base.get_default_registry"><code class="docutils literal notranslate"><span class="pre">get_default_registry()</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="../../../../api/adapters.html#zishu.adapters.base.set_default_registry"><code class="docutils literal notranslate"><span class="pre">set_default_registry()</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="../../../../api/adapters.html#zishu.adapters.base.handle_adapter_exceptions"><code class="docutils literal notranslate"><span class="pre">handle_adapter_exceptions()</span></code></a></li>
+</ul>
+</li>
+</ul>
+</li>
+<li class="toctree-l2"><a class="reference internal" href="../../../../api/adapters.html#core-adapter">Core Adapter</a><ul>
+<li class="toctree-l3"><a class="reference internal" href="../../../../api/adapters.html#id12">核心适配器主类</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../../../../api/adapters.html#module-zishu.adapters.core.services.health_service">健康检查服务</a><ul>
+<li class="toctree-l4"><a class="reference internal" href="../../../../api/adapters.html#zishu.adapters.core.services.health_service.HealthMetricType"><code class="docutils literal notranslate"><span class="pre">HealthMetricType</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="../../../../api/adapters.html#zishu.adapters.core.services.health_service.HealthMetric"><code class="docutils literal notranslate"><span class="pre">HealthMetric</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="../../../../api/adapters.html#zishu.adapters.core.services.health_service.HealthThreshold"><code class="docutils literal notranslate"><span class="pre">HealthThreshold</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="../../../../api/adapters.html#zishu.adapters.core.services.health_service.HealthMetricsInfo"><code class="docutils literal notranslate"><span class="pre">HealthMetricsInfo</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="../../../../api/adapters.html#zishu.adapters.core.services.health_service.AdapterHealthStatus"><code class="docutils literal notranslate"><span class="pre">AdapterHealthStatus</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="../../../../api/adapters.html#zishu.adapters.core.services.health_service.HealthMonitor"><code class="docutils literal notranslate"><span class="pre">HealthMonitor</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="../../../../api/adapters.html#zishu.adapters.core.services.health_service.AdapterHealthService"><code class="docutils literal notranslate"><span class="pre">AdapterHealthService</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="../../../../api/adapters.html#zishu.adapters.core.services.health_service.AvailabilityMonitor"><code class="docutils literal notranslate"><span class="pre">AvailabilityMonitor</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="../../../../api/adapters.html#zishu.adapters.core.services.health_service.ResponseTimeMonitor"><code class="docutils literal notranslate"><span class="pre">ResponseTimeMonitor</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="../../../../api/adapters.html#zishu.adapters.core.services.health_service.ErrorRateMonitor"><code class="docutils literal notranslate"><span class="pre">ErrorRateMonitor</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="../../../../api/adapters.html#zishu.adapters.core.services.health_service.MemoryUsageMonitor"><code class="docutils literal notranslate"><span class="pre">MemoryUsageMonitor</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="../../../../api/adapters.html#zishu.adapters.core.services.health_service.ThroughputMonitor"><code class="docutils literal notranslate"><span class="pre">ThroughputMonitor</span></code></a></li>
+</ul>
+</li>
+<li class="toctree-l3"><a class="reference internal" href="../../../../api/adapters.html#module-zishu.adapters.core.services.event_service">事件服务</a><ul>
+<li class="toctree-l4"><a class="reference internal" href="../../../../api/adapters.html#zishu.adapters.core.services.event_service.EventDeliveryMode"><code class="docutils literal notranslate"><span class="pre">EventDeliveryMode</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="../../../../api/adapters.html#zishu.adapters.core.services.event_service.EventPersistenceMode"><code class="docutils literal notranslate"><span class="pre">EventPersistenceMode</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="../../../../api/adapters.html#zishu.adapters.core.services.event_service.EventSubscription"><code class="docutils literal notranslate"><span class="pre">EventSubscription</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="../../../../api/adapters.html#zishu.adapters.core.services.event_service.EventDeliveryResult"><code class="docutils literal notranslate"><span class="pre">EventDeliveryResult</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="../../../../api/adapters.html#zishu.adapters.core.services.event_service.EventMetrics"><code class="docutils literal notranslate"><span class="pre">EventMetrics</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="../../../../api/adapters.html#zishu.adapters.core.services.event_service.AdapterEventService"><code class="docutils literal notranslate"><span class="pre">AdapterEventService</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="../../../../api/adapters.html#zishu.adapters.core.services.event_service.LoggingEventHandler"><code class="docutils literal notranslate"><span class="pre">LoggingEventHandler</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="../../../../api/adapters.html#zishu.adapters.core.services.event_service.MetricsEventHandler"><code class="docutils literal notranslate"><span class="pre">MetricsEventHandler</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="../../../../api/adapters.html#zishu.adapters.core.services.event_service.FilterEventHandler"><code class="docutils literal notranslate"><span class="pre">FilterEventHandler</span></code></a></li>
+</ul>
+</li>
+</ul>
+</li>
+<li class="toctree-l2"><a class="reference internal" href="../../../../api/adapters.html#soft-adapter">Soft Adapter</a><ul>
+<li class="toctree-l3"><a class="reference internal" href="../../../../api/adapters.html#id15">软适配器主类</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../../../../api/adapters.html#module-zishu.adapters.soft.rag_engine">RAG 引擎</a><ul>
+<li class="toctree-l4"><a class="reference internal" href="../../../../api/adapters.html#zishu.adapters.soft.rag_engine.RAGEngine"><code class="docutils literal notranslate"><span class="pre">RAGEngine</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="../../../../api/adapters.html#zishu.adapters.soft.rag_engine.RAGConfig"><code class="docutils literal notranslate"><span class="pre">RAGConfig</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="../../../../api/adapters.html#zishu.adapters.soft.rag_engine.RetrievalConfig"><code class="docutils literal notranslate"><span class="pre">RetrievalConfig</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="../../../../api/adapters.html#zishu.adapters.soft.rag_engine.GenerationConfig"><code class="docutils literal notranslate"><span class="pre">GenerationConfig</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="../../../../api/adapters.html#zishu.adapters.soft.rag_engine.RerankingConfig"><code class="docutils literal notranslate"><span class="pre">RerankingConfig</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="../../../../api/adapters.html#zishu.adapters.soft.rag_engine.RAGResult"><code class="docutils literal notranslate"><span class="pre">RAGResult</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="../../../../api/adapters.html#zishu.adapters.soft.rag_engine.RetrievalResult"><code class="docutils literal notranslate"><span class="pre">RetrievalResult</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="../../../../api/adapters.html#zishu.adapters.soft.rag_engine.QueryResult"><code class="docutils literal notranslate"><span class="pre">QueryResult</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="../../../../api/adapters.html#zishu.adapters.soft.rag_engine.RAGEngineError"><code class="docutils literal notranslate"><span class="pre">RAGEngineError</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="../../../../api/adapters.html#zishu.adapters.soft.rag_engine.DocumentStore"><code class="docutils literal notranslate"><span class="pre">DocumentStore</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="../../../../api/adapters.html#zishu.adapters.soft.rag_engine.VectorStore"><code class="docutils literal notranslate"><span class="pre">VectorStore</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="../../../../api/adapters.html#zishu.adapters.soft.rag_engine.EmbeddingService"><code class="docutils literal notranslate"><span class="pre">EmbeddingService</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="../../../../api/adapters.html#zishu.adapters.soft.rag_engine.RetrievalService"><code class="docutils literal notranslate"><span class="pre">RetrievalService</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="../../../../api/adapters.html#zishu.adapters.soft.rag_engine.RerankingService"><code class="docutils literal notranslate"><span class="pre">RerankingService</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="../../../../api/adapters.html#zishu.adapters.soft.rag_engine.MemoryDocumentStore"><code class="docutils literal notranslate"><span class="pre">MemoryDocumentStore</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="../../../../api/adapters.html#zishu.adapters.soft.rag_engine.MemoryVectorStore"><code class="docutils literal notranslate"><span class="pre">MemoryVectorStore</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="../../../../api/adapters.html#zishu.adapters.soft.rag_engine.MockEmbeddingService"><code class="docutils literal notranslate"><span class="pre">MockEmbeddingService</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="../../../../api/adapters.html#zishu.adapters.soft.rag_engine.RAGMode"><code class="docutils literal notranslate"><span class="pre">RAGMode</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="../../../../api/adapters.html#zishu.adapters.soft.rag_engine.RetrievalStrategy"><code class="docutils literal notranslate"><span class="pre">RetrievalStrategy</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="../../../../api/adapters.html#zishu.adapters.soft.rag_engine.RankingMethod"><code class="docutils literal notranslate"><span class="pre">RankingMethod</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="../../../../api/adapters.html#zishu.adapters.soft.rag_engine.GenerationMode"><code class="docutils literal notranslate"><span class="pre">GenerationMode</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="../../../../api/adapters.html#zishu.adapters.soft.rag_engine.Retriever"><code class="docutils literal notranslate"><span class="pre">Retriever</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="../../../../api/adapters.html#zishu.adapters.soft.rag_engine.SimilarityRetriever"><code class="docutils literal notranslate"><span class="pre">SimilarityRetriever</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="../../../../api/adapters.html#zishu.adapters.soft.rag_engine.HybridRetriever"><code class="docutils literal notranslate"><span class="pre">HybridRetriever</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="../../../../api/adapters.html#zishu.adapters.soft.rag_engine.KeywordRetriever"><code class="docutils literal notranslate"><span class="pre">KeywordRetriever</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="../../../../api/adapters.html#zishu.adapters.soft.rag_engine.Reranker"><code class="docutils literal notranslate"><span class="pre">Reranker</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="../../../../api/adapters.html#zishu.adapters.soft.rag_engine.CosineSimilarityReranker"><code class="docutils literal notranslate"><span class="pre">CosineSimilarityReranker</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="../../../../api/adapters.html#zishu.adapters.soft.rag_engine.BM25Reranker"><code class="docutils literal notranslate"><span class="pre">BM25Reranker</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="../../../../api/adapters.html#zishu.adapters.soft.rag_engine.HybridReranker"><code class="docutils literal notranslate"><span class="pre">HybridReranker</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="../../../../api/adapters.html#zishu.adapters.soft.rag_engine.ReciprocalRankFusionReranker"><code class="docutils literal notranslate"><span class="pre">ReciprocalRankFusionReranker</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="../../../../api/adapters.html#zishu.adapters.soft.rag_engine.Generator"><code class="docutils literal notranslate"><span class="pre">Generator</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="../../../../api/adapters.html#zishu.adapters.soft.rag_engine.PromptBasedGenerator"><code class="docutils literal notranslate"><span class="pre">PromptBasedGenerator</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="../../../../api/adapters.html#zishu.adapters.soft.rag_engine.ChainOfThoughtGenerator"><code class="docutils literal notranslate"><span class="pre">ChainOfThoughtGenerator</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="../../../../api/adapters.html#zishu.adapters.soft.rag_engine.HybridGenerator"><code class="docutils literal notranslate"><span class="pre">HybridGenerator</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="../../../../api/adapters.html#zishu.adapters.soft.rag_engine.FactCheckingGenerator"><code class="docutils literal notranslate"><span class="pre">FactCheckingGenerator</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="../../../../api/adapters.html#zishu.adapters.soft.rag_engine.RAGEngineFactory"><code class="docutils literal notranslate"><span class="pre">RAGEngineFactory</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="../../../../api/adapters.html#zishu.adapters.soft.rag_engine.RAGPerformanceOptimizer"><code class="docutils literal notranslate"><span class="pre">RAGPerformanceOptimizer</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="../../../../api/adapters.html#zishu.adapters.soft.rag_engine.RAGUtils"><code class="docutils literal notranslate"><span class="pre">RAGUtils</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="../../../../api/adapters.html#id16">主要类和方法</a></li>
+</ul>
+</li>
+<li class="toctree-l3"><a class="reference internal" href="../../../../api/adapters.html#module-zishu.adapters.soft.prompt_engine">Prompt 引擎</a><ul>
+<li class="toctree-l4"><a class="reference internal" href="../../../../api/adapters.html#zishu.adapters.soft.prompt_engine.DynamicPromptEngine"><code class="docutils literal notranslate"><span class="pre">DynamicPromptEngine</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="../../../../api/adapters.html#zishu.adapters.soft.prompt_engine.PromptEngine"><code class="docutils literal notranslate"><span class="pre">PromptEngine</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="../../../../api/adapters.html#zishu.adapters.soft.prompt_engine.PromptTemplate"><code class="docutils literal notranslate"><span class="pre">PromptTemplate</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="../../../../api/adapters.html#zishu.adapters.soft.prompt_engine.PromptVariable"><code class="docutils literal notranslate"><span class="pre">PromptVariable</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="../../../../api/adapters.html#zishu.adapters.soft.prompt_engine.PromptContext"><code class="docutils literal notranslate"><span class="pre">PromptContext</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="../../../../api/adapters.html#zishu.adapters.soft.prompt_engine.TemplateLoader"><code class="docutils literal notranslate"><span class="pre">TemplateLoader</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="../../../../api/adapters.html#zishu.adapters.soft.prompt_engine.PromptValidator"><code class="docutils literal notranslate"><span class="pre">PromptValidator</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="../../../../api/adapters.html#zishu.adapters.soft.prompt_engine.PromptCache"><code class="docutils literal notranslate"><span class="pre">PromptCache</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="../../../../api/adapters.html#zishu.adapters.soft.prompt_engine.PromptOptimizer"><code class="docutils literal notranslate"><span class="pre">PromptOptimizer</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="../../../../api/adapters.html#zishu.adapters.soft.prompt_engine.PromptEngineError"><code class="docutils literal notranslate"><span class="pre">PromptEngineError</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="../../../../api/adapters.html#zishu.adapters.soft.prompt_engine.PromptTemplateError"><code class="docutils literal notranslate"><span class="pre">PromptTemplateError</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="../../../../api/adapters.html#zishu.adapters.soft.prompt_engine.PromptValidationError"><code class="docutils literal notranslate"><span class="pre">PromptValidationError</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="../../../../api/adapters.html#zishu.adapters.soft.prompt_engine.create_prompt_engine"><code class="docutils literal notranslate"><span class="pre">create_prompt_engine()</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="../../../../api/adapters.html#zishu.adapters.soft.prompt_engine.get_global_engine"><code class="docutils literal notranslate"><span class="pre">get_global_engine()</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="../../../../api/adapters.html#zishu.adapters.soft.prompt_engine.render"><code class="docutils literal notranslate"><span class="pre">render()</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="../../../../api/adapters.html#id40">主要类和方法</a></li>
+</ul>
+</li>
+</ul>
+</li>
+<li class="toctree-l2"><a class="reference internal" href="../../../../api/adapters.html#hard-adapter">Hard Adapter</a><ul>
+<li class="toctree-l3"><a class="reference internal" href="../../../../api/adapters.html#id62">硬适配器主类</a></li>
+</ul>
+</li>
+<li class="toctree-l2"><a class="reference internal" href="../../../../api/adapters.html#id63">适配器工厂</a></li>
+</ul>
+</li>
+<li class="toctree-l1"><a class="reference internal" href="../../../../api/services.html">服务层 API</a><ul>
+<li class="toctree-l2"><a class="reference internal" href="../../../../api/services.html#id1">服务层概述</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../../../../api/services.html#id2">用户服务</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../../../../api/services.html#id3">认证服务</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../../../../api/services.html#id4">对话服务</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../../../../api/services.html#id5">文档服务</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../../../../api/services.html#id6">知识库服务</a></li>
+</ul>
+</li>
+<li class="toctree-l1"><a class="reference internal" href="../../../../api/models.html">数据模型 API</a><ul>
+<li class="toctree-l2"><a class="reference internal" href="../../../../api/models.html#id1">数据库模型</a><ul>
+<li class="toctree-l3"><a class="reference internal" href="../../../../api/models.html#id2">用户模型</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../../../../api/models.html#id3">对话模型</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../../../../api/models.html#id4">消息模型</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../../../../api/models.html#id5">文档模型</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../../../../api/models.html#id6">知识库模型</a></li>
+</ul>
+</li>
+<li class="toctree-l2"><a class="reference internal" href="../../../../api/models.html#pydantic">Pydantic 模型</a><ul>
+<li class="toctree-l3"><a class="reference internal" href="../../../../api/models.html#id7">请求模型</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../../../../api/models.html#id8">响应模型</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../../../../api/models.html#id9">通用模型</a></li>
+</ul>
+</li>
+</ul>
+</li>
+<li class="toctree-l1"><a class="reference internal" href="../../../../api/utils.html">工具函数 API</a><ul>
+<li class="toctree-l2"><a class="reference internal" href="../../../../api/utils.html#id1">通用工具</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../../../../api/utils.html#id2">文本处理</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../../../../api/utils.html#id3">日期时间</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../../../../api/utils.html#id4">加密工具</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../../../../api/utils.html#id5">验证工具</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../../../../api/utils.html#id6">日志工具</a></li>
+</ul>
+</li>
+</ul>
+
+        </div>
+      </div>
+    </nav>
+
+    <section data-toggle="wy-nav-shift" class="wy-nav-content-wrap"><nav class="wy-nav-top" aria-label="移动版导航菜单"  style="background: #2980B9" >
+          <i data-toggle="wy-nav-top" class="fa fa-bars"></i>
+          <a href="../../../../index.html">Zishu-Sensei</a>
+      </nav>
+
+      <div class="wy-nav-content">
+        <div class="rst-content">
+          <div role="navigation" aria-label="页面导航">
+  <ul class="wy-breadcrumbs">
+      <li><a href="../../../../index.html" class="icon icon-home" aria-label="Home"></a></li>
+          <li class="breadcrumb-item"><a href="../../../index.html">模块代码</a></li>
+      <li class="breadcrumb-item active">zishu.api.schemas.responses</li>
+      <li class="wy-breadcrumbs-aside">
+      </li>
+  </ul>
+  <hr/>
+</div>
+          <div role="main" class="document" itemscope="itemscope" itemtype="http://schema.org/Article">
+           <div itemprop="articleBody">
+             
+  <h1>zishu.api.schemas.responses 源代码</h1><div class="highlight"><pre>
+<span></span><span class="kn">from</span><span class="w"> </span><span class="nn">pydantic</span><span class="w"> </span><span class="kn">import</span> <span class="n">BaseModel</span><span class="p">,</span> <span class="n">Field</span><span class="p">,</span> <span class="n">field_validator</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">typing</span><span class="w"> </span><span class="kn">import</span> <span class="n">Optional</span><span class="p">,</span> <span class="n">List</span><span class="p">,</span> <span class="n">Any</span><span class="p">,</span> <span class="n">Dict</span><span class="p">,</span> <span class="n">Union</span><span class="p">,</span> <span class="n">Literal</span><span class="p">,</span> <span class="n">TYPE_CHECKING</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">datetime</span><span class="w"> </span><span class="kn">import</span> <span class="n">datetime</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">enum</span><span class="w"> </span><span class="kn">import</span> <span class="n">Enum</span>
+<span class="kn">import</span><span class="w"> </span><span class="nn">uuid</span>
+
+<span class="k">if</span> <span class="n">TYPE_CHECKING</span><span class="p">:</span>
+    <span class="kn">from</span><span class="w"> </span><span class="nn">typing</span><span class="w"> </span><span class="kn">import</span> <span class="n">ForwardRef</span>
+
+<span class="kn">from</span><span class="w"> </span><span class="nn">.chat</span><span class="w"> </span><span class="kn">import</span> <span class="p">(</span>
+    <span class="n">MessageRole</span><span class="p">,</span>
+    <span class="n">MessageType</span><span class="p">,</span>
+    <span class="n">EmotionType</span><span class="p">,</span>
+    <span class="n">CharacterConfig</span><span class="p">,</span>
+    <span class="n">ChatModel</span><span class="p">,</span>
+    <span class="n">Message</span><span class="p">,</span>
+<span class="p">)</span>
+
+
+<div class="viewcode-block" id="CompletionFinishReason">
+<a class="viewcode-back" href="../../../../api/models.html#zishu.api.schemas.responses.CompletionFinishReason">[文档]</a>
+<span class="k">class</span><span class="w"> </span><span class="nc">CompletionFinishReason</span><span class="p">(</span><span class="nb">str</span><span class="p">,</span> <span class="n">Enum</span><span class="p">):</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;完成原因枚举&quot;&quot;&quot;</span>
+
+    <span class="n">STOP</span> <span class="o">=</span> <span class="s2">&quot;stop&quot;</span>
+    <span class="n">LENGTH</span> <span class="o">=</span> <span class="s2">&quot;length&quot;</span>
+    <span class="n">CONTENT_FILTER</span> <span class="o">=</span> <span class="s2">&quot;content_filter&quot;</span>
+    <span class="n">FUNCTION_CALL</span> <span class="o">=</span> <span class="s2">&quot;function_call&quot;</span>
+    <span class="n">ERROR</span> <span class="o">=</span> <span class="s2">&quot;error&quot;</span></div>
+
+
+
+<div class="viewcode-block" id="ResponseStatus">
+<a class="viewcode-back" href="../../../../api/models.html#zishu.api.schemas.responses.ResponseStatus">[文档]</a>
+<span class="k">class</span><span class="w"> </span><span class="nc">ResponseStatus</span><span class="p">(</span><span class="nb">str</span><span class="p">,</span> <span class="n">Enum</span><span class="p">):</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;响应状态枚举&quot;&quot;&quot;</span>
+
+    <span class="n">SUCCESS</span> <span class="o">=</span> <span class="s2">&quot;success&quot;</span>
+    <span class="n">ERROR</span> <span class="o">=</span> <span class="s2">&quot;error&quot;</span>
+    <span class="n">PARTIAL</span> <span class="o">=</span> <span class="s2">&quot;partial&quot;</span>
+    <span class="n">PROCESSING</span> <span class="o">=</span> <span class="s2">&quot;processing&quot;</span></div>
+
+
+
+<div class="viewcode-block" id="SortOrder">
+<a class="viewcode-back" href="../../../../api/models.html#zishu.api.schemas.responses.SortOrder">[文档]</a>
+<span class="k">class</span><span class="w"> </span><span class="nc">SortOrder</span><span class="p">(</span><span class="nb">str</span><span class="p">,</span> <span class="n">Enum</span><span class="p">):</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;排序顺序枚举&quot;&quot;&quot;</span>
+
+    <span class="n">ASC</span> <span class="o">=</span> <span class="s2">&quot;asc&quot;</span>
+    <span class="n">DESC</span> <span class="o">=</span> <span class="s2">&quot;desc&quot;</span></div>
+
+
+
+<span class="c1"># 通用参数类</span>
+<div class="viewcode-block" id="PaginationParams">
+<a class="viewcode-back" href="../../../../api/models.html#zishu.api.schemas.responses.PaginationParams">[文档]</a>
+<span class="k">class</span><span class="w"> </span><span class="nc">PaginationParams</span><span class="p">(</span><span class="n">BaseModel</span><span class="p">):</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;分页参数&quot;&quot;&quot;</span>
+
+    <span class="n">page</span><span class="p">:</span> <span class="nb">int</span> <span class="o">=</span> <span class="n">Field</span><span class="p">(</span><span class="mi">1</span><span class="p">,</span> <span class="n">ge</span><span class="o">=</span><span class="mi">1</span><span class="p">,</span> <span class="n">description</span><span class="o">=</span><span class="s2">&quot;页码，从1开始&quot;</span><span class="p">)</span>
+    <span class="n">size</span><span class="p">:</span> <span class="nb">int</span> <span class="o">=</span> <span class="n">Field</span><span class="p">(</span><span class="mi">20</span><span class="p">,</span> <span class="n">ge</span><span class="o">=</span><span class="mi">1</span><span class="p">,</span> <span class="n">le</span><span class="o">=</span><span class="mi">100</span><span class="p">,</span> <span class="n">description</span><span class="o">=</span><span class="s2">&quot;每页大小，1-100&quot;</span><span class="p">)</span>
+    <span class="n">sort_by</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="nb">str</span><span class="p">]</span> <span class="o">=</span> <span class="n">Field</span><span class="p">(</span><span class="kc">None</span><span class="p">,</span> <span class="n">description</span><span class="o">=</span><span class="s2">&quot;排序字段&quot;</span><span class="p">)</span>
+    <span class="n">sort_order</span><span class="p">:</span> <span class="n">SortOrder</span> <span class="o">=</span> <span class="n">Field</span><span class="p">(</span><span class="n">SortOrder</span><span class="o">.</span><span class="n">ASC</span><span class="p">,</span> <span class="n">description</span><span class="o">=</span><span class="s2">&quot;排序顺序&quot;</span><span class="p">)</span></div>
+
+
+
+<div class="viewcode-block" id="FilterParams">
+<a class="viewcode-back" href="../../../../api/models.html#zishu.api.schemas.responses.FilterParams">[文档]</a>
+<span class="k">class</span><span class="w"> </span><span class="nc">FilterParams</span><span class="p">(</span><span class="n">BaseModel</span><span class="p">):</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;过滤参数&quot;&quot;&quot;</span>
+
+    <span class="n">filters</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="n">Dict</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="n">Any</span><span class="p">]]</span> <span class="o">=</span> <span class="n">Field</span><span class="p">(</span><span class="kc">None</span><span class="p">,</span> <span class="n">description</span><span class="o">=</span><span class="s2">&quot;过滤条件&quot;</span><span class="p">)</span>
+    <span class="n">search</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="nb">str</span><span class="p">]</span> <span class="o">=</span> <span class="n">Field</span><span class="p">(</span><span class="kc">None</span><span class="p">,</span> <span class="n">description</span><span class="o">=</span><span class="s2">&quot;搜索关键词&quot;</span><span class="p">)</span>
+    <span class="n">date_from</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="n">datetime</span><span class="p">]</span> <span class="o">=</span> <span class="n">Field</span><span class="p">(</span><span class="kc">None</span><span class="p">,</span> <span class="n">description</span><span class="o">=</span><span class="s2">&quot;开始日期&quot;</span><span class="p">)</span>
+    <span class="n">date_to</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="n">datetime</span><span class="p">]</span> <span class="o">=</span> <span class="n">Field</span><span class="p">(</span><span class="kc">None</span><span class="p">,</span> <span class="n">description</span><span class="o">=</span><span class="s2">&quot;结束日期&quot;</span><span class="p">)</span></div>
+
+
+
+<div class="viewcode-block" id="APIVersion">
+<a class="viewcode-back" href="../../../../api/models.html#zishu.api.schemas.responses.APIVersion">[文档]</a>
+<span class="k">class</span><span class="w"> </span><span class="nc">APIVersion</span><span class="p">(</span><span class="n">BaseModel</span><span class="p">):</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;API版本信息&quot;&quot;&quot;</span>
+
+    <span class="n">version</span><span class="p">:</span> <span class="nb">str</span> <span class="o">=</span> <span class="n">Field</span><span class="p">(</span><span class="o">...</span><span class="p">,</span> <span class="n">description</span><span class="o">=</span><span class="s2">&quot;版本号&quot;</span><span class="p">)</span>
+    <span class="n">build</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="nb">str</span><span class="p">]</span> <span class="o">=</span> <span class="n">Field</span><span class="p">(</span><span class="kc">None</span><span class="p">,</span> <span class="n">description</span><span class="o">=</span><span class="s2">&quot;构建号&quot;</span><span class="p">)</span>
+    <span class="n">commit_hash</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="nb">str</span><span class="p">]</span> <span class="o">=</span> <span class="n">Field</span><span class="p">(</span><span class="kc">None</span><span class="p">,</span> <span class="n">description</span><span class="o">=</span><span class="s2">&quot;提交哈希&quot;</span><span class="p">)</span>
+    <span class="n">release_date</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="n">datetime</span><span class="p">]</span> <span class="o">=</span> <span class="n">Field</span><span class="p">(</span><span class="kc">None</span><span class="p">,</span> <span class="n">description</span><span class="o">=</span><span class="s2">&quot;发布日期&quot;</span><span class="p">)</span></div>
+
+
+
+<div class="viewcode-block" id="BaseResponse">
+<a class="viewcode-back" href="../../../../api/models.html#zishu.api.schemas.responses.BaseResponse">[文档]</a>
+<span class="k">class</span><span class="w"> </span><span class="nc">BaseResponse</span><span class="p">(</span><span class="n">BaseModel</span><span class="p">):</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;基础响应模型&quot;&quot;&quot;</span>
+
+    <span class="n">success</span><span class="p">:</span> <span class="nb">bool</span> <span class="o">=</span> <span class="n">Field</span><span class="p">(</span><span class="o">...</span><span class="p">,</span> <span class="n">description</span><span class="o">=</span><span class="s2">&quot;操作是否成功&quot;</span><span class="p">)</span>
+    <span class="n">message</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="nb">str</span><span class="p">]</span> <span class="o">=</span> <span class="n">Field</span><span class="p">(</span><span class="kc">None</span><span class="p">,</span> <span class="n">description</span><span class="o">=</span><span class="s2">&quot;响应消息&quot;</span><span class="p">)</span>
+    <span class="n">timestamp</span><span class="p">:</span> <span class="n">datetime</span> <span class="o">=</span> <span class="n">Field</span><span class="p">(</span>
+        <span class="n">default_factory</span><span class="o">=</span><span class="k">lambda</span><span class="p">:</span> <span class="n">datetime</span><span class="o">.</span><span class="n">now</span><span class="p">(),</span> <span class="n">description</span><span class="o">=</span><span class="s2">&quot;响应时间戳&quot;</span>
+    <span class="p">)</span>
+    <span class="n">request_id</span><span class="p">:</span> <span class="nb">str</span> <span class="o">=</span> <span class="n">Field</span><span class="p">(</span>
+        <span class="n">default_factory</span><span class="o">=</span><span class="k">lambda</span><span class="p">:</span> <span class="nb">str</span><span class="p">(</span><span class="n">uuid</span><span class="o">.</span><span class="n">uuid4</span><span class="p">()),</span> <span class="n">description</span><span class="o">=</span><span class="s2">&quot;请求ID&quot;</span>
+    <span class="p">)</span></div>
+
+
+
+<span class="c1"># 基础响应模型</span>
+<div class="viewcode-block" id="UsageInfo">
+<a class="viewcode-back" href="../../../../api/models.html#zishu.api.schemas.responses.UsageInfo">[文档]</a>
+<span class="k">class</span><span class="w"> </span><span class="nc">UsageInfo</span><span class="p">(</span><span class="n">BaseModel</span><span class="p">):</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;Token使用统计&quot;&quot;&quot;</span>
+
+    <span class="n">prompt_tokens</span><span class="p">:</span> <span class="nb">int</span> <span class="o">=</span> <span class="n">Field</span><span class="p">(</span><span class="o">...</span><span class="p">,</span> <span class="n">description</span><span class="o">=</span><span class="s2">&quot;提示token数量&quot;</span><span class="p">)</span>
+    <span class="n">completion_tokens</span><span class="p">:</span> <span class="nb">int</span> <span class="o">=</span> <span class="n">Field</span><span class="p">(</span><span class="o">...</span><span class="p">,</span> <span class="n">description</span><span class="o">=</span><span class="s2">&quot;完成token数量&quot;</span><span class="p">)</span>
+    <span class="n">total_tokens</span><span class="p">:</span> <span class="nb">int</span> <span class="o">=</span> <span class="n">Field</span><span class="p">(</span><span class="o">...</span><span class="p">,</span> <span class="n">description</span><span class="o">=</span><span class="s2">&quot;总token数量&quot;</span><span class="p">)</span>
+    <span class="n">estimated_cost</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="nb">float</span><span class="p">]</span> <span class="o">=</span> <span class="n">Field</span><span class="p">(</span><span class="kc">None</span><span class="p">,</span> <span class="n">description</span><span class="o">=</span><span class="s2">&quot;预估成本&quot;</span><span class="p">)</span></div>
+
+
+
+<div class="viewcode-block" id="Choice">
+<a class="viewcode-back" href="../../../../api/models.html#zishu.api.schemas.responses.Choice">[文档]</a>
+<span class="k">class</span><span class="w"> </span><span class="nc">Choice</span><span class="p">(</span><span class="n">BaseModel</span><span class="p">):</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;对话选择项&quot;&quot;&quot;</span>
+
+    <span class="n">index</span><span class="p">:</span> <span class="nb">int</span> <span class="o">=</span> <span class="n">Field</span><span class="p">(</span><span class="o">...</span><span class="p">,</span> <span class="n">description</span><span class="o">=</span><span class="s2">&quot;选择索引&quot;</span><span class="p">)</span>
+    <span class="n">message</span><span class="p">:</span> <span class="n">Message</span> <span class="o">=</span> <span class="n">Field</span><span class="p">(</span><span class="o">...</span><span class="p">,</span> <span class="n">description</span><span class="o">=</span><span class="s2">&quot;消息内容&quot;</span><span class="p">)</span>
+    <span class="n">finish_reason</span><span class="p">:</span> <span class="n">CompletionFinishReason</span> <span class="o">=</span> <span class="n">Field</span><span class="p">(</span><span class="o">...</span><span class="p">,</span> <span class="n">description</span><span class="o">=</span><span class="s2">&quot;完成原因&quot;</span><span class="p">)</span>
+
+    <span class="c1"># 扩展信息</span>
+    <span class="n">confidence</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="nb">float</span><span class="p">]</span> <span class="o">=</span> <span class="n">Field</span><span class="p">(</span>
+        <span class="kc">None</span><span class="p">,</span> <span class="n">ge</span><span class="o">=</span><span class="mf">0.0</span><span class="p">,</span> <span class="n">le</span><span class="o">=</span><span class="mf">1.0</span><span class="p">,</span> <span class="n">description</span><span class="o">=</span><span class="s2">&quot;生成置信度&quot;</span>
+    <span class="p">)</span>  <span class="c1"># TODO: 需要根据生成质量计算</span>
+    <span class="n">safety_score</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="nb">float</span><span class="p">]</span> <span class="o">=</span> <span class="n">Field</span><span class="p">(</span>
+        <span class="kc">None</span><span class="p">,</span> <span class="n">ge</span><span class="o">=</span><span class="mf">0.0</span><span class="p">,</span> <span class="n">le</span><span class="o">=</span><span class="mf">1.0</span><span class="p">,</span> <span class="n">description</span><span class="o">=</span><span class="s2">&quot;安全得分&quot;</span>
+    <span class="p">)</span>  <span class="c1"># TODO: 需要根据生成内容计算</span></div>
+
+
+
+<div class="viewcode-block" id="StreamChoice">
+<a class="viewcode-back" href="../../../../api/models.html#zishu.api.schemas.responses.StreamChoice">[文档]</a>
+<span class="k">class</span><span class="w"> </span><span class="nc">StreamChoice</span><span class="p">(</span><span class="n">BaseModel</span><span class="p">):</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;流式响应选择项&quot;&quot;&quot;</span>
+
+    <span class="n">index</span><span class="p">:</span> <span class="nb">int</span> <span class="o">=</span> <span class="n">Field</span><span class="p">(</span><span class="o">...</span><span class="p">,</span> <span class="n">description</span><span class="o">=</span><span class="s2">&quot;选择索引&quot;</span><span class="p">)</span>
+    <span class="n">dalta</span><span class="p">:</span> <span class="n">Dict</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="n">Any</span><span class="p">]</span> <span class="o">=</span> <span class="n">Field</span><span class="p">(</span><span class="o">...</span><span class="p">,</span> <span class="n">description</span><span class="o">=</span><span class="s2">&quot;增量内容&quot;</span><span class="p">)</span>
+    <span class="n">finish_reason</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="n">CompletionFinishReason</span><span class="p">]</span> <span class="o">=</span> <span class="n">Field</span><span class="p">(</span><span class="kc">None</span><span class="p">,</span> <span class="n">description</span><span class="o">=</span><span class="s2">&quot;完成原因&quot;</span><span class="p">)</span></div>
+
+
+
+<div class="viewcode-block" id="ChatCompletionResponse">
+<a class="viewcode-back" href="../../../../api/models.html#zishu.api.schemas.responses.ChatCompletionResponse">[文档]</a>
+<span class="k">class</span><span class="w"> </span><span class="nc">ChatCompletionResponse</span><span class="p">(</span><span class="n">BaseModel</span><span class="p">):</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;对话完成响应 - 兼容OpenAI&quot;&quot;&quot;</span>
+
+    <span class="nb">id</span><span class="p">:</span> <span class="nb">str</span> <span class="o">=</span> <span class="n">Field</span><span class="p">(</span><span class="o">...</span><span class="p">,</span> <span class="n">description</span><span class="o">=</span><span class="s2">&quot;响应唯一ID&quot;</span><span class="p">)</span>
+    <span class="nb">object</span><span class="p">:</span> <span class="n">Literal</span><span class="p">[</span><span class="s2">&quot;chat.completion&quot;</span><span class="p">]</span> <span class="o">=</span> <span class="n">Field</span><span class="p">(</span>
+        <span class="n">default</span><span class="o">=</span><span class="s2">&quot;chat.completion&quot;</span><span class="p">,</span> <span class="n">description</span><span class="o">=</span><span class="s2">&quot;对象类型&quot;</span>
+    <span class="p">)</span>
+    <span class="n">created</span><span class="p">:</span> <span class="nb">int</span> <span class="o">=</span> <span class="n">Field</span><span class="p">(</span><span class="o">...</span><span class="p">,</span> <span class="n">description</span><span class="o">=</span><span class="s2">&quot;创建时间戳&quot;</span><span class="p">)</span>
+    <span class="n">model</span><span class="p">:</span> <span class="nb">str</span> <span class="o">=</span> <span class="n">Field</span><span class="p">(</span><span class="o">...</span><span class="p">,</span> <span class="n">description</span><span class="o">=</span><span class="s2">&quot;模型ID&quot;</span><span class="p">)</span>
+    <span class="n">choices</span><span class="p">:</span> <span class="n">List</span><span class="p">[</span><span class="n">Choice</span><span class="p">]</span> <span class="o">=</span> <span class="n">Field</span><span class="p">(</span><span class="o">...</span><span class="p">,</span> <span class="n">description</span><span class="o">=</span><span class="s2">&quot;生成选择列表&quot;</span><span class="p">)</span>
+    <span class="n">usage</span><span class="p">:</span> <span class="n">UsageInfo</span> <span class="o">=</span> <span class="n">Field</span><span class="p">(</span><span class="o">...</span><span class="p">,</span> <span class="n">description</span><span class="o">=</span><span class="s2">&quot;Token使用统计&quot;</span><span class="p">)</span>
+
+    <span class="c1"># 扩展字段</span>
+    <span class="n">adapter</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="nb">str</span><span class="p">]</span> <span class="o">=</span> <span class="n">Field</span><span class="p">(</span><span class="kc">None</span><span class="p">,</span> <span class="n">description</span><span class="o">=</span><span class="s2">&quot;适配器ID&quot;</span><span class="p">)</span>
+    <span class="n">session_id</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="nb">str</span><span class="p">]</span> <span class="o">=</span> <span class="n">Field</span><span class="p">(</span><span class="kc">None</span><span class="p">,</span> <span class="n">description</span><span class="o">=</span><span class="s2">&quot;会话ID&quot;</span><span class="p">)</span>
+    <span class="n">processing_time</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="nb">float</span><span class="p">]</span> <span class="o">=</span> <span class="n">Field</span><span class="p">(</span><span class="o">...</span><span class="p">,</span> <span class="n">description</span><span class="o">=</span><span class="s2">&quot;处理时间(秒)&quot;</span><span class="p">)</span>
+
+    <span class="c1"># 情绪分析结果：</span>
+    <span class="n">emotion_analysis</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="n">Dict</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="n">Any</span><span class="p">]]</span> <span class="o">=</span> <span class="n">Field</span><span class="p">(</span><span class="kc">None</span><span class="p">,</span> <span class="n">description</span><span class="o">=</span><span class="s2">&quot;情绪分析结果&quot;</span><span class="p">)</span>
+
+    <span class="c1"># 元数据</span>
+    <span class="n">metadata</span><span class="p">:</span> <span class="n">Dict</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="n">Any</span><span class="p">]</span> <span class="o">=</span> <span class="n">Field</span><span class="p">(</span><span class="n">default_factory</span><span class="o">=</span><span class="nb">dict</span><span class="p">,</span> <span class="n">description</span><span class="o">=</span><span class="s2">&quot;响应元数据&quot;</span><span class="p">)</span></div>
+
+
+
+<div class="viewcode-block" id="StreamChunk">
+<a class="viewcode-back" href="../../../../api/models.html#zishu.api.schemas.responses.StreamChunk">[文档]</a>
+<span class="k">class</span><span class="w"> </span><span class="nc">StreamChunk</span><span class="p">(</span><span class="n">BaseModel</span><span class="p">):</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;流式响应数据块&quot;&quot;&quot;</span>
+
+    <span class="nb">id</span><span class="p">:</span> <span class="nb">str</span> <span class="o">=</span> <span class="n">Field</span><span class="p">(</span><span class="o">...</span><span class="p">,</span> <span class="n">description</span><span class="o">=</span><span class="s2">&quot;流式ID&quot;</span><span class="p">)</span>
+    <span class="nb">object</span><span class="p">:</span> <span class="n">Literal</span><span class="p">[</span><span class="s2">&quot;chat.completion.chunk&quot;</span><span class="p">]</span> <span class="o">=</span> <span class="n">Field</span><span class="p">(</span>
+        <span class="n">default</span><span class="o">=</span><span class="s2">&quot;chat.completion.chunk&quot;</span><span class="p">,</span> <span class="n">description</span><span class="o">=</span><span class="s2">&quot;对象类型&quot;</span>
+    <span class="p">)</span>
+    <span class="n">created</span><span class="p">:</span> <span class="nb">int</span> <span class="o">=</span> <span class="n">Field</span><span class="p">(</span><span class="o">...</span><span class="p">,</span> <span class="n">description</span><span class="o">=</span><span class="s2">&quot;创建时间戳&quot;</span><span class="p">)</span>
+    <span class="n">model</span><span class="p">:</span> <span class="nb">str</span> <span class="o">=</span> <span class="n">Field</span><span class="p">(</span><span class="o">...</span><span class="p">,</span> <span class="n">description</span><span class="o">=</span><span class="s2">&quot;模型ID&quot;</span><span class="p">)</span>
+    <span class="n">choices</span><span class="p">:</span> <span class="n">List</span><span class="p">[</span><span class="n">StreamChoice</span><span class="p">]</span> <span class="o">=</span> <span class="n">Field</span><span class="p">(</span><span class="o">...</span><span class="p">,</span> <span class="n">description</span><span class="o">=</span><span class="s2">&quot;流式选择列表&quot;</span><span class="p">)</span>
+
+    <span class="c1"># 可选的使用统计</span>
+    <span class="n">usage</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="n">UsageInfo</span><span class="p">]</span> <span class="o">=</span> <span class="n">Field</span><span class="p">(</span><span class="kc">None</span><span class="p">,</span> <span class="n">description</span><span class="o">=</span><span class="s2">&quot;Token使用统计&quot;</span><span class="p">)</span>
+
+    <span class="c1"># 扩展字段</span>
+    <span class="n">adapter</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="nb">str</span><span class="p">]</span> <span class="o">=</span> <span class="n">Field</span><span class="p">(</span><span class="kc">None</span><span class="p">,</span> <span class="n">description</span><span class="o">=</span><span class="s2">&quot;适配器ID&quot;</span><span class="p">)</span>
+    <span class="n">session_id</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="nb">str</span><span class="p">]</span> <span class="o">=</span> <span class="n">Field</span><span class="p">(</span><span class="kc">None</span><span class="p">,</span> <span class="n">description</span><span class="o">=</span><span class="s2">&quot;会话ID&quot;</span><span class="p">)</span></div>
+
+
+
+<span class="c1"># 情绪系统响应</span>
+<div class="viewcode-block" id="EmotionAnalysis">
+<a class="viewcode-back" href="../../../../api/models.html#zishu.api.schemas.responses.EmotionAnalysis">[文档]</a>
+<span class="k">class</span><span class="w"> </span><span class="nc">EmotionAnalysis</span><span class="p">(</span><span class="n">BaseModel</span><span class="p">):</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;情绪分析结果&quot;&quot;&quot;</span>
+
+    <span class="n">detected_emotion</span><span class="p">:</span> <span class="n">EmotionType</span> <span class="o">=</span> <span class="n">Field</span><span class="p">(</span><span class="o">...</span><span class="p">,</span> <span class="n">description</span><span class="o">=</span><span class="s2">&quot;检测到的情绪&quot;</span><span class="p">)</span>
+    <span class="n">confidence</span><span class="p">:</span> <span class="nb">float</span> <span class="o">=</span> <span class="n">Field</span><span class="p">(</span><span class="o">...</span><span class="p">,</span> <span class="n">ge</span><span class="o">=</span><span class="mf">0.0</span><span class="p">,</span> <span class="n">le</span><span class="o">=</span><span class="mf">1.0</span><span class="p">,</span> <span class="n">description</span><span class="o">=</span><span class="s2">&quot;检测置信度&quot;</span><span class="p">)</span>
+    <span class="n">emotion_scores</span><span class="p">:</span> <span class="n">Dict</span><span class="p">[</span><span class="n">EmotionType</span><span class="p">,</span> <span class="nb">float</span><span class="p">]</span> <span class="o">=</span> <span class="n">Field</span><span class="p">(</span><span class="o">...</span><span class="p">,</span> <span class="n">description</span><span class="o">=</span><span class="s2">&quot;情绪得分&quot;</span><span class="p">)</span>
+    <span class="n">intensity</span><span class="p">:</span> <span class="nb">float</span> <span class="o">=</span> <span class="n">Field</span><span class="p">(</span><span class="o">...</span><span class="p">,</span> <span class="n">ge</span><span class="o">=</span><span class="mf">0.0</span><span class="p">,</span> <span class="n">le</span><span class="o">=</span><span class="mf">1.0</span><span class="p">,</span> <span class="n">description</span><span class="o">=</span><span class="s2">&quot;情绪强度&quot;</span><span class="p">)</span></div>
+
+
+
+<div class="viewcode-block" id="EmotionTransition">
+<a class="viewcode-back" href="../../../../api/models.html#zishu.api.schemas.responses.EmotionTransition">[文档]</a>
+<span class="k">class</span><span class="w"> </span><span class="nc">EmotionTransition</span><span class="p">(</span><span class="n">BaseModel</span><span class="p">):</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;情绪转换信息&quot;&quot;&quot;</span>
+
+    <span class="n">from_emotion</span><span class="p">:</span> <span class="n">EmotionType</span> <span class="o">=</span> <span class="n">Field</span><span class="p">(</span><span class="o">...</span><span class="p">,</span> <span class="n">description</span><span class="o">=</span><span class="s2">&quot;转换前的情绪&quot;</span><span class="p">)</span>
+    <span class="n">to_emotion</span><span class="p">:</span> <span class="n">EmotionType</span> <span class="o">=</span> <span class="n">Field</span><span class="p">(</span><span class="o">...</span><span class="p">,</span> <span class="n">description</span><span class="o">=</span><span class="s2">&quot;转换后的情绪&quot;</span><span class="p">)</span>
+    <span class="n">transition_reason</span><span class="p">:</span> <span class="nb">str</span> <span class="o">=</span> <span class="n">Field</span><span class="p">(</span><span class="o">...</span><span class="p">,</span> <span class="n">description</span><span class="o">=</span><span class="s2">&quot;转换原因&quot;</span><span class="p">)</span>
+    <span class="n">smooth_transition</span><span class="p">:</span> <span class="nb">bool</span> <span class="o">=</span> <span class="n">Field</span><span class="p">(</span><span class="o">...</span><span class="p">,</span> <span class="n">description</span><span class="o">=</span><span class="s2">&quot;是否平滑转换&quot;</span><span class="p">)</span></div>
+
+
+
+<span class="k">class</span><span class="w"> </span><span class="nc">EmotionResponse</span><span class="p">(</span><span class="n">BaseModel</span><span class="p">):</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;情绪对话响应&quot;&quot;&quot;</span>
+
+    <span class="nb">id</span><span class="p">:</span> <span class="nb">str</span> <span class="o">=</span> <span class="n">Field</span><span class="p">(</span><span class="o">...</span><span class="p">,</span> <span class="n">description</span><span class="o">=</span><span class="s2">&quot;响应ID&quot;</span><span class="p">)</span>
+    <span class="n">message</span><span class="p">:</span> <span class="n">Message</span> <span class="o">=</span> <span class="n">Field</span><span class="p">(</span><span class="o">...</span><span class="p">,</span> <span class="n">description</span><span class="o">=</span><span class="s2">&quot;回复消息&quot;</span><span class="p">)</span>
+
+    <span class="c1"># 情绪分析</span>
+    <span class="n">user_emotion</span><span class="p">:</span> <span class="n">EmotionAnalysis</span> <span class="o">=</span> <span class="n">Field</span><span class="p">(</span><span class="kc">None</span><span class="p">,</span> <span class="n">description</span><span class="o">=</span><span class="s2">&quot;用户情绪分析&quot;</span><span class="p">)</span>
+    <span class="n">response_emotion</span><span class="p">:</span> <span class="n">EmotionType</span> <span class="o">=</span> <span class="n">Field</span><span class="p">(</span><span class="kc">None</span><span class="p">,</span> <span class="n">description</span><span class="o">=</span><span class="s2">&quot;回复情绪&quot;</span><span class="p">)</span>
+    <span class="n">emotion_transition</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="n">EmotionTransition</span><span class="p">]</span> <span class="o">=</span> <span class="n">Field</span><span class="p">(</span><span class="kc">None</span><span class="p">,</span> <span class="n">description</span><span class="o">=</span><span class="s2">&quot;情绪过渡&quot;</span><span class="p">)</span>
+
+    <span class="c1"># 基础信息</span>
+    <span class="n">usage</span><span class="p">:</span> <span class="n">UsageInfo</span> <span class="o">=</span> <span class="n">Field</span><span class="p">(</span><span class="o">...</span><span class="p">,</span> <span class="n">description</span><span class="o">=</span><span class="s2">&quot;Token使用统计&quot;</span><span class="p">)</span>
+    <span class="n">processing_time</span><span class="p">:</span> <span class="nb">float</span> <span class="o">=</span> <span class="n">Field</span><span class="p">(</span><span class="kc">None</span><span class="p">,</span> <span class="n">description</span><span class="o">=</span><span class="s2">&quot;处理时间(秒)&quot;</span><span class="p">)</span>
+    <span class="n">timestamp</span><span class="p">:</span> <span class="n">datetime</span> <span class="o">=</span> <span class="n">Field</span><span class="p">(</span><span class="n">default_factory</span><span class="o">=</span><span class="n">datetime</span><span class="o">.</span><span class="n">now</span><span class="p">,</span> <span class="n">description</span><span class="o">=</span><span class="s2">&quot;响应时间&quot;</span><span class="p">)</span>
+
+
+<span class="c1"># 健康检查响应</span>
+<div class="viewcode-block" id="ModelStatus">
+<a class="viewcode-back" href="../../../../api/models.html#zishu.api.schemas.responses.ModelStatus">[文档]</a>
+<span class="k">class</span><span class="w"> </span><span class="nc">ModelStatus</span><span class="p">(</span><span class="n">BaseModel</span><span class="p">):</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;模型状态&quot;&quot;&quot;</span>
+
+    <span class="n">status</span><span class="p">:</span> <span class="n">Literal</span><span class="p">[</span><span class="s2">&quot;healthy&quot;</span><span class="p">,</span> <span class="s2">&quot;unhealthy&quot;</span><span class="p">,</span> <span class="s2">&quot;degraded&quot;</span><span class="p">]</span> <span class="o">=</span> <span class="n">Field</span><span class="p">(</span><span class="o">...</span><span class="p">,</span> <span class="n">description</span><span class="o">=</span><span class="s2">&quot;模型状态&quot;</span><span class="p">)</span>
+    <span class="n">loaded_adapters</span><span class="p">:</span> <span class="n">List</span><span class="p">[</span><span class="nb">str</span><span class="p">]</span> <span class="o">=</span> <span class="n">Field</span><span class="p">(</span><span class="n">default_factory</span><span class="o">=</span><span class="nb">list</span><span class="p">,</span> <span class="n">description</span><span class="o">=</span><span class="s2">&quot;已加载的适配器列表&quot;</span><span class="p">)</span>
+    <span class="n">total_memory_usage</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="nb">int</span><span class="p">]</span> <span class="o">=</span> <span class="n">Field</span><span class="p">(</span><span class="kc">None</span><span class="p">,</span> <span class="n">description</span><span class="o">=</span><span class="s2">&quot;总内存使用(字节)&quot;</span><span class="p">)</span>
+    <span class="n">available_memory</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="nb">int</span><span class="p">]</span> <span class="o">=</span> <span class="n">Field</span><span class="p">(</span><span class="kc">None</span><span class="p">,</span> <span class="n">description</span><span class="o">=</span><span class="s2">&quot;可用内存(字节)&quot;</span><span class="p">)</span>
+    <span class="n">gpu_info</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="n">Dict</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="n">Dict</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="n">Any</span><span class="p">]]]</span> <span class="o">=</span> <span class="n">Field</span><span class="p">(</span><span class="kc">None</span><span class="p">,</span> <span class="n">description</span><span class="o">=</span><span class="s2">&quot;GPU信息&quot;</span><span class="p">)</span>
+    <span class="n">last_updated</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="n">datetime</span><span class="p">]</span> <span class="o">=</span> <span class="n">Field</span><span class="p">(</span><span class="kc">None</span><span class="p">,</span> <span class="n">description</span><span class="o">=</span><span class="s2">&quot;最后更新时间&quot;</span><span class="p">)</span></div>
+
+
+
+<div class="viewcode-block" id="SystemInfo">
+<a class="viewcode-back" href="../../../../api/models.html#zishu.api.schemas.responses.SystemInfo">[文档]</a>
+<span class="k">class</span><span class="w"> </span><span class="nc">SystemInfo</span><span class="p">(</span><span class="n">BaseModel</span><span class="p">):</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;系统信息&quot;&quot;&quot;</span>
+
+    <span class="n">cpu_usage</span><span class="p">:</span> <span class="nb">float</span> <span class="o">=</span> <span class="n">Field</span><span class="p">(</span><span class="o">...</span><span class="p">,</span> <span class="n">description</span><span class="o">=</span><span class="s2">&quot;CPU使用率百分比&quot;</span><span class="p">)</span>
+    <span class="n">memory_usage</span><span class="p">:</span> <span class="nb">float</span> <span class="o">=</span> <span class="n">Field</span><span class="p">(</span><span class="o">...</span><span class="p">,</span> <span class="n">description</span><span class="o">=</span><span class="s2">&quot;内存使用率百分比&quot;</span><span class="p">)</span>
+    <span class="n">disk_usage</span><span class="p">:</span> <span class="nb">float</span> <span class="o">=</span> <span class="n">Field</span><span class="p">(</span><span class="o">...</span><span class="p">,</span> <span class="n">description</span><span class="o">=</span><span class="s2">&quot;磁盘使用率百分比&quot;</span><span class="p">)</span>
+    <span class="n">gpu_usage</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="n">Dict</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="nb">float</span><span class="p">]]</span> <span class="o">=</span> <span class="n">Field</span><span class="p">(</span><span class="kc">None</span><span class="p">,</span> <span class="n">description</span><span class="o">=</span><span class="s2">&quot;GPU使用率&quot;</span><span class="p">)</span>
+    <span class="n">temperature</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="n">Dict</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="nb">float</span><span class="p">]]</span> <span class="o">=</span> <span class="n">Field</span><span class="p">(</span><span class="kc">None</span><span class="p">,</span> <span class="n">description</span><span class="o">=</span><span class="s2">&quot;温度信息&quot;</span><span class="p">)</span>
+    <span class="n">uptime_seconds</span><span class="p">:</span> <span class="nb">float</span> <span class="o">=</span> <span class="n">Field</span><span class="p">(</span><span class="o">...</span><span class="p">,</span> <span class="n">description</span><span class="o">=</span><span class="s2">&quot;系统运行时间(秒)&quot;</span><span class="p">)</span>
+    <span class="n">timestamp</span><span class="p">:</span> <span class="n">datetime</span> <span class="o">=</span> <span class="n">Field</span><span class="p">(</span><span class="o">...</span><span class="p">,</span> <span class="n">description</span><span class="o">=</span><span class="s2">&quot;时间戳&quot;</span><span class="p">)</span></div>
+
+
+
+<div class="viewcode-block" id="ComponentHealth">
+<a class="viewcode-back" href="../../../../api/models.html#zishu.api.schemas.responses.ComponentHealth">[文档]</a>
+<span class="k">class</span><span class="w"> </span><span class="nc">ComponentHealth</span><span class="p">(</span><span class="n">BaseModel</span><span class="p">):</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;组件健康状态&quot;&quot;&quot;</span>
+
+    <span class="n">name</span><span class="p">:</span> <span class="nb">str</span> <span class="o">=</span> <span class="n">Field</span><span class="p">(</span><span class="o">...</span><span class="p">,</span> <span class="n">description</span><span class="o">=</span><span class="s2">&quot;组件名称&quot;</span><span class="p">)</span>
+    <span class="n">status</span><span class="p">:</span> <span class="n">Literal</span><span class="p">[</span><span class="s2">&quot;healthy&quot;</span><span class="p">,</span> <span class="s2">&quot;unhealthy&quot;</span><span class="p">,</span> <span class="s2">&quot;degraded&quot;</span><span class="p">]</span> <span class="o">=</span> <span class="n">Field</span><span class="p">(</span><span class="o">...</span><span class="p">,</span> <span class="n">description</span><span class="o">=</span><span class="s2">&quot;组件状态&quot;</span><span class="p">)</span>
+    <span class="n">message</span><span class="p">:</span> <span class="nb">str</span> <span class="o">=</span> <span class="n">Field</span><span class="p">(</span><span class="o">...</span><span class="p">,</span> <span class="n">description</span><span class="o">=</span><span class="s2">&quot;状态消息&quot;</span><span class="p">)</span>
+    <span class="n">response_time_ms</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="nb">float</span><span class="p">]</span> <span class="o">=</span> <span class="n">Field</span><span class="p">(</span><span class="kc">None</span><span class="p">,</span> <span class="n">description</span><span class="o">=</span><span class="s2">&quot;响应时间(毫秒)&quot;</span><span class="p">)</span>
+    <span class="n">last_check</span><span class="p">:</span> <span class="n">datetime</span> <span class="o">=</span> <span class="n">Field</span><span class="p">(</span><span class="o">...</span><span class="p">,</span> <span class="n">description</span><span class="o">=</span><span class="s2">&quot;最后检查时间&quot;</span><span class="p">)</span>
+    <span class="n">details</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="n">Dict</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="n">Any</span><span class="p">]]</span> <span class="o">=</span> <span class="n">Field</span><span class="p">(</span><span class="kc">None</span><span class="p">,</span> <span class="n">description</span><span class="o">=</span><span class="s2">&quot;详细信息&quot;</span><span class="p">)</span>
+    <span class="n">error</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="nb">str</span><span class="p">]</span> <span class="o">=</span> <span class="n">Field</span><span class="p">(</span><span class="kc">None</span><span class="p">,</span> <span class="n">description</span><span class="o">=</span><span class="s2">&quot;错误信息&quot;</span><span class="p">)</span></div>
+
+
+
+<div class="viewcode-block" id="SystemMetrics">
+<a class="viewcode-back" href="../../../../api/models.html#zishu.api.schemas.responses.SystemMetrics">[文档]</a>
+<span class="k">class</span><span class="w"> </span><span class="nc">SystemMetrics</span><span class="p">(</span><span class="n">BaseModel</span><span class="p">):</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;系统指标&quot;&quot;&quot;</span>
+
+    <span class="n">cpu_percent</span><span class="p">:</span> <span class="nb">float</span> <span class="o">=</span> <span class="n">Field</span><span class="p">(</span><span class="o">...</span><span class="p">,</span> <span class="n">description</span><span class="o">=</span><span class="s2">&quot;CPU使用率百分比&quot;</span><span class="p">)</span>
+    <span class="n">memory_percent</span><span class="p">:</span> <span class="nb">float</span> <span class="o">=</span> <span class="n">Field</span><span class="p">(</span><span class="o">...</span><span class="p">,</span> <span class="n">description</span><span class="o">=</span><span class="s2">&quot;内存使用率百分比&quot;</span><span class="p">)</span>
+    <span class="n">disk_percent</span><span class="p">:</span> <span class="nb">float</span> <span class="o">=</span> <span class="n">Field</span><span class="p">(</span><span class="o">...</span><span class="p">,</span> <span class="n">description</span><span class="o">=</span><span class="s2">&quot;磁盘使用率百分比&quot;</span><span class="p">)</span>
+    <span class="n">network_io</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="n">Dict</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="nb">int</span><span class="p">]]</span> <span class="o">=</span> <span class="n">Field</span><span class="p">(</span><span class="kc">None</span><span class="p">,</span> <span class="n">description</span><span class="o">=</span><span class="s2">&quot;网络IO统计&quot;</span><span class="p">)</span>
+    <span class="n">process_count</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="nb">int</span><span class="p">]</span> <span class="o">=</span> <span class="n">Field</span><span class="p">(</span><span class="kc">None</span><span class="p">,</span> <span class="n">description</span><span class="o">=</span><span class="s2">&quot;进程数量&quot;</span><span class="p">)</span>
+    <span class="n">load_average</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="n">List</span><span class="p">[</span><span class="nb">float</span><span class="p">]]</span> <span class="o">=</span> <span class="n">Field</span><span class="p">(</span><span class="kc">None</span><span class="p">,</span> <span class="n">description</span><span class="o">=</span><span class="s2">&quot;系统负载平均值&quot;</span><span class="p">)</span>
+    <span class="n">timestamp</span><span class="p">:</span> <span class="n">datetime</span> <span class="o">=</span> <span class="n">Field</span><span class="p">(</span><span class="o">...</span><span class="p">,</span> <span class="n">description</span><span class="o">=</span><span class="s2">&quot;指标时间戳&quot;</span><span class="p">)</span></div>
+
+
+
+<div class="viewcode-block" id="HealthCheckResponse">
+<a class="viewcode-back" href="../../../../api/models.html#zishu.api.schemas.responses.HealthCheckResponse">[文档]</a>
+<span class="k">class</span><span class="w"> </span><span class="nc">HealthCheckResponse</span><span class="p">(</span><span class="n">BaseModel</span><span class="p">):</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;基础健康检查响应&quot;&quot;&quot;</span>
+
+    <span class="n">status</span><span class="p">:</span> <span class="n">Literal</span><span class="p">[</span><span class="s2">&quot;healthy&quot;</span><span class="p">,</span> <span class="s2">&quot;unhealthy&quot;</span><span class="p">,</span> <span class="s2">&quot;degraded&quot;</span><span class="p">]</span> <span class="o">=</span> <span class="n">Field</span><span class="p">(</span><span class="o">...</span><span class="p">,</span> <span class="n">description</span><span class="o">=</span><span class="s2">&quot;整体状态&quot;</span><span class="p">)</span>
+    <span class="n">timestamp</span><span class="p">:</span> <span class="n">datetime</span> <span class="o">=</span> <span class="n">Field</span><span class="p">(</span><span class="o">...</span><span class="p">,</span> <span class="n">description</span><span class="o">=</span><span class="s2">&quot;检查时间&quot;</span><span class="p">)</span>
+    <span class="n">uptime_seconds</span><span class="p">:</span> <span class="nb">float</span> <span class="o">=</span> <span class="n">Field</span><span class="p">(</span><span class="o">...</span><span class="p">,</span> <span class="n">description</span><span class="o">=</span><span class="s2">&quot;系统运行时间(秒)&quot;</span><span class="p">)</span>
+    <span class="n">version</span><span class="p">:</span> <span class="nb">str</span> <span class="o">=</span> <span class="n">Field</span><span class="p">(</span><span class="o">...</span><span class="p">,</span> <span class="n">description</span><span class="o">=</span><span class="s2">&quot;系统版本&quot;</span><span class="p">)</span></div>
+
+
+
+<div class="viewcode-block" id="DeepHealthCheckResponse">
+<a class="viewcode-back" href="../../../../api/models.html#zishu.api.schemas.responses.DeepHealthCheckResponse">[文档]</a>
+<span class="k">class</span><span class="w"> </span><span class="nc">DeepHealthCheckResponse</span><span class="p">(</span><span class="n">BaseModel</span><span class="p">):</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;深度健康检查响应&quot;&quot;&quot;</span>
+
+    <span class="n">status</span><span class="p">:</span> <span class="n">Literal</span><span class="p">[</span><span class="s2">&quot;healthy&quot;</span><span class="p">,</span> <span class="s2">&quot;unhealthy&quot;</span><span class="p">,</span> <span class="s2">&quot;degraded&quot;</span><span class="p">]</span> <span class="o">=</span> <span class="n">Field</span><span class="p">(</span><span class="o">...</span><span class="p">,</span> <span class="n">description</span><span class="o">=</span><span class="s2">&quot;整体状态&quot;</span><span class="p">)</span>
+    <span class="n">timestamp</span><span class="p">:</span> <span class="n">datetime</span> <span class="o">=</span> <span class="n">Field</span><span class="p">(</span><span class="o">...</span><span class="p">,</span> <span class="n">description</span><span class="o">=</span><span class="s2">&quot;检查时间&quot;</span><span class="p">)</span>
+    <span class="n">uptime_seconds</span><span class="p">:</span> <span class="nb">float</span> <span class="o">=</span> <span class="n">Field</span><span class="p">(</span><span class="o">...</span><span class="p">,</span> <span class="n">description</span><span class="o">=</span><span class="s2">&quot;系统运行时间(秒)&quot;</span><span class="p">)</span>
+    <span class="n">version</span><span class="p">:</span> <span class="nb">str</span> <span class="o">=</span> <span class="n">Field</span><span class="p">(</span><span class="o">...</span><span class="p">,</span> <span class="n">description</span><span class="o">=</span><span class="s2">&quot;系统版本&quot;</span><span class="p">)</span>
+    <span class="n">components</span><span class="p">:</span> <span class="n">List</span><span class="p">[</span><span class="n">ComponentHealth</span><span class="p">]</span> <span class="o">=</span> <span class="n">Field</span><span class="p">(</span><span class="o">...</span><span class="p">,</span> <span class="n">description</span><span class="o">=</span><span class="s2">&quot;组件健康状态列表&quot;</span><span class="p">)</span>
+    <span class="n">system_metrics</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="n">SystemMetrics</span><span class="p">]</span> <span class="o">=</span> <span class="n">Field</span><span class="p">(</span><span class="kc">None</span><span class="p">,</span> <span class="n">description</span><span class="o">=</span><span class="s2">&quot;系统指标&quot;</span><span class="p">)</span>
+    <span class="n">summary</span><span class="p">:</span> <span class="n">Dict</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="n">Any</span><span class="p">]</span> <span class="o">=</span> <span class="n">Field</span><span class="p">(</span><span class="o">...</span><span class="p">,</span> <span class="n">description</span><span class="o">=</span><span class="s2">&quot;健康状态摘要&quot;</span><span class="p">)</span></div>
+
+
+
+<div class="viewcode-block" id="HealthResponse">
+<a class="viewcode-back" href="../../../../api/models.html#zishu.api.schemas.responses.HealthResponse">[文档]</a>
+<span class="k">class</span><span class="w"> </span><span class="nc">HealthResponse</span><span class="p">(</span><span class="n">BaseModel</span><span class="p">):</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;健康检查响应&quot;&quot;&quot;</span>
+
+    <span class="n">status</span><span class="p">:</span> <span class="n">Literal</span><span class="p">[</span><span class="s2">&quot;healthy&quot;</span><span class="p">,</span> <span class="s2">&quot;unhealthy&quot;</span><span class="p">,</span> <span class="s2">&quot;degraded&quot;</span><span class="p">]</span> <span class="o">=</span> <span class="n">Field</span><span class="p">(</span><span class="o">...</span><span class="p">,</span> <span class="n">description</span><span class="o">=</span><span class="s2">&quot;整体状态&quot;</span><span class="p">)</span>
+    <span class="n">timestamp</span><span class="p">:</span> <span class="n">datetime</span> <span class="o">=</span> <span class="n">Field</span><span class="p">(</span><span class="n">default_factory</span><span class="o">=</span><span class="n">datetime</span><span class="o">.</span><span class="n">now</span><span class="p">,</span> <span class="n">description</span><span class="o">=</span><span class="s2">&quot;检查时间&quot;</span><span class="p">)</span>
+
+    <span class="c1"># 详细状态</span>
+    <span class="n">api_status</span><span class="p">:</span> <span class="nb">bool</span> <span class="o">=</span> <span class="n">Field</span><span class="p">(</span><span class="o">...</span><span class="p">,</span> <span class="n">description</span><span class="o">=</span><span class="s2">&quot;API服务状态&quot;</span><span class="p">)</span>
+    <span class="n">database_status</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="nb">bool</span><span class="p">]</span> <span class="o">=</span> <span class="n">Field</span><span class="p">(</span><span class="kc">None</span><span class="p">,</span> <span class="n">description</span><span class="o">=</span><span class="s2">&quot;数据库状态&quot;</span><span class="p">)</span>
+    <span class="n">cache_status</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="nb">bool</span><span class="p">]</span> <span class="o">=</span> <span class="n">Field</span><span class="p">(</span><span class="kc">None</span><span class="p">,</span> <span class="n">description</span><span class="o">=</span><span class="s2">&quot;缓存状态&quot;</span><span class="p">)</span>
+
+    <span class="c1"># 模型状态</span>
+    <span class="n">models</span><span class="p">:</span> <span class="n">List</span><span class="p">[</span><span class="n">ModelStatus</span><span class="p">]</span> <span class="o">=</span> <span class="n">Field</span><span class="p">(</span><span class="n">default_factory</span><span class="o">=</span><span class="nb">list</span><span class="p">,</span> <span class="n">description</span><span class="o">=</span><span class="s2">&quot;模型状态列表&quot;</span><span class="p">)</span>
+
+    <span class="c1"># 系统指标</span>
+    <span class="n">metrics</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="n">SystemMetrics</span><span class="p">]</span> <span class="o">=</span> <span class="n">Field</span><span class="p">(</span><span class="kc">None</span><span class="p">,</span> <span class="n">description</span><span class="o">=</span><span class="s2">&quot;系统指标&quot;</span><span class="p">)</span>
+
+    <span class="c1"># 检查详情</span>
+    <span class="n">checks</span><span class="p">:</span> <span class="n">Dict</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="n">Any</span><span class="p">]</span> <span class="o">=</span> <span class="n">Field</span><span class="p">(</span><span class="n">default_factory</span><span class="o">=</span><span class="nb">dict</span><span class="p">,</span> <span class="n">description</span><span class="o">=</span><span class="s2">&quot;检查详情&quot;</span><span class="p">)</span>
+    <span class="n">version</span><span class="p">:</span> <span class="nb">str</span> <span class="o">=</span> <span class="n">Field</span><span class="p">(</span><span class="o">...</span><span class="p">,</span> <span class="n">description</span><span class="o">=</span><span class="s2">&quot;API版本&quot;</span><span class="p">)</span></div>
+
+
+
+<span class="c1"># 模型管理响应</span>
+<div class="viewcode-block" id="AdapterInfo">
+<a class="viewcode-back" href="../../../../api/models.html#zishu.api.schemas.responses.AdapterInfo">[文档]</a>
+<span class="k">class</span><span class="w"> </span><span class="nc">AdapterInfo</span><span class="p">(</span><span class="n">BaseModel</span><span class="p">):</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;适配器信息&quot;&quot;&quot;</span>
+
+    <span class="n">name</span><span class="p">:</span> <span class="nb">str</span> <span class="o">=</span> <span class="n">Field</span><span class="p">(</span><span class="o">...</span><span class="p">,</span> <span class="n">description</span><span class="o">=</span><span class="s2">&quot;适配器名称&quot;</span><span class="p">)</span>
+    <span class="n">path</span><span class="p">:</span> <span class="nb">str</span> <span class="o">=</span> <span class="n">Field</span><span class="p">(</span><span class="o">...</span><span class="p">,</span> <span class="n">description</span><span class="o">=</span><span class="s2">&quot;适配器路径&quot;</span><span class="p">)</span>
+    <span class="n">size</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="nb">float</span><span class="p">]</span> <span class="o">=</span> <span class="n">Field</span><span class="p">(</span><span class="kc">None</span><span class="p">,</span> <span class="n">description</span><span class="o">=</span><span class="s2">&quot;适配器大小(Byte)&quot;</span><span class="p">)</span>
+    <span class="n">version</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="nb">str</span><span class="p">]</span> <span class="o">=</span> <span class="n">Field</span><span class="p">(</span><span class="kc">None</span><span class="p">,</span> <span class="n">description</span><span class="o">=</span><span class="s2">&quot;适配器版本&quot;</span><span class="p">)</span>
+    <span class="n">description</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="nb">str</span><span class="p">]</span> <span class="o">=</span> <span class="n">Field</span><span class="p">(</span><span class="kc">None</span><span class="p">,</span> <span class="n">description</span><span class="o">=</span><span class="s2">&quot;适配器描述&quot;</span><span class="p">)</span>
+
+    <span class="c1"># 状态信息</span>
+    <span class="n">status</span><span class="p">:</span> <span class="n">Literal</span><span class="p">[</span><span class="s2">&quot;loaded&quot;</span><span class="p">,</span> <span class="s2">&quot;unloaded&quot;</span><span class="p">,</span> <span class="s2">&quot;loading&quot;</span><span class="p">,</span> <span class="s2">&quot;error&quot;</span><span class="p">]</span> <span class="o">=</span> <span class="n">Field</span><span class="p">(</span>
+        <span class="o">...</span><span class="p">,</span> <span class="n">description</span><span class="o">=</span><span class="s2">&quot;适配器状态&quot;</span>
+    <span class="p">)</span>
+    <span class="n">load_time</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="nb">float</span><span class="p">]</span> <span class="o">=</span> <span class="n">Field</span><span class="p">(</span><span class="kc">None</span><span class="p">,</span> <span class="n">description</span><span class="o">=</span><span class="s2">&quot;加载时间(秒)&quot;</span><span class="p">)</span>
+    <span class="n">memory_usage</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="nb">float</span><span class="p">]</span> <span class="o">=</span> <span class="n">Field</span><span class="p">(</span><span class="kc">None</span><span class="p">,</span> <span class="n">description</span><span class="o">=</span><span class="s2">&quot;内存使用&quot;</span><span class="p">)</span>
+
+    <span class="c1"># 配置信息</span>
+    <span class="n">config</span><span class="p">:</span> <span class="n">Dict</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="n">Any</span><span class="p">]</span> <span class="o">=</span> <span class="n">Field</span><span class="p">(</span><span class="n">default_factory</span><span class="o">=</span><span class="nb">dict</span><span class="p">,</span> <span class="n">description</span><span class="o">=</span><span class="s2">&quot;适配器配置&quot;</span><span class="p">)</span></div>
+
+
+
+<div class="viewcode-block" id="ModelListResponse">
+<a class="viewcode-back" href="../../../../api/models.html#zishu.api.schemas.responses.ModelListResponse">[文档]</a>
+<span class="k">class</span><span class="w"> </span><span class="nc">ModelListResponse</span><span class="p">(</span><span class="n">BaseModel</span><span class="p">):</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;模型列表响应&quot;&quot;&quot;</span>
+
+    <span class="n">success</span><span class="p">:</span> <span class="nb">bool</span> <span class="o">=</span> <span class="n">Field</span><span class="p">(</span><span class="o">...</span><span class="p">,</span> <span class="n">description</span><span class="o">=</span><span class="s2">&quot;操作是否成功&quot;</span><span class="p">)</span>
+    <span class="n">operation</span><span class="p">:</span> <span class="n">Literal</span><span class="p">[</span><span class="s2">&quot;load&quot;</span><span class="p">,</span> <span class="s2">&quot;unload&quot;</span><span class="p">,</span> <span class="s2">&quot;switch&quot;</span><span class="p">]</span> <span class="o">=</span> <span class="n">Field</span><span class="p">(</span><span class="o">...</span><span class="p">,</span> <span class="n">description</span><span class="o">=</span><span class="s2">&quot;操作类型&quot;</span><span class="p">)</span>
+    <span class="n">adapter_name</span><span class="p">:</span> <span class="nb">str</span> <span class="o">=</span> <span class="n">Field</span><span class="p">(</span><span class="o">...</span><span class="p">,</span> <span class="n">description</span><span class="o">=</span><span class="s2">&quot;适配器名称&quot;</span><span class="p">)</span>
+    <span class="n">message</span><span class="p">:</span> <span class="nb">str</span> <span class="o">=</span> <span class="n">Field</span><span class="p">(</span><span class="o">...</span><span class="p">,</span> <span class="n">description</span><span class="o">=</span><span class="s2">&quot;操作结果消息&quot;</span><span class="p">)</span>
+
+    <span class="c1"># 详细信息</span>
+    <span class="n">execution_time</span><span class="p">:</span> <span class="nb">float</span> <span class="o">=</span> <span class="n">Field</span><span class="p">(</span><span class="o">...</span><span class="p">,</span> <span class="n">description</span><span class="o">=</span><span class="s2">&quot;执行时间(秒)&quot;</span><span class="p">)</span>
+    <span class="n">memory_usage</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="nb">float</span><span class="p">]</span> <span class="o">=</span> <span class="n">Field</span><span class="p">(</span><span class="kc">None</span><span class="p">,</span> <span class="n">description</span><span class="o">=</span><span class="s2">&quot;内存使用(MB)&quot;</span><span class="p">)</span>
+
+    <span class="c1"># 错误信息</span>
+    <span class="n">error_code</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="nb">str</span><span class="p">]</span> <span class="o">=</span> <span class="n">Field</span><span class="p">(</span><span class="kc">None</span><span class="p">,</span> <span class="n">description</span><span class="o">=</span><span class="s2">&quot;错误代码&quot;</span><span class="p">)</span>
+    <span class="n">error_details</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="nb">str</span><span class="p">]</span> <span class="o">=</span> <span class="n">Field</span><span class="p">(</span><span class="kc">None</span><span class="p">,</span> <span class="n">description</span><span class="o">=</span><span class="s2">&quot;错误详情&quot;</span><span class="p">)</span>
+
+    <span class="n">timestamp</span><span class="p">:</span> <span class="n">datetime</span> <span class="o">=</span> <span class="n">Field</span><span class="p">(</span><span class="n">default_factory</span><span class="o">=</span><span class="n">datetime</span><span class="o">.</span><span class="n">now</span><span class="p">,</span> <span class="n">description</span><span class="o">=</span><span class="s2">&quot;操作时间&quot;</span><span class="p">)</span></div>
+
+
+
+<span class="c1"># 角色配置响应</span>
+<div class="viewcode-block" id="CharacterInfo">
+<a class="viewcode-back" href="../../../../api/models.html#zishu.api.schemas.responses.CharacterInfo">[文档]</a>
+<span class="k">class</span><span class="w"> </span><span class="nc">CharacterInfo</span><span class="p">(</span><span class="n">BaseModel</span><span class="p">):</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;角色信息&quot;&quot;&quot;</span>
+
+    <span class="n">name</span><span class="p">:</span> <span class="nb">str</span> <span class="o">=</span> <span class="n">Field</span><span class="p">(</span><span class="n">default</span><span class="o">=</span><span class="s2">&quot;紫舒&quot;</span><span class="p">,</span> <span class="n">description</span><span class="o">=</span><span class="s2">&quot;角色名称&quot;</span><span class="p">)</span>
+    <span class="n">display_name</span><span class="p">:</span> <span class="nb">str</span> <span class="o">=</span> <span class="n">Field</span><span class="p">(</span><span class="n">default</span><span class="o">=</span><span class="s2">&quot;紫舒老师&quot;</span><span class="p">,</span> <span class="n">description</span><span class="o">=</span><span class="s2">&quot;显示名称&quot;</span><span class="p">)</span>
+    <span class="n">description</span><span class="p">:</span> <span class="nb">str</span> <span class="o">=</span> <span class="n">Field</span><span class="p">(</span><span class="n">default</span><span class="o">=</span><span class="s2">&quot;害羞温柔的虚拟老师&quot;</span><span class="p">,</span> <span class="n">description</span><span class="o">=</span><span class="s2">&quot;角色描述&quot;</span><span class="p">)</span>
+    <span class="n">avatar</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="nb">str</span><span class="p">]</span> <span class="o">=</span> <span class="n">Field</span><span class="p">(</span><span class="kc">None</span><span class="p">,</span> <span class="n">description</span><span class="o">=</span><span class="s2">&quot;头像URL&quot;</span><span class="p">)</span>
+
+    <span class="c1"># 用户自定义标识</span>
+    <span class="n">is_default</span><span class="p">:</span> <span class="nb">bool</span> <span class="o">=</span> <span class="n">Field</span><span class="p">(</span><span class="n">default</span><span class="o">=</span><span class="kc">False</span><span class="p">,</span> <span class="n">description</span><span class="o">=</span><span class="s2">&quot;是否为默认角色&quot;</span><span class="p">)</span>
+    <span class="n">created_by</span><span class="p">:</span> <span class="n">Literal</span><span class="p">[</span><span class="s2">&quot;user&quot;</span><span class="p">,</span> <span class="s2">&quot;system&quot;</span><span class="p">]</span> <span class="o">=</span> <span class="n">Field</span><span class="p">(</span><span class="n">default</span><span class="o">=</span><span class="s2">&quot;system&quot;</span><span class="p">,</span> <span class="n">description</span><span class="o">=</span><span class="s2">&quot;创建者&quot;</span><span class="p">)</span></div>
+
+
+
+<div class="viewcode-block" id="CharacterConfigResponse">
+<a class="viewcode-back" href="../../../../api/models.html#zishu.api.schemas.responses.CharacterConfigResponse">[文档]</a>
+<span class="k">class</span><span class="w"> </span><span class="nc">CharacterConfigResponse</span><span class="p">(</span><span class="n">BaseModel</span><span class="p">):</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;角色配置响应&quot;&quot;&quot;</span>
+
+    <span class="n">character_info</span><span class="p">:</span> <span class="n">CharacterInfo</span> <span class="o">=</span> <span class="n">Field</span><span class="p">(</span><span class="o">...</span><span class="p">,</span> <span class="n">description</span><span class="o">=</span><span class="s2">&quot;角色基本信息&quot;</span><span class="p">)</span>
+    <span class="n">character_config</span><span class="p">:</span> <span class="n">CharacterConfig</span> <span class="o">=</span> <span class="n">Field</span><span class="p">(</span><span class="o">...</span><span class="p">,</span> <span class="n">description</span><span class="o">=</span><span class="s2">&quot;角色详细配置&quot;</span><span class="p">)</span>
+    <span class="n">current_emotion</span><span class="p">:</span> <span class="n">EmotionType</span> <span class="o">=</span> <span class="n">Field</span><span class="p">(</span><span class="n">default</span><span class="o">=</span><span class="s2">&quot;neutral&quot;</span><span class="p">,</span> <span class="n">description</span><span class="o">=</span><span class="s2">&quot;当前情绪&quot;</span><span class="p">)</span>
+
+    <span class="c1"># 运行状态</span>
+    <span class="n">active_since</span><span class="p">:</span> <span class="n">datetime</span> <span class="o">=</span> <span class="n">Field</span><span class="p">(</span><span class="n">default_factory</span><span class="o">=</span><span class="n">datetime</span><span class="o">.</span><span class="n">now</span><span class="p">,</span> <span class="n">description</span><span class="o">=</span><span class="s2">&quot;激活时间&quot;</span><span class="p">)</span>
+    <span class="n">interaction_count</span><span class="p">:</span> <span class="nb">int</span> <span class="o">=</span> <span class="n">Field</span><span class="p">(</span><span class="n">default</span><span class="o">=</span><span class="mi">0</span><span class="p">,</span> <span class="n">description</span><span class="o">=</span><span class="s2">&quot;互动次数&quot;</span><span class="p">)</span>
+
+    <span class="c1"># 配置信息</span>
+    <span class="n">last_updated</span><span class="p">:</span> <span class="n">datetime</span> <span class="o">=</span> <span class="n">Field</span><span class="p">(</span><span class="n">default_factory</span><span class="o">=</span><span class="n">datetime</span><span class="o">.</span><span class="n">now</span><span class="p">,</span> <span class="n">description</span><span class="o">=</span><span class="s2">&quot;最后更新时间&quot;</span><span class="p">)</span>
+    <span class="n">internal_version</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="nb">str</span><span class="p">]</span> <span class="o">=</span> <span class="n">Field</span><span class="p">(</span><span class="kc">None</span><span class="p">,</span> <span class="n">alias</span><span class="o">=</span><span class="s2">&quot;version&quot;</span><span class="p">,</span> <span class="n">description</span><span class="o">=</span><span class="s2">&quot;内部版本号&quot;</span><span class="p">)</span></div>
+
+
+
+<div class="viewcode-block" id="EmotionResponse">
+<a class="viewcode-back" href="../../../../api/models.html#zishu.api.schemas.responses.EmotionResponse">[文档]</a>
+<span class="k">class</span><span class="w"> </span><span class="nc">EmotionResponse</span><span class="p">(</span><span class="n">BaseModel</span><span class="p">):</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;情绪响应&quot;&quot;&quot;</span>
+
+    <span class="n">success</span><span class="p">:</span> <span class="nb">bool</span> <span class="o">=</span> <span class="n">Field</span><span class="p">(</span><span class="o">...</span><span class="p">,</span> <span class="n">description</span><span class="o">=</span><span class="s2">&quot;更新是否成功&quot;</span><span class="p">)</span>
+    <span class="n">previous_emotion</span><span class="p">:</span> <span class="n">EmotionType</span> <span class="o">=</span> <span class="n">Field</span><span class="p">(</span><span class="o">...</span><span class="p">,</span> <span class="n">description</span><span class="o">=</span><span class="s2">&quot;之前情绪&quot;</span><span class="p">)</span>
+    <span class="n">current_emotion</span><span class="p">:</span> <span class="n">EmotionType</span> <span class="o">=</span> <span class="n">Field</span><span class="p">(</span><span class="o">...</span><span class="p">,</span> <span class="n">description</span><span class="o">=</span><span class="s2">&quot;当前情绪&quot;</span><span class="p">)</span>
+
+    <span class="c1"># 转换信息</span>
+    <span class="n">transition_time</span><span class="p">:</span> <span class="nb">float</span> <span class="o">=</span> <span class="n">Field</span><span class="p">(</span><span class="o">...</span><span class="p">,</span> <span class="n">description</span><span class="o">=</span><span class="s2">&quot;转换时间(秒)&quot;</span><span class="p">)</span>
+    <span class="n">transition_smooth</span><span class="p">:</span> <span class="nb">bool</span> <span class="o">=</span> <span class="n">Field</span><span class="p">(</span><span class="o">...</span><span class="p">,</span> <span class="n">description</span><span class="o">=</span><span class="s2">&quot;是否平滑转换&quot;</span><span class="p">)</span>
+
+    <span class="n">timestamp</span><span class="p">:</span> <span class="n">datetime</span> <span class="o">=</span> <span class="n">Field</span><span class="p">(</span><span class="n">default_factory</span><span class="o">=</span><span class="n">datetime</span><span class="o">.</span><span class="n">now</span><span class="p">,</span> <span class="n">description</span><span class="o">=</span><span class="s2">&quot;更新时间&quot;</span><span class="p">)</span></div>
+
+
+
+<span class="c1"># 多模态响应</span>
+<div class="viewcode-block" id="VoiceResponse">
+<a class="viewcode-back" href="../../../../api/models.html#zishu.api.schemas.responses.VoiceResponse">[文档]</a>
+<span class="k">class</span><span class="w"> </span><span class="nc">VoiceResponse</span><span class="p">(</span><span class="n">BaseModel</span><span class="p">):</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;语音响应&quot;&quot;&quot;</span>
+
+    <span class="n">success</span><span class="p">:</span> <span class="nb">bool</span> <span class="o">=</span> <span class="n">Field</span><span class="p">(</span><span class="o">...</span><span class="p">,</span> <span class="n">description</span><span class="o">=</span><span class="s2">&quot;生成是否成功&quot;</span><span class="p">)</span>
+    <span class="n">audio_url</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="nb">str</span><span class="p">]</span> <span class="o">=</span> <span class="n">Field</span><span class="p">(</span><span class="kc">None</span><span class="p">,</span> <span class="n">description</span><span class="o">=</span><span class="s2">&quot;语音URL&quot;</span><span class="p">)</span>
+    <span class="n">audio_base64</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="nb">str</span><span class="p">]</span> <span class="o">=</span> <span class="n">Field</span><span class="p">(</span><span class="kc">None</span><span class="p">,</span> <span class="n">description</span><span class="o">=</span><span class="s2">&quot;语音Base64&quot;</span><span class="p">)</span>
+
+    <span class="c1"># 生成信息</span>
+    <span class="n">duration</span><span class="p">:</span> <span class="nb">float</span> <span class="o">=</span> <span class="n">Field</span><span class="p">(</span><span class="o">...</span><span class="p">,</span> <span class="n">description</span><span class="o">=</span><span class="s2">&quot;语音时长(秒)&quot;</span><span class="p">)</span>
+    <span class="n">voice_style</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="nb">str</span><span class="p">]</span> <span class="o">=</span> <span class="n">Field</span><span class="p">(</span><span class="kc">None</span><span class="p">,</span> <span class="n">description</span><span class="o">=</span><span class="s2">&quot;语音风格&quot;</span><span class="p">)</span>
+    <span class="n">emotion</span><span class="p">:</span> <span class="n">EmotionType</span> <span class="o">=</span> <span class="n">Field</span><span class="p">(</span><span class="o">...</span><span class="p">,</span> <span class="n">description</span><span class="o">=</span><span class="s2">&quot;情绪&quot;</span><span class="p">)</span>
+
+    <span class="c1"># 技术信息</span>
+    <span class="nb">format</span><span class="p">:</span> <span class="nb">str</span> <span class="o">=</span> <span class="n">Field</span><span class="p">(</span><span class="n">default</span><span class="o">=</span><span class="s2">&quot;wav&quot;</span><span class="p">,</span> <span class="n">description</span><span class="o">=</span><span class="s2">&quot;语音格式&quot;</span><span class="p">)</span>
+    <span class="n">sample_rate</span><span class="p">:</span> <span class="nb">int</span> <span class="o">=</span> <span class="n">Field</span><span class="p">(</span><span class="n">default</span><span class="o">=</span><span class="mi">16000</span><span class="p">,</span> <span class="n">description</span><span class="o">=</span><span class="s2">&quot;采样率&quot;</span><span class="p">)</span>
+    <span class="n">generation_time</span><span class="p">:</span> <span class="nb">float</span> <span class="o">=</span> <span class="n">Field</span><span class="p">(</span><span class="o">...</span><span class="p">,</span> <span class="n">description</span><span class="o">=</span><span class="s2">&quot;生成时间(秒)&quot;</span><span class="p">)</span>
+
+    <span class="n">timestamp</span><span class="p">:</span> <span class="n">datetime</span> <span class="o">=</span> <span class="n">Field</span><span class="p">(</span><span class="n">default_factory</span><span class="o">=</span><span class="n">datetime</span><span class="o">.</span><span class="n">now</span><span class="p">,</span> <span class="n">description</span><span class="o">=</span><span class="s2">&quot;生成时间&quot;</span><span class="p">)</span></div>
+
+
+
+<div class="viewcode-block" id="AnimationResponse">
+<a class="viewcode-back" href="../../../../api/models.html#zishu.api.schemas.responses.AnimationResponse">[文档]</a>
+<span class="k">class</span><span class="w"> </span><span class="nc">AnimationResponse</span><span class="p">(</span><span class="n">BaseModel</span><span class="p">):</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;动画响应&quot;&quot;&quot;</span>
+
+    <span class="n">success</span><span class="p">:</span> <span class="nb">bool</span> <span class="o">=</span> <span class="n">Field</span><span class="p">(</span><span class="o">...</span><span class="p">,</span> <span class="n">description</span><span class="o">=</span><span class="s2">&quot;生成是否成功&quot;</span><span class="p">)</span>
+    <span class="n">animation_data</span><span class="p">:</span> <span class="n">Dict</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="n">Any</span><span class="p">]</span> <span class="o">=</span> <span class="n">Field</span><span class="p">(</span><span class="o">...</span><span class="p">,</span> <span class="n">description</span><span class="o">=</span><span class="s2">&quot;动画数据&quot;</span><span class="p">)</span>
+
+    <span class="c1"># 动画信息</span>
+    <span class="n">emotion</span><span class="p">:</span> <span class="n">EmotionType</span> <span class="o">=</span> <span class="n">Field</span><span class="p">(</span><span class="o">...</span><span class="p">,</span> <span class="n">description</span><span class="o">=</span><span class="s2">&quot;目标情绪&quot;</span><span class="p">)</span>
+    <span class="n">duration</span><span class="p">:</span> <span class="nb">float</span> <span class="o">=</span> <span class="n">Field</span><span class="p">(</span><span class="o">...</span><span class="p">,</span> <span class="n">description</span><span class="o">=</span><span class="s2">&quot;动画时长(秒)&quot;</span><span class="p">)</span>
+    <span class="n">style</span><span class="p">:</span> <span class="nb">str</span> <span class="o">=</span> <span class="n">Field</span><span class="p">(</span><span class="o">...</span><span class="p">,</span> <span class="n">description</span><span class="o">=</span><span class="s2">&quot;动画风格&quot;</span><span class="p">)</span>
+
+    <span class="c1"># 技术信息</span>
+    <span class="n">frame_count</span><span class="p">:</span> <span class="nb">int</span> <span class="o">=</span> <span class="n">Field</span><span class="p">(</span><span class="o">...</span><span class="p">,</span> <span class="n">description</span><span class="o">=</span><span class="s2">&quot;帧数&quot;</span><span class="p">)</span>
+    <span class="n">fps</span><span class="p">:</span> <span class="nb">int</span> <span class="o">=</span> <span class="n">Field</span><span class="p">(</span><span class="n">default</span><span class="o">=</span><span class="mi">30</span><span class="p">,</span> <span class="n">description</span><span class="o">=</span><span class="s2">&quot;帧率&quot;</span><span class="p">)</span>
+    <span class="n">generation_time</span><span class="p">:</span> <span class="nb">float</span> <span class="o">=</span> <span class="n">Field</span><span class="p">(</span><span class="o">...</span><span class="p">,</span> <span class="n">description</span><span class="o">=</span><span class="s2">&quot;生成时间(秒)&quot;</span><span class="p">)</span>
+
+    <span class="n">timestamp</span><span class="p">:</span> <span class="n">datetime</span> <span class="o">=</span> <span class="n">Field</span><span class="p">(</span><span class="n">default_factory</span><span class="o">=</span><span class="n">datetime</span><span class="o">.</span><span class="n">now</span><span class="p">,</span> <span class="n">description</span><span class="o">=</span><span class="s2">&quot;生成时间&quot;</span><span class="p">)</span></div>
+
+
+
+<span class="c1"># 会话管理响应</span>
+<div class="viewcode-block" id="SessionInfo">
+<a class="viewcode-back" href="../../../../api/models.html#zishu.api.schemas.responses.SessionInfo">[文档]</a>
+<span class="k">class</span><span class="w"> </span><span class="nc">SessionInfo</span><span class="p">(</span><span class="n">BaseModel</span><span class="p">):</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;会话信息&quot;&quot;&quot;</span>
+
+    <span class="n">session_id</span><span class="p">:</span> <span class="nb">str</span> <span class="o">=</span> <span class="n">Field</span><span class="p">(</span><span class="o">...</span><span class="p">,</span> <span class="n">description</span><span class="o">=</span><span class="s2">&quot;会话ID&quot;</span><span class="p">)</span>
+    <span class="n">user_id</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="nb">str</span><span class="p">]</span> <span class="o">=</span> <span class="n">Field</span><span class="p">(</span><span class="kc">None</span><span class="p">,</span> <span class="n">description</span><span class="o">=</span><span class="s2">&quot;用户ID&quot;</span><span class="p">)</span>
+    <span class="n">session_name</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="nb">str</span><span class="p">]</span> <span class="o">=</span> <span class="n">Field</span><span class="p">(</span><span class="kc">None</span><span class="p">,</span> <span class="n">description</span><span class="o">=</span><span class="s2">&quot;会话名称&quot;</span><span class="p">)</span>
+
+    <span class="c1"># 状态信息</span>
+    <span class="n">created_at</span><span class="p">:</span> <span class="n">datetime</span> <span class="o">=</span> <span class="n">Field</span><span class="p">(</span><span class="n">default_factory</span><span class="o">=</span><span class="n">datetime</span><span class="o">.</span><span class="n">now</span><span class="p">,</span> <span class="n">description</span><span class="o">=</span><span class="s2">&quot;创建时间&quot;</span><span class="p">)</span>
+    <span class="n">last_activity</span><span class="p">:</span> <span class="n">datetime</span> <span class="o">=</span> <span class="n">Field</span><span class="p">(</span><span class="n">default_factory</span><span class="o">=</span><span class="n">datetime</span><span class="o">.</span><span class="n">now</span><span class="p">,</span> <span class="n">description</span><span class="o">=</span><span class="s2">&quot;最后活动时间&quot;</span><span class="p">)</span>
+    <span class="n">message_count</span><span class="p">:</span> <span class="nb">int</span> <span class="o">=</span> <span class="n">Field</span><span class="p">(</span><span class="n">default</span><span class="o">=</span><span class="mi">0</span><span class="p">,</span> <span class="n">description</span><span class="o">=</span><span class="s2">&quot;消息数量&quot;</span><span class="p">)</span>
+
+    <span class="c1"># 配置信息</span>
+    <span class="n">character_config</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="n">CharacterConfig</span><span class="p">]</span> <span class="o">=</span> <span class="n">Field</span><span class="p">(</span><span class="kc">None</span><span class="p">,</span> <span class="n">description</span><span class="o">=</span><span class="s2">&quot;角色配置&quot;</span><span class="p">)</span>
+    <span class="n">current_emotion</span><span class="p">:</span> <span class="n">EmotionType</span> <span class="o">=</span> <span class="n">Field</span><span class="p">(</span><span class="n">default</span><span class="o">=</span><span class="s2">&quot;neutral&quot;</span><span class="p">,</span> <span class="n">description</span><span class="o">=</span><span class="s2">&quot;当前情绪&quot;</span><span class="p">)</span>
+
+    <span class="c1"># 统计信息</span>
+    <span class="n">total_tokens</span><span class="p">:</span> <span class="nb">int</span> <span class="o">=</span> <span class="n">Field</span><span class="p">(</span><span class="n">default</span><span class="o">=</span><span class="mi">0</span><span class="p">,</span> <span class="n">description</span><span class="o">=</span><span class="s2">&quot;总token数量&quot;</span><span class="p">)</span>
+    <span class="n">total_cost</span><span class="p">:</span> <span class="nb">float</span> <span class="o">=</span> <span class="n">Field</span><span class="p">(</span><span class="n">default</span><span class="o">=</span><span class="mf">0.0</span><span class="p">,</span> <span class="n">description</span><span class="o">=</span><span class="s2">&quot;总成本&quot;</span><span class="p">)</span></div>
+
+
+
+<div class="viewcode-block" id="SessionListResponse">
+<a class="viewcode-back" href="../../../../api/models.html#zishu.api.schemas.responses.SessionListResponse">[文档]</a>
+<span class="k">class</span><span class="w"> </span><span class="nc">SessionListResponse</span><span class="p">(</span><span class="n">BaseModel</span><span class="p">):</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;会话列表响应&quot;&quot;&quot;</span>
+
+    <span class="n">session</span><span class="p">:</span> <span class="n">SessionInfo</span> <span class="o">=</span> <span class="n">Field</span><span class="p">(</span><span class="o">...</span><span class="p">,</span> <span class="n">description</span><span class="o">=</span><span class="s2">&quot;会话信息&quot;</span><span class="p">)</span>
+    <span class="n">operation</span><span class="p">:</span> <span class="n">Literal</span><span class="p">[</span><span class="s2">&quot;create&quot;</span><span class="p">,</span> <span class="s2">&quot;delete&quot;</span><span class="p">,</span> <span class="s2">&quot;update&quot;</span><span class="p">]</span> <span class="o">=</span> <span class="n">Field</span><span class="p">(</span><span class="o">...</span><span class="p">,</span> <span class="n">description</span><span class="o">=</span><span class="s2">&quot;操作类型&quot;</span><span class="p">)</span>
+    <span class="n">success</span><span class="p">:</span> <span class="nb">bool</span> <span class="o">=</span> <span class="n">Field</span><span class="p">(</span><span class="o">...</span><span class="p">,</span> <span class="n">description</span><span class="o">=</span><span class="s2">&quot;操作是否成功&quot;</span><span class="p">)</span>
+    <span class="n">message</span><span class="p">:</span> <span class="nb">str</span> <span class="o">=</span> <span class="n">Field</span><span class="p">(</span><span class="o">...</span><span class="p">,</span> <span class="n">description</span><span class="o">=</span><span class="s2">&quot;操作结果消息&quot;</span><span class="p">)</span>
+
+    <span class="n">timestamp</span><span class="p">:</span> <span class="n">datetime</span> <span class="o">=</span> <span class="n">Field</span><span class="p">(</span><span class="n">default_factory</span><span class="o">=</span><span class="n">datetime</span><span class="o">.</span><span class="n">now</span><span class="p">,</span> <span class="n">description</span><span class="o">=</span><span class="s2">&quot;操作时间&quot;</span><span class="p">)</span></div>
+
+
+
+<span class="c1"># 批量处理响应</span>
+<div class="viewcode-block" id="BatchResponse">
+<a class="viewcode-back" href="../../../../api/models.html#zishu.api.schemas.responses.BatchResponse">[文档]</a>
+<span class="k">class</span><span class="w"> </span><span class="nc">BatchResponse</span><span class="p">(</span><span class="n">BaseModel</span><span class="p">):</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;批量处理响应&quot;&quot;&quot;</span>
+
+    <span class="n">batch_id</span><span class="p">:</span> <span class="nb">str</span> <span class="o">=</span> <span class="n">Field</span><span class="p">(</span><span class="o">...</span><span class="p">,</span> <span class="n">description</span><span class="o">=</span><span class="s2">&quot;批次ID&quot;</span><span class="p">)</span>
+    <span class="n">total_requests</span><span class="p">:</span> <span class="nb">int</span> <span class="o">=</span> <span class="n">Field</span><span class="p">(</span><span class="o">...</span><span class="p">,</span> <span class="n">description</span><span class="o">=</span><span class="s2">&quot;总请求数量&quot;</span><span class="p">)</span>
+    <span class="n">successful_requests</span><span class="p">:</span> <span class="nb">int</span> <span class="o">=</span> <span class="n">Field</span><span class="p">(</span><span class="o">...</span><span class="p">,</span> <span class="n">description</span><span class="o">=</span><span class="s2">&quot;成功请求数量&quot;</span><span class="p">)</span>
+    <span class="n">failed_requests</span><span class="p">:</span> <span class="nb">int</span> <span class="o">=</span> <span class="n">Field</span><span class="p">(</span><span class="o">...</span><span class="p">,</span> <span class="n">description</span><span class="o">=</span><span class="s2">&quot;失败请求数量&quot;</span><span class="p">)</span>
+
+    <span class="c1"># 详细结果</span>
+    <span class="n">results</span><span class="p">:</span> <span class="n">List</span><span class="p">[</span><span class="n">Union</span><span class="p">[</span><span class="n">ChatCompletionResponse</span><span class="p">,</span> <span class="s2">&quot;ErrorResponse&quot;</span><span class="p">]]</span> <span class="o">=</span> <span class="n">Field</span><span class="p">(</span>
+        <span class="o">...</span><span class="p">,</span> <span class="n">description</span><span class="o">=</span><span class="s2">&quot;批量结果&quot;</span>
+    <span class="p">)</span>
+
+    <span class="c1"># 执行信息</span>
+    <span class="n">execution_time</span><span class="p">:</span> <span class="nb">float</span> <span class="o">=</span> <span class="n">Field</span><span class="p">(</span><span class="o">...</span><span class="p">,</span> <span class="n">description</span><span class="o">=</span><span class="s2">&quot;执行时间(秒)&quot;</span><span class="p">)</span>
+    <span class="n">parallel_execution</span><span class="p">:</span> <span class="nb">bool</span> <span class="o">=</span> <span class="n">Field</span><span class="p">(</span><span class="o">...</span><span class="p">,</span> <span class="n">description</span><span class="o">=</span><span class="s2">&quot;是否并行执行&quot;</span><span class="p">)</span>
+
+    <span class="n">timestamp</span><span class="p">:</span> <span class="n">datetime</span> <span class="o">=</span> <span class="n">Field</span><span class="p">(</span><span class="n">default_factory</span><span class="o">=</span><span class="n">datetime</span><span class="o">.</span><span class="n">now</span><span class="p">,</span> <span class="n">description</span><span class="o">=</span><span class="s2">&quot;操作时间&quot;</span><span class="p">)</span></div>
+
+
+
+<span class="c1"># 错误响应</span>
+<div class="viewcode-block" id="ErrorDetail">
+<a class="viewcode-back" href="../../../../api/models.html#zishu.api.schemas.responses.ErrorDetail">[文档]</a>
+<span class="k">class</span><span class="w"> </span><span class="nc">ErrorDetail</span><span class="p">(</span><span class="n">BaseModel</span><span class="p">):</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;错误响应&quot;&quot;&quot;</span>
+
+    <span class="n">code</span><span class="p">:</span> <span class="nb">str</span> <span class="o">=</span> <span class="n">Field</span><span class="p">(</span><span class="o">...</span><span class="p">,</span> <span class="n">description</span><span class="o">=</span><span class="s2">&quot;错误代码&quot;</span><span class="p">)</span>
+    <span class="n">message</span><span class="p">:</span> <span class="nb">str</span> <span class="o">=</span> <span class="n">Field</span><span class="p">(</span><span class="o">...</span><span class="p">,</span> <span class="n">description</span><span class="o">=</span><span class="s2">&quot;错误消息&quot;</span><span class="p">)</span>
+    <span class="n">details</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="nb">str</span><span class="p">]</span> <span class="o">=</span> <span class="n">Field</span><span class="p">(</span><span class="kc">None</span><span class="p">,</span> <span class="n">description</span><span class="o">=</span><span class="s2">&quot;错误详情&quot;</span><span class="p">)</span>
+    <span class="n">field</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="nb">str</span><span class="p">]</span> <span class="o">=</span> <span class="n">Field</span><span class="p">(</span><span class="kc">None</span><span class="p">,</span> <span class="n">description</span><span class="o">=</span><span class="s2">&quot;相关字段&quot;</span><span class="p">)</span></div>
+
+
+
+<div class="viewcode-block" id="ErrorResponse">
+<a class="viewcode-back" href="../../../../api/models.html#zishu.api.schemas.responses.ErrorResponse">[文档]</a>
+<span class="k">class</span><span class="w"> </span><span class="nc">ErrorResponse</span><span class="p">(</span><span class="n">BaseResponse</span><span class="p">):</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;错误响应&quot;&quot;&quot;</span>
+
+    <span class="n">success</span><span class="p">:</span> <span class="nb">bool</span> <span class="o">=</span> <span class="n">Field</span><span class="p">(</span><span class="n">default</span><span class="o">=</span><span class="kc">False</span><span class="p">,</span> <span class="n">description</span><span class="o">=</span><span class="s2">&quot;操作是否成功&quot;</span><span class="p">)</span>
+    <span class="n">error_code</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="nb">str</span><span class="p">]</span> <span class="o">=</span> <span class="n">Field</span><span class="p">(</span><span class="kc">None</span><span class="p">,</span> <span class="n">description</span><span class="o">=</span><span class="s2">&quot;错误代码&quot;</span><span class="p">)</span>
+    <span class="n">error_details</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="n">Dict</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="n">Any</span><span class="p">]]</span> <span class="o">=</span> <span class="n">Field</span><span class="p">(</span><span class="kc">None</span><span class="p">,</span> <span class="n">description</span><span class="o">=</span><span class="s2">&quot;错误详情&quot;</span><span class="p">)</span>
+
+    <span class="c1"># 向后兼容字段</span>
+    <span class="n">error</span><span class="p">:</span> <span class="nb">bool</span> <span class="o">=</span> <span class="n">Field</span><span class="p">(</span><span class="n">default</span><span class="o">=</span><span class="kc">True</span><span class="p">,</span> <span class="n">description</span><span class="o">=</span><span class="s2">&quot;是否错误&quot;</span><span class="p">)</span>
+    <span class="n">error_type</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="nb">str</span><span class="p">]</span> <span class="o">=</span> <span class="n">Field</span><span class="p">(</span><span class="kc">None</span><span class="p">,</span> <span class="n">description</span><span class="o">=</span><span class="s2">&quot;错误类型&quot;</span><span class="p">)</span>
+    <span class="n">details</span><span class="p">:</span> <span class="n">List</span><span class="p">[</span><span class="n">ErrorDetail</span><span class="p">]</span> <span class="o">=</span> <span class="n">Field</span><span class="p">(</span><span class="n">default_factory</span><span class="o">=</span><span class="nb">list</span><span class="p">,</span> <span class="n">description</span><span class="o">=</span><span class="s2">&quot;错误详情&quot;</span><span class="p">)</span>
+
+    <span class="c1"># 帮助信息</span>
+    <span class="n">suggestions</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="n">List</span><span class="p">[</span><span class="nb">str</span><span class="p">]]</span> <span class="o">=</span> <span class="n">Field</span><span class="p">(</span><span class="kc">None</span><span class="p">,</span> <span class="n">description</span><span class="o">=</span><span class="s2">&quot;解决建议&quot;</span><span class="p">)</span>
+    <span class="n">documentation</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="nb">str</span><span class="p">]</span> <span class="o">=</span> <span class="n">Field</span><span class="p">(</span><span class="kc">None</span><span class="p">,</span> <span class="n">description</span><span class="o">=</span><span class="s2">&quot;文档链接&quot;</span><span class="p">)</span></div>
+
+
+
+<span class="c1"># 通用响应包装器</span>
+<div class="viewcode-block" id="ApiResponse">
+<a class="viewcode-back" href="../../../../api/models.html#zishu.api.schemas.responses.ApiResponse">[文档]</a>
+<span class="k">class</span><span class="w"> </span><span class="nc">ApiResponse</span><span class="p">(</span><span class="n">BaseModel</span><span class="p">):</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;API响应包装器&quot;&quot;&quot;</span>
+
+    <span class="n">success</span><span class="p">:</span> <span class="nb">bool</span> <span class="o">=</span> <span class="n">Field</span><span class="p">(</span><span class="o">...</span><span class="p">,</span> <span class="n">description</span><span class="o">=</span><span class="s2">&quot;操作是否成功&quot;</span><span class="p">)</span>
+    <span class="n">status</span><span class="p">:</span> <span class="n">ResponseStatus</span> <span class="o">=</span> <span class="n">Field</span><span class="p">(</span><span class="o">...</span><span class="p">,</span> <span class="n">description</span><span class="o">=</span><span class="s2">&quot;响应状态&quot;</span><span class="p">)</span>
+    <span class="n">data</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="n">Any</span><span class="p">]</span> <span class="o">=</span> <span class="n">Field</span><span class="p">(</span><span class="kc">None</span><span class="p">,</span> <span class="n">description</span><span class="o">=</span><span class="s2">&quot;响应数据&quot;</span><span class="p">)</span>
+    <span class="n">error</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="n">ErrorResponse</span><span class="p">]</span> <span class="o">=</span> <span class="n">Field</span><span class="p">(</span><span class="kc">None</span><span class="p">,</span> <span class="n">description</span><span class="o">=</span><span class="s2">&quot;错误信息&quot;</span><span class="p">)</span>
+
+    <span class="c1"># 元信息</span>
+    <span class="n">request_id</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="nb">str</span><span class="p">]</span> <span class="o">=</span> <span class="n">Field</span><span class="p">(</span><span class="kc">None</span><span class="p">,</span> <span class="n">description</span><span class="o">=</span><span class="s2">&quot;请求ID&quot;</span><span class="p">)</span>
+    <span class="n">timestamp</span><span class="p">:</span> <span class="n">datetime</span> <span class="o">=</span> <span class="n">Field</span><span class="p">(</span><span class="n">default_factory</span><span class="o">=</span><span class="n">datetime</span><span class="o">.</span><span class="n">now</span><span class="p">,</span> <span class="n">description</span><span class="o">=</span><span class="s2">&quot;响应时间&quot;</span><span class="p">)</span>
+    <span class="n">processing_time</span><span class="p">:</span> <span class="nb">float</span> <span class="o">=</span> <span class="n">Field</span><span class="p">(</span><span class="o">...</span><span class="p">,</span> <span class="n">description</span><span class="o">=</span><span class="s2">&quot;处理时间(秒)&quot;</span><span class="p">)</span>
+
+    <span class="c1"># API信息</span>
+    <span class="n">api_version</span><span class="p">:</span> <span class="nb">str</span> <span class="o">=</span> <span class="n">Field</span><span class="p">(</span><span class="o">...</span><span class="p">,</span> <span class="n">description</span><span class="o">=</span><span class="s2">&quot;API版本&quot;</span><span class="p">)</span>
+    <span class="n">server_info</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="n">Dict</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="n">Any</span><span class="p">]]</span> <span class="o">=</span> <span class="n">Field</span><span class="p">(</span><span class="kc">None</span><span class="p">,</span> <span class="n">description</span><span class="o">=</span><span class="s2">&quot;服务器信息&quot;</span><span class="p">)</span></div>
+
+
+
+<span class="c1"># 验证器</span>
+<span class="nd">@field_validator</span><span class="p">(</span><span class="s2">&quot;usage&quot;</span><span class="p">)</span>
+<span class="k">def</span><span class="w"> </span><span class="nf">validate_usage</span><span class="p">(</span><span class="bp">cls</span><span class="p">,</span> <span class="n">v</span><span class="p">):</span>
+    <span class="k">if</span> <span class="n">v</span><span class="o">.</span><span class="n">prompt_tokens</span> <span class="o">&lt;</span> <span class="mi">0</span> <span class="ow">or</span> <span class="n">v</span><span class="o">.</span><span class="n">completion_tokens</span> <span class="o">&lt;</span> <span class="mi">0</span><span class="p">:</span>
+        <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span><span class="s2">&quot;Token数量不能为负数&quot;</span><span class="p">)</span>
+    <span class="k">if</span> <span class="n">v</span><span class="o">.</span><span class="n">total_tokens</span> <span class="o">!=</span> <span class="n">v</span><span class="o">.</span><span class="n">prompt_tokens</span> <span class="o">+</span> <span class="n">v</span><span class="o">.</span><span class="n">completion_tokens</span><span class="p">:</span>
+        <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span><span class="s2">&quot;总token数计算不正确&quot;</span><span class="p">)</span>
+    <span class="k">return</span> <span class="n">v</span>
+
+
+<span class="c1"># 工具函数</span>
+<div class="viewcode-block" id="create_error_response">
+<a class="viewcode-back" href="../../../../api/models.html#zishu.api.schemas.responses.create_error_response">[文档]</a>
+<span class="k">def</span><span class="w"> </span><span class="nf">create_error_response</span><span class="p">(</span>
+    <span class="n">error_type</span><span class="p">:</span> <span class="nb">str</span><span class="p">,</span>
+    <span class="n">error_code</span><span class="p">:</span> <span class="nb">str</span><span class="p">,</span>
+    <span class="n">message</span><span class="p">:</span> <span class="nb">str</span><span class="p">,</span>
+    <span class="n">details</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="n">List</span><span class="p">[</span><span class="n">ErrorDetail</span><span class="p">]]</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
+    <span class="n">request_id</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="nb">str</span><span class="p">]</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
+<span class="p">)</span> <span class="o">-&gt;</span> <span class="n">ErrorResponse</span><span class="p">:</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;创建错误响应&quot;&quot;&quot;</span>
+    <span class="k">return</span> <span class="n">ErrorResponse</span><span class="p">(</span>
+        <span class="n">error</span><span class="o">=</span><span class="kc">True</span><span class="p">,</span>
+        <span class="n">error_type</span><span class="o">=</span><span class="n">error_type</span><span class="p">,</span>
+        <span class="n">error_code</span><span class="o">=</span><span class="n">error_code</span><span class="p">,</span>
+        <span class="n">message</span><span class="o">=</span><span class="n">message</span><span class="p">,</span>
+        <span class="n">details</span><span class="o">=</span><span class="n">details</span> <span class="ow">or</span> <span class="p">[],</span>
+        <span class="n">request_id</span><span class="o">=</span><span class="n">request_id</span><span class="p">,</span>
+    <span class="p">)</span></div>
+
+
+
+<div class="viewcode-block" id="create_success_response">
+<a class="viewcode-back" href="../../../../api/models.html#zishu.api.schemas.responses.create_success_response">[文档]</a>
+<span class="k">def</span><span class="w"> </span><span class="nf">create_success_response</span><span class="p">(</span>
+    <span class="n">data</span><span class="p">:</span> <span class="n">Any</span><span class="p">,</span>
+    <span class="n">request_id</span><span class="p">:</span> <span class="nb">str</span><span class="p">,</span>
+    <span class="n">processing_time</span><span class="p">:</span> <span class="nb">float</span><span class="p">,</span>
+<span class="p">)</span> <span class="o">-&gt;</span> <span class="n">ApiResponse</span><span class="p">:</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;创建成功响应&quot;&quot;&quot;</span>
+    <span class="k">return</span> <span class="n">ApiResponse</span><span class="p">(</span>
+        <span class="n">success</span><span class="o">=</span><span class="kc">True</span><span class="p">,</span>
+        <span class="n">status</span><span class="o">=</span><span class="n">ResponseStatus</span><span class="o">.</span><span class="n">SUCCESS</span><span class="p">,</span>
+        <span class="n">data</span><span class="o">=</span><span class="n">data</span><span class="p">,</span>
+        <span class="n">request_id</span><span class="o">=</span><span class="n">request_id</span><span class="p">,</span>
+        <span class="n">processing_time</span><span class="o">=</span><span class="n">processing_time</span><span class="p">,</span>
+    <span class="p">)</span></div>
+
+
+
+<span class="c1"># 添加测试需要的响应类</span>
+<div class="viewcode-block" id="ChatResponse">
+<a class="viewcode-back" href="../../../../api/models.html#zishu.api.schemas.responses.ChatResponse">[文档]</a>
+<span class="k">class</span><span class="w"> </span><span class="nc">ChatResponse</span><span class="p">(</span><span class="n">BaseModel</span><span class="p">):</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;聊天响应&quot;&quot;&quot;</span>
+
+    <span class="nb">id</span><span class="p">:</span> <span class="nb">str</span> <span class="o">=</span> <span class="n">Field</span><span class="p">(</span><span class="o">...</span><span class="p">,</span> <span class="n">description</span><span class="o">=</span><span class="s2">&quot;响应ID&quot;</span><span class="p">)</span>
+    <span class="n">message</span><span class="p">:</span> <span class="n">Any</span> <span class="o">=</span> <span class="n">Field</span><span class="p">(</span><span class="o">...</span><span class="p">,</span> <span class="n">description</span><span class="o">=</span><span class="s2">&quot;消息内容&quot;</span><span class="p">)</span>
+    <span class="n">model</span><span class="p">:</span> <span class="nb">str</span> <span class="o">=</span> <span class="n">Field</span><span class="p">(</span><span class="o">...</span><span class="p">,</span> <span class="n">description</span><span class="o">=</span><span class="s2">&quot;使用的模型&quot;</span><span class="p">)</span>
+    <span class="n">usage</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="n">Dict</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="nb">int</span><span class="p">]]</span> <span class="o">=</span> <span class="n">Field</span><span class="p">(</span><span class="kc">None</span><span class="p">,</span> <span class="n">description</span><span class="o">=</span><span class="s2">&quot;Token使用统计&quot;</span><span class="p">)</span>
+    <span class="n">created</span><span class="p">:</span> <span class="n">datetime</span> <span class="o">=</span> <span class="n">Field</span><span class="p">(</span><span class="o">...</span><span class="p">,</span> <span class="n">description</span><span class="o">=</span><span class="s2">&quot;创建时间&quot;</span><span class="p">)</span></div>
+
+
+
+<div class="viewcode-block" id="ChatStreamResponse">
+<a class="viewcode-back" href="../../../../api/models.html#zishu.api.schemas.responses.ChatStreamResponse">[文档]</a>
+<span class="k">class</span><span class="w"> </span><span class="nc">ChatStreamResponse</span><span class="p">(</span><span class="n">BaseModel</span><span class="p">):</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;流式聊天响应&quot;&quot;&quot;</span>
+
+    <span class="nb">id</span><span class="p">:</span> <span class="nb">str</span> <span class="o">=</span> <span class="n">Field</span><span class="p">(</span><span class="o">...</span><span class="p">,</span> <span class="n">description</span><span class="o">=</span><span class="s2">&quot;响应ID&quot;</span><span class="p">)</span>
+    <span class="n">delta</span><span class="p">:</span> <span class="n">Dict</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="n">Any</span><span class="p">]</span> <span class="o">=</span> <span class="n">Field</span><span class="p">(</span><span class="o">...</span><span class="p">,</span> <span class="n">description</span><span class="o">=</span><span class="s2">&quot;增量内容&quot;</span><span class="p">)</span>
+    <span class="n">model</span><span class="p">:</span> <span class="nb">str</span> <span class="o">=</span> <span class="n">Field</span><span class="p">(</span><span class="o">...</span><span class="p">,</span> <span class="n">description</span><span class="o">=</span><span class="s2">&quot;使用的模型&quot;</span><span class="p">)</span>
+    <span class="n">created</span><span class="p">:</span> <span class="n">datetime</span> <span class="o">=</span> <span class="n">Field</span><span class="p">(</span><span class="o">...</span><span class="p">,</span> <span class="n">description</span><span class="o">=</span><span class="s2">&quot;创建时间&quot;</span><span class="p">)</span>
+    <span class="n">finish_reason</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="nb">str</span><span class="p">]</span> <span class="o">=</span> <span class="n">Field</span><span class="p">(</span><span class="kc">None</span><span class="p">,</span> <span class="n">description</span><span class="o">=</span><span class="s2">&quot;完成原因&quot;</span><span class="p">)</span></div>
+
+
+
+<div class="viewcode-block" id="ConversationSummary">
+<a class="viewcode-back" href="../../../../api/models.html#zishu.api.schemas.responses.ConversationSummary">[文档]</a>
+<span class="k">class</span><span class="w"> </span><span class="nc">ConversationSummary</span><span class="p">(</span><span class="n">BaseModel</span><span class="p">):</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;对话摘要&quot;&quot;&quot;</span>
+
+    <span class="nb">id</span><span class="p">:</span> <span class="nb">str</span> <span class="o">=</span> <span class="n">Field</span><span class="p">(</span>
+        <span class="n">default_factory</span><span class="o">=</span><span class="k">lambda</span><span class="p">:</span> <span class="nb">str</span><span class="p">(</span><span class="nb">__import__</span><span class="p">(</span><span class="s2">&quot;uuid&quot;</span><span class="p">)</span><span class="o">.</span><span class="n">uuid4</span><span class="p">()),</span> <span class="n">description</span><span class="o">=</span><span class="s2">&quot;摘要ID&quot;</span>
+    <span class="p">)</span>
+    <span class="n">conversation_id</span><span class="p">:</span> <span class="nb">str</span> <span class="o">=</span> <span class="n">Field</span><span class="p">(</span><span class="o">...</span><span class="p">,</span> <span class="n">description</span><span class="o">=</span><span class="s2">&quot;对话ID&quot;</span><span class="p">)</span>
+    <span class="n">title</span><span class="p">:</span> <span class="nb">str</span> <span class="o">=</span> <span class="n">Field</span><span class="p">(</span><span class="o">...</span><span class="p">,</span> <span class="n">description</span><span class="o">=</span><span class="s2">&quot;对话标题&quot;</span><span class="p">)</span>
+    <span class="n">summary</span><span class="p">:</span> <span class="nb">str</span> <span class="o">=</span> <span class="n">Field</span><span class="p">(</span><span class="o">...</span><span class="p">,</span> <span class="n">description</span><span class="o">=</span><span class="s2">&quot;摘要内容&quot;</span><span class="p">)</span>
+    <span class="n">message_count</span><span class="p">:</span> <span class="nb">int</span> <span class="o">=</span> <span class="n">Field</span><span class="p">(</span><span class="o">...</span><span class="p">,</span> <span class="n">description</span><span class="o">=</span><span class="s2">&quot;消息数量&quot;</span><span class="p">)</span>
+    <span class="n">created_at</span><span class="p">:</span> <span class="n">datetime</span> <span class="o">=</span> <span class="n">Field</span><span class="p">(</span><span class="o">...</span><span class="p">,</span> <span class="n">description</span><span class="o">=</span><span class="s2">&quot;创建时间&quot;</span><span class="p">)</span>
+    <span class="n">last_message_at</span><span class="p">:</span> <span class="n">datetime</span> <span class="o">=</span> <span class="n">Field</span><span class="p">(</span><span class="o">...</span><span class="p">,</span> <span class="n">description</span><span class="o">=</span><span class="s2">&quot;最后消息时间&quot;</span><span class="p">)</span>
+    <span class="n">created</span><span class="p">:</span> <span class="n">datetime</span> <span class="o">=</span> <span class="n">Field</span><span class="p">(</span>
+        <span class="n">default_factory</span><span class="o">=</span><span class="nb">__import__</span><span class="p">(</span><span class="s2">&quot;datetime&quot;</span><span class="p">)</span><span class="o">.</span><span class="n">datetime</span><span class="o">.</span><span class="n">now</span><span class="p">,</span> <span class="n">description</span><span class="o">=</span><span class="s2">&quot;创建时间&quot;</span>
+    <span class="p">)</span></div>
+
+
+
+<div class="viewcode-block" id="ChatHistory">
+<a class="viewcode-back" href="../../../../api/models.html#zishu.api.schemas.responses.ChatHistory">[文档]</a>
+<span class="k">class</span><span class="w"> </span><span class="nc">ChatHistory</span><span class="p">(</span><span class="n">BaseModel</span><span class="p">):</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;聊天历史&quot;&quot;&quot;</span>
+
+    <span class="n">session_id</span><span class="p">:</span> <span class="nb">str</span> <span class="o">=</span> <span class="n">Field</span><span class="p">(</span>
+        <span class="n">default_factory</span><span class="o">=</span><span class="k">lambda</span><span class="p">:</span> <span class="nb">str</span><span class="p">(</span><span class="nb">__import__</span><span class="p">(</span><span class="s2">&quot;uuid&quot;</span><span class="p">)</span><span class="o">.</span><span class="n">uuid4</span><span class="p">()),</span> <span class="n">description</span><span class="o">=</span><span class="s2">&quot;会话ID&quot;</span>
+    <span class="p">)</span>
+    <span class="n">conversation_id</span><span class="p">:</span> <span class="nb">str</span> <span class="o">=</span> <span class="n">Field</span><span class="p">(</span><span class="o">...</span><span class="p">,</span> <span class="n">description</span><span class="o">=</span><span class="s2">&quot;对话ID&quot;</span><span class="p">)</span>
+    <span class="n">messages</span><span class="p">:</span> <span class="n">List</span><span class="p">[</span><span class="n">Any</span><span class="p">]</span> <span class="o">=</span> <span class="n">Field</span><span class="p">(</span><span class="o">...</span><span class="p">,</span> <span class="n">description</span><span class="o">=</span><span class="s2">&quot;消息列表&quot;</span><span class="p">)</span>
+    <span class="n">total_messages</span><span class="p">:</span> <span class="nb">int</span> <span class="o">=</span> <span class="n">Field</span><span class="p">(</span><span class="n">default</span><span class="o">=</span><span class="mi">0</span><span class="p">,</span> <span class="n">description</span><span class="o">=</span><span class="s2">&quot;总消息数&quot;</span><span class="p">)</span>
+    <span class="n">created_at</span><span class="p">:</span> <span class="n">datetime</span> <span class="o">=</span> <span class="n">Field</span><span class="p">(</span><span class="o">...</span><span class="p">,</span> <span class="n">description</span><span class="o">=</span><span class="s2">&quot;创建时间&quot;</span><span class="p">)</span>
+    <span class="n">updated_at</span><span class="p">:</span> <span class="n">datetime</span> <span class="o">=</span> <span class="n">Field</span><span class="p">(</span><span class="o">...</span><span class="p">,</span> <span class="n">description</span><span class="o">=</span><span class="s2">&quot;更新时间&quot;</span><span class="p">)</span>
+    <span class="n">title</span><span class="p">:</span> <span class="nb">str</span> <span class="o">=</span> <span class="n">Field</span><span class="p">(</span><span class="o">...</span><span class="p">,</span> <span class="n">description</span><span class="o">=</span><span class="s2">&quot;对话标题&quot;</span><span class="p">)</span>
+    <span class="n">created</span><span class="p">:</span> <span class="n">datetime</span> <span class="o">=</span> <span class="n">Field</span><span class="p">(</span>
+        <span class="n">default_factory</span><span class="o">=</span><span class="nb">__import__</span><span class="p">(</span><span class="s2">&quot;datetime&quot;</span><span class="p">)</span><span class="o">.</span><span class="n">datetime</span><span class="o">.</span><span class="n">now</span><span class="p">,</span> <span class="n">description</span><span class="o">=</span><span class="s2">&quot;创建时间&quot;</span>
+    <span class="p">)</span></div>
+
+</pre></div>
+
+           </div>
+          </div>
+          <footer>
+
+  <hr/>
+
+  <div role="contentinfo">
+    <p>&#169; 版权所有 2025, Zishu-Sensei Team。
+      <span class="lastupdated">最后更新于 2025-10-17 21:09:36.
+      </span></p>
+  </div>
+
+  利用 <a href="https://www.sphinx-doc.org/">Sphinx</a> 构建，使用的 
+    <a href="https://github.com/readthedocs/sphinx_rtd_theme">主题</a>
+    由 <a href="https://readthedocs.org">Read the Docs</a> 开发.
+   
+
+</footer>
+        </div>
+      </div>
+    </section>
+  </div>
+  <script>
+      jQuery(function () {
+          SphinxRtdTheme.Navigation.enable(true);
+      });
+  </script> 
+
+</body>
+</html>

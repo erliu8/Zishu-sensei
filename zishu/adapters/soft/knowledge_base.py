@@ -846,8 +846,10 @@ class KnowledgeBaseAdapter(BaseAdapter):
     """紫舒老师知识库管理适配器"""
 
     def __init__(self, config: Optional[Dict[str, Any]] = None):
-        super().__init__()
         self.config = config or {}
+        # 初始化内部元数据存储，以便BaseAdapter可以设置
+        self._metadata_obj: Optional[AdapterMetadata] = None
+        super().__init__(self.config)
         self.storage_backend: Optional[StorageBackendBase] = None
         self.embedding_generator: Optional[EmbeddingGenerator] = None
         self._initialized = False
@@ -876,6 +878,9 @@ class KnowledgeBaseAdapter(BaseAdapter):
     @property
     def metadata(self) -> AdapterMetadata:
         """适配器元数据"""
+        # 如果已经有外部设置的metadata，使用它；否则返回默认元数据
+        if self._metadata_obj is not None:
+            return self._metadata_obj
         return AdapterMetadata(
             name="knowledge_base",
             display_name="紫舒老师知识库管理器",
@@ -916,6 +921,11 @@ class KnowledgeBaseAdapter(BaseAdapter):
                 },
             },
         )
+    
+    @metadata.setter
+    def metadata(self, value: Optional[AdapterMetadata]) -> None:
+        """设置适配器元数据"""
+        self._metadata_obj = value
 
     async def initialize(self, context: ExecutionContext) -> ExecutionResult:
         """初始化知识库适配器"""
@@ -923,8 +933,10 @@ class KnowledgeBaseAdapter(BaseAdapter):
             with self._lock:
                 if self._initialized:
                     return ExecutionResult(
-                        success=True,
-                        message="Knowledge base adapter already initialized",
+                        execution_id="init",
+                        adapter_id=self.adapter_id,
+                        status="success",
+                        output={"message": "Knowledge base adapter already initialized"},
                     )
 
                 # 初始化存储后端
@@ -953,9 +965,11 @@ class KnowledgeBaseAdapter(BaseAdapter):
                 self.logger.info("Knowledge base adapter initialized successfully")
 
                 return ExecutionResult(
-                    success=True,
-                    message="Knowledge base adapter initialized",
-                    data={
+                    execution_id="init",
+                    adapter_id=self.adapter_id,
+                    status="success",
+                    output={
+                        "message": "Knowledge base adapter initialized",
                         "backend": storage_type,
                         "embedding_model": embedding_config["model_name"],
                     },
@@ -964,9 +978,10 @@ class KnowledgeBaseAdapter(BaseAdapter):
         except Exception as e:
             self.logger.error(f"Failed to initialize knowledge base adapter: {e}")
             return ExecutionResult(
-                success=False,
-                message=f"Initialization failed: {e}",
-                error_code=ErrorCode.INITIALIZATION_ERROR,
+                execution_id="init",
+                adapter_id=self.adapter_id,
+                status="error",
+                error=f"Initialization failed: {e}",
             )
 
     def _check_permission(
@@ -1010,9 +1025,7 @@ class KnowledgeBaseAdapter(BaseAdapter):
     async def execute(self, context: ExecutionContext) -> ExecutionResult:
         """执行知识库操作"""
         if not self._initialized:
-            return ExecutionResult(
-                success=False,
-                message="Knowledge base adapter not initialized",
+            return ExecutionResult(execution_id="kb_op", adapter_id=self.adapter_id, status="error", error="Knowledge base adapter not initialized",
                 error_code=ErrorCode.NOT_INITIALIZED,
             )
 
@@ -1035,7 +1048,7 @@ class KnowledgeBaseAdapter(BaseAdapter):
                 return await self._clear_cache(context)
             else:
                 return ExecutionResult(
-                    success=False,
+                    status="error",
                     message=f"Unknown action: {action}",
                     error_code=ErrorCode.INVALID_PARAMETER,
                 )
@@ -1043,7 +1056,7 @@ class KnowledgeBaseAdapter(BaseAdapter):
         except Exception as e:
             self.logger.error(f"Execution failed for action {action}: {e}")
             return ExecutionResult(
-                success=False,
+                status="error",
                 message=f"Execution failed: {e}",
                 error_code=ErrorCode.EXECUTION_ERROR,
             )
@@ -1065,9 +1078,7 @@ class KnowledgeBaseAdapter(BaseAdapter):
             source = context.parameters.get("source")
 
             if not content:
-                return ExecutionResult(
-                    success=False,
-                    message="Document content is required",
+                return ExecutionResult(execution_id="kb_op", adapter_id=self.adapter_id, status="error", error="Document content is required",
                     error_code=ErrorCode.INVALID_PARAMETER,
                 )
 
@@ -1105,22 +1116,18 @@ class KnowledgeBaseAdapter(BaseAdapter):
                     self.stats["last_updated"] = datetime.now(timezone.utc)
 
                 self.logger.info(f"Document {document.id} added successfully")
-                return ExecutionResult(
-                    success=True,
-                    message="Document added successfully",
+                return ExecutionResult(execution_id="kb_op", adapter_id=self.adapter_id, status="success", output={"message": "Document added successfully"},
                     data={"document_id": document.id, "status": document.status.value},
                 )
             else:
-                return ExecutionResult(
-                    success=False,
-                    message="Failed to store document",
+                return ExecutionResult(execution_id="kb_op", adapter_id=self.adapter_id, status="error", error="Failed to store document",
                     error_code=ErrorCode.STORAGE_ERROR,
                 )
 
         except Exception as e:
             self.logger.error(f"Failed to add document: {e}")
             return ExecutionResult(
-                success=False,
+                status="error",
                 message=f"Failed to add document: {e}",
                 error_code=ErrorCode.EXECUTION_ERROR,
             )
@@ -1132,9 +1139,7 @@ class KnowledgeBaseAdapter(BaseAdapter):
             user_id = context.parameters.get("user_id")
 
             if not doc_id:
-                return ExecutionResult(
-                    success=False,
-                    message="Document ID is required",
+                return ExecutionResult(execution_id="kb_op", adapter_id=self.adapter_id, status="error", error="Document ID is required",
                     error_code=ErrorCode.INVALID_PARAMETER,
                 )
 
@@ -1154,14 +1159,12 @@ class KnowledgeBaseAdapter(BaseAdapter):
                         self._document_cache[doc_id] = document
 
             if document:
-                return ExecutionResult(
-                    success=True,
-                    message="Document retrieved successfully",
+                return ExecutionResult(execution_id="kb_op", adapter_id=self.adapter_id, status="success", output={"message": "Document retrieved successfully"},
                     data=document.to_dict(),
                 )
             else:
                 return ExecutionResult(
-                    success=False,
+                    status="error",
                     message=f"Document {doc_id} not found",
                     error_code=ErrorCode.NOT_FOUND,
                 )
@@ -1169,7 +1172,7 @@ class KnowledgeBaseAdapter(BaseAdapter):
         except Exception as e:
             self.logger.error(f"Failed to get document: {e}")
             return ExecutionResult(
-                success=False,
+                status="error",
                 message=f"Failed to get document: {e}",
                 error_code=ErrorCode.EXECUTION_ERROR,
             )
@@ -1181,9 +1184,7 @@ class KnowledgeBaseAdapter(BaseAdapter):
             user_id = context.parameters.get("user_id")
 
             if not doc_id:
-                return ExecutionResult(
-                    success=False,
-                    message="Document ID is required",
+                return ExecutionResult(execution_id="kb_op", adapter_id=self.adapter_id, status="error", error="Document ID is required",
                     error_code=ErrorCode.INVALID_PARAMETER,
                 )
 
@@ -1194,7 +1195,7 @@ class KnowledgeBaseAdapter(BaseAdapter):
             existing_doc = await self.storage_backend.get_document(doc_id)
             if not existing_doc:
                 return ExecutionResult(
-                    success=False,
+                    status="error",
                     message=f"Document {doc_id} not found",
                     error_code=ErrorCode.NOT_FOUND,
                 )
@@ -1241,22 +1242,18 @@ class KnowledgeBaseAdapter(BaseAdapter):
                     self.stats["last_updated"] = datetime.now(timezone.utc)
 
                 self.logger.info(f"Document {doc_id} updated successfully")
-                return ExecutionResult(
-                    success=True,
-                    message="Document updated successfully",
+                return ExecutionResult(execution_id="kb_op", adapter_id=self.adapter_id, status="success", output={"message": "Document updated successfully"},
                     data={"document_id": doc_id, "version": existing_doc.version},
                 )
             else:
-                return ExecutionResult(
-                    success=False,
-                    message="Failed to update document",
+                return ExecutionResult(execution_id="kb_op", adapter_id=self.adapter_id, status="error", error="Failed to update document",
                     error_code=ErrorCode.STORAGE_ERROR,
                 )
 
         except Exception as e:
             self.logger.error(f"Failed to update document: {e}")
             return ExecutionResult(
-                success=False,
+                status="error",
                 message=f"Failed to update document: {e}",
                 error_code=ErrorCode.EXECUTION_ERROR,
             )
@@ -1268,9 +1265,7 @@ class KnowledgeBaseAdapter(BaseAdapter):
             user_id = context.parameters.get("user_id")
 
             if not doc_id:
-                return ExecutionResult(
-                    success=False,
-                    message="Document ID is required",
+                return ExecutionResult(execution_id="kb_op", adapter_id=self.adapter_id, status="error", error="Document ID is required",
                     error_code=ErrorCode.INVALID_PARAMETER,
                 )
 
@@ -1285,22 +1280,18 @@ class KnowledgeBaseAdapter(BaseAdapter):
                     self.stats["last_updated"] = datetime.now(timezone.utc)
 
                 self.logger.info(f"Document {doc_id} deleted successfully")
-                return ExecutionResult(
-                    success=True,
-                    message="Document deleted successfully",
+                return ExecutionResult(execution_id="kb_op", adapter_id=self.adapter_id, status="success", output={"message": "Document deleted successfully"},
                     data={"document_id": doc_id},
                 )
             else:
-                return ExecutionResult(
-                    success=False,
-                    message="Failed to delete document",
+                return ExecutionResult(execution_id="kb_op", adapter_id=self.adapter_id, status="error", error="Failed to delete document",
                     error_code=ErrorCode.STORAGE_ERROR,
                 )
 
         except Exception as e:
             self.logger.error(f"Failed to delete document: {e}")
             return ExecutionResult(
-                success=False,
+                status="error",
                 message=f"Failed to delete document: {e}",
                 error_code=ErrorCode.EXECUTION_ERROR,
             )
@@ -1320,9 +1311,7 @@ class KnowledgeBaseAdapter(BaseAdapter):
             filters = context.parameters.get("filters", {})
 
             if not query_text:
-                return ExecutionResult(
-                    success=False,
-                    message="Query text is required",
+                return ExecutionResult(execution_id="kb_op", adapter_id=self.adapter_id, status="error", error="Query text is required",
                     error_code=ErrorCode.INVALID_PARAMETER,
                 )
 
@@ -1349,9 +1338,7 @@ class KnowledgeBaseAdapter(BaseAdapter):
                     ).seconds < self._cache_ttl:
                         self.stats["cache_hits"] += 1
                         self.logger.debug(f"Search cache hit for query: {query_text}")
-                        return ExecutionResult(
-                            success=True,
-                            message="Search completed (cached)",
+                        return ExecutionResult(execution_id="kb_op", adapter_id=self.adapter_id, status="success", output={"message": "Search completed (cached)"},
                             data=cached_response.to_dict(),
                         )
                     else:
@@ -1383,22 +1370,18 @@ class KnowledgeBaseAdapter(BaseAdapter):
                 self.logger.info(
                     f"Search completed: {len(response.results)} results for '{query_text}'"
                 )
-                return ExecutionResult(
-                    success=True,
-                    message="Search completed successfully",
+                return ExecutionResult(execution_id="kb_op", adapter_id=self.adapter_id, status="success", output={"message": "Search completed successfully"},
                     data=response.to_dict(),
                 )
             else:
-                return ExecutionResult(
-                    success=False,
-                    message="Search failed",
+                return ExecutionResult(execution_id="kb_op", adapter_id=self.adapter_id, status="error", error="Search failed",
                     error_code=ErrorCode.SEARCH_ERROR,
                 )
 
         except Exception as e:
             self.logger.error(f"Search failed: {e}")
             return ExecutionResult(
-                success=False,
+                status="error",
                 message=f"Search failed: {e}",
                 error_code=ErrorCode.EXECUTION_ERROR,
             )
@@ -1425,16 +1408,14 @@ class KnowledgeBaseAdapter(BaseAdapter):
                 ),
             }
 
-            return ExecutionResult(
-                success=True,
-                message="Statistics retrieved successfully",
+            return ExecutionResult(execution_id="kb_op", adapter_id=self.adapter_id, status="success", output={"message": "Statistics retrieved successfully"},
                 data=combined_stats,
             )
 
         except Exception as e:
             self.logger.error(f"Failed to get stats: {e}")
             return ExecutionResult(
-                success=False,
+                status="error",
                 message=f"Failed to get stats: {e}",
                 error_code=ErrorCode.EXECUTION_ERROR,
             )
@@ -1458,7 +1439,7 @@ class KnowledgeBaseAdapter(BaseAdapter):
                     )
 
             return ExecutionResult(
-                success=True,
+                status="success",
                 message=f"Cache cleared successfully ({cache_type})",
                 data={"cache_type": cache_type},
             )
@@ -1466,7 +1447,7 @@ class KnowledgeBaseAdapter(BaseAdapter):
         except Exception as e:
             self.logger.error(f"Failed to clear cache: {e}")
             return ExecutionResult(
-                success=False,
+                status="error",
                 message=f"Failed to clear cache: {e}",
                 error_code=ErrorCode.EXECUTION_ERROR,
             )
@@ -1516,6 +1497,135 @@ class KnowledgeBaseAdapter(BaseAdapter):
         # 使用JSON序列化确保一致性
         key_str = json.dumps(key_data, sort_keys=True)
         return hashlib.md5(key_str.encode()).hexdigest()
+
+    # ================================
+    # 基类抽象方法实现
+    # ================================
+
+    async def _initialize_impl(self) -> bool:
+        """初始化实现"""
+        try:
+            with self._lock:
+                if self._initialized:
+                    return True
+
+                # 初始化存储后端
+                storage_type = self.config.get("storage_backend", "memory")
+                if storage_type == "memory":
+                    self.storage_backend = MemoryStorageBackend(self.config)
+                else:
+                    raise AdapterConfigurationError(
+                        f"Unsupported storage backend: {storage_type}"
+                    )
+
+                if not await self.storage_backend.initialize():
+                    raise AdapterExecutionError("Failed to initialize storage backend")
+
+                # 初始化嵌入生成器
+                embedding_config = {
+                    "model_name": self.config.get("embedding_model", "all-MiniLM-L6-v2")
+                }
+                self.embedding_generator = EmbeddingGenerator(embedding_config)
+                if not await self.embedding_generator.initialize():
+                    raise AdapterExecutionError(
+                        "Failed to initialize embedding generator"
+                    )
+
+                self._initialized = True
+                logger.info("Knowledge base adapter initialized successfully")
+                return True
+
+        except Exception as e:
+            logger.error(f"Failed to initialize knowledge base adapter: {e}")
+            return False
+
+    async def _process_impl(self, input_data: Any, context: ExecutionContext) -> Any:
+        """处理实现"""
+        # 根据输入数据类型确定操作
+        if isinstance(input_data, dict):
+            operation = input_data.get("operation", "search")
+            if operation == "search":
+                query_text = input_data.get("query", "")
+                from .knowledge_base import SearchQuery, SearchType
+                query = SearchQuery(
+                    query_text=query_text,
+                    search_type=SearchType.SEMANTIC,
+                    limit=input_data.get("limit", 10)
+                )
+                result = await self._search(query, context)
+                return result.data if result.success else None
+            elif operation == "add_document":
+                doc_data = input_data.get("document", {})
+                from .knowledge_base import Document, DocumentType
+                document = Document(
+                    id=doc_data.get("id", str(uuid.uuid4())),
+                    title=doc_data.get("title", ""),
+                    content=doc_data.get("content", ""),
+                    doc_type=DocumentType.TEXT,
+                    metadata=doc_data.get("metadata", {})
+                )
+                result = await self._add_document(document, context)
+                return result.data if result.success else None
+        
+        return {"message": "No operation specified or unsupported operation"}
+
+    async def _health_check_impl(self) -> Dict[str, Any]:
+        """健康检查实现"""
+        health_info = {
+            "initialized": self._initialized,
+            "storage_backend_available": self.storage_backend is not None,
+            "embedding_generator_available": self.embedding_generator is not None,
+            "document_count": 0,
+            "cache_size": len(self._document_cache),
+            "search_cache_size": len(self._search_cache)
+        }
+        
+        if self.storage_backend:
+            try:
+                health_info["document_count"] = await self.storage_backend.get_document_count()
+            except:
+                health_info["storage_backend_healthy"] = False
+        
+        return health_info
+
+    async def _cleanup_impl(self) -> bool:
+        """清理实现"""
+        try:
+            with self._lock:
+                # 清理缓存
+                self._document_cache.clear()
+                self._search_cache.clear()
+                
+                # 关闭存储后端
+                if self.storage_backend:
+                    await self.storage_backend.cleanup()
+                    self.storage_backend = None
+                
+                # 清理嵌入生成器
+                if self.embedding_generator:
+                    await self.embedding_generator.cleanup()
+                    self.embedding_generator = None
+                
+                self._initialized = False
+                logger.info("Knowledge base adapter cleaned up successfully")
+                return True
+                
+        except Exception as e:
+            logger.error(f"Failed to cleanup knowledge base adapter: {e}")
+            return False
+
+    def _get_capabilities_impl(self) -> List[AdapterCapability]:
+        """获取能力实现"""
+        return [
+            AdapterCapability.DATA_STORAGE,
+            AdapterCapability.SEARCH,
+            AdapterCapability.INDEXING,
+            AdapterCapability.CACHING,
+        ]
+
+    def _load_metadata(self) -> AdapterMetadata:
+        """加载元数据"""
+        return self.metadata
 
 
 def create_knowledge_base_adapter(
@@ -1660,7 +1770,7 @@ class SecurityManager:
             # 检查登录尝试次数
             if self._login_attempts.get(username, 0) >= self._max_login_attempts:
                 self._log_action(
-                    "user.login", "user", user.id, user.id, success=False, error="账户已锁定"
+                    "user.login", "user", user.id, user.id, status="error", error="账户已锁定"
                 )
                 return None
 
@@ -1680,7 +1790,7 @@ class SecurityManager:
                     "user",
                     user.id if user else "",
                     "",
-                    success=False,
+                    status="error",
                     error="密码错误",
                 )
         return None
@@ -1743,7 +1853,7 @@ class SecurityManager:
             resource_type,
             resource_id,
             user.id,
-            success=False,
+            status="error",
             error=f"权限不足: {action}",
         )
         return False
@@ -1842,7 +1952,7 @@ class SecurityManager:
                 "access_token",
                 "",
                 "system",
-                success=True,
+                status="success",
                 details={"cleaned_count": len(expired_tokens)},
             )
 

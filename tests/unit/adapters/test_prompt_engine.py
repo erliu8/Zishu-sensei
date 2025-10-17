@@ -566,6 +566,24 @@ class TestPromptOptimizer:
 class TestPromptEnginePerformance:
     """提示引擎性能测试"""
     
+    @pytest.fixture
+    def prompt_engine_config(self):
+        """创建提示引擎配置"""
+        return {
+            "template_dir": "templates",
+            "cache_enabled": True,
+            "cache_ttl": 3600,
+            "validation_enabled": True,
+            "optimization_enabled": True,
+            "max_template_size": 10000,
+            "supported_formats": ["jinja2", "f-string", "template"]
+        }
+
+    @pytest.fixture
+    def prompt_engine(self, prompt_engine_config):
+        """创建提示引擎实例"""
+        return PromptEngine(prompt_engine_config)
+    
     @pytest.mark.asyncio
     async def test_rendering_performance(self, prompt_engine):
         """测试渲染性能"""

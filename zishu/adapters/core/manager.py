@@ -491,7 +491,16 @@ class AdapterManager:
 
                 return success
 
+            except (ValueError, TypeError, AttributeError) as e:
+                # 配置验证错误应该抛出异常
+                logger.error(f"Invalid adapter configuration: {e}")
+                raise
+            except RuntimeError as e:
+                # 运行时错误（如超时）也应该抛出
+                logger.error(f"Failed to register adapter {getattr(config, 'identity', 'unknown')}: {e}")
+                raise
             except Exception as e:
+                # 其他错误返回False
                 logger.error(f"Failed to register adapter {getattr(config, 'identity', 'unknown')}: {e}")
                 return False
 
@@ -549,6 +558,18 @@ class AdapterManager:
                 if not registration:
                     logger.error(f"Adapter {adapter_id} not found")
                     return False
+
+                # 先启动依赖的适配器
+                if registration.configuration.dependencies:
+                    logger.info(f"Starting dependencies for adapter {adapter_id}: {registration.configuration.dependencies}")
+                    for dep_id in registration.configuration.dependencies:
+                        # 检查依赖是否已经在运行
+                        if dep_id not in self._adapters:
+                            logger.info(f"Starting dependency adapter {dep_id}")
+                            dep_success = await self.start_adapter(dep_id)
+                            if not dep_success:
+                                logger.error(f"Failed to start dependency {dep_id} for adapter {adapter_id}")
+                                return False
 
                 # 创建适配器实例（带超时）
                 create_coro = self._create_adapter_instance(registration)

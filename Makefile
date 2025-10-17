@@ -160,11 +160,21 @@ clean-cache: ## Clean Python cache files
 clean-all: clean clean-cache ## Clean everything
 
 # Documentation
-docs-build: ## Build documentation
-	cd docs && make html
+docs-build: ## Build Sphinx documentation
+	bash scripts/run_with_cloud_env.sh -m sphinx.cmd.build -b html docs/sphinx docs/sphinx/_build/html
+
+docs-clean: ## Clean documentation build files
+	rm -rf docs/sphinx/_build
 
 docs-serve: ## Serve documentation locally
-	cd docs/_build/html && python -m http.server 8080
+	cd docs/sphinx/_build/html && python -m http.server 8080
+
+docs-live: ## Build and auto-reload documentation
+	bash scripts/run_with_cloud_env.sh -m sphinx_autobuild docs/sphinx docs/sphinx/_build/html --host 0.0.0.0 --port 8080
+
+docs-full: docs-clean docs-build ## Clean build and rebuild documentation
+	@echo "Documentation built successfully!"
+	@echo "Open docs/sphinx/_build/html/index.html in your browser"
 
 # Security
 security-check: ## Run security checks

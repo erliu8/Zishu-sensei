@@ -61,6 +61,7 @@ class ExecutionContext:
     debug_mode: bool = False
     trace_enabled: bool = False
     metadata: Dict[str, Any] = field(default_factory=dict)
+    data: Dict[str, Any] = field(default_factory=dict)  # 为兼容性添加data属性
     created_at: datetime = field(default_factory=lambda: datetime.now(timezone.utc))
 
 
@@ -79,7 +80,41 @@ class ExecutionResult:
     performance_metrics: Dict[str, Any] = field(default_factory=dict)
     audit_log: List[Dict[str, Any]] = field(default_factory=list)
     warnings: List[str] = field(default_factory=list)
+    metadata: Dict[str, Any] = field(default_factory=dict)  # 为兼容性添加metadata属性
     created_at: datetime = field(default_factory=lambda: datetime.now(timezone.utc))
+    
+    @property
+    def data(self) -> Any:
+        """兼容性属性：指向output"""
+        return self.output
+    
+    @property
+    def success(self) -> bool:
+        """兼容性属性：判断是否成功"""
+        return self.status == "success"
+    
+    @property
+    def error_message(self) -> Optional[str]:
+        """兼容性属性：指向error"""
+        return self.error
+    
+    def __getitem__(self, key: str) -> Any:
+        """支持字典式访问，访问 output 中的键"""
+        if self.output is not None and isinstance(self.output, dict):
+            return self.output[key]
+        raise KeyError(f"Key '{key}' not found in ExecutionResult output")
+    
+    def __contains__(self, key: str) -> bool:
+        """支持 in 操作符，检查 output 中是否有指定的键"""
+        if self.output is not None and isinstance(self.output, dict):
+            return key in self.output
+        return False
+    
+    def get(self, key: str, default=None) -> Any:
+        """支持 get 方法，从 output 中获取值"""
+        if self.output is not None and isinstance(self.output, dict):
+            return self.output.get(key, default)
+        return default
 
     def to_dict(self) -> Dict[str, Any]:
         """转换为字典格式"""
@@ -495,7 +530,7 @@ class BaseAdapter(ABC):
                     )
 
     async def process(
-        self, input_data: Any, context: Optional[Dict[str, Any]] = None
+        self, input_data: Any, context: Optional[Union[Dict[str, Any], ExecutionContext]] = None
     ) -> ExecutionResult:
         """
         处理输入数据
@@ -509,19 +544,22 @@ class BaseAdapter(ABC):
 
         Args:
             input_data: 输入数据
-            context: 执行上下文字典
+            context: 执行上下文字典或ExecutionContext对象
 
         Returns:
             ExecutionResult: 执行结果对象
         """
-        # 创建执行上下文
-        exec_context = ExecutionContext()
-        if context:
-            for key, value in context.items():
-                if hasattr(exec_context, key):
-                    setattr(exec_context, key, value)
-                else:
-                    exec_context.metadata[key] = value
+        # 创建或使用执行上下文
+        if isinstance(context, ExecutionContext):
+            exec_context = context
+        else:
+            exec_context = ExecutionContext()
+            if context:
+                for key, value in context.items():
+                    if hasattr(exec_context, key):
+                        setattr(exec_context, key, value)
+                    else:
+                        exec_context.metadata[key] = value
 
         start_time = time.time()
 
