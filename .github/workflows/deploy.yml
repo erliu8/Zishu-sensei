@@ -58,12 +58,16 @@ jobs:
           cache-from: type=gha
           cache-to: type=gha,mode=max
 
-  # 部署到生产环境
+  # 部署到生产环境 (需要配置 secrets 后启用)
   deploy-production:
     name: Deploy to Production
     runs-on: ubuntu-latest
     needs: build-and-push
-    if: github.ref == 'refs/heads/main'
+    # 暂时禁用自动部署，需要配置以下 secrets:
+    # - PRODUCTION_HOST
+    # - PRODUCTION_USER  
+    # - PRODUCTION_SSH_KEY
+    if: false
     environment:
       name: production
       url: https://zishu.ai
