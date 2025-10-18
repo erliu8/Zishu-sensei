@@ -347,6 +347,45 @@
     }
 }
 
+/* ==================== 虚拟滚动 ==================== */
+
+/* 虚拟滚动容器 */
+.virtualScrollContainer {
+    @apply relative;
+    /* 优化虚拟滚动性能 */
+    will-change: scroll-position;
+    contain: layout style paint;
+}
+
+/* 虚拟滚动项包装器 */
+.virtualScrollContainer .messagesContainer {
+    @apply relative;
+    contain: layout style;
+}
+
+/* 虚拟滚动中的日期分隔符 */
+.dateInVirtual {
+    @apply mb-2;
+}
+
+/* 虚拟滚动优化 */
+.virtualScrollContainer .messagesContainer > * {
+    /* 提升渲染性能 */
+    will-change: transform;
+    contain: layout style paint;
+}
+
+/* 虚拟滚动加载状态 */
+.virtualScrollContainer .loadingState,
+.virtualScrollContainer .emptyState {
+    @apply absolute inset-0 flex items-center justify-center;
+}
+
+/* 虚拟滚动平滑过渡 */
+.virtualScrollContainer.smooth-scroll {
+    scroll-behavior: smooth;
+}
+
 /* ==================== 辅助类 ==================== */
 
 /* 平滑滚动 */

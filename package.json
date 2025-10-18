@@ -1,0 +1,38 @@
+{
+  "name": "zishu-sensei",
+  "version": "1.0.0",
+  "private": true,
+  "description": "Zishu AI - Desktop AI Assistant with Community Platform",
+  "author": "Zishu Team",
+  "license": "Apache-2.0",
+  "workspaces": [
+    "community_platform/frontend",
+    "desktop_app"
+  ],
+  "scripts": {
+    "dev:frontend": "npm run dev --workspace=community_platform/frontend",
+    "dev:desktop": "npm run tauri:dev --workspace=desktop_app",
+    "build:frontend": "npm run build --workspace=community_platform/frontend",
+    "build:desktop": "npm run tauri:build --workspace=desktop_app",
+    "test:frontend": "npm run test --workspace=community_platform/frontend",
+    "test:desktop": "npm run test --workspace=desktop_app",
+    "test:all": "npm run test:frontend && npm run test:desktop",
+    "lint:frontend": "npm run lint --workspace=community_platform/frontend",
+    "lint:desktop": "npm run lint --workspace=desktop_app",
+    "lint:all": "npm run lint:frontend && npm run lint:desktop",
+    "clean": "npm run clean --workspaces --if-present",
+    "setup": "node scripts/setup.js",
+    "deploy:community": "cd community_platform && ./deploy.sh"
+  },
+  "devDependencies": {
+    "@commitlint/cli": "^18.4.3",
+    "@commitlint/config-conventional": "^18.4.3",
+    "husky": "^8.0.3",
+    "lint-staged": "^15.2.0"
+  },
+  "engines": {
+    "node": ">=18.0.0",
+    "npm": ">=9.0.0"
+  }
+}
+

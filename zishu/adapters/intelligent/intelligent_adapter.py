@@ -747,15 +747,27 @@ class IntelligentHardAdapter(ABC):
                     code, result, context
                 )
 
-            return {
-                "output": result.output,
-                "error_output": result.error_output,
-                "return_code": result.return_code,
-                "execution_time": result.execution_time,
-                "memory_usage": result.memory_usage,
-                "success": result.success,
-                "metadata": result.metadata,
-            }
+            # 支持字典或对象返回值
+            if isinstance(result, dict):
+                return {
+                    "output": result.get("result", ""),
+                    "error_output": result.get("error", ""),
+                    "return_code": 0 if result.get("success") else 1,
+                    "execution_time": result.get("execution_time", 0.0),
+                    "memory_usage": result.get("memory_used", 0),
+                    "success": result.get("success", False),
+                    "metadata": result.get("metadata", {}),
+                }
+            else:
+                return {
+                    "output": result.output,
+                    "error_output": result.error_output,
+                    "return_code": result.return_code,
+                    "execution_time": result.execution_time,
+                    "memory_usage": result.memory_usage,
+                    "success": result.success,
+                    "metadata": result.metadata,
+                }
 
         except Exception as e:
             logger.error(f"代码执行失败: {str(e)}", exc_info=True)
@@ -1571,18 +1583,34 @@ class IntelligentHardAdapter(ABC):
                 
                 execution_result = await self._executor.execute_code(execution_request)
                 
-                return BaseExecutionResult(
-                    execution_id=getattr(context, 'execution_id', 'unknown'),
-                    adapter_id=self._adapter_id,
-                    status="success" if execution_result.success else "error",
-                    output={
-                        "result": execution_result.stdout if execution_result.success else None,
-                        "execution_time": execution_result.execution_time_seconds,
-                        "memory_used": getattr(execution_result.resource_usage, 'memory_usage_mb', 0),
-                        "error": execution_result.stderr if not execution_result.success else None
-                    },
-                    error=execution_result.stderr if not execution_result.success else None,
-                )
+                # 支持字典或对象返回值
+                if isinstance(execution_result, dict):
+                    success = execution_result.get("success", False)
+                    return BaseExecutionResult(
+                        execution_id=getattr(context, 'execution_id', 'unknown'),
+                        adapter_id=self._adapter_id,
+                        status="success" if success else "error",
+                        output={
+                            "result": execution_result.get("result") if success else None,
+                            "execution_time": execution_result.get("execution_time", 0.0),
+                            "memory_used": execution_result.get("memory_used", 0),
+                            "error": execution_result.get("error") if not success else None
+                        },
+                        error=execution_result.get("error") if not success else None,
+                    )
+                else:
+                    return BaseExecutionResult(
+                        execution_id=getattr(context, 'execution_id', 'unknown'),
+                        adapter_id=self._adapter_id,
+                        status="success" if execution_result.success else "error",
+                        output={
+                            "result": execution_result.stdout if execution_result.success else None,
+                            "execution_time": execution_result.execution_time_seconds,
+                            "memory_used": getattr(execution_result.resource_usage, 'memory_usage_mb', 0),
+                            "error": execution_result.stderr if not execution_result.success else None
+                        },
+                        error=execution_result.stderr if not execution_result.success else None,
+                    )
             else:
                 return BaseExecutionResult(
                     execution_id=getattr(context, 'execution_id', 'unknown'),

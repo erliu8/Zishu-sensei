@@ -58,11 +58,15 @@ class HealthCheckResult:
     """健康检查结果"""
 
     is_healthy: bool
-    status: ServiceHealth
     service_name: Optional[str] = None
     message: Optional[str] = None
     details: Dict[str, Any] = field(default_factory=dict)
     timestamp: datetime = field(default_factory=lambda: datetime.now(timezone.utc))
+    
+    @property
+    def status(self) -> ServiceHealth:
+        """根据 is_healthy 自动推导状态"""
+        return ServiceHealth.HEALTHY if self.is_healthy else ServiceHealth.UNHEALTHY
 
 
 class AsyncService(ABC):

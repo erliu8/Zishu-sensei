@@ -1,0 +1,644 @@
+/**
+ * 消息搜索组件样式
+ */
+
+.container {
+  display: flex;
+  flex-direction: column;
+  background: #fff;
+  border-radius: 12px;
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
+  overflow: hidden;
+  max-width: 600px;
+  width: 100%;
+}
+
+/* ==================== 搜索栏 ==================== */
+
+.searchBar {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 12px 16px;
+  background: #f9fafb;
+  border-bottom: 1px solid #e5e7eb;
+  position: relative;
+}
+
+.searchIcon {
+  color: #6b7280;
+  flex-shrink: 0;
+}
+
+.searchInput {
+  flex: 1;
+  padding: 8px 12px;
+  font-size: 14px;
+  border: 1px solid #d1d5db;
+  border-radius: 6px;
+  outline: none;
+  background: #fff;
+  transition: all 0.2s ease;
+}
+
+.searchInput:focus {
+  border-color: #3b82f6;
+  box-shadow: 0 0 0 3px rgba(59, 130, 246, 0.1);
+}
+
+.resultCount {
+  font-size: 13px;
+  color: #6b7280;
+  white-space: nowrap;
+  padding: 4px 8px;
+  background: #f3f4f6;
+  border-radius: 4px;
+}
+
+/* ==================== 导航按钮 ==================== */
+
+.navigation {
+  display: flex;
+  gap: 4px;
+}
+
+.navButton {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 32px;
+  height: 32px;
+  border: 1px solid #d1d5db;
+  background: #fff;
+  border-radius: 6px;
+  color: #374151;
+  cursor: pointer;
+  transition: all 0.2s ease;
+}
+
+.navButton:hover:not(:disabled) {
+  background: #f3f4f6;
+  border-color: #9ca3af;
+}
+
+.navButton:active:not(:disabled) {
+  transform: scale(0.95);
+}
+
+.navButton:disabled {
+  opacity: 0.4;
+  cursor: not-allowed;
+}
+
+/* ==================== 筛选按钮 ==================== */
+
+.filterButton {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 32px;
+  height: 32px;
+  border: 1px solid #d1d5db;
+  background: #fff;
+  border-radius: 6px;
+  color: #374151;
+  cursor: pointer;
+  transition: all 0.2s ease;
+}
+
+.filterButton:hover {
+  background: #f3f4f6;
+  border-color: #9ca3af;
+}
+
+.filterButtonActive {
+  background: #3b82f6;
+  border-color: #3b82f6;
+  color: #fff;
+}
+
+/* ==================== 清除/关闭按钮 ==================== */
+
+.clearButton,
+.closeButton {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 32px;
+  height: 32px;
+  border: none;
+  background: transparent;
+  color: #6b7280;
+  cursor: pointer;
+  border-radius: 6px;
+  transition: all 0.2s ease;
+}
+
+.clearButton:hover,
+.closeButton:hover {
+  background: #fee2e2;
+  color: #ef4444;
+}
+
+.clearButton:active,
+.closeButton:active {
+  transform: scale(0.95);
+}
+
+/* ==================== 搜索历史 ==================== */
+
+.historyDropdown {
+  position: absolute;
+  top: 100%;
+  left: 48px;
+  right: 48px;
+  margin-top: 4px;
+  background: #fff;
+  border: 1px solid #e5e7eb;
+  border-radius: 8px;
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
+  z-index: 1000;
+  max-height: 300px;
+  overflow-y: auto;
+}
+
+.historyHeader {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 8px 12px;
+  background: #f9fafb;
+  border-bottom: 1px solid #e5e7eb;
+  font-size: 12px;
+  font-weight: 600;
+  color: #6b7280;
+}
+
+.historyHeader span {
+  flex: 1;
+}
+
+.clearHistoryButton {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 24px;
+  height: 24px;
+  border: none;
+  background: transparent;
+  color: #9ca3af;
+  cursor: pointer;
+  border-radius: 4px;
+  transition: all 0.2s ease;
+}
+
+.clearHistoryButton:hover {
+  background: #fee2e2;
+  color: #ef4444;
+}
+
+.historyList {
+  display: flex;
+  flex-direction: column;
+}
+
+.historyItem {
+  width: 100%;
+  padding: 10px 12px;
+  text-align: left;
+  font-size: 14px;
+  color: #374151;
+  background: transparent;
+  border: none;
+  cursor: pointer;
+  transition: background 0.15s ease;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.historyItem:hover {
+  background: #f3f4f6;
+}
+
+.historyItem:active {
+  background: #e5e7eb;
+}
+
+/* ==================== 筛选面板 ==================== */
+
+.filterPanel {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+  padding: 16px;
+  background: #f9fafb;
+  border-bottom: 1px solid #e5e7eb;
+}
+
+.filterRow {
+  display: flex;
+  gap: 12px;
+  align-items: center;
+}
+
+.checkbox {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  font-size: 14px;
+  color: #374151;
+  cursor: pointer;
+  user-select: none;
+}
+
+.checkbox input[type="checkbox"] {
+  width: 16px;
+  height: 16px;
+  cursor: pointer;
+}
+
+.filterField {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  flex: 1;
+  padding: 8px 12px;
+  background: #fff;
+  border: 1px solid #d1d5db;
+  border-radius: 6px;
+}
+
+.filterField svg {
+  color: #6b7280;
+  flex-shrink: 0;
+}
+
+.dateInput,
+.select {
+  flex: 1;
+  border: none;
+  outline: none;
+  font-size: 14px;
+  color: #374151;
+  background: transparent;
+}
+
+.dateInput::placeholder,
+.select::placeholder {
+  color: #9ca3af;
+}
+
+/* ==================== 搜索结果列表 ==================== */
+
+.resultList {
+  display: flex;
+  flex-direction: column;
+  max-height: 400px;
+  overflow-y: auto;
+}
+
+.resultItem {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+  padding: 12px 16px;
+  background: #fff;
+  border: none;
+  border-bottom: 1px solid #e5e7eb;
+  cursor: pointer;
+  text-align: left;
+  transition: background 0.15s ease;
+}
+
+.resultItem:hover {
+  background: #f9fafb;
+}
+
+.resultItemActive {
+  background: #eff6ff;
+  border-left: 3px solid #3b82f6;
+  padding-left: 13px;
+}
+
+.resultItemCurrent {
+  background: #fef3c7;
+}
+
+.resultHeader {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  gap: 12px;
+  margin-bottom: 4px;
+}
+
+.resultSender {
+  font-size: 13px;
+  font-weight: 600;
+  color: #111827;
+}
+
+.resultTime {
+  font-size: 12px;
+  color: #6b7280;
+}
+
+.resultContent {
+  font-size: 14px;
+  line-height: 1.5;
+  color: #374151;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  display: -webkit-box;
+  -webkit-line-clamp: 2;
+  -webkit-box-orient: vertical;
+}
+
+.resultBefore,
+.resultAfter {
+  color: #6b7280;
+}
+
+.resultMatch {
+  background: #fef08a;
+  color: #854d0e;
+  padding: 2px 4px;
+  border-radius: 3px;
+  font-weight: 500;
+}
+
+/* ==================== 无结果提示 ==================== */
+
+.noResults {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  padding: 48px 24px;
+  color: #6b7280;
+  text-align: center;
+}
+
+.noResultsIcon {
+  margin-bottom: 16px;
+  opacity: 0.5;
+}
+
+.noResults p {
+  margin: 8px 0;
+  font-size: 14px;
+}
+
+.noResultsHint {
+  font-size: 13px;
+  opacity: 0.8;
+}
+
+/* ==================== 滚动条 ==================== */
+
+.historyDropdown::-webkit-scrollbar,
+.resultList::-webkit-scrollbar {
+  width: 8px;
+}
+
+.historyDropdown::-webkit-scrollbar-track,
+.resultList::-webkit-scrollbar-track {
+  background: transparent;
+}
+
+.historyDropdown::-webkit-scrollbar-thumb,
+.resultList::-webkit-scrollbar-thumb {
+  background: rgba(0, 0, 0, 0.2);
+  border-radius: 4px;
+}
+
+.historyDropdown::-webkit-scrollbar-thumb:hover,
+.resultList::-webkit-scrollbar-thumb:hover {
+  background: rgba(0, 0, 0, 0.3);
+}
+
+/* ==================== 响应式 ==================== */
+
+@media (max-width: 768px) {
+  .container {
+    max-width: 100%;
+    border-radius: 0;
+  }
+
+  .searchBar {
+    padding: 10px 12px;
+  }
+
+  .searchInput {
+    font-size: 13px;
+    padding: 6px 10px;
+  }
+
+  .resultCount {
+    font-size: 12px;
+  }
+
+  .navButton,
+  .filterButton,
+  .clearButton,
+  .closeButton {
+    width: 28px;
+    height: 28px;
+  }
+
+  .filterPanel {
+    padding: 12px;
+  }
+
+  .filterRow {
+    flex-wrap: wrap;
+  }
+
+  .resultItem {
+    padding: 10px 12px;
+  }
+
+  .resultContent {
+    font-size: 13px;
+  }
+}
+
+/* ==================== 暗色主题 ==================== */
+
+@media (prefers-color-scheme: dark) {
+  .container {
+    background: #1f2937;
+    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.3);
+  }
+
+  .searchBar {
+    background: #111827;
+    border-bottom-color: #374151;
+  }
+
+  .searchIcon {
+    color: #9ca3af;
+  }
+
+  .searchInput {
+    background: #1f2937;
+    border-color: #374151;
+    color: #f3f4f6;
+  }
+
+  .searchInput:focus {
+    border-color: #3b82f6;
+    box-shadow: 0 0 0 3px rgba(59, 130, 246, 0.2);
+  }
+
+  .resultCount {
+    background: #374151;
+    color: #9ca3af;
+  }
+
+  .navButton,
+  .filterButton {
+    background: #1f2937;
+    border-color: #374151;
+    color: #e5e7eb;
+  }
+
+  .navButton:hover:not(:disabled),
+  .filterButton:hover {
+    background: #374151;
+    border-color: #4b5563;
+  }
+
+  .filterButtonActive {
+    background: #3b82f6;
+    border-color: #3b82f6;
+    color: #fff;
+  }
+
+  .clearButton,
+  .closeButton {
+    color: #9ca3af;
+  }
+
+  .clearButton:hover,
+  .closeButton:hover {
+    background: #7f1d1d;
+    color: #fca5a5;
+  }
+
+  .historyDropdown {
+    background: #1f2937;
+    border-color: #374151;
+    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.4);
+  }
+
+  .historyHeader {
+    background: #111827;
+    border-bottom-color: #374151;
+    color: #9ca3af;
+  }
+
+  .clearHistoryButton {
+    color: #6b7280;
+  }
+
+  .clearHistoryButton:hover {
+    background: #7f1d1d;
+    color: #fca5a5;
+  }
+
+  .historyItem {
+    color: #e5e7eb;
+  }
+
+  .historyItem:hover {
+    background: #374151;
+  }
+
+  .historyItem:active {
+    background: #4b5563;
+  }
+
+  .filterPanel {
+    background: #111827;
+    border-bottom-color: #374151;
+  }
+
+  .checkbox {
+    color: #e5e7eb;
+  }
+
+  .filterField {
+    background: #1f2937;
+    border-color: #374151;
+  }
+
+  .filterField svg {
+    color: #9ca3af;
+  }
+
+  .dateInput,
+  .select {
+    color: #e5e7eb;
+  }
+
+  .resultList {
+    background: #1f2937;
+  }
+
+  .resultItem {
+    background: #1f2937;
+    border-bottom-color: #374151;
+  }
+
+  .resultItem:hover {
+    background: #111827;
+  }
+
+  .resultItemActive {
+    background: #1e3a5f;
+    border-left-color: #3b82f6;
+  }
+
+  .resultItemCurrent {
+    background: #422006;
+  }
+
+  .resultSender {
+    color: #f3f4f6;
+  }
+
+  .resultTime {
+    color: #9ca3af;
+  }
+
+  .resultContent {
+    color: #d1d5db;
+  }
+
+  .resultBefore,
+  .resultAfter {
+    color: #9ca3af;
+  }
+
+  .resultMatch {
+    background: #854d0e;
+    color: #fef08a;
+  }
+
+  .noResults {
+    color: #9ca3af;
+  }
+
+  .historyDropdown::-webkit-scrollbar-thumb,
+  .resultList::-webkit-scrollbar-thumb {
+    background: rgba(255, 255, 255, 0.2);
+  }
+
+  .historyDropdown::-webkit-scrollbar-thumb:hover,
+  .resultList::-webkit-scrollbar-thumb:hover {
+    background: rgba(255, 255, 255, 0.3);
+  }
+}
+

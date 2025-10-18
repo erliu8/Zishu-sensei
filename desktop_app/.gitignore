@@ -243,3 +243,9 @@ Thumbs.db
 # Miscellaneous
 *.tgz
 *.tar.gz
+
+# Live2D models
+public/live2d_models/
+
+# Vite cache
+.vite/

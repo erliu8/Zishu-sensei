@@ -724,12 +724,19 @@ class BaseAdapter(ABC):
             performance_summary = self.performance_monitor.get_performance_summary()
             metrics = {**impl_result.metrics, **performance_summary}
 
+            # 如果状态为degraded或unhealthy，且issues列表为空，添加关于失败检查的信息
+            issues = list(impl_result.issues) if impl_result.issues else []
+            if status in ["degraded", "unhealthy"] and not issues:
+                failed_checks = [name for name, passed in all_checks.items() if not passed]
+                if failed_checks:
+                    issues.append(f"以下检查失败: {', '.join(failed_checks)}")
+
             return HealthCheckResult(
                 is_healthy=is_healthy,
                 status=status,
                 checks=all_checks,
                 metrics=metrics,
-                issues=impl_result.issues,
+                issues=issues,
                 recommendations=impl_result.recommendations,
             )
 

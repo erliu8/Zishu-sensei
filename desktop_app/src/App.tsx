@@ -15,6 +15,7 @@ import { UpdateNotification } from '@/components/common/UpdateNotification'
 import { SystemTray } from '@/components/Desktop/SystemTray'
 import { PetWindow } from '@/components/Layout/PetWindow'
 import { SettingsPanel } from '@/components/Settings/SettingsPanel'
+import AdapterManagement from '@/pages/AdapterManagement'
 
 // Hooks 导入
 import { useCharacter } from '@/hooks/useCharacter'
@@ -22,16 +23,23 @@ import { useSettings } from '@/hooks/useSettings'
 import { useTauri } from '@/hooks/useTauri'
 import { useTheme } from '@/hooks/useTheme'
 import { useWindowManager } from '@/hooks/useWindowManager'
+import useKeyboardShortcuts from '@/hooks/useKeyboardShortcuts'
 
 // 类型导入
 import type { AppState, WindowMode } from '@/types/app'
 import type { ContextMenuOption } from '@/types/ui'
+import type { ShortcutConfig } from '@/types/shortcuts'
+
+// 工具导入
+import { getAdjustedShortcuts } from '@/config/shortcutPresets'
+import { ShortcutStorageManager } from '@/utils/shortcutStorage'
 
 // 常量定义
 const WINDOW_MODES = {
     PET: 'pet',
     CHAT: 'chat',
     SETTINGS: 'settings',
+    ADAPTERS: 'adapters',
     MINIMIZED: 'minimized',
 } as const
 
@@ -90,9 +98,187 @@ const App: React.FC = () => {
     const { currentCharacter, switchCharacter, characterList } = useCharacter()
     const { isTauriEnv, tauriVersion } = useTauri()
     const { minimizeWindow, closeWindow } = useWindowManager()
+    const shortcuts = useKeyboardShortcuts()
 
-    // ==================== 键盘快捷键 ====================
-    // TODO: 实现键盘快捷键
+    // ==================== 键盘快捷键系统 ====================
+    // 初始化快捷键
+    useEffect(() => {
+        console.log('🎹 [App] 初始化快捷键系统')
+        
+        // 从本地存储加载配置
+        const storedData = ShortcutStorageManager.load()
+        
+        // 获取预设快捷键
+        const presets = getAdjustedShortcuts()
+        
+        // 合并配置
+        const finalShortcuts = ShortcutStorageManager.merge(presets, storedData)
+        
+        // 注册所有快捷键
+        finalShortcuts.forEach(shortcut => {
+            const fullShortcut: ShortcutConfig = {
+                ...shortcut,
+                callback: getShortcutCallback(shortcut.id),
+            }
+            
+            shortcuts.register(fullShortcut)
+        })
+        
+        console.log(`✅ [App] 已注册 ${finalShortcuts.length} 个快捷键`)
+        
+        // 清理函数
+        return () => {
+            shortcuts.unregisterAll()
+        }
+    }, []) // 只在组件挂载时执行一次
+
+    // 快捷键回调函数工厂
+    const getShortcutCallback = useCallback((shortcutId: string) => {
+        return () => {
+            console.log(`⌨️ [App] 快捷键触发: ${shortcutId}`)
+            
+            switch (shortcutId) {
+                // ==================== 窗口管理 ====================
+                case 'window.minimize':
+                    minimizeWindow()
+                    break
+                
+                case 'window.close':
+                    closeWindow()
+                    break
+                
+                case 'window.toggleAlwaysOnTop':
+                    if (isTauriEnv) {
+                        invoke('toggle_always_on_top').catch(console.error)
+                    }
+                    break
+                
+                case 'window.show':
+                    if (isTauriEnv) {
+                        invoke('show_window').catch(console.error)
+                    }
+                    break
+
+                // ==================== 视图切换 ====================
+                case 'view.pet':
+                    handleWindowModeChange('pet')
+                    break
+                
+                case 'view.chat':
+                    handleWindowModeChange('chat')
+                    break
+                
+                case 'view.settings':
+                    handleWindowModeChange('settings')
+                    break
+                
+                case 'view.adapters':
+                    handleWindowModeChange('adapters')
+                    break
+
+                // ==================== 聊天相关 ====================
+                case 'chat.focusInput':
+                    // 聚焦输入框（由 ChatWindow 组件处理）
+                    document.dispatchEvent(new CustomEvent('shortcut:chat.focusInput'))
+                    break
+                
+                case 'chat.send':
+                    // 发送消息（由 ChatWindow 组件处理）
+                    document.dispatchEvent(new CustomEvent('shortcut:chat.send'))
+                    break
+                
+                case 'chat.newConversation':
+                    // 新建对话（由 ChatWindow 组件处理）
+                    document.dispatchEvent(new CustomEvent('shortcut:chat.newConversation'))
+                    break
+                
+                case 'chat.clearHistory':
+                    // 清空历史（由 ChatWindow 组件处理）
+                    document.dispatchEvent(new CustomEvent('shortcut:chat.clearHistory'))
+                    break
+                
+                case 'chat.search':
+                    // 搜索消息（由 ChatWindow 组件处理）
+                    document.dispatchEvent(new CustomEvent('shortcut:chat.search'))
+                    break
+
+                // ==================== 角色相关 ====================
+                case 'character.switch':
+                    // 打开角色切换菜单
+                    document.dispatchEvent(new CustomEvent('shortcut:character.switch'))
+                    break
+                
+                case 'character.interact':
+                    // 触发角色互动
+                    document.dispatchEvent(new CustomEvent('shortcut:character.interact'))
+                    break
+                
+                case 'character.resetPosition':
+                    // 重置角色位置
+                    if (isTauriEnv) {
+                        invoke('center_window').catch(console.error)
+                    }
+                    break
+
+                // ==================== 系统相关 ====================
+                case 'system.quit':
+                    if (isTauriEnv) {
+                        invoke('quit_app').catch(console.error)
+                    }
+                    break
+                
+                case 'system.reload':
+                    window.location.reload()
+                    break
+                
+                case 'system.toggleDevTools':
+                    if (isTauriEnv) {
+                        invoke('toggle_devtools').catch(console.error)
+                    }
+                    break
+                
+                case 'system.openSettings':
+                    handleWindowModeChange('settings')
+                    break
+
+                // ==================== 导航相关 ====================
+                case 'nav.back':
+                    window.history.back()
+                    break
+                
+                case 'nav.forward':
+                    window.history.forward()
+                    break
+                
+                case 'nav.home':
+                    handleWindowModeChange('pet')
+                    break
+
+                default:
+                    console.warn(`⚠️ [App] 未处理的快捷键: ${shortcutId}`)
+            }
+        }
+    }, [
+        minimizeWindow,
+        closeWindow,
+        handleWindowModeChange,
+        isTauriEnv,
+    ])
+
+    // 保存快捷键配置到本地存储
+    useEffect(() => {
+        const handleStorageSync = () => {
+            const registeredShortcuts = shortcuts.getRegisteredShortcuts()
+            ShortcutStorageManager.save(registeredShortcuts)
+        }
+
+        // 监听快捷键变化事件
+        window.addEventListener('shortcuts-changed', handleStorageSync)
+        
+        return () => {
+            window.removeEventListener('shortcuts-changed', handleStorageSync)
+        }
+    }, [shortcuts])
 
     // ==================== 事件处理器 ====================
     const handleWindowModeChange = useCallback((mode: WindowMode) => {
@@ -128,6 +314,12 @@ const App: React.FC = () => {
                 label: '设置',
                 icon: '⚙️',
                 onClick: () => handleWindowModeChange(WINDOW_MODES.SETTINGS),
+            },
+            {
+                id: 'adapters',
+                label: '适配器管理',
+                icon: '🔌',
+                onClick: () => handleWindowModeChange(WINDOW_MODES.ADAPTERS),
             },
             { id: 'divider-1', label: '', type: 'separator' },
             {
@@ -395,6 +587,11 @@ const App: React.FC = () => {
                         onClose={() => handleWindowModeChange(WINDOW_MODES.PET)}
                         onReset={resetSettings}
                     />
+                )
+
+            case WINDOW_MODES.ADAPTERS:
+                return (
+                    <AdapterManagement />
                 )
 
             default:

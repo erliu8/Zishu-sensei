@@ -397,8 +397,75 @@ pub async fn set_chat_model_handler(
         return Err("模型 ID 不能为空".to_string());
     }
     
-    // TODO: 这里可以实现模型配置的持久化存储
-    // 目前只是简单返回成功响应
+    // 获取数据库实例
+    let db = crate::database::get_database().ok_or_else(|| {
+        handle_command_error("set_chat_model", "数据库未初始化")
+    })?;
+    
+    // 查找或创建配置
+    let config_id = format!("chat_{}", uuid::Uuid::new_v4().to_string().replace("-", "")[..16].to_string());
+    
+    // 从请求中提取配置参数
+    let temperature = input.config.as_ref()
+        .and_then(|c| c.get("temperature"))
+        .and_then(|v| v.as_f64())
+        .unwrap_or(0.7) as f32;
+    
+    let top_p = input.config.as_ref()
+        .and_then(|c| c.get("top_p"))
+        .and_then(|v| v.as_f64())
+        .unwrap_or(0.9) as f32;
+    
+    let max_tokens = input.config.as_ref()
+        .and_then(|c| c.get("max_tokens"))
+        .and_then(|v| v.as_u64())
+        .unwrap_or(2048) as u32;
+    
+    let frequency_penalty = input.config.as_ref()
+        .and_then(|c| c.get("frequency_penalty"))
+        .and_then(|v| v.as_f64())
+        .unwrap_or(0.0) as f32;
+    
+    let presence_penalty = input.config.as_ref()
+        .and_then(|c| c.get("presence_penalty"))
+        .and_then(|v| v.as_f64())
+        .unwrap_or(0.0) as f32;
+    
+    // 创建模型配置
+    let model_config = crate::database::model_config::ModelConfigData {
+        id: config_id.clone(),
+        name: format!("聊天配置 - {}", input.model_id),
+        model_id: input.model_id.clone(),
+        adapter_id: input.adapter_id.clone(),
+        temperature,
+        top_p,
+        top_k: None,
+        max_tokens,
+        frequency_penalty,
+        presence_penalty,
+        stop_sequences: vec![],
+        is_default: false,
+        is_enabled: true,
+        description: Some("通过 set_chat_model 命令创建的配置".to_string()),
+        extra_config: input.config.as_ref().map(|c| serde_json::to_string(c).unwrap()),
+        created_at: chrono::Utc::now().timestamp(),
+        updated_at: chrono::Utc::now().timestamp(),
+    };
+    
+    // 保存配置到数据库
+    db.model_config_registry.save_config(model_config.clone()).map_err(|e| {
+        handle_command_error("set_chat_model", &format!("保存模型配置失败: {}", e))
+    })?;
+    
+    // 更新应用状态中的模型配置
+    let state_config = crate::state::ModelConfig {
+        model_id: input.model_id.clone(),
+        adapter_id: input.adapter_id.clone(),
+        temperature,
+        top_p,
+        max_tokens,
+    };
+    state.chat.set_model_config(state_config);
     
     let response = SetModelResponse {
         success: true,
@@ -406,7 +473,7 @@ pub async fn set_chat_model_handler(
         adapter_id: input.adapter_id.clone(),
     };
     
-    tracing::info!("聊天模型已设置: {}", input.model_id);
+    tracing::info!("聊天模型已设置并保存: {} (配置ID: {})", input.model_id, config_id);
     
     // 返回 JSON 响应
     Ok(serde_json::to_value(response).unwrap())

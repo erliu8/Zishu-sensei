@@ -68,6 +68,17 @@ pub struct SwitchCharacterRequest {
     pub character_id: String,
 }
 
+/// Character configuration
+#[derive(Debug, Clone, Serialize, Deserialize)]
+pub struct CharacterConfigData {
+    pub character_id: String,
+    pub scale: f64,
+    pub position_x: f64,
+    pub position_y: f64,
+    pub interaction_enabled: bool,
+    pub config_json: Option<String>,
+}
+
 // ================================
 // Command Handlers
 // ================================
@@ -79,47 +90,27 @@ pub async fn get_characters(
 ) -> Result<CommandResponse<Vec<CharacterInfo>>, String> {
     info!("获取可用角色列表");
     
-    let current_character = state.config.lock().character.current_character.clone();
+    // Get database instance
+    let db = crate::database::get_database()
+        .ok_or_else(|| "数据库未初始化".to_string())?;
     
-    // TODO: In the future, load this from a character registry/database
-    let characters = vec![
-        CharacterInfo {
-            id: "shizuku".to_string(),
-            name: "Shizuku".to_string(),
-            description: Some("可爱的桌面宠物角色".to_string()),
-            preview_image: Some("/characters/shizuku/preview.png".to_string()),
-            motions: vec![
-                "idle".to_string(),
-                "tap_body".to_string(),
-                "tap_head".to_string(),
-                "shake".to_string(),
-            ],
-            expressions: vec![
-                "normal".to_string(),
-                "happy".to_string(),
-                "sad".to_string(),
-                "angry".to_string(),
-            ],
-            is_active: current_character == "shizuku",
-        },
-        CharacterInfo {
-            id: "haru".to_string(),
-            name: "Haru".to_string(),
-            description: Some("活泼的桌面助手".to_string()),
-            preview_image: Some("/characters/haru/preview.png".to_string()),
-            motions: vec![
-                "idle".to_string(),
-                "wave".to_string(),
-                "dance".to_string(),
-            ],
-            expressions: vec![
-                "normal".to_string(),
-                "smile".to_string(),
-                "wink".to_string(),
-            ],
-            is_active: current_character == "haru",
-        },
-    ];
+    // Load characters from database
+    let characters_data = db.character_registry.get_all_characters()
+        .map_err(|e| format!("获取角色列表失败: {}", e))?;
+    
+    // Convert to CharacterInfo
+    let characters: Vec<CharacterInfo> = characters_data
+        .into_iter()
+        .map(|c| CharacterInfo {
+            id: c.id,
+            name: c.name,
+            description: Some(c.description),
+            preview_image: c.preview_image,
+            motions: c.motions,
+            expressions: c.expressions,
+            is_active: c.is_active,
+        })
+        .collect();
     
     Ok(CommandResponse::success(characters))
 }
@@ -132,52 +123,31 @@ pub async fn get_character_info(
 ) -> Result<CommandResponse<CharacterInfo>, String> {
     info!("获取角色信息: {}", character_id);
     
-    let current_character = state.config.lock().character.current_character.clone();
+    // Get database instance
+    let db = crate::database::get_database()
+        .ok_or_else(|| "数据库未初始化".to_string())?;
     
-    // TODO: Load from character registry
-    let character = match character_id.as_str() {
-        "shizuku" => CharacterInfo {
-            id: "shizuku".to_string(),
-            name: "Shizuku".to_string(),
-            description: Some("可爱的桌面宠物角色，喜欢和用户互动".to_string()),
-            preview_image: Some("/characters/shizuku/preview.png".to_string()),
-            motions: vec![
-                "idle".to_string(),
-                "tap_body".to_string(),
-                "tap_head".to_string(),
-                "shake".to_string(),
-            ],
-            expressions: vec![
-                "normal".to_string(),
-                "happy".to_string(),
-                "sad".to_string(),
-                "angry".to_string(),
-            ],
-            is_active: current_character == "shizuku",
-        },
-        "haru" => CharacterInfo {
-            id: "haru".to_string(),
-            name: "Haru".to_string(),
-            description: Some("活泼的桌面助手，总是充满活力".to_string()),
-            preview_image: Some("/characters/haru/preview.png".to_string()),
-            motions: vec![
-                "idle".to_string(),
-                "wave".to_string(),
-                "dance".to_string(),
-            ],
-            expressions: vec![
-                "normal".to_string(),
-                "smile".to_string(),
-                "wink".to_string(),
-            ],
-            is_active: current_character == "haru",
-        },
-        _ => {
-            return Ok(CommandResponse::error(format!("角色不存在: {}", character_id)));
+    // Load character from database
+    let character_data = db.character_registry.get_character(&character_id)
+        .map_err(|e| format!("获取角色信息失败: {}", e))?;
+    
+    match character_data {
+        Some(c) => {
+            let character = CharacterInfo {
+                id: c.id,
+                name: c.name,
+                description: Some(c.description),
+                preview_image: c.preview_image,
+                motions: c.motions,
+                expressions: c.expressions,
+                is_active: c.is_active,
+            };
+            Ok(CommandResponse::success(character))
         }
-    };
-    
-    Ok(CommandResponse::success(character))
+        None => {
+            Ok(CommandResponse::error(format!("角色不存在: {}", character_id)))
+        }
+    }
 }
 
 /// Switch to a different character
@@ -189,17 +159,33 @@ pub async fn switch_character(
 ) -> Result<CommandResponse<CharacterInfo>, String> {
     info!("切换角色: {}", character_id);
     
-    // Validate character exists
-    // TODO: Check against character registry
-    let valid_characters = vec!["shizuku", "haru"];
-    if !valid_characters.contains(&character_id.as_str()) {
-        error!("尝试切换到不存在的角色: {}", character_id);
-        return Ok(CommandResponse::error(format!("角色不存在: {}", character_id)));
-    }
+    // Get database instance
+    let db = crate::database::get_database()
+        .ok_or_else(|| "数据库未初始化".to_string())?;
+    
+    // Validate character exists in database
+    let character_data = db.character_registry.get_character(&character_id)
+        .map_err(|e| format!("查询角色失败: {}", e))?;
+    
+    let character_data = match character_data {
+        Some(c) => c,
+        None => {
+            error!("尝试切换到不存在的角色: {}", character_id);
+            return Ok(CommandResponse::error(format!("角色不存在: {}", character_id)));
+        }
+    };
+    
+    // Get old active character
+    let old_character = db.character_registry.get_active_character()
+        .map_err(|e| format!("获取当前角色失败: {}", e))?
+        .map(|c| c.id);
+    
+    // Set new active character in database
+    db.character_registry.set_active_character(&character_id)
+        .map_err(|e| format!("设置激活角色失败: {}", e))?;
     
     // Update config
     let mut config = state.config.lock().clone();
-    let old_character = config.character.current_character.clone();
     config.character.current_character = character_id.clone();
     
     // Save config
@@ -209,14 +195,14 @@ pub async fn switch_character(
         return Ok(CommandResponse::error(format!("保存配置失败: {}", e)));
     }
     
-    // Get character info
+    // Build character info response
     let character_info = CharacterInfo {
-        id: character_id.clone(),
-        name: character_id.clone(),
-        description: None,
-        preview_image: None,
-        motions: vec![],
-        expressions: vec![],
+        id: character_data.id.clone(),
+        name: character_data.name.clone(),
+        description: Some(character_data.description),
+        preview_image: character_data.preview_image,
+        motions: character_data.motions,
+        expressions: character_data.expressions,
         is_active: true,
     };
     
@@ -225,10 +211,11 @@ pub async fn switch_character(
         let _ = main_window.emit("character-changed", serde_json::json!({
             "old_character": old_character,
             "new_character": character_id,
+            "character_info": character_info,
         }));
     }
     
-    info!("角色切换成功: {} -> {}", old_character, character_id);
+    info!("角色切换成功: {:?} -> {}", old_character, character_id);
     Ok(CommandResponse::success_with_message(
         character_info,
         format!("已切换到角色: {}", character_id),
@@ -461,5 +448,102 @@ pub fn get_command_metadata() -> std::collections::HashMap<String, CommandMetada
         },
     );
     
+    metadata.insert(
+        "save_character_config".to_string(),
+        CommandMetadata {
+            name: "save_character_config".to_string(),
+            description: "保存角色配置".to_string(),
+            input_type: Some("CharacterConfigData".to_string()),
+            output_type: Some("()".to_string()),
+            required_permission: PermissionLevel::User,
+            is_async: true,
+            category: "character".to_string(),
+        },
+    );
+    
+    metadata.insert(
+        "get_character_config".to_string(),
+        CommandMetadata {
+            name: "get_character_config".to_string(),
+            description: "获取角色配置".to_string(),
+            input_type: Some("String".to_string()),
+            output_type: Some("CharacterConfigData".to_string()),
+            required_permission: PermissionLevel::User,
+            is_async: true,
+            category: "character".to_string(),
+        },
+    );
+    
     metadata
+}
+
+/// Save character configuration to database
+#[tauri::command]
+pub async fn save_character_config(
+    config: CharacterConfigData,
+) -> Result<CommandResponse<()>, String> {
+    info!("保存角色配置: {}", config.character_id);
+    
+    // Get database instance
+    let db = crate::database::get_database()
+        .ok_or_else(|| "数据库未初始化".to_string())?;
+    
+    // Convert to database CharacterConfig
+    let db_config = crate::database::character_registry::CharacterConfig {
+        character_id: config.character_id.clone(),
+        scale: config.scale,
+        position_x: config.position_x,
+        position_y: config.position_y,
+        interaction_enabled: config.interaction_enabled,
+        config_json: config.config_json,
+    };
+    
+    // Save to database
+    db.character_registry.save_character_config(db_config)
+        .map_err(|e| format!("保存角色配置失败: {}", e))?;
+    
+    info!("角色配置保存成功: {}", config.character_id);
+    Ok(CommandResponse::success(()))
+}
+
+/// Get character configuration from database
+#[tauri::command]
+pub async fn get_character_config(
+    character_id: String,
+) -> Result<CommandResponse<CharacterConfigData>, String> {
+    info!("获取角色配置: {}", character_id);
+    
+    // Get database instance
+    let db = crate::database::get_database()
+        .ok_or_else(|| "数据库未初始化".to_string())?;
+    
+    // Load from database
+    let db_config = db.character_registry.get_character_config(&character_id)
+        .map_err(|e| format!("获取角色配置失败: {}", e))?;
+    
+    match db_config {
+        Some(config) => {
+            let config_data = CharacterConfigData {
+                character_id: config.character_id,
+                scale: config.scale,
+                position_x: config.position_x,
+                position_y: config.position_y,
+                interaction_enabled: config.interaction_enabled,
+                config_json: config.config_json,
+            };
+            Ok(CommandResponse::success(config_data))
+        }
+        None => {
+            // Return default config
+            let default_config = CharacterConfigData {
+                character_id: character_id.clone(),
+                scale: 1.0,
+                position_x: 0.0,
+                position_y: 0.0,
+                interaction_enabled: true,
+                config_json: None,
+            };
+            Ok(CommandResponse::success(default_config))
+        }
+    }
 }

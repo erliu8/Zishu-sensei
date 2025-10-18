@@ -66,6 +66,9 @@ thiserror = "1.0"
 # 系统信息
 sysinfo = "0.29"
 
+# 开机自启
+auto-launch = "0.5"
+
 # 窗口管理和系统集成
 window-shadows = "0.2"
 window-vibrancy = "0.4"
@@ -234,6 +237,31 @@ Zishu-sensei 是一个基于 Tauri + React + Live2D 技术栈开发的智能桌�
 [package.metadata.docs.rs]
 all-features = true
 rustdoc-args = ["--cfg", "docsrs"]
+
+# 测试依赖
+[dev-dependencies]
+# 测试框架
+tokio-test = "0.4"
+tempfile = "3.8"
+
+# Mock 和测试工具
+mockall = "0.12"
+mockito = "1.2"
+wiremock = "0.5"
+
+# 测试断言
+assert_matches = "1.5"
+proptest = "1.4"
+
+# 测试数据生成
+fake = "2.9"
+quickcheck = "1.0"
+
+# 性能测试
+criterion = "0.5"
+
+# 集成测试
+# tauri-test = "0.2"  # 暂时注释，因为包不存在
 
 # 发布配置
 [package.metadata.release]

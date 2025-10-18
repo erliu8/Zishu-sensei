@@ -15,7 +15,7 @@ NC='\033[0m' # No Color
 
 # 项目路径
 PROJECT_ROOT="/opt/zishu-sensei"
-CLOUD_ENV_PATH="/data/zishu-sensei"
+CLOUD_ENV_PATH="/data/disk/zishu-sensei"
 
 echo -e "${BLUE}=== Zishu-Sensei 云硬盘环境启动器 ===${NC}"
 

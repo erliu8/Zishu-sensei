@@ -83,6 +83,12 @@ pub mod market;
 /// 更新检查命令
 pub mod update;
 
+/// 快捷键管理命令
+pub mod shortcuts;
+
+/// 模型配置管理命令
+pub mod model_config;
+
 // ================================
 // 公共命令类型定义
 // ================================
@@ -479,6 +485,12 @@ pub fn get_command_metadata() -> HashMap<String, CommandMetadata> {
     // 更新命令
     metadata.extend(update::get_command_metadata());
     
+    // 快捷键命令 (如果有元数据函数的话)
+    // metadata.extend(shortcuts::get_command_metadata());
+    
+    // 模型配置命令
+    metadata.extend(model_config::get_command_metadata());
+    
     metadata
 }
 
@@ -600,6 +612,12 @@ pub use market::*;
 
 // 更新命令
 pub use update::*;
+
+// 快捷键命令
+pub use shortcuts::*;
+
+// 模型配置命令
+pub use model_config::*;
 
 // ================================
 // 测试模块

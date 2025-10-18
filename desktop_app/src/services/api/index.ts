@@ -8,8 +8,15 @@
 export * from './chat';
 export { default as ChatAPI } from './chat';
 
-// 其他 API 可以在这里导出
-// export * from './adapter';
-// export * from './system';
-// export * from './desktop';
+// 桌面操作 API
+export * from './desktop';
+export { default as DesktopAPI } from './desktop';
+
+// 适配器 API
+export * from './adapter';
+export { default as AdapterAPI } from './adapter';
+
+// 系统 API
+export * from './system';
+export { default as SystemAPI } from './system';
 

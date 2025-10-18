@@ -1,5 +1,7 @@
 pub mod config;
 pub mod bridge;
+pub mod logger;
+pub mod file_system;
 
 pub use config::{
     get_app_log_dir,
@@ -19,5 +21,18 @@ pub use config::{
     create_config_snapshot,
     restore_from_snapshot,
     get_config_diff,
+};
+
+pub use logger::{
+    Logger,
+    LogLevel,
+    LogEntry,
+    LoggerConfig,
+    LoggerError,
+    LoggerResult,
+    RotationStrategy,
+    init_global_logger,
+    global_logger,
+    init_tracing,
 };
 

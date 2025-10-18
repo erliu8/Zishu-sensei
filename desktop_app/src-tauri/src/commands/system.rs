@@ -10,7 +10,8 @@
 use std::path::PathBuf;
 use tauri::{AppHandle, State, Manager};
 use serde::{Deserialize, Serialize};
-use tracing::{info, error};
+use tracing::{info, error, warn};
+use sysinfo::{System, SystemExt, CpuExt, ProcessExt};
 
 use crate::{
     commands::*,
@@ -35,6 +36,14 @@ pub struct SystemInfo {
     pub cpu_count: usize,
     /// Total memory (bytes)
     pub total_memory: u64,
+    /// Available memory (bytes)
+    pub available_memory: u64,
+    /// Used memory (bytes)
+    pub used_memory: u64,
+    /// CPU usage (percentage)
+    pub cpu_usage: f32,
+    /// Uptime (seconds)
+    pub uptime: u64,
     /// App version
     pub app_version: String,
     /// App name
@@ -52,6 +61,29 @@ pub struct VersionInfo {
     pub git_hash: Option<String>,
 }
 
+/// Update information
+#[derive(Debug, Clone, Serialize, Deserialize)]
+pub struct UpdateInfo {
+    /// Current version
+    pub current_version: String,
+    /// Latest version
+    pub latest_version: String,
+    /// Update available
+    pub update_available: bool,
+    /// Update message
+    pub message: String,
+    /// Download URL
+    pub download_url: Option<String>,
+    /// Release notes
+    pub release_notes: Option<String>,
+    /// Release date
+    pub release_date: Option<String>,
+    /// Update size (bytes)
+    pub size: Option<u64>,
+    /// Update is mandatory
+    pub mandatory: bool,
+}
+
 // ================================
 // Command Handlers
 // ================================
@@ -66,22 +98,39 @@ pub async fn get_system_info(
     let os = std::env::consts::OS.to_string();
     let arch = std::env::consts::ARCH.to_string();
     
+    // Initialize sysinfo system
+    let mut sys = System::new_all();
+    sys.refresh_all();
+    
     // Get OS version
-    let os_version = if cfg!(target_os = "windows") {
-        "Windows".to_string()
-    } else if cfg!(target_os = "macos") {
-        "macOS".to_string()
-    } else if cfg!(target_os = "linux") {
-        "Linux".to_string()
-    } else {
-        "Unknown".to_string()
-    };
+    let os_version = System::long_os_version().unwrap_or_else(|| {
+        if cfg!(target_os = "windows") {
+            "Windows".to_string()
+        } else if cfg!(target_os = "macos") {
+            "macOS".to_string()
+        } else if cfg!(target_os = "linux") {
+            "Linux".to_string()
+        } else {
+            "Unknown".to_string()
+        }
+    });
     
     // Get CPU count
-    let cpu_count = num_cpus::get();
+    let cpu_count = sys.cpus().len();
     
-    // Get memory info (using sysinfo if available, otherwise default)
-    let total_memory = 0u64; // TODO: Add sysinfo crate for actual memory info
+    // Get memory info using sysinfo
+    let total_memory = sys.total_memory();
+    let available_memory = sys.available_memory();
+    let used_memory = sys.used_memory();
+    
+    // Get CPU usage (需要刷新两次才能获取准确值)
+    sys.refresh_cpu();
+    tokio::time::sleep(tokio::time::Duration::from_millis(200)).await;
+    sys.refresh_cpu();
+    let cpu_usage = sys.global_cpu_info().cpu_usage();
+    
+    // Get system uptime
+    let uptime = System::uptime();
     
     let app_version = app_handle.package_info().version.to_string();
     let app_name = app_handle.package_info().name.clone();
@@ -92,9 +141,19 @@ pub async fn get_system_info(
         arch,
         cpu_count,
         total_memory,
+        available_memory,
+        used_memory,
+        cpu_usage,
+        uptime,
         app_version,
         app_name,
     };
+    
+    info!("系统信息: 内存总量={}MB, 可用={}MB, CPU使用率={:.2}%", 
+        total_memory / 1024 / 1024,
+        available_memory / 1024 / 1024,
+        cpu_usage
+    );
     
     Ok(CommandResponse::success(system_info))
 }
@@ -121,25 +180,122 @@ pub async fn get_app_version(
 #[tauri::command]
 pub async fn check_for_updates(
     app_handle: AppHandle,
-) -> Result<CommandResponse<serde_json::Value>, String> {
+) -> Result<CommandResponse<UpdateInfo>, String> {
     info!("检查应用更新");
-    
-    // TODO: Implement actual update checking logic
-    // This would typically:
-    // 1. Check a remote server for the latest version
-    // 2. Compare with current version
-    // 3. Return update information if available
     
     let current_version = app_handle.package_info().version.to_string();
     
-    let update_info = serde_json::json!({
-        "current_version": current_version,
-        "latest_version": current_version,
-        "update_available": false,
-        "message": "您已使用最新版本",
-    });
+    // 从环境变量或配置中读取更新服务器URL
+    let update_server_url = std::env::var("UPDATE_SERVER_URL")
+        .unwrap_or_else(|_| "https://api.zishu-sensei.com/updates/check".to_string());
     
-    Ok(CommandResponse::success(update_info))
+    // 尝试从远程服务器获取最新版本信息
+    match fetch_latest_version(&update_server_url, &current_version).await {
+        Ok(update_info) => {
+            info!("更新检查成功: {:?}", update_info);
+            Ok(CommandResponse::success(update_info))
+        }
+        Err(e) => {
+            warn!("从远程服务器检查更新失败: {}, 返回默认信息", e);
+            
+            // 如果远程检查失败，返回默认信息
+            let fallback_info = UpdateInfo {
+                current_version: current_version.clone(),
+                latest_version: current_version,
+                update_available: false,
+                message: "您已使用最新版本".to_string(),
+                download_url: None,
+                release_notes: None,
+                release_date: None,
+                size: None,
+                mandatory: false,
+            };
+            
+            Ok(CommandResponse::success(fallback_info))
+        }
+    }
+}
+
+/// Fetch latest version from update server
+async fn fetch_latest_version(
+    server_url: &str,
+    current_version: &str,
+) -> Result<UpdateInfo, Box<dyn std::error::Error + Send + Sync>> {
+    use reqwest;
+    
+    let client = reqwest::Client::builder()
+        .timeout(std::time::Duration::from_secs(10))
+        .build()?;
+    
+    let response = client
+        .get(server_url)
+        .query(&[("version", current_version)])
+        .header("User-Agent", format!("Zishu-Sensei/{}", current_version))
+        .send()
+        .await?;
+    
+    if !response.status().is_success() {
+        return Err(format!("服务器返回错误状态: {}", response.status()).into());
+    }
+    
+    let update_data: serde_json::Value = response.json().await?;
+    
+    let latest_version = update_data["latest_version"]
+        .as_str()
+        .ok_or("缺少 latest_version 字段")?
+        .to_string();
+    
+    // 比较版本号
+    let update_available = compare_versions(&latest_version, current_version);
+    
+    let message = if update_available {
+        format!("发现新版本 {} (当前版本: {})", latest_version, current_version)
+    } else {
+        "您已使用最新版本".to_string()
+    };
+    
+    Ok(UpdateInfo {
+        current_version: current_version.to_string(),
+        latest_version,
+        update_available,
+        message,
+        download_url: update_data["download_url"]
+            .as_str()
+            .map(|s| s.to_string()),
+        release_notes: update_data["release_notes"]
+            .as_str()
+            .map(|s| s.to_string()),
+        release_date: update_data["release_date"]
+            .as_str()
+            .map(|s| s.to_string()),
+        size: update_data["size"].as_u64(),
+        mandatory: update_data["mandatory"].as_bool().unwrap_or(false),
+    })
+}
+
+/// Compare two version strings (simple implementation)
+fn compare_versions(version1: &str, version2: &str) -> bool {
+    let v1_parts: Vec<u32> = version1
+        .split('.')
+        .filter_map(|s| s.parse().ok())
+        .collect();
+    let v2_parts: Vec<u32> = version2
+        .split('.')
+        .filter_map(|s| s.parse().ok())
+        .collect();
+    
+    for i in 0..std::cmp::max(v1_parts.len(), v2_parts.len()) {
+        let v1 = v1_parts.get(i).unwrap_or(&0);
+        let v2 = v2_parts.get(i).unwrap_or(&0);
+        
+        if v1 > v2 {
+            return true;
+        } else if v1 < v2 {
+            return false;
+        }
+    }
+    
+    false
 }
 
 /// Restart application
@@ -303,22 +459,112 @@ pub async fn set_auto_start(
 ) -> Result<CommandResponse<bool>, String> {
     info!("设置开机自启: {}", enabled);
     
-    // TODO: Implement auto-start logic using auto-launch crate
-    // For now, just update the config
+    // 实现自启动功能
+    match configure_auto_launch(enabled, &app_handle) {
+        Ok(_) => {
+            info!("自启动配置成功: {}", if enabled { "已启用" } else { "已禁用" });
+            
+            // 更新配置
+            let mut config = state.config.lock().clone();
+            config.system.auto_start = enabled;
+            *state.config.lock() = config.clone();
+            
+            if let Err(e) = save_config(&app_handle, &config).await {
+                error!("保存自启动配置失败: {}", e);
+                return Ok(CommandResponse::error(format!("保存配置失败: {}", e)));
+            }
+            
+            Ok(CommandResponse::success_with_message(
+                enabled,
+                if enabled { "已启用开机自启".to_string() } else { "已禁用开机自启".to_string() },
+            ))
+        }
+        Err(e) => {
+            error!("配置自启动失败: {}", e);
+            Ok(CommandResponse::error(format!("配置自启动失败: {}", e)))
+        }
+    }
+}
+
+/// Configure auto-launch using auto-launch crate
+fn configure_auto_launch(
+    enabled: bool,
+    app_handle: &AppHandle,
+) -> Result<(), Box<dyn std::error::Error + Send + Sync>> {
+    use auto_launch::AutoLaunch;
+    use std::env;
     
-    let mut config = state.config.lock().clone();
-    config.system.auto_start = enabled;
-    *state.config.lock() = config.clone();
+    // 获取应用名称和可执行文件路径
+    let app_name = app_handle.package_info().name.clone();
+    let app_path = env::current_exe()?;
     
-    if let Err(e) = save_config(&app_handle, &config).await {
-        error!("保存自启动配置失败: {}", e);
-        return Ok(CommandResponse::error(format!("保存配置失败: {}", e)));
+    info!("配置自启动: 应用={}, 路径={:?}", app_name, app_path);
+    
+    // 创建 AutoLaunch 实例
+    let auto = AutoLaunch::new(
+        &app_name,
+        app_path.to_str().ok_or("无效的应用路径")?,
+        &[] as &[&str], // 启动参数
+    );
+    
+    if enabled {
+        // 启用自启动
+        if auto.is_enabled()? {
+            info!("自启动已经启用");
+            return Ok(());
+        }
+        
+        auto.enable()?;
+        info!("自启动已启用");
+    } else {
+        // 禁用自启动
+        if !auto.is_enabled()? {
+            info!("自启动已经禁用");
+            return Ok(());
+        }
+        
+        auto.disable()?;
+        info!("自启动已禁用");
     }
     
-    Ok(CommandResponse::success_with_message(
-        enabled,
-        if enabled { "已启用开机自启".to_string() } else { "已禁用开机自启".to_string() },
-    ))
+    Ok(())
+}
+
+/// Check if auto-start is enabled
+#[tauri::command]
+pub async fn is_auto_start_enabled(
+    app_handle: AppHandle,
+) -> Result<CommandResponse<bool>, String> {
+    info!("检查开机自启状态");
+    
+    match check_auto_launch_status(&app_handle) {
+        Ok(enabled) => {
+            Ok(CommandResponse::success(enabled))
+        }
+        Err(e) => {
+            error!("检查自启动状态失败: {}", e);
+            Ok(CommandResponse::error(format!("检查自启动状态失败: {}", e)))
+        }
+    }
+}
+
+/// Check auto-launch status
+fn check_auto_launch_status(
+    app_handle: &AppHandle,
+) -> Result<bool, Box<dyn std::error::Error + Send + Sync>> {
+    use auto_launch::AutoLaunch;
+    use std::env;
+    
+    let app_name = app_handle.package_info().name.clone();
+    let app_path = env::current_exe()?;
+    
+    let auto = AutoLaunch::new(
+        &app_name,
+        app_path.to_str().ok_or("无效的应用路径")?,
+        &[] as &[&str],
+    );
+    
+    Ok(auto.is_enabled()?)
 }
 
 /// Copy text to clipboard
@@ -363,6 +609,321 @@ pub async fn read_from_clipboard(
             Ok(CommandResponse::error(format!("读取失败: {}", e)))
         }
     }
+}
+
+// ================================
+// Logger Commands
+// ================================
+
+/// Upload logs request
+#[derive(Debug, Clone, Serialize, Deserialize)]
+pub struct UploadLogsRequest {
+    /// Logs to upload
+    pub logs: Vec<serde_json::Value>,
+}
+
+/// Check log rotation request
+#[derive(Debug, Clone, Serialize, Deserialize)]
+pub struct CheckLogRotationRequest {
+    /// Maximum file size in bytes
+    pub max_size: u64,
+    /// Retention days
+    pub retention_days: u32,
+}
+
+/// Upload logs to backend
+#[tauri::command]
+pub async fn upload_logs(
+    request: UploadLogsRequest,
+) -> Result<CommandResponse<bool>, String> {
+    info!("上传日志: {} 条", request.logs.len());
+    
+    // 从环境变量读取日志上传URL
+    let log_upload_url = std::env::var("LOG_UPLOAD_URL")
+        .unwrap_or_else(|_| "https://api.zishu-sensei.com/logs/upload".to_string());
+    
+    // 尝试上传到后端 API
+    match upload_logs_to_backend(&log_upload_url, &request.logs).await {
+        Ok(response) => {
+            info!("日志上传成功: {:?}", response);
+            Ok(CommandResponse::success_with_message(
+                true,
+                format!("成功上传 {} 条日志", request.logs.len()),
+            ))
+        }
+        Err(e) => {
+            warn!("日志上传失败: {}, 已记录到本地", e);
+            
+            // 如果上传失败，记录到本地日志
+            for log in &request.logs {
+                tracing::debug!("前端日志(上传失败): {}", log);
+            }
+            
+            // 返回成功但带警告消息
+            Ok(CommandResponse::success_with_message(
+                true,
+                format!("日志已记录到本地 ({} 条), 但上传失败: {}", request.logs.len(), e),
+            ))
+        }
+    }
+}
+
+/// Upload logs to backend API
+async fn upload_logs_to_backend(
+    upload_url: &str,
+    logs: &[serde_json::Value],
+) -> Result<serde_json::Value, Box<dyn std::error::Error + Send + Sync>> {
+    use reqwest;
+    
+    let client = reqwest::Client::builder()
+        .timeout(std::time::Duration::from_secs(30))
+        .build()?;
+    
+    // 准备上传数据
+    let upload_data = serde_json::json!({
+        "logs": logs,
+        "timestamp": chrono::Utc::now().timestamp(),
+        "app_version": env!("CARGO_PKG_VERSION"),
+        "os": std::env::consts::OS,
+    });
+    
+    let response = client
+        .post(upload_url)
+        .json(&upload_data)
+        .header("Content-Type", "application/json")
+        .header("User-Agent", format!("Zishu-Sensei/{}", env!("CARGO_PKG_VERSION")))
+        .send()
+        .await?;
+    
+    if !response.status().is_success() {
+        return Err(format!("服务器返回错误状态: {}", response.status()).into());
+    }
+    
+    let result = response.json().await?;
+    Ok(result)
+}
+
+/// Check log rotation and cleanup old logs
+#[tauri::command]
+pub async fn check_log_rotation(
+    request: CheckLogRotationRequest,
+) -> Result<CommandResponse<bool>, String> {
+    info!("检查日志轮转");
+    
+    // Get logger and check rotation
+    if let Ok(logger) = crate::utils::logger::global_logger() {
+        // The logger's check_rotation method is called automatically on each log write
+        // This command can be used to manually trigger cleanup
+        logger.flush().map_err(|e| e.to_string())?;
+    }
+    
+    Ok(CommandResponse::success_with_message(
+        true,
+        "日志轮转检查完成".to_string(),
+    ))
+}
+
+/// Get log stats
+#[tauri::command]
+pub async fn get_log_stats() -> Result<CommandResponse<serde_json::Value>, String> {
+    info!("获取日志统计");
+    
+    match collect_log_statistics().await {
+        Ok(stats) => {
+            info!("日志统计收集成功: {:?}", stats);
+            Ok(CommandResponse::success(stats))
+        }
+        Err(e) => {
+            error!("日志统计收集失败: {}", e);
+            Ok(CommandResponse::error(format!("日志统计收集失败: {}", e)))
+        }
+    }
+}
+
+/// Collect log statistics
+async fn collect_log_statistics() -> Result<serde_json::Value, Box<dyn std::error::Error + Send + Sync>> {
+    use std::fs;
+    use chrono::{DateTime, Local};
+    
+    let log_dir = get_app_log_dir()?;
+    
+    if !log_dir.exists() {
+        return Ok(serde_json::json!({
+            "total_logs": 0,
+            "total_files": 0,
+            "total_size": 0,
+            "oldest_log": null,
+            "newest_log": null,
+            "files": []
+        }));
+    }
+    
+    let mut total_logs = 0u64;
+    let mut total_files = 0u32;
+    let mut total_size = 0u64;
+    let mut oldest_time: Option<DateTime<Local>> = None;
+    let mut newest_time: Option<DateTime<Local>> = None;
+    let mut log_files = Vec::new();
+    
+    // 遍历日志目录
+    for entry in fs::read_dir(&log_dir)? {
+        let entry = entry?;
+        let path = entry.path();
+        
+        // 只处理 .log 文件
+        if path.extension().and_then(|s| s.to_str()) == Some("log") {
+            let metadata = entry.metadata()?;
+            let file_size = metadata.len();
+            total_size += file_size;
+            total_files += 1;
+            
+            // 获取文件修改时间
+            if let Ok(modified) = metadata.modified() {
+                let modified_time: DateTime<Local> = modified.into();
+                
+                // 更新最旧和最新时间
+                match oldest_time {
+                    None => oldest_time = Some(modified_time),
+                    Some(ref t) if modified_time < *t => oldest_time = Some(modified_time),
+                    _ => {}
+                }
+                
+                match newest_time {
+                    None => newest_time = Some(modified_time),
+                    Some(ref t) if modified_time > *t => newest_time = Some(modified_time),
+                    _ => {}
+                }
+            }
+            
+            // 统计文件中的日志行数
+            if let Ok(content) = fs::read_to_string(&path) {
+                let line_count = content.lines().count() as u64;
+                total_logs += line_count;
+                
+                log_files.push(serde_json::json!({
+                    "name": path.file_name().and_then(|n| n.to_str()),
+                    "size": file_size,
+                    "lines": line_count,
+                    "modified": metadata.modified()
+                        .ok()
+                        .and_then(|t| {
+                            let dt: DateTime<Local> = t.into();
+                            Some(dt.format("%Y-%m-%d %H:%M:%S").to_string())
+                        }),
+                }));
+            }
+        }
+    }
+    
+    // 按修改时间排序（最新的在前）
+    log_files.sort_by(|a, b| {
+        let time_a = a.get("modified").and_then(|v| v.as_str()).unwrap_or("");
+        let time_b = b.get("modified").and_then(|v| v.as_str()).unwrap_or("");
+        time_b.cmp(time_a)
+    });
+    
+    Ok(serde_json::json!({
+        "total_logs": total_logs,
+        "total_files": total_files,
+        "total_size": total_size,
+        "total_size_mb": (total_size as f64 / 1024.0 / 1024.0),
+        "oldest_log": oldest_time.map(|t| t.format("%Y-%m-%d %H:%M:%S").to_string()),
+        "newest_log": newest_time.map(|t| t.format("%Y-%m-%d %H:%M:%S").to_string()),
+        "log_dir": log_dir.to_string_lossy(),
+        "files": log_files,
+    }))
+}
+
+/// Clean old logs
+#[tauri::command]
+pub async fn clean_old_logs(
+    retention_days: Option<u32>,
+) -> Result<CommandResponse<serde_json::Value>, String> {
+    info!("清理旧日志, 保留天数: {:?}", retention_days);
+    
+    let retention_days = retention_days.unwrap_or(7);
+    
+    match cleanup_old_log_files(retention_days).await {
+        Ok(result) => {
+            info!("日志清理完成: 删除 {} 个文件, 释放 {} MB", 
+                result.deleted_count, 
+                result.freed_size / 1024 / 1024
+            );
+            
+            Ok(CommandResponse::success_with_message(
+                serde_json::json!({
+                    "deleted_count": result.deleted_count,
+                    "freed_size": result.freed_size,
+                    "freed_size_mb": (result.freed_size as f64 / 1024.0 / 1024.0),
+                }),
+                format!("清理完成: 删除 {} 个文件", result.deleted_count),
+            ))
+        }
+        Err(e) => {
+            error!("日志清理失败: {}", e);
+            Ok(CommandResponse::error(format!("日志清理失败: {}", e)))
+        }
+    }
+}
+
+/// Log cleanup result
+struct LogCleanupResult {
+    deleted_count: u32,
+    freed_size: u64,
+}
+
+/// Cleanup old log files
+async fn cleanup_old_log_files(
+    retention_days: u32,
+) -> Result<LogCleanupResult, Box<dyn std::error::Error + Send + Sync>> {
+    use std::fs;
+    use chrono::{DateTime, Local, Duration};
+    
+    let log_dir = get_app_log_dir()?;
+    
+    if !log_dir.exists() {
+        return Ok(LogCleanupResult {
+            deleted_count: 0,
+            freed_size: 0,
+        });
+    }
+    
+    let cutoff_time = Local::now() - Duration::days(retention_days as i64);
+    let mut deleted_count = 0u32;
+    let mut freed_size = 0u64;
+    
+    for entry in fs::read_dir(&log_dir)? {
+        let entry = entry?;
+        let path = entry.path();
+        
+        if path.extension().and_then(|s| s.to_str()) == Some("log") {
+            if let Ok(metadata) = entry.metadata() {
+                if let Ok(modified) = metadata.modified() {
+                    let modified_time: DateTime<Local> = modified.into();
+                    
+                    if modified_time < cutoff_time {
+                        let file_size = metadata.len();
+                        
+                        match fs::remove_file(&path) {
+                            Ok(_) => {
+                                info!("删除旧日志文件: {:?}", path);
+                                deleted_count += 1;
+                                freed_size += file_size;
+                            }
+                            Err(e) => {
+                                warn!("删除日志文件失败 {:?}: {}", path, e);
+                            }
+                        }
+                    }
+                }
+            }
+        }
+    }
+    
+    Ok(LogCleanupResult {
+        deleted_count,
+        freed_size,
+    })
 }
 
 // ================================

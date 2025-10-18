@@ -36,6 +36,7 @@ import { format, isToday, isYesterday, differenceInDays } from 'date-fns'
 import { zhCN } from 'date-fns/locale'
 import type { ChatMessage } from '@/types/chat'
 import { MessageItem } from './MessageItem'
+import { useVirtualScroll } from '@/hooks/useVirtualScroll'
 import styles from './MessageList.module.css'
 
 // ==================== 类型定义 ====================
@@ -197,6 +198,15 @@ export const MessageList: React.FC<MessageListProps> = memo(
     const [isNearBottom, setIsNearBottom] = useState(true)
     const prevMessagesLengthRef = useRef(messages.length)
 
+    // ==================== 虚拟滚动 ====================
+    const virtualScroll = useVirtualScroll(messages, {
+      enabled: enableVirtualScroll,
+      threshold: virtualScrollThreshold,
+      overscanBefore: 5,
+      overscanAfter: 10,
+      smoothScroll: true,
+    })
+
     // ==================== 计算属性 ====================
 
     // 按日期分组的消息
@@ -221,12 +231,20 @@ export const MessageList: React.FC<MessageListProps> = memo(
      */
     const scrollToBottom = useCallback(
       (behavior: ScrollBehavior = 'smooth') => {
+        // 如果启用了虚拟滚动，使用虚拟滚动的方法
+        if (shouldUseVirtualScroll && virtualScroll.isVirtualScrollEnabled) {
+          virtualScroll.scrollToBottom(behavior)
+          onScrollToBottom?.()
+          return
+        }
+
+        // 否则使用传统滚动
         if (messagesEndRef.current) {
           messagesEndRef.current.scrollIntoView({ behavior, block: 'end' })
           onScrollToBottom?.()
         }
       },
-      [onScrollToBottom]
+      [shouldUseVirtualScroll, virtualScroll, onScrollToBottom]
     )
 
     /**
@@ -427,15 +445,96 @@ export const MessageList: React.FC<MessageListProps> = memo(
     )
 
     /**
-     * 渲染消息列表
+     * 渲染虚拟滚动消息列表
      */
-    const renderMessages = () => {
-      if (shouldUseVirtualScroll) {
-        // TODO: 实现虚拟滚动
-        // 这里可以集成 react-window 或 react-virtual
-        // 暂时回退到普通渲染
-      }
+    const renderVirtualizedMessages = () => {
+      const { virtualItems, totalSize } = virtualScroll
 
+      return (
+        <div
+          style={{
+            height: `${totalSize}px`,
+            width: '100%',
+            position: 'relative',
+          }}
+        >
+          {virtualItems.map((virtualItem) => {
+            const message = virtualItem.message
+            const isLastMsg =
+              virtualItem.index === messages.length - 1
+
+            return (
+              <div
+                key={message.id}
+                data-message-id={message.id}
+                data-index={virtualItem.index}
+                ref={virtualScroll.measureElement}
+                style={{
+                  position: 'absolute',
+                  top: 0,
+                  left: 0,
+                  width: '100%',
+                  transform: `translateY(${virtualItem.start}px)`,
+                }}
+              >
+                {/* 日期分隔符 */}
+                {showDateSeparator &&
+                  shouldShowDateSeparator(virtualItem.index) && (
+                    <div className={styles.dateInVirtual}>
+                      {renderDateSeparator(message.timestamp)}
+                    </div>
+                  )}
+
+                {/* 消息项 */}
+                <MessageItem
+                  message={message}
+                  isStreaming={
+                    isStreaming && message.id === streamingMessageId
+                  }
+                  showAvatar={showAvatar}
+                  showTimestamp={showTimestamp}
+                  showActions={showActions}
+                  compact={compact}
+                  isLastMessage={isLastMsg}
+                  onCopy={onCopyMessage}
+                  onResend={onResendMessage}
+                  onEdit={onEditMessage}
+                  onDelete={onDeleteMessage}
+                  onRegenerate={onRegenerateMessage}
+                  onTogglePin={onTogglePin}
+                  onToggleStar={onToggleStar}
+                />
+              </div>
+            )
+          })}
+        </div>
+      )
+    }
+
+    /**
+     * 判断是否应该显示日期分隔符
+     */
+    const shouldShowDateSeparator = (index: number): boolean => {
+      if (index === 0) return true
+
+      const currentMessage = messages[index]
+      const prevMessage = messages[index - 1]
+
+      if (!currentMessage || !prevMessage) return false
+
+      const currentDate = format(
+        new Date(currentMessage.timestamp),
+        'yyyy-MM-dd'
+      )
+      const prevDate = format(new Date(prevMessage.timestamp), 'yyyy-MM-dd')
+
+      return currentDate !== prevDate
+    }
+
+    /**
+     * 渲染普通消息列表
+     */
+    const renderRegularMessages = () => {
       return (
         <AnimatePresence mode="popLayout">
           {groupedMessages.map((group, groupIndex) => (
@@ -484,6 +583,16 @@ export const MessageList: React.FC<MessageListProps> = memo(
     }
 
     /**
+     * 渲染消息列表（根据是否启用虚拟滚动）
+     */
+    const renderMessages = () => {
+      if (shouldUseVirtualScroll && virtualScroll.isVirtualScrollEnabled) {
+        return renderVirtualizedMessages()
+      }
+      return renderRegularMessages()
+    }
+
+    /**
      * 渲染滚动到底部按钮
      */
     const renderScrollButton = () => {
@@ -508,11 +617,21 @@ export const MessageList: React.FC<MessageListProps> = memo(
 
     // ==================== 主渲染 ====================
 
+    // 使用虚拟滚动或普通容器的引用
+    const effectiveContainerRef = shouldUseVirtualScroll && virtualScroll.isVirtualScrollEnabled
+      ? virtualScroll.scrollContainerRef
+      : containerRef
+
     return (
       <div className={clsx(styles.messageList, className)}>
         <div
-          ref={containerRef}
-          className={styles.scrollContainer}
+          ref={effectiveContainerRef}
+          className={clsx(
+            styles.scrollContainer,
+            shouldUseVirtualScroll &&
+              virtualScroll.isVirtualScrollEnabled &&
+              styles.virtualScrollContainer
+          )}
           onScroll={handleScroll}
         >
           {/* 加载历史触发器 */}
@@ -522,8 +641,10 @@ export const MessageList: React.FC<MessageListProps> = memo(
           <div className={styles.messagesContainer}>
             {isEmpty ? renderEmpty() : isLoading ? renderLoading() : renderMessages()}
 
-            {/* 滚动锚点 */}
-            <div ref={messagesEndRef} className={styles.messagesEnd} />
+            {/* 滚动锚点（仅在非虚拟滚动模式下使用） */}
+            {!(shouldUseVirtualScroll && virtualScroll.isVirtualScrollEnabled) && (
+              <div ref={messagesEndRef} className={styles.messagesEnd} />
+            )}
           </div>
         </div>
 

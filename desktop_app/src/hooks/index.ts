@@ -5,4 +5,5 @@
 
 export * from './useAnimationControl'
 export * from './useSound'
+export * from './useTaskMonitor'
 

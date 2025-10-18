@@ -1,6 +1,10 @@
-import React, { useCallback, useMemo } from 'react'
+import React, { useCallback, useMemo, useState, useEffect } from 'react'
 import { Live2DViewer } from './Live2D/Live2DViewer'
-import { Live2DModelConfig, Live2DViewerConfig, Live2DAnimationPriority } from '@/types/live2d'
+import { ModelSelector } from './ModelSelector'
+import { Live2DModelConfig, Live2DViewerConfig } from '@/types/live2d'
+import { modelManager } from '@/utils/modelManager'
+import { useModelLoader, CharacterInfo } from './ModelLoader'
+import { CharacterTransitionWithLoading, TransitionType } from './Animations/CharacterTransition'
 
 interface Character {
     id: string
@@ -12,50 +16,75 @@ interface Character {
 interface CharacterProps {
     character: Character | null
     onInteraction: (type: string, data: any) => void
+    showModelSelector?: boolean
 }
 
 /**
- * 角色组件 - 使用Live2D渲染
+ * 角色组件 - 使用Live2D渲染，支持动态模型切换
  */
 export const Character: React.FC<CharacterProps> = ({
     character,
     onInteraction,
+    showModelSelector = false,
 }) => {
-    if (!character) return null
+    // 状态管理
+    const [currentModelId, setCurrentModelId] = useState<string>('hiyori')
+    const [modelConfig, setModelConfig] = useState<Live2DModelConfig | null>(null)
+    const [isLoadingModel, setIsLoadingModel] = useState(true)
+    const [transitionType, setTransitionType] = useState<TransitionType>('fade')
 
-    // Hiyori模型配置 - 使用useMemo缓存以避免不必要的重新渲染
-    const hiyoriModelConfig: Live2DModelConfig = useMemo(() => ({
-        id: 'hiyori',
-        name: 'Hiyori Momose',
-        modelPath: '/live2d_models/hiyori/hiyori.model3.json',
-        previewImage: '/live2d_models/hiyori/icon.jpg',
-        description: '桃瀬ひより - 可爱的女孩子',
-        author: 'Live2D Inc.',
-        version: '1.0.0',
-        tags: ['girl', 'cute', 'anime'],
-        animations: {
-            idle: [
-                { name: 'idle_01', file: 'animations/idle_01.motion3.json', priority: Live2DAnimationPriority.IDLE },
-                { name: 'idle_02', file: 'animations/idle_02.motion3.json', priority: Live2DAnimationPriority.IDLE }
-            ],
-            tap: [
-                { name: 'tap_body', file: 'animations/tap_body.motion3.json', priority: Live2DAnimationPriority.NORMAL }
-            ]
-        },
-        expressions: [
-            { name: 'default', file: 'expressions/default.exp3.json' },
-            { name: 'happy', file: 'expressions/happy.exp3.json' },
-            { name: 'sad', file: 'expressions/sad.exp3.json' }
-        ],
-        physics: '/live2d_models/hiyori/hiyori.physics3.json',
-        metadata: {
-            modelSize: { width: 1024, height: 1024 },
-            canvasSize: { width: 400, height: 600 },
-            pixelsPerUnit: 1.0,
-            originX: 0.5,
-            originY: 0.5
+    // 使用模型加载器 Hook
+    const { currentCharacter, switchCharacter } = useModelLoader()
+
+    // 当后端角色改变时，更新前端模型
+    useEffect(() => {
+        if (currentCharacter) {
+            console.log('🔄 后端角色切换到:', currentCharacter.id)
+            setCurrentModelId(currentCharacter.id)
+            // 根据角色特性选择不同的过渡动画
+            const animations: TransitionType[] = ['fade', 'slide-left', 'zoom', 'dissolve']
+            const randomAnimation = animations[Math.floor(Math.random() * animations.length)]
+            setTransitionType(randomAnimation)
         }
-    }), []) // 空依赖数组，配置永不改变
+    }, [currentCharacter])
+
+    // 加载模型配置
+    useEffect(() => {
+        const loadModelConfig = async () => {
+            try {
+                setIsLoadingModel(true)
+                const config = await modelManager.createModelConfig(currentModelId)
+                setModelConfig(config)
+                modelManager.setCurrentModelId(currentModelId)
+                console.log('✅ 模型配置加载成功:', currentModelId)
+            } catch (error) {
+                console.error('❌ 加载模型配置失败:', error)
+                // 回退到默认模型
+                if (currentModelId !== 'hiyori') {
+                    setCurrentModelId('hiyori')
+                }
+            } finally {
+                setIsLoadingModel(false)
+            }
+        }
+
+        loadModelConfig()
+    }, [currentModelId])
+
+    // 处理模型切换
+    const handleModelSelect = useCallback(async (modelId: string) => {
+        console.log('🔄 切换模型:', modelId)
+        try {
+            // 调用后端 API 切换角色
+            await switchCharacter(modelId)
+            onInteraction('model_changed', { character, modelId })
+        } catch (error) {
+            console.error('❌ 切换模型失败:', error)
+            onInteraction('model_error', { character, error })
+        }
+    }, [character, onInteraction, switchCharacter])
+
+    if (!character) return null
 
     // Live2D查看器配置 - 使用useMemo缓存以避免不必要的重新渲染
     const viewerConfig: Live2DViewerConfig = useMemo(() => ({
@@ -114,6 +143,8 @@ export const Character: React.FC<CharacterProps> = ({
         onInteraction('model_error', { character, error })
     }, [character, onInteraction])
 
+    if (!character) return null
+
     return (
         <div style={{
             position: 'relative',
@@ -121,20 +152,57 @@ export const Character: React.FC<CharacterProps> = ({
             height: '100%',
             pointerEvents: 'auto',
             display: 'flex',
-            alignItems: 'center',
-            justifyContent: 'center',
+            flexDirection: 'column',
         }}>
-            <Live2DViewer
-                config={viewerConfig}
-                modelConfig={hiyoriModelConfig}
-                onInteraction={handleLive2DInteraction}
-                onModelLoad={handleModelLoad}
-                onError={handleError}
-                className=""
-                style={{
-                    background: 'transparent'
-                }}
-            />
+            {/* 模型选择器 */}
+            {showModelSelector && (
+                <div style={{
+                    position: 'absolute',
+                    top: '1rem',
+                    right: '1rem',
+                    zIndex: 1000,
+                    width: '280px',
+                }}>
+                    <ModelSelector
+                        currentModelId={currentModelId}
+                        onModelSelect={handleModelSelect}
+                    />
+                </div>
+            )}
+
+            {/* 带过渡动画的 Live2D 查看器 */}
+            <div style={{
+                flex: 1,
+                display: 'flex',
+                alignItems: 'center',
+                justifyContent: 'center',
+            }}>
+                <CharacterTransitionWithLoading
+                    characterId={currentModelId}
+                    transitionType={transitionType}
+                    duration={600}
+                    isLoading={isLoadingModel || !modelConfig}
+                    loadingText={`加载 ${currentCharacter?.name || '角色'} 中...`}
+                    onTransitionComplete={() => {
+                        console.log('✅ 角色过渡动画完成:', currentModelId)
+                    }}
+                >
+                    {modelConfig && (
+                        <Live2DViewer
+                            key={currentModelId} // 强制重新挂载以切换模型
+                            config={viewerConfig}
+                            modelConfig={modelConfig}
+                            onInteraction={handleLive2DInteraction}
+                            onModelLoad={handleModelLoad}
+                            onError={handleError}
+                            className=""
+                            style={{
+                                background: 'transparent'
+                            }}
+                        />
+                    )}
+                </CharacterTransitionWithLoading>
+            </div>
         </div>
     )
 }

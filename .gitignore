@@ -1,20 +1,4 @@
-# 排除大型数据目录和模型
-/models/
-output/
-venv/
-anime-offline-database/
-/adapters/
-/data/
-# 但包含测试文件
-!tests/unit/adapters/
-
-# 环境变量文件
-.env
-.env.dev
-.env.local
-.env.*.local
-
-# 排除Python临时文件
+# Python
 __pycache__/
 *.py[cod]
 *$py.class
@@ -35,23 +19,194 @@ wheels/
 *.egg-info/
 .installed.cfg
 *.egg
+MANIFEST
+*.manifest
+*.spec
+pip-log.txt
+pip-delete-this-directory.txt
+htmlcov/
+.tox/
+.nox/
+.coverage
+.coverage.*
+.cache
+nosetests.xml
+coverage.xml
+*.cover
+.hypothesis/
+.pytest_cache/
+*.mo
+*.pot
+.mypy_cache/
+.dmypy.json
+dmypy.json
+.pyre/
+.pytype/
+venv/
+env/
+ENV/
+env.bak/
+venv.bak/
 
-# 日志和临时文件
-*.log
-*.tmp
-*.temp
+# Node
+node_modules/
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+lerna-debug.log*
+.pnpm-debug.log*
+report.[0-9]*.[0-9]*.[0-9]*.[0-9]*.json
+pids
+*.pid
+*.seed
+*.pid.lock
+lib-cov
+coverage
+*.lcov
+.nyc_output
+.grunt
+bower_components
+.lock-wscript
+build/Release
+.node_repl_history
+*.tgz
+.yarn-integrity
+.npm
+.eslintcache
+.stylelintcache
+.rpt2_cache/
+.rts2_cache_cjs/
+.rts2_cache_es/
+.rts2_cache_umd/
+.cache/
+.parcel-cache
+.next/
+out/
+.nuxt
+dist
+.cache/
+.vuepress/dist
+.temp
+.docusaurus
+.serverless/
+.fusebox/
+.dynamodb/
+.tern-port
+.vscode-test
+.yarn/cache
+.yarn/unplugged
+.yarn/build-state.yml
+.yarn/install-state.gz
+.pnp.*
 
-# IDE相关
-.idea/
+# Rust / Tauri
+target/
+**/*.rs.bk
+*.pdb
+Cargo.lock
+
+# IDEs
 .vscode/
+!.vscode/extensions.json
+!.vscode/settings.json
+.idea/
 *.swp
 *.swo
+*~
+.DS_Store
+*.sublime-project
+*.sublime-workspace
 
-# Jupyter Notebook checkpoints
+# Environment
+.env
+.env.local
+.env.*.local
+.env.development.local
+.env.test.local
+.env.production.local
+
+# Logs
+logs/
+*.log
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+pnpm-debug.log*
+lerna-debug.log*
+
+# OS
+.DS_Store
+Thumbs.db
+ehthumbs.db
+Desktop.ini
+$RECYCLE.BIN/
+*.cab
+*.msi
+*.msix
+*.msm
+*.msp
+*.lnk
+
+# Docker
+.dockerignore
+
+# Database
+*.db
+*.sqlite
+*.sqlite3
+
+# Data directories
+data/postgres/*
+!data/postgres/.gitkeep
+data/redis/*
+!data/redis/.gitkeep
+data/qdrant/*
+!data/qdrant/.gitkeep
+data/prometheus/*
+!data/prometheus/.gitkeep
+data/grafana/*
+!data/grafana/.gitkeep
+data/loki/*
+!data/loki/.gitkeep
+
+# Temporary files
+tmp/
+temp/
+*.tmp
+*.bak
+*.swp
+*~.nib
+
+# Models
+models/*.bin
+models/*.gguf
+models/*.safetensors
+models/*.pt
+models/*.pth
+!models/README.md
+
+# Cache
+cache/
+.cache/
+
+# Build artifacts
+*.o
+*.a
+*.dylib
+*.dll
+*.exe
+
+# Testing
+.coverage
+coverage/
+.nyc_output/
+test-results/
+playwright-report/
+
+# Jupyter
 .ipynb_checkpoints/
+*.ipynb
 
-# Large training data files (exceed GitHub 100MB limit)
-training/data/raw/bangumi/character.jsonlines
-training/data/raw/bangumi/episode.jsonlines
-training/data/raw/bangumi/dump-2025-06-03.210251Z.zip
-training/data/raw/bangumi/subject.jsonlines
+# Misc
+.turbo
+.vercel

@@ -376,6 +376,18 @@ async fn main() {
             commands::chat::clear_chat_history,
             commands::chat::set_chat_model,
             
+            // 模型配置命令
+            commands::model_config::save_model_config,
+            commands::model_config::get_model_config,
+            commands::model_config::delete_model_config,
+            commands::model_config::get_all_model_configs,
+            commands::model_config::get_default_model_config,
+            commands::model_config::set_default_model_config,
+            commands::model_config::validate_model_config,
+            commands::model_config::get_config_history,
+            commands::model_config::export_model_config,
+            commands::model_config::import_model_config,
+            
             // 设置命令
             commands::settings::get_settings,
             commands::settings::update_settings,
@@ -408,6 +420,8 @@ async fn main() {
             commands::character::get_current_character,
             commands::character::toggle_character_interaction,
             commands::character::set_character_scale,
+            commands::character::save_character_config,
+            commands::character::get_character_config,
             
             // 窗口命令
             commands::window::minimize_to_tray,
@@ -433,8 +447,13 @@ async fn main() {
             commands::system::get_app_data_path,
             commands::system::get_app_log_path,
             commands::system::set_auto_start,
+            commands::system::is_auto_start_enabled,
             commands::system::copy_to_clipboard,
             commands::system::read_from_clipboard,
+            commands::system::upload_logs,
+            commands::system::check_log_rotation,
+            commands::system::get_log_stats,
+            commands::system::clean_old_logs,
             
             // 适配器命令
             commands::adapter::get_adapters,
@@ -443,10 +462,32 @@ async fn main() {
             commands::adapter::execute_adapter,
             commands::adapter::get_adapter_config,
             commands::adapter::update_adapter_config,
+            commands::adapter::search_adapters,
+            commands::adapter::get_adapter_details,
+            commands::adapter::load_adapter,
+            commands::adapter::unload_adapter,
+            commands::adapter::get_adapter_status,
             
             // 桌面命令
             commands::desktop::get_desktop_info,
+            commands::desktop::get_monitor_at_position,
+            commands::desktop::get_primary_monitor,
+            commands::desktop::get_all_monitors,
+            
+            // 快捷键命令
+            commands::shortcuts::register_shortcut,
+            commands::shortcuts::unregister_shortcut,
+            commands::shortcuts::unregister_all_shortcuts,
+            commands::shortcuts::get_registered_shortcuts,
+            commands::shortcuts::get_shortcut_info,
+            commands::shortcuts::update_shortcut,
+            commands::shortcuts::toggle_shortcut,
+            commands::shortcuts::record_shortcut_trigger,
+            commands::shortcuts::get_shortcut_statistics,
+            commands::shortcuts::check_shortcut_conflict,
+            commands::shortcuts::validate_shortcut_config,
         ])
+        .manage(commands::shortcuts::ShortcutRegistry::new())
         .build(tauri::generate_context!());
     
     match app_result {

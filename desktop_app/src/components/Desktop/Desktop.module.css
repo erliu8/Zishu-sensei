@@ -1,0 +1,793 @@
+/**
+ * 桌面组件样式
+ */
+
+.desktop {
+  display: flex;
+  flex-direction: column;
+  height: 100%;
+  background: var(--bg-primary, #ffffff);
+  overflow: hidden;
+}
+
+/* ==================== 头部 ==================== */
+
+.header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 16px 24px;
+  border-bottom: 1px solid var(--border-color, #e5e7eb);
+  background: var(--bg-secondary, #f9fafb);
+}
+
+.title {
+  font-size: 20px;
+  font-weight: 600;
+  margin: 0;
+  color: var(--text-primary, #111827);
+}
+
+.headerActions {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+/* ==================== 错误横幅 ==================== */
+
+.errorBanner {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 12px 24px;
+  background: #fef2f2;
+  border-bottom: 1px solid #fecaca;
+  color: #991b1b;
+  font-size: 14px;
+}
+
+.errorClose {
+  background: none;
+  border: none;
+  color: #991b1b;
+  cursor: pointer;
+  font-size: 18px;
+  padding: 4px;
+  border-radius: 4px;
+  transition: background-color 0.2s;
+}
+
+.errorClose:hover {
+  background: rgba(0, 0, 0, 0.1);
+}
+
+/* ==================== 标签导航 ==================== */
+
+.tabs {
+  display: flex;
+  border-bottom: 1px solid var(--border-color, #e5e7eb);
+  background: var(--bg-secondary, #f9fafb);
+  padding: 0 16px;
+}
+
+.tab {
+  padding: 12px 20px;
+  background: none;
+  border: none;
+  border-bottom: 2px solid transparent;
+  color: var(--text-secondary, #6b7280);
+  font-size: 14px;
+  font-weight: 500;
+  cursor: pointer;
+  transition: all 0.2s;
+  white-space: nowrap;
+}
+
+.tab:hover {
+  color: var(--text-primary, #111827);
+  background: rgba(0, 0, 0, 0.05);
+}
+
+.tabActive {
+  color: var(--primary-color, #3b82f6);
+  border-bottom-color: var(--primary-color, #3b82f6);
+}
+
+/* ==================== 内容区域 ==================== */
+
+.content {
+  flex: 1;
+  overflow-y: auto;
+  position: relative;
+}
+
+.viewContainer {
+  height: 100%;
+  overflow-y: auto;
+}
+
+.loadingOverlay {
+  position: absolute;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  background: rgba(255, 255, 255, 0.8);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  z-index: 100;
+}
+
+.spinner {
+  width: 40px;
+  height: 40px;
+  border: 3px solid var(--border-color, #e5e7eb);
+  border-top-color: var(--primary-color, #3b82f6);
+  border-radius: 50%;
+  animation: spin 0.8s linear infinite;
+}
+
+@keyframes spin {
+  to { transform: rotate(360deg); }
+}
+
+/* ==================== 仪表盘视图 ==================== */
+
+.dashboard {
+  padding: 24px;
+  display: flex;
+  flex-direction: column;
+  gap: 24px;
+}
+
+.section {
+  background: var(--bg-primary, #ffffff);
+  border: 1px solid var(--border-color, #e5e7eb);
+  border-radius: 12px;
+  padding: 20px;
+  box-shadow: 0 1px 3px 0 rgba(0, 0, 0, 0.1);
+}
+
+.sectionHeader {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  margin-bottom: 16px;
+}
+
+.sectionTitle {
+  font-size: 16px;
+  font-weight: 600;
+  margin: 0 0 16px 0;
+  color: var(--text-primary, #111827);
+}
+
+/* 资源卡片网格 */
+
+.resourceGrid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+  gap: 16px;
+}
+
+.resourceCard {
+  padding: 16px;
+  background: var(--bg-secondary, #f9fafb);
+  border: 1px solid var(--border-color, #e5e7eb);
+  border-radius: 8px;
+  transition: all 0.2s;
+}
+
+.resourceCard:hover {
+  box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1);
+  transform: translateY(-2px);
+}
+
+.resourceLabel {
+  font-size: 12px;
+  font-weight: 500;
+  color: var(--text-secondary, #6b7280);
+  margin-bottom: 8px;
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+}
+
+.resourceValue {
+  font-size: 18px;
+  font-weight: 600;
+  color: var(--text-primary, #111827);
+  margin-bottom: 12px;
+}
+
+.resourceBar {
+  height: 6px;
+  background: var(--bg-primary, #ffffff);
+  border-radius: 3px;
+  overflow: hidden;
+}
+
+.resourceBarFill {
+  height: 100%;
+  transition: width 0.3s ease;
+}
+
+/* 工作流列表 */
+
+.workflowList {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+}
+
+.workflowItem {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 12px;
+  background: var(--bg-secondary, #f9fafb);
+  border: 1px solid var(--border-color, #e5e7eb);
+  border-radius: 8px;
+  transition: all 0.2s;
+}
+
+.workflowItem:hover {
+  border-color: var(--primary-color, #3b82f6);
+  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.05);
+}
+
+.workflowInfo {
+  flex: 1;
+  min-width: 0;
+}
+
+.workflowName {
+  font-size: 14px;
+  font-weight: 500;
+  color: var(--text-primary, #111827);
+  margin-bottom: 4px;
+}
+
+.workflowDesc {
+  font-size: 12px;
+  color: var(--text-tertiary, #9ca3af);
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.workflowActions {
+  display: flex;
+  gap: 8px;
+}
+
+/* 任务列表 */
+
+.taskList {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+}
+
+.taskItem {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 12px;
+  background: var(--bg-secondary, #f9fafb);
+  border: 1px solid var(--border-color, #e5e7eb);
+  border-radius: 8px;
+}
+
+.taskInfo {
+  flex: 1;
+  min-width: 0;
+}
+
+.taskName {
+  font-size: 14px;
+  font-weight: 500;
+  color: var(--text-primary, #111827);
+  margin-bottom: 8px;
+}
+
+.taskProgress {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+}
+
+.progressBar {
+  flex: 1;
+  height: 6px;
+  background: var(--bg-primary, #ffffff);
+  border-radius: 3px;
+  overflow: hidden;
+}
+
+.progressFill {
+  height: 100%;
+  background: var(--primary-color, #3b82f6);
+  transition: width 0.3s ease;
+}
+
+.progressText {
+  font-size: 12px;
+  font-weight: 500;
+  color: var(--text-secondary, #6b7280);
+  min-width: 40px;
+  text-align: right;
+}
+
+.taskActions {
+  display: flex;
+  gap: 8px;
+}
+
+/* 空状态 */
+
+.emptyState {
+  padding: 32px;
+  text-align: center;
+  color: var(--text-tertiary, #9ca3af);
+  font-size: 14px;
+}
+
+.loading {
+  padding: 32px;
+  text-align: center;
+  color: var(--text-tertiary, #9ca3af);
+  font-size: 14px;
+}
+
+/* ==================== 工作流视图 ==================== */
+
+.workflowsView {
+  padding: 24px;
+  height: 100%;
+  overflow-y: auto;
+}
+
+.viewHeader {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  margin-bottom: 24px;
+}
+
+.viewTitle {
+  font-size: 24px;
+  font-weight: 600;
+  margin: 0;
+  color: var(--text-primary, #111827);
+}
+
+.workflowGrid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(300px, 1fr));
+  gap: 20px;
+}
+
+.workflowCard {
+  background: var(--bg-primary, #ffffff);
+  border: 1px solid var(--border-color, #e5e7eb);
+  border-radius: 12px;
+  padding: 20px;
+  box-shadow: 0 1px 3px 0 rgba(0, 0, 0, 0.1);
+  display: flex;
+  flex-direction: column;
+  transition: all 0.2s;
+}
+
+.workflowCard:hover {
+  box-shadow: 0 10px 15px -3px rgba(0, 0, 0, 0.1);
+}
+
+.cardHeader {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  margin-bottom: 12px;
+}
+
+.cardTitle {
+  font-size: 16px;
+  font-weight: 600;
+  margin: 0;
+  color: var(--text-primary, #111827);
+}
+
+.cardBadge {
+  padding: 4px 8px;
+  background: #eff6ff;
+  border: 1px solid #bfdbfe;
+  border-radius: 4px;
+  font-size: 11px;
+  font-weight: 600;
+  color: #1e40af;
+  text-transform: uppercase;
+}
+
+.cardBody {
+  flex: 1;
+  margin-bottom: 16px;
+}
+
+.cardDesc {
+  font-size: 14px;
+  color: var(--text-secondary, #6b7280);
+  margin-bottom: 12px;
+  line-height: 1.5;
+}
+
+.cardMeta {
+  display: flex;
+  gap: 16px;
+  font-size: 12px;
+  color: var(--text-tertiary, #9ca3af);
+}
+
+.cardFooter {
+  display: flex;
+  gap: 8px;
+  padding-top: 16px;
+  border-top: 1px solid var(--border-color, #e5e7eb);
+}
+
+.emptyView {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  height: 400px;
+  text-align: center;
+}
+
+.emptyView .emptyIcon {
+  font-size: 64px;
+  margin-bottom: 16px;
+  opacity: 0.5;
+}
+
+.emptyTitle {
+  font-size: 18px;
+  font-weight: 600;
+  margin-bottom: 8px;
+  color: var(--text-primary, #111827);
+}
+
+.emptyDesc {
+  font-size: 14px;
+  color: var(--text-tertiary, #9ca3af);
+  margin-bottom: 24px;
+}
+
+/* ==================== 任务视图 ==================== */
+
+.tasksView {
+  padding: 24px;
+  height: 100%;
+  overflow-y: auto;
+}
+
+.taskTable {
+  background: var(--bg-primary, #ffffff);
+  border: 1px solid var(--border-color, #e5e7eb);
+  border-radius: 12px;
+  overflow: hidden;
+}
+
+.tableHeader {
+  display: grid;
+  grid-template-columns: 2fr 1fr 1fr 1.5fr 1fr;
+  gap: 16px;
+  padding: 16px 20px;
+  background: var(--bg-secondary, #f9fafb);
+  border-bottom: 1px solid var(--border-color, #e5e7eb);
+  font-size: 12px;
+  font-weight: 600;
+  color: var(--text-secondary, #6b7280);
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+}
+
+.tableRow {
+  display: grid;
+  grid-template-columns: 2fr 1fr 1fr 1.5fr 1fr;
+  gap: 16px;
+  padding: 16px 20px;
+  border-bottom: 1px solid var(--border-color, #e5e7eb);
+  transition: background-color 0.2s;
+}
+
+.tableRow:last-child {
+  border-bottom: none;
+}
+
+.tableRow:hover {
+  background: var(--bg-secondary, #f9fafb);
+}
+
+.tableCell {
+  display: flex;
+  align-items: center;
+  font-size: 14px;
+  color: var(--text-primary, #374151);
+}
+
+.taskNameCell {
+  font-weight: 500;
+}
+
+.statusBadge {
+  padding: 4px 12px;
+  border-radius: 12px;
+  font-size: 12px;
+  font-weight: 600;
+  color: white;
+  text-align: center;
+  white-space: nowrap;
+}
+
+.progressCell {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  width: 100%;
+}
+
+/* ==================== 资源视图 ==================== */
+
+.resourcesView {
+  padding: 24px;
+  height: 100%;
+  overflow-y: auto;
+}
+
+.resourcesGrid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+  gap: 20px;
+}
+
+.resourcePanel {
+  background: var(--bg-primary, #ffffff);
+  border: 1px solid var(--border-color, #e5e7eb);
+  border-radius: 12px;
+  padding: 20px;
+  box-shadow: 0 1px 3px 0 rgba(0, 0, 0, 0.1);
+}
+
+.panelTitle {
+  font-size: 14px;
+  font-weight: 600;
+  margin: 0 0 12px 0;
+  color: var(--text-secondary, #6b7280);
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+}
+
+.panelValue {
+  font-size: 24px;
+  font-weight: 700;
+  color: var(--text-primary, #111827);
+  margin-bottom: 16px;
+}
+
+.panelChart {
+  height: 120px;
+  background: var(--bg-secondary, #f9fafb);
+  border-radius: 6px;
+  padding: 12px;
+  display: flex;
+  align-items: flex-end;
+  margin-bottom: 8px;
+}
+
+.chartBar {
+  width: 100%;
+  border-radius: 4px;
+  transition: height 0.3s ease;
+}
+
+.panelDesc {
+  font-size: 12px;
+  color: var(--text-tertiary, #9ca3af);
+}
+
+/* ==================== 状态栏 ==================== */
+
+.statusBar {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 8px 24px;
+  background: var(--bg-secondary, #f9fafb);
+  border-top: 1px solid var(--border-color, #e5e7eb);
+  font-size: 12px;
+  color: var(--text-tertiary, #9ca3af);
+}
+
+.statusOnline {
+  color: #10b981;
+  font-weight: 500;
+}
+
+.statusInfo {
+  display: flex;
+  gap: 16px;
+}
+
+/* ==================== 响应式设计 ==================== */
+
+@media (max-width: 1024px) {
+  .workflowGrid {
+    grid-template-columns: repeat(auto-fill, minmax(250px, 1fr));
+  }
+
+  .resourcesGrid {
+    grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+  }
+}
+
+@media (max-width: 768px) {
+  .desktop {
+    font-size: 14px;
+  }
+
+  .header {
+    padding: 12px 16px;
+  }
+
+  .tabs {
+    overflow-x: auto;
+    scrollbar-width: none;
+    -ms-overflow-style: none;
+  }
+
+  .tabs::-webkit-scrollbar {
+    display: none;
+  }
+
+  .dashboard,
+  .workflowsView,
+  .tasksView,
+  .resourcesView {
+    padding: 16px;
+  }
+
+  .workflowGrid {
+    grid-template-columns: 1fr;
+  }
+
+  .resourceGrid {
+    grid-template-columns: 1fr;
+  }
+
+  .resourcesGrid {
+    grid-template-columns: 1fr;
+  }
+
+  .tableHeader,
+  .tableRow {
+    grid-template-columns: 1fr;
+    gap: 8px;
+  }
+
+  .tableHeader {
+    display: none;
+  }
+
+  .tableCell {
+    padding: 4px 0;
+  }
+
+  .tableCell::before {
+    content: attr(data-label);
+    font-weight: 600;
+    margin-right: 8px;
+    min-width: 80px;
+  }
+}
+
+@media (max-width: 480px) {
+  .title {
+    font-size: 16px;
+  }
+
+  .viewTitle {
+    font-size: 20px;
+  }
+
+  .cardFooter {
+    flex-direction: column;
+  }
+
+  .workflowActions,
+  .taskActions {
+    flex-direction: column;
+    width: 100%;
+  }
+
+  .workflowActions > *,
+  .taskActions > * {
+    width: 100%;
+  }
+}
+
+/* ==================== 暗色主题 ==================== */
+
+@media (prefers-color-scheme: dark) {
+  .desktop {
+    --bg-primary: #1f2937;
+    --bg-secondary: #111827;
+    --text-primary: #f9fafb;
+    --text-secondary: #d1d5db;
+    --text-tertiary: #9ca3af;
+    --border-color: #374151;
+    --primary-color: #60a5fa;
+  }
+
+  .loadingOverlay {
+    background: rgba(31, 41, 55, 0.8);
+  }
+
+  .cardBadge {
+    background: #1e3a8a;
+    border-color: #1e40af;
+    color: #bfdbfe;
+  }
+}
+
+/* ==================== 动画 ==================== */
+
+@keyframes fadeIn {
+  from {
+    opacity: 0;
+  }
+  to {
+    opacity: 1;
+  }
+}
+
+@keyframes slideUp {
+  from {
+    transform: translateY(20px);
+    opacity: 0;
+  }
+  to {
+    transform: translateY(0);
+    opacity: 1;
+  }
+}
+
+.section,
+.workflowCard,
+.resourcePanel {
+  animation: slideUp 0.3s ease-out;
+}
+
+/* ==================== 打印样式 ==================== */
+
+@media print {
+  .header,
+  .tabs,
+  .statusBar,
+  .headerActions,
+  .workflowActions,
+  .taskActions {
+    display: none;
+  }
+
+  .desktop {
+    background: white;
+  }
+
+  .section,
+  .workflowCard,
+  .resourcePanel {
+    page-break-inside: avoid;
+  }
+}
+

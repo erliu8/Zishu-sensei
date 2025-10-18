@@ -1,0 +1,124 @@
+/**
+ * CharacterTransition 动画样式
+ */
+
+.character-transition-container {
+    position: relative;
+    width: 100%;
+    height: 100%;
+    overflow: hidden;
+}
+
+.character-transition-wrapper {
+    position: absolute;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+}
+
+.character-transition-wrapper.transitioning {
+    pointer-events: none;
+}
+
+/* 加载覆盖层 */
+.character-loading-overlay {
+    position: absolute;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    background: rgba(0, 0, 0, 0.05);
+    backdrop-filter: blur(4px);
+    z-index: 1000;
+}
+
+.loading-content {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 1rem;
+    padding: 2rem;
+    background: rgba(255, 255, 255, 0.9);
+    border-radius: 12px;
+    box-shadow: 0 4px 20px rgba(0, 0, 0, 0.1);
+}
+
+.loading-spinner {
+    width: 40px;
+    height: 40px;
+    border: 3px solid rgba(0, 0, 0, 0.1);
+    border-top-color: var(--primary-color, #667eea);
+    border-radius: 50%;
+    animation: spin 0.8s linear infinite;
+}
+
+.loading-text {
+    color: var(--text-primary, #2d3748);
+    font-size: 0.875rem;
+    font-weight: 500;
+}
+
+@keyframes spin {
+    to {
+        transform: rotate(360deg);
+    }
+}
+
+/* 深色主题支持 */
+@media (prefers-color-scheme: dark) {
+    .character-loading-overlay {
+        background: rgba(0, 0, 0, 0.3);
+    }
+
+    .loading-content {
+        background: rgba(45, 55, 72, 0.95);
+    }
+
+    .loading-text {
+        color: var(--text-primary-dark, #e2e8f0);
+    }
+}
+
+/* 减少动画效果（可访问性） */
+@media (prefers-reduced-motion: reduce) {
+    .character-transition-wrapper,
+    .loading-content,
+    .loading-spinner {
+        animation: none !important;
+        transition: none !important;
+    }
+}
+
+/* 性能优化 */
+.character-transition-wrapper {
+    will-change: transform, opacity;
+    backface-visibility: hidden;
+    -webkit-backface-visibility: hidden;
+    -moz-backface-visibility: hidden;
+    transform: translateZ(0);
+    -webkit-transform: translateZ(0);
+}
+
+/* 响应式调整 */
+@media (max-width: 768px) {
+    .loading-content {
+        padding: 1.5rem;
+    }
+
+    .loading-spinner {
+        width: 32px;
+        height: 32px;
+    }
+
+    .loading-text {
+        font-size: 0.8125rem;
+    }
+}
+

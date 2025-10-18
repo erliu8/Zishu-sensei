@@ -747,7 +747,7 @@ class AdapterComposer:
         if group_id is None:
             group_id = f"parallel_group_{uuid.uuid4().hex[:8]}"
             
-        chain = AdapterChain(group_id, CompositionStrategy.PARALLEL)
+        chain = AdapterChain(chain_id=group_id, strategy=CompositionStrategy.PARALLEL)
         
         # 添加适配器到链中
         for adapter in adapters:

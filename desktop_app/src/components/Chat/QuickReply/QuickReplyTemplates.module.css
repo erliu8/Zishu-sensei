@@ -1,0 +1,636 @@
+/**
+ * 快捷回复模板组件样式
+ */
+
+.container {
+  display: flex;
+  flex-direction: column;
+  background: #fff;
+  border-radius: 12px;
+  box-shadow: 0 4px 16px rgba(0, 0, 0, 0.1);
+  max-width: 700px;
+  width: 100%;
+  max-height: 80vh;
+  overflow: hidden;
+}
+
+/* ==================== 头部 ==================== */
+
+.header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 20px 24px;
+  background: linear-gradient(135deg, #8b5cf6 0%, #7c3aed 100%);
+  color: #fff;
+}
+
+.headerTitle {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+}
+
+.headerTitle h2 {
+  margin: 0;
+  font-size: 18px;
+  font-weight: 600;
+}
+
+.headerIcon {
+  fill: currentColor;
+}
+
+.count {
+  font-size: 14px;
+  opacity: 0.9;
+}
+
+.headerActions {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.addButton,
+.closeButton {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 32px;
+  height: 32px;
+  border: none;
+  background: rgba(255, 255, 255, 0.2);
+  color: #fff;
+  border-radius: 6px;
+  cursor: pointer;
+  transition: all 0.2s ease;
+}
+
+.addButton:hover,
+.closeButton:hover {
+  background: rgba(255, 255, 255, 0.3);
+}
+
+/* ==================== 工具栏 ==================== */
+
+.toolbar {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  padding: 16px 24px;
+  background: #f9fafb;
+  border-bottom: 1px solid #e5e7eb;
+}
+
+.searchBox {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  flex: 1;
+  padding: 8px 12px;
+  background: #fff;
+  border: 1px solid #d1d5db;
+  border-radius: 8px;
+}
+
+.searchBox svg {
+  color: #6b7280;
+  flex-shrink: 0;
+}
+
+.searchInput {
+  flex: 1;
+  border: none;
+  outline: none;
+  font-size: 14px;
+  color: #374151;
+}
+
+.clearButton {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 20px;
+  height: 20px;
+  border: none;
+  background: transparent;
+  color: #9ca3af;
+  border-radius: 4px;
+  cursor: pointer;
+  transition: all 0.2s ease;
+}
+
+.clearButton:hover {
+  background: #fee2e2;
+  color: #ef4444;
+}
+
+/* ==================== 分类筛选 ==================== */
+
+.categoryFilter {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 12px 24px;
+  background: #f9fafb;
+  border-bottom: 1px solid #e5e7eb;
+  overflow-x: auto;
+}
+
+.categoryChip {
+  display: flex;
+  align-items: center;
+  gap: 4px;
+  padding: 6px 12px;
+  font-size: 13px;
+  font-weight: 500;
+  color: #6b7280;
+  background: #fff;
+  border: 1px solid #d1d5db;
+  border-radius: 16px;
+  cursor: pointer;
+  transition: all 0.2s ease;
+  white-space: nowrap;
+}
+
+.categoryChip:hover {
+  background: #f3f4f6;
+  border-color: #9ca3af;
+}
+
+.categoryChipActive {
+  background: #8b5cf6;
+  border-color: #8b5cf6;
+  color: #fff;
+}
+
+/* ==================== 模板列表 ==================== */
+
+.templateList {
+  flex: 1;
+  overflow-y: auto;
+  padding: 16px 24px;
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+}
+
+.templateCard {
+  padding: 16px;
+  background: #f9fafb;
+  border: 1px solid #e5e7eb;
+  border-radius: 12px;
+  cursor: pointer;
+  transition: all 0.2s ease;
+}
+
+.templateCard:hover {
+  background: #f3f4f6;
+  border-color: #d1d5db;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.05);
+  transform: translateY(-2px);
+}
+
+.templateHeader {
+  display: flex;
+  justify-content: space-between;
+  align-items: flex-start;
+  gap: 12px;
+  margin-bottom: 10px;
+}
+
+.templateTitle {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  flex-wrap: wrap;
+}
+
+.templateName {
+  font-size: 15px;
+  font-weight: 600;
+  color: #111827;
+}
+
+.templateCategory {
+  display: flex;
+  align-items: center;
+  gap: 3px;
+  padding: 3px 8px;
+  font-size: 11px;
+  color: #8b5cf6;
+  background: #f3e8ff;
+  border: 1px solid #e9d5ff;
+  border-radius: 10px;
+}
+
+.templateActions {
+  display: flex;
+  align-items: center;
+  gap: 4px;
+}
+
+.actionButton {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 28px;
+  height: 28px;
+  border: none;
+  background: transparent;
+  color: #9ca3af;
+  border-radius: 6px;
+  cursor: pointer;
+  transition: all 0.2s ease;
+}
+
+.actionButton:hover {
+  background: #e5e7eb;
+  color: #374151;
+}
+
+.actionButtonDanger:hover {
+  background: #fee2e2;
+  color: #ef4444;
+}
+
+.checkIcon {
+  color: #22c55e;
+}
+
+.templateContent {
+  font-size: 14px;
+  line-height: 1.6;
+  color: #374151;
+  margin-bottom: 10px;
+  white-space: pre-wrap;
+  word-wrap: break-word;
+}
+
+.templateFooter {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+}
+
+.templateShortcut {
+  padding: 4px 8px;
+  font-size: 12px;
+  font-family: 'Courier New', monospace;
+  color: #8b5cf6;
+  background: #f3e8ff;
+  border: 1px solid #e9d5ff;
+  border-radius: 6px;
+}
+
+.templateUseCount {
+  font-size: 12px;
+  color: #9ca3af;
+}
+
+/* ==================== 表单 ==================== */
+
+.formCard {
+  padding: 20px;
+  background: #eff6ff;
+  border: 2px solid #3b82f6;
+  border-radius: 12px;
+  margin-bottom: 16px;
+}
+
+.formTitle {
+  margin: 0 0 16px;
+  font-size: 16px;
+  font-weight: 600;
+  color: #1e40af;
+}
+
+.formGroup {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  margin-bottom: 12px;
+}
+
+.formGroup label {
+  font-size: 13px;
+  font-weight: 500;
+  color: #374151;
+}
+
+.formInput,
+.formTextarea {
+  padding: 10px 12px;
+  font-size: 14px;
+  border: 1px solid #d1d5db;
+  border-radius: 8px;
+  outline: none;
+  transition: all 0.2s ease;
+}
+
+.formInput:focus,
+.formTextarea:focus {
+  border-color: #3b82f6;
+  box-shadow: 0 0 0 3px rgba(59, 130, 246, 0.1);
+}
+
+.formTextarea {
+  resize: vertical;
+  font-family: inherit;
+}
+
+.formRow {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 12px;
+}
+
+.variablesHint {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  font-size: 12px;
+  color: #6b7280;
+  flex-wrap: wrap;
+}
+
+.variableTag {
+  padding: 2px 6px;
+  background: #fef3c7;
+  color: #92400e;
+  border-radius: 4px;
+  font-family: 'Courier New', monospace;
+}
+
+.formActions {
+  display: flex;
+  justify-content: flex-end;
+  gap: 8px;
+  margin-top: 16px;
+}
+
+.cancelButton,
+.saveButton {
+  padding: 8px 16px;
+  font-size: 14px;
+  font-weight: 500;
+  border: none;
+  border-radius: 8px;
+  cursor: pointer;
+  transition: all 0.2s ease;
+}
+
+.cancelButton {
+  color: #6b7280;
+  background: #f3f4f6;
+}
+
+.cancelButton:hover {
+  background: #e5e7eb;
+}
+
+.saveButton {
+  color: #fff;
+  background: #3b82f6;
+}
+
+.saveButton:hover:not(:disabled) {
+  background: #2563eb;
+}
+
+.saveButton:disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
+}
+
+/* ==================== 空状态 ==================== */
+
+.emptyState {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  padding: 64px 24px;
+  color: #9ca3af;
+  text-align: center;
+}
+
+.emptyIcon {
+  margin-bottom: 16px;
+  opacity: 0.5;
+}
+
+.emptyState p {
+  margin: 8px 0 16px;
+  font-size: 14px;
+}
+
+.emptyAddButton {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  padding: 10px 20px;
+  font-size: 14px;
+  font-weight: 500;
+  color: #fff;
+  background: #8b5cf6;
+  border: none;
+  border-radius: 8px;
+  cursor: pointer;
+  transition: all 0.2s ease;
+}
+
+.emptyAddButton:hover {
+  background: #7c3aed;
+  transform: translateY(-2px);
+  box-shadow: 0 4px 12px rgba(139, 92, 246, 0.3);
+}
+
+/* ==================== 滚动条 ==================== */
+
+.categoryFilter::-webkit-scrollbar,
+.templateList::-webkit-scrollbar {
+  width: 8px;
+  height: 8px;
+}
+
+.categoryFilter::-webkit-scrollbar-track,
+.templateList::-webkit-scrollbar-track {
+  background: transparent;
+}
+
+.categoryFilter::-webkit-scrollbar-thumb,
+.templateList::-webkit-scrollbar-thumb {
+  background: rgba(0, 0, 0, 0.2);
+  border-radius: 4px;
+}
+
+.categoryFilter::-webkit-scrollbar-thumb:hover,
+.templateList::-webkit-scrollbar-thumb:hover {
+  background: rgba(0, 0, 0, 0.3);
+}
+
+/* ==================== 响应式 ==================== */
+
+@media (max-width: 768px) {
+  .container {
+    max-width: 100%;
+    max-height: 100vh;
+    border-radius: 0;
+  }
+
+  .header,
+  .toolbar,
+  .categoryFilter,
+  .templateList {
+    padding-left: 16px;
+    padding-right: 16px;
+  }
+
+  .formRow {
+    grid-template-columns: 1fr;
+  }
+
+  .templateHeader {
+    flex-direction: column;
+    align-items: flex-start;
+  }
+
+  .templateActions {
+    width: 100%;
+    justify-content: flex-end;
+  }
+}
+
+/* ==================== 暗色主题 ==================== */
+
+@media (prefers-color-scheme: dark) {
+  .container {
+    background: #1f2937;
+  }
+
+  .toolbar,
+  .categoryFilter {
+    background: #111827;
+    border-bottom-color: #374151;
+  }
+
+  .searchBox,
+  .categoryChip {
+    background: #1f2937;
+    border-color: #374151;
+  }
+
+  .searchBox svg,
+  .categoryChip {
+    color: #9ca3af;
+  }
+
+  .searchInput {
+    color: #e5e7eb;
+  }
+
+  .categoryChipActive {
+    background: #8b5cf6;
+    border-color: #8b5cf6;
+    color: #fff;
+  }
+
+  .templateCard {
+    background: #111827;
+    border-color: #374151;
+  }
+
+  .templateCard:hover {
+    background: #1f2937;
+    border-color: #4b5563;
+  }
+
+  .templateName {
+    color: #f3f4f6;
+  }
+
+  .templateCategory {
+    color: #c4b5fd;
+    background: #2e1065;
+    border-color: #4c1d95;
+  }
+
+  .actionButton {
+    color: #6b7280;
+  }
+
+  .actionButton:hover {
+    background: #374151;
+    color: #e5e7eb;
+  }
+
+  .actionButtonDanger:hover {
+    background: #7f1d1d;
+    color: #fca5a5;
+  }
+
+  .templateContent {
+    color: #d1d5db;
+  }
+
+  .templateShortcut {
+    color: #c4b5fd;
+    background: #2e1065;
+    border-color: #4c1d95;
+  }
+
+  .templateUseCount {
+    color: #6b7280;
+  }
+
+  .formCard {
+    background: #1e3a5f;
+    border-color: #3b82f6;
+  }
+
+  .formTitle {
+    color: #93c5fd;
+  }
+
+  .formGroup label {
+    color: #d1d5db;
+  }
+
+  .formInput,
+  .formTextarea {
+    background: #1f2937;
+    border-color: #374151;
+    color: #e5e7eb;
+  }
+
+  .variablesHint {
+    color: #9ca3af;
+  }
+
+  .variableTag {
+    background: #422006;
+    color: #fbbf24;
+  }
+
+  .cancelButton {
+    background: #374151;
+    color: #9ca3af;
+  }
+
+  .cancelButton:hover {
+    background: #4b5563;
+  }
+
+  .emptyState {
+    color: #6b7280;
+  }
+
+  .categoryFilter::-webkit-scrollbar-thumb,
+  .templateList::-webkit-scrollbar-thumb {
+    background: rgba(255, 255, 255, 0.2);
+  }
+}
+

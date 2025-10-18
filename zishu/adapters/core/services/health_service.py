@@ -164,6 +164,9 @@ class AdapterHealthService(AsyncService):
 
         # 注册的适配器
         self._registered_adapters: Dict[str, AdapterRegistration] = {}
+        
+        # 正在恢复中的适配器集合（避免重复恢复）
+        self._recovering_adapters: set = set()
 
         logger.info(f"AdapterHealthService initialized with config: {self.config}")
 
@@ -677,6 +680,8 @@ class AdapterHealthService(AsyncService):
         self, adapter_id: str, metrics: List[HealthMetric]
     ) -> None:
         """更新健康状态"""
+        need_recovery = False
+        
         async with self._health_lock:
             if adapter_id not in self._health_status:
                 self._health_status[adapter_id] = AdapterHealthStatus(
@@ -730,8 +735,20 @@ class AdapterHealthService(AsyncService):
             status.check_count += 1
 
             if overall_health == ServiceHealth.UNHEALTHY:
-                status.consecutive_failures += 1
-                status.failed_checks += 1
+                # 如果适配器正在恢复中，不增加连续失败计数（避免在恢复期间重复触发）
+                if adapter_id not in self._recovering_adapters:
+                    status.consecutive_failures += 1
+                    status.failed_checks += 1
+                    
+                    # 检查是否需要自动恢复
+                    if self._enable_auto_recovery:
+                        max_failed_checks = self.config.get('max_failed_checks', self._failure_threshold)
+                        if status.consecutive_failures >= max_failed_checks:
+                            need_recovery = True
+                            self._recovering_adapters.add(adapter_id)
+                            # 重置连续失败计数，避免后续检查重复触发恢复
+                            status.consecutive_failures = 0
+                
                 # 设置不健康状态的消息
                 if issues:
                     status.message = "; ".join(issues)
@@ -771,6 +788,10 @@ class AdapterHealthService(AsyncService):
             # 限制历史记录大小
             if len(self._health_status_history[adapter_id]) > self._max_history_size:
                 self._health_status_history[adapter_id] = self._health_status_history[adapter_id][-self._max_history_size:]
+        
+        # 在锁外部执行恢复操作，避免死锁
+        if need_recovery:
+            asyncio.create_task(self._attempt_adapter_recovery(adapter_id))
 
     async def _check_thresholds(
         self, adapter_id: str, metrics: List[HealthMetric]
@@ -871,6 +892,81 @@ class AdapterHealthService(AsyncService):
             status.message = error_message  # 设置错误消息
             status.consecutive_failures += 1
             status.last_check = datetime.now(timezone.utc)
+
+    async def _attempt_adapter_recovery(self, adapter_id: str) -> None:
+        """尝试恢复不健康的适配器"""
+        try:
+            logger.info(f"Attempting to recover adapter: {adapter_id}")
+            
+            # 获取适配器实例
+            registration = self._registered_adapters.get(adapter_id)
+            if not registration:
+                logger.warning(f"Cannot recover adapter '{adapter_id}': not found in registry")
+                return
+            
+            # 获取适配器实例（优先使用 instance，否则使用 adapter_class）
+            adapter_instance = getattr(registration, 'instance', registration.adapter_class)
+            
+            # 检查适配器是否有 recover 方法
+            if hasattr(adapter_instance, 'recover') and callable(adapter_instance.recover):
+                # 调用恢复方法
+                recovery_result = await adapter_instance.recover()
+                
+                if recovery_result:
+                    logger.info(f"Successfully recovered adapter: {adapter_id}")
+                    
+                    # 清除监控器的历史记录，避免旧的失败记录影响恢复后的健康状态
+                    await self._clear_adapter_health_history(adapter_id)
+                    
+                    # 恢复后立即进行健康检查以更新状态
+                    # 注意：这里不使用await，避免在_health_lock内部再次获取锁
+                    # 将健康检查任务安排到事件循环中异步执行
+                    asyncio.create_task(self._post_recovery_health_check(adapter_id))
+                else:
+                    logger.warning(f"Recovery attempt for adapter '{adapter_id}' returned False")
+            else:
+                logger.debug(f"Adapter '{adapter_id}' does not have a recover() method")
+                
+        except Exception as e:
+            logger.error(f"Failed to recover adapter '{adapter_id}': {e}")
+
+    async def _clear_adapter_health_history(self, adapter_id: str) -> None:
+        """清除适配器的健康历史记录"""
+        try:
+            # 清除监控器中的历史记录
+            for monitor in self._health_monitors.values():
+                if isinstance(monitor, AvailabilityMonitor):
+                    # 清除可用性监控器的历史
+                    if adapter_id in monitor._response_history:
+                        monitor._response_history[adapter_id] = []
+                    if adapter_id in monitor._failure_counts:
+                        monitor._failure_counts[adapter_id] = 0
+            
+            # 清除健康服务自己的历史记录
+            async with self._health_lock:
+                if adapter_id in self._health_history:
+                    self._health_history[adapter_id] = []
+                    
+            logger.debug(f"Cleared health history for adapter: {adapter_id}")
+        except Exception as e:
+            logger.error(f"Failed to clear health history for adapter '{adapter_id}': {e}")
+
+    async def _post_recovery_health_check(self, adapter_id: str) -> None:
+        """恢复后的健康检查"""
+        try:
+            # 短暂延迟，让恢复操作完全生效
+            recovery_timeout = self.config.get('recovery_timeout', 0.1)
+            await asyncio.sleep(recovery_timeout)
+            
+            # 执行健康检查
+            await self.check_adapter_health(adapter_id)
+            logger.debug(f"Post-recovery health check completed for adapter: {adapter_id}")
+        except Exception as e:
+            logger.error(f"Post-recovery health check failed for adapter '{adapter_id}': {e}")
+        finally:
+            # 无论健康检查成功与否，都从恢复集合中移除
+            async with self._health_lock:
+                self._recovering_adapters.discard(adapter_id)
 
     async def _cleanup_loop(self) -> None:
         """清理循环"""

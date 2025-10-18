@@ -1,0 +1,399 @@
+/**
+ * 文件上传区域样式
+ */
+
+.container {
+  width: 100%;
+  outline: none;
+}
+
+/* ==================== 拖拽区域 ==================== */
+
+.dropzone {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  padding: 32px 24px;
+  border: 2px dashed #d1d5db;
+  border-radius: 12px;
+  background: #f9fafb;
+  cursor: pointer;
+  transition: all 0.3s ease;
+  min-height: 180px;
+}
+
+.dropzone:hover {
+  border-color: #3b82f6;
+  background: #eff6ff;
+}
+
+.dropzoneActive {
+  border-color: #3b82f6;
+  background: #dbeafe;
+  transform: scale(1.02);
+}
+
+.dropzoneDragging {
+  border-color: #2563eb;
+  background: #bfdbfe;
+  box-shadow: 0 0 0 4px rgba(59, 130, 246, 0.1);
+}
+
+.dropzoneDisabled {
+  opacity: 0.5;
+  cursor: not-allowed;
+  pointer-events: none;
+}
+
+.dropzoneIcon {
+  color: #6b7280;
+  margin-bottom: 12px;
+  transition: all 0.3s ease;
+}
+
+.dropzone:hover .dropzoneIcon {
+  color: #3b82f6;
+  transform: translateY(-4px);
+}
+
+.dropzoneText {
+  margin: 0;
+  font-size: 16px;
+  font-weight: 500;
+  color: #374151;
+  text-align: center;
+}
+
+.dropzoneHint {
+  margin: 8px 0 0;
+  font-size: 13px;
+  color: #6b7280;
+  text-align: center;
+}
+
+/* ==================== 文件列表 ==================== */
+
+.fileList {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+  margin-top: 16px;
+}
+
+/* ==================== 文件项 ==================== */
+
+.fileItem {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  padding: 12px;
+  background: #fff;
+  border: 1px solid #e5e7eb;
+  border-radius: 8px;
+  transition: all 0.2s ease;
+  position: relative;
+}
+
+.fileItem:hover {
+  border-color: #d1d5db;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.05);
+}
+
+.fileItem--pending {
+  background: #f9fafb;
+}
+
+.fileItem--uploading {
+  background: #eff6ff;
+  border-color: #3b82f6;
+}
+
+.fileItem--success {
+  background: #f0fdf4;
+  border-color: #22c55e;
+}
+
+.fileItem--error {
+  background: #fef2f2;
+  border-color: #ef4444;
+}
+
+/* ==================== 预览 ==================== */
+
+.filePreview {
+  flex-shrink: 0;
+  width: 48px;
+  height: 48px;
+  border-radius: 6px;
+  overflow: hidden;
+  background: #f3f4f6;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.previewImage {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+}
+
+.previewIcon {
+  color: #6b7280;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+/* ==================== 文件信息 ==================== */
+
+.fileInfo {
+  flex: 1;
+  min-width: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+}
+
+.fileName {
+  font-size: 14px;
+  font-weight: 500;
+  color: #111827;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.fileSize {
+  font-size: 12px;
+  color: #6b7280;
+}
+
+/* ==================== 进度条 ==================== */
+
+.progress {
+  width: 100%;
+  height: 4px;
+  background: #e5e7eb;
+  border-radius: 2px;
+  overflow: hidden;
+  margin-top: 4px;
+}
+
+.progressBar {
+  height: 100%;
+  background: linear-gradient(90deg, #3b82f6, #2563eb);
+  border-radius: 2px;
+  transition: width 0.3s ease;
+  animation: progressAnimation 1.5s ease-in-out infinite;
+}
+
+@keyframes progressAnimation {
+  0% {
+    background-position: 0% 50%;
+  }
+  50% {
+    background-position: 100% 50%;
+  }
+  100% {
+    background-position: 0% 50%;
+  }
+}
+
+/* ==================== 错误信息 ==================== */
+
+.error {
+  display: flex;
+  align-items: center;
+  gap: 4px;
+  font-size: 12px;
+  color: #ef4444;
+  margin-top: 4px;
+}
+
+/* ==================== 状态图标 ==================== */
+
+.fileStatus {
+  flex-shrink: 0;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  min-width: 60px;
+}
+
+.successIcon {
+  color: #22c55e;
+}
+
+.errorIcon {
+  color: #ef4444;
+}
+
+.uploadingText {
+  font-size: 13px;
+  font-weight: 600;
+  color: #3b82f6;
+}
+
+/* ==================== 移除按钮 ==================== */
+
+.removeButton {
+  flex-shrink: 0;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 28px;
+  height: 28px;
+  border: none;
+  background: transparent;
+  color: #9ca3af;
+  border-radius: 6px;
+  cursor: pointer;
+  transition: all 0.2s ease;
+}
+
+.removeButton:hover {
+  background: #fee2e2;
+  color: #ef4444;
+}
+
+.removeButton:active {
+  transform: scale(0.95);
+}
+
+/* ==================== 响应式 ==================== */
+
+@media (max-width: 768px) {
+  .dropzone {
+    padding: 24px 16px;
+    min-height: 150px;
+  }
+
+  .dropzoneIcon {
+    width: 28px;
+    height: 28px;
+  }
+
+  .dropzoneText {
+    font-size: 14px;
+  }
+
+  .dropzoneHint {
+    font-size: 12px;
+  }
+
+  .fileItem {
+    padding: 10px;
+    gap: 10px;
+  }
+
+  .filePreview {
+    width: 40px;
+    height: 40px;
+  }
+
+  .fileName {
+    font-size: 13px;
+  }
+
+  .fileSize {
+    font-size: 11px;
+  }
+}
+
+/* ==================== 暗色主题 ==================== */
+
+@media (prefers-color-scheme: dark) {
+  .dropzone {
+    background: #1f2937;
+    border-color: #374151;
+  }
+
+  .dropzone:hover {
+    border-color: #3b82f6;
+    background: #1e3a5f;
+  }
+
+  .dropzoneActive {
+    background: #1e40af;
+  }
+
+  .dropzoneDragging {
+    background: #1e3a8a;
+  }
+
+  .dropzoneIcon {
+    color: #9ca3af;
+  }
+
+  .dropzone:hover .dropzoneIcon {
+    color: #60a5fa;
+  }
+
+  .dropzoneText {
+    color: #e5e7eb;
+  }
+
+  .dropzoneHint {
+    color: #9ca3af;
+  }
+
+  .fileItem {
+    background: #1f2937;
+    border-color: #374151;
+  }
+
+  .fileItem:hover {
+    border-color: #4b5563;
+  }
+
+  .fileItem--pending {
+    background: #111827;
+  }
+
+  .fileItem--uploading {
+    background: #1e3a5f;
+    border-color: #3b82f6;
+  }
+
+  .fileItem--success {
+    background: #14532d;
+    border-color: #22c55e;
+  }
+
+  .fileItem--error {
+    background: #450a0a;
+    border-color: #ef4444;
+  }
+
+  .filePreview {
+    background: #111827;
+  }
+
+  .previewIcon {
+    color: #9ca3af;
+  }
+
+  .fileName {
+    color: #f3f4f6;
+  }
+
+  .fileSize {
+    color: #9ca3af;
+  }
+
+  .progress {
+    background: #374151;
+  }
+
+  .removeButton {
+    color: #6b7280;
+  }
+
+  .removeButton:hover {
+    background: #7f1d1d;
+    color: #fca5a5;
+  }
+}
+

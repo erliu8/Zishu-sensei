@@ -121,9 +121,61 @@ export type {
   PasswordStrengthOptions,
 } from './validators'
 
+// ==================== 常量定义 ====================
+export * from './constants'
+
+// ==================== 辅助函数 ====================
+export * from './helpers'
+
+// ==================== 防抖节流 ====================
+export {
+  debounce,
+  throttle,
+  adaptiveDebounce,
+  throttleWithCount,
+  rafThrottle,
+  idleDebounce,
+  debounceThrottle,
+  conditionalDebounce,
+  debouncePromise,
+  throttlePromise,
+} from './debounce'
+
+export type {
+  DebounceOptions,
+  ThrottleOptions,
+  DebouncedFunction,
+  ThrottledFunction,
+} from './debounce'
+
+// ==================== 日志系统 ====================
+export {
+  Logger,
+  LogLevel,
+  logger,
+  debug,
+  info,
+  warn,
+  error,
+  fatal,
+  measurePerformance,
+} from './logger'
+
+export type {
+  LogEntry,
+  LoggerConfig,
+  LogFilter,
+  LogStats,
+  PerformanceMetrics,
+} from './logger'
+
 // ==================== 默认导出 ====================
 export { default as formatters } from './formatters'
 export { default as validators } from './validators'
+export { default as constants } from './constants'
+export { default as helpers } from './helpers'
+export { default as debounceUtils } from './debounce'
+export { default as logger } from './logger'
 
 // ==================== 工具类型 ====================
 
@@ -308,15 +360,17 @@ export function generateId(prefix = ''): string {
 }
 
 /**
- * 节流函数
+ * 简单节流函数（简化版本）
  * @param fn 要节流的函数
  * @param delay 延迟时间（毫秒）
  * @returns 节流后的函数
  * 
+ * @deprecated 推荐使用 './debounce' 中的完整版本
+ * 
  * @example
- * const throttled = throttle(() => console.log('throttled'), 1000)
+ * const throttled = simpleThrottle(() => console.log('throttled'), 1000)
  */
-export function throttle<T extends (...args: any[]) => any>(
+export function simpleThrottle<T extends (...args: any[]) => any>(
   fn: T,
   delay: number
 ): (...args: Parameters<T>) => void {
@@ -331,15 +385,17 @@ export function throttle<T extends (...args: any[]) => any>(
 }
 
 /**
- * 防抖函数
+ * 简单防抖函数（简化版本）
  * @param fn 要防抖的函数
  * @param delay 延迟时间（毫秒）
  * @returns 防抖后的函数
  * 
+ * @deprecated 推荐使用 './debounce' 中的完整版本
+ * 
  * @example
- * const debounced = debounce(() => console.log('debounced'), 1000)
+ * const debounced = simpleDebounce(() => console.log('debounced'), 1000)
  */
-export function debounce<T extends (...args: any[]) => any>(
+export function simpleDebounce<T extends (...args: any[]) => any>(
   fn: T,
   delay: number
 ): (...args: Parameters<T>) => void {
