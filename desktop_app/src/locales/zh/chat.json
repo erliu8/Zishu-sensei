@@ -1,0 +1,49 @@
+{
+  "title": "对话",
+  "placeholder": "输入消息...",
+  "send": "发送",
+  "clear": "清空对话",
+  "history": "历史记录",
+  "newChat": "新对话",
+  "typing": "正在输入...",
+  "thinking": "思考中...",
+  "generating": "生成中...",
+  "messages": {
+    "welcome": "你好！我是紫舒先生，很高兴为您服务！有什么我可以帮助您的吗？",
+    "error": "抱歉，发生了错误。请稍后重试。",
+    "networkError": "网络连接失败，请检查网络设置。",
+    "tooLong": "消息太长了，请缩短后重试。",
+    "empty": "请输入消息内容。",
+    "rateLimited": "发送太频繁，请稍后再试。"
+  },
+  "actions": {
+    "copy": "复制",
+    "delete": "删除",
+    "edit": "编辑",
+    "retry": "重试",
+    "like": "点赞",
+    "dislike": "点踩",
+    "share": "分享",
+    "report": "举报"
+  },
+  "settings": {
+    "title": "对话设置",
+    "model": "AI模型",
+    "temperature": "创造性",
+    "maxTokens": "最大长度",
+    "systemPrompt": "系统提示",
+    "autoSave": "自动保存",
+    "soundEnabled": "声音提醒",
+    "animationEnabled": "动画效果"
+  },
+  "export": {
+    "title": "导出对话",
+    "format": "格式",
+    "markdown": "Markdown",
+    "json": "JSON",
+    "text": "纯文本",
+    "pdf": "PDF",
+    "success": "导出成功！",
+    "error": "导出失败，请重试。"
+  }
+}

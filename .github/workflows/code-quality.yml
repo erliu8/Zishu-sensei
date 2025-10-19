@@ -1,0 +1,492 @@
+name: Code Quality
+
+on:
+  push:
+    branches: [main, develop]
+  pull_request:
+    branches: [main]
+  schedule:
+    # 每周运行一次完整的代码质量检查 (周日 UTC 6:00)
+    - cron: '0 6 * * 0'
+  workflow_dispatch:
+    inputs:
+      check_type:
+        description: '检查类型'
+        required: true
+        default: 'all'
+        type: choice
+        options:
+          - all
+          - lint
+          - security
+          - coverage
+          - complexity
+
+env:
+  CARGO_TERM_COLOR: always
+
+jobs:
+  # 代码风格检查
+  lint-check:
+    name: 代码风格检查
+    runs-on: ubuntu-latest
+    if: github.event.inputs.check_type == 'lint' || github.event.inputs.check_type == 'all' || github.event_name != 'workflow_dispatch'
+    steps:
+      - name: 检出代码
+        uses: actions/checkout@v4
+
+      - name: 设置 Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: '18'
+          cache: 'npm'
+          cache-dependency-path: desktop_app/package-lock.json
+
+      - name: 设置 Rust
+        uses: dtolnay/rust-toolchain@stable
+        with:
+          components: rustfmt, clippy
+
+      - name: 安装依赖
+        working-directory: desktop_app
+        run: npm ci
+
+      - name: ESLint 检查
+        working-directory: desktop_app
+        run: |
+          echo "## 🔍 ESLint 检查结果" >> $GITHUB_STEP_SUMMARY
+          echo "" >> $GITHUB_STEP_SUMMARY
+          
+          # 运行 ESLint 并生成报告
+          npx eslint . --ext .ts,.tsx,.js,.jsx --format json --output-file eslint-report.json || true
+          npx eslint . --ext .ts,.tsx,.js,.jsx --format unix > eslint-output.txt || true
+          
+          # 统计错误和警告
+          ERRORS=$(jq '[.[] | .messages[] | select(.severity == 2)] | length' eslint-report.json 2>/dev/null || echo "0")
+          WARNINGS=$(jq '[.[] | .messages[] | select(.severity == 1)] | length' eslint-report.json 2>/dev/null || echo "0")
+          
+          echo "| 类型 | 数量 |" >> $GITHUB_STEP_SUMMARY
+          echo "|------|------|" >> $GITHUB_STEP_SUMMARY
+          echo "| 错误 | $ERRORS |" >> $GITHUB_STEP_SUMMARY
+          echo "| 警告 | $WARNINGS |" >> $GITHUB_STEP_SUMMARY
+          
+          if [[ $ERRORS -gt 0 ]]; then
+            echo "" >> $GITHUB_STEP_SUMMARY
+            echo "### ❌ ESLint 错误" >> $GITHUB_STEP_SUMMARY
+            echo "\`\`\`" >> $GITHUB_STEP_SUMMARY
+            head -20 eslint-output.txt >> $GITHUB_STEP_SUMMARY
+            echo "\`\`\`" >> $GITHUB_STEP_SUMMARY
+            exit 1
+          fi
+
+      - name: Prettier 格式检查
+        working-directory: desktop_app
+        run: |
+          echo "### 💅 Prettier 格式检查" >> $GITHUB_STEP_SUMMARY
+          
+          if npx prettier --check . --ignore-path .gitignore; then
+            echo "✅ 代码格式正确" >> $GITHUB_STEP_SUMMARY
+          else
+            echo "❌ 代码格式不正确" >> $GITHUB_STEP_SUMMARY
+            echo "" >> $GITHUB_STEP_SUMMARY
+            echo "请运行 \`npm run format\` 修复格式问题" >> $GITHUB_STEP_SUMMARY
+            exit 1
+          fi
+
+      - name: Rust 格式检查
+        working-directory: desktop_app/src-tauri
+        run: |
+          echo "### 🦀 Rust 格式检查" >> $GITHUB_STEP_SUMMARY
+          
+          if cargo fmt --check; then
+            echo "✅ Rust 代码格式正确" >> $GITHUB_STEP_SUMMARY
+          else
+            echo "❌ Rust 代码格式不正确" >> $GITHUB_STEP_SUMMARY
+            echo "" >> $GITHUB_STEP_SUMMARY
+            echo "请运行 \`cargo fmt\` 修复格式问题" >> $GITHUB_STEP_SUMMARY
+            exit 1
+          fi
+
+      - name: Clippy 检查
+        working-directory: desktop_app/src-tauri
+        run: |
+          echo "### 📎 Clippy 检查" >> $GITHUB_STEP_SUMMARY
+          
+          # 运行 Clippy 并捕获输出
+          if cargo clippy --all-targets --all-features -- -D warnings > clippy-output.txt 2>&1; then
+            echo "✅ Clippy 检查通过" >> $GITHUB_STEP_SUMMARY
+          else
+            echo "❌ Clippy 发现问题" >> $GITHUB_STEP_SUMMARY
+            echo "" >> $GITHUB_STEP_SUMMARY
+            echo "\`\`\`" >> $GITHUB_STEP_SUMMARY
+            head -20 clippy-output.txt >> $GITHUB_STEP_SUMMARY
+            echo "\`\`\`" >> $GITHUB_STEP_SUMMARY
+            exit 1
+          fi
+
+      - name: TypeScript 类型检查
+        working-directory: desktop_app
+        run: |
+          echo "### 🔷 TypeScript 类型检查" >> $GITHUB_STEP_SUMMARY
+          
+          if npx tsc --noEmit; then
+            echo "✅ TypeScript 类型检查通过" >> $GITHUB_STEP_SUMMARY
+          else
+            echo "❌ TypeScript 类型错误" >> $GITHUB_STEP_SUMMARY
+            exit 1
+          fi
+
+  # 安全扫描
+  security-scan:
+    name: 安全扫描
+    runs-on: ubuntu-latest
+    if: github.event.inputs.check_type == 'security' || github.event.inputs.check_type == 'all' || github.event_name != 'workflow_dispatch'
+    steps:
+      - name: 检出代码
+        uses: actions/checkout@v4
+
+      - name: 设置 Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: '18'
+          cache: 'npm'
+          cache-dependency-path: desktop_app/package-lock.json
+
+      - name: 设置 Rust
+        uses: dtolnay/rust-toolchain@stable
+
+      - name: 安装依赖
+        working-directory: desktop_app
+        run: npm ci
+
+      - name: npm 安全审计
+        working-directory: desktop_app
+        run: |
+          echo "## 🔒 安全扫描结果" >> $GITHUB_STEP_SUMMARY
+          echo "" >> $GITHUB_STEP_SUMMARY
+          echo "### NPM 安全审计" >> $GITHUB_STEP_SUMMARY
+          
+          # 运行 npm audit
+          if npm audit --audit-level moderate --format json > npm-audit.json 2>/dev/null; then
+            echo "✅ NPM 审计通过" >> $GITHUB_STEP_SUMMARY
+          else
+            VULNERABILITIES=$(jq '.metadata.vulnerabilities' npm-audit.json 2>/dev/null || echo '{}')
+            TOTAL=$(echo $VULNERABILITIES | jq '.info + .low + .moderate + .high + .critical' 2>/dev/null || echo "0")
+            
+            echo "| 严重程度 | 数量 |" >> $GITHUB_STEP_SUMMARY
+            echo "|----------|------|" >> $GITHUB_STEP_SUMMARY
+            echo "| Critical | $(echo $VULNERABILITIES | jq '.critical // 0') |" >> $GITHUB_STEP_SUMMARY
+            echo "| High | $(echo $VULNERABILITIES | jq '.high // 0') |" >> $GITHUB_STEP_SUMMARY
+            echo "| Moderate | $(echo $VULNERABILITIES | jq '.moderate // 0') |" >> $GITHUB_STEP_SUMMARY
+            echo "| Low | $(echo $VULNERABILITIES | jq '.low // 0') |" >> $GITHUB_STEP_SUMMARY
+            echo "| Info | $(echo $VULNERABILITIES | jq '.info // 0') |" >> $GITHUB_STEP_SUMMARY
+            echo "| **总计** | **$TOTAL** |" >> $GITHUB_STEP_SUMMARY
+            
+            # 如果有高危或严重漏洞，失败
+            CRITICAL=$(echo $VULNERABILITIES | jq '.critical // 0')
+            HIGH=$(echo $VULNERABILITIES | jq '.high // 0')
+            if [[ $CRITICAL -gt 0 ]] || [[ $HIGH -gt 0 ]]; then
+              echo "" >> $GITHUB_STEP_SUMMARY
+              echo "❌ **发现高危安全漏洞，请立即修复！**" >> $GITHUB_STEP_SUMMARY
+              exit 1
+            fi
+          fi
+
+      - name: Cargo 安全审计
+        working-directory: desktop_app/src-tauri
+        run: |
+          echo "### Cargo 安全审计" >> $GITHUB_STEP_SUMMARY
+          
+          # 安装 cargo-audit
+          cargo install cargo-audit --quiet
+          
+          if cargo audit --format json > cargo-audit.json 2>/dev/null; then
+            echo "✅ Cargo 审计通过" >> $GITHUB_STEP_SUMMARY
+          else
+            echo "⚠️ Cargo 审计发现问题" >> $GITHUB_STEP_SUMMARY
+            echo "" >> $GITHUB_STEP_SUMMARY
+            echo "\`\`\`json" >> $GITHUB_STEP_SUMMARY
+            head -20 cargo-audit.json >> $GITHUB_STEP_SUMMARY
+            echo "\`\`\`" >> $GITHUB_STEP_SUMMARY
+          fi
+
+      - name: 依赖许可证检查
+        working-directory: desktop_app
+        run: |
+          echo "### 📄 许可证检查" >> $GITHUB_STEP_SUMMARY
+          
+          # 安装 license-checker
+          npm install -g license-checker
+          
+          # 检查 NPM 依赖许可证
+          license-checker --json --out npm-licenses.json
+          
+          # 统计许可证类型
+          echo "#### NPM 依赖许可证" >> $GITHUB_STEP_SUMMARY
+          echo "| 许可证 | 数量 |" >> $GITHUB_STEP_SUMMARY
+          echo "|-------|------|" >> $GITHUB_STEP_SUMMARY
+          
+          jq -r 'to_entries[] | .value.licenses // "Unknown"' npm-licenses.json | \
+            sort | uniq -c | sort -nr | head -10 | \
+            while read count license; do
+              echo "| $license | $count |" >> $GITHUB_STEP_SUMMARY
+            done
+          
+          # 检查是否有禁用的许可证
+          FORBIDDEN_LICENSES=("GPL-3.0" "AGPL-3.0" "LGPL-3.0")
+          for license in "${FORBIDDEN_LICENSES[@]}"; do
+            if jq -r 'to_entries[] | .value.licenses // "Unknown"' npm-licenses.json | grep -q "$license"; then
+              echo "" >> $GITHUB_STEP_SUMMARY
+              echo "❌ **发现禁用许可证: $license**" >> $GITHUB_STEP_SUMMARY
+              exit 1
+            fi
+          done
+
+      - name: CodeQL 分析
+        uses: github/codeql-action/init@v3
+        with:
+          languages: javascript, typescript
+          queries: security-and-quality
+
+      - name: 构建项目 (CodeQL)
+        working-directory: desktop_app
+        run: |
+          npm run build
+
+      - name: 执行 CodeQL 分析
+        uses: github/codeql-action/analyze@v3
+        with:
+          category: "/language:javascript"
+
+  # 测试覆盖率
+  coverage-check:
+    name: 测试覆盖率
+    runs-on: ubuntu-latest
+    if: github.event.inputs.check_type == 'coverage' || github.event.inputs.check_type == 'all' || github.event_name != 'workflow_dispatch'
+    steps:
+      - name: 检出代码
+        uses: actions/checkout@v4
+
+      - name: 设置 Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: '18'
+          cache: 'npm'
+          cache-dependency-path: desktop_app/package-lock.json
+
+      - name: 设置 Rust
+        uses: dtolnay/rust-toolchain@stable
+
+      - name: 安装 Rust 覆盖率工具
+        run: cargo install cargo-tarpaulin
+
+      - name: 安装依赖
+        working-directory: desktop_app
+        run: npm ci
+
+      - name: 前端测试覆盖率
+        working-directory: desktop_app
+        run: |
+          echo "## 📊 测试覆盖率报告" >> $GITHUB_STEP_SUMMARY
+          echo "" >> $GITHUB_STEP_SUMMARY
+          echo "### 前端覆盖率" >> $GITHUB_STEP_SUMMARY
+          
+          # 运行测试并生成覆盖率报告
+          npm run test:coverage
+          
+          # 解析覆盖率数据
+          if [[ -f "coverage/coverage-summary.json" ]]; then
+            LINES=$(jq -r '.total.lines.pct' coverage/coverage-summary.json)
+            FUNCTIONS=$(jq -r '.total.functions.pct' coverage/coverage-summary.json)
+            BRANCHES=$(jq -r '.total.branches.pct' coverage/coverage-summary.json)
+            STATEMENTS=$(jq -r '.total.statements.pct' coverage/coverage-summary.json)
+            
+            echo "| 指标 | 覆盖率 | 状态 |" >> $GITHUB_STEP_SUMMARY
+            echo "|------|--------|------|" >> $GITHUB_STEP_SUMMARY
+            echo "| 行覆盖率 | ${LINES}% | $([ ${LINES%.*} -ge 80 ] && echo '✅' || echo '⚠️') |" >> $GITHUB_STEP_SUMMARY
+            echo "| 函数覆盖率 | ${FUNCTIONS}% | $([ ${FUNCTIONS%.*} -ge 80 ] && echo '✅' || echo '⚠️') |" >> $GITHUB_STEP_SUMMARY
+            echo "| 分支覆盖率 | ${BRANCHES}% | $([ ${BRANCHES%.*} -ge 70 ] && echo '✅' || echo '⚠️') |" >> $GITHUB_STEP_SUMMARY
+            echo "| 语句覆盖率 | ${STATEMENTS}% | $([ ${STATEMENTS%.*} -ge 80 ] && echo '✅' || echo '⚠️') |" >> $GITHUB_STEP_SUMMARY
+            
+            # 检查覆盖率阈值
+            if [[ ${LINES%.*} -lt 80 ]] || [[ ${FUNCTIONS%.*} -lt 80 ]] || [[ ${STATEMENTS%.*} -lt 80 ]]; then
+              echo "" >> $GITHUB_STEP_SUMMARY
+              echo "⚠️ **覆盖率低于阈值，请增加测试用例**" >> $GITHUB_STEP_SUMMARY
+            fi
+          fi
+
+      - name: Rust 测试覆盖率
+        working-directory: desktop_app/src-tauri
+        run: |
+          echo "### Rust 覆盖率" >> $GITHUB_STEP_SUMMARY
+          
+          # 运行 Rust 测试覆盖率
+          cargo tarpaulin --out Json --output-dir ../../coverage
+          
+          if [[ -f "../../coverage/tarpaulin-report.json" ]]; then
+            COVERAGE=$(jq -r '.files | to_entries | map(.value.coverage) | add / length' ../../coverage/tarpaulin-report.json 2>/dev/null || echo "0")
+            
+            echo "| 指标 | 覆盖率 | 状态 |" >> $GITHUB_STEP_SUMMARY
+            echo "|------|--------|------|" >> $GITHUB_STEP_SUMMARY
+            echo "| Rust 覆盖率 | ${COVERAGE}% | $([ ${COVERAGE%.*} -ge 70 ] && echo '✅' || echo '⚠️') |" >> $GITHUB_STEP_SUMMARY
+          fi
+
+      - name: 上传覆盖率到 Codecov
+        uses: codecov/codecov-action@v4
+        with:
+          directory: desktop_app/coverage
+          flags: frontend
+          name: frontend-coverage
+        env:
+          CODECOV_TOKEN: ${{ secrets.CODECOV_TOKEN }}
+
+      - name: 覆盖率趋势分析
+        if: github.event_name == 'pull_request'
+        run: |
+          echo "### 📈 覆盖率趋势" >> $GITHUB_STEP_SUMMARY
+          echo "覆盖率数据已上传到 Codecov，可查看详细的覆盖率报告和趋势分析。" >> $GITHUB_STEP_SUMMARY
+
+  # 代码复杂度分析
+  complexity-analysis:
+    name: 代码复杂度分析
+    runs-on: ubuntu-latest
+    if: github.event.inputs.check_type == 'complexity' || github.event.inputs.check_type == 'all' || github.event_name != 'workflow_dispatch'
+    steps:
+      - name: 检出代码
+        uses: actions/checkout@v4
+
+      - name: 设置 Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: '18'
+          cache: 'npm'
+          cache-dependency-path: desktop_app/package-lock.json
+
+      - name: 安装依赖
+        working-directory: desktop_app
+        run: npm ci
+
+      - name: 安装复杂度分析工具
+        run: |
+          npm install -g complexity-report
+          npm install -g jscpd
+
+      - name: 圈复杂度分析
+        working-directory: desktop_app
+        run: |
+          echo "## 🔄 代码复杂度分析" >> $GITHUB_STEP_SUMMARY
+          echo "" >> $GITHUB_STEP_SUMMARY
+          echo "### 圈复杂度" >> $GITHUB_STEP_SUMMARY
+          
+          # 分析 TypeScript/JavaScript 文件
+          find src -name "*.ts" -o -name "*.tsx" -o -name "*.js" -o -name "*.jsx" | \
+            head -20 | \
+            while read file; do
+              if command -v cr &> /dev/null; then
+                COMPLEXITY=$(cr "$file" --format json 2>/dev/null | jq -r '.reports[0].complexity.cyclomatic' 2>/dev/null || echo "N/A")
+                echo "| $file | $COMPLEXITY |" >> $GITHUB_STEP_SUMMARY
+              fi
+            done || {
+              echo "| 文件 | 复杂度 |" >> $GITHUB_STEP_SUMMARY
+              echo "|------|--------|" >> $GITHUB_STEP_SUMMARY
+              echo "| - | 分析工具不可用 |" >> $GITHUB_STEP_SUMMARY
+            }
+
+      - name: 代码重复检测
+        working-directory: desktop_app
+        run: |
+          echo "### 🔍 代码重复检测" >> $GITHUB_STEP_SUMMARY
+          
+          # 检测代码重复
+          if jscpd src --format json --output jscpd-report.json --silent; then
+            if [[ -f "jscpd-report.json" ]]; then
+              DUPLICATES=$(jq '.statistics.total.duplicatedLines // 0' jscpd-report.json)
+              TOTAL_LINES=$(jq '.statistics.total.totalLines // 1' jscpd-report.json)
+              DUPLICATE_PERCENT=$(echo "scale=2; $DUPLICATES * 100 / $TOTAL_LINES" | bc -l 2>/dev/null || echo "0")
+              
+              echo "| 指标 | 值 | 状态 |" >> $GITHUB_STEP_SUMMARY
+              echo "|------|-----|------|" >> $GITHUB_STEP_SUMMARY
+              echo "| 重复行数 | $DUPLICATES | - |" >> $GITHUB_STEP_SUMMARY
+              echo "| 总行数 | $TOTAL_LINES | - |" >> $GITHUB_STEP_SUMMARY
+              echo "| 重复率 | ${DUPLICATE_PERCENT}% | $([ ${DUPLICATE_PERCENT%.*} -le 10 ] && echo '✅' || echo '⚠️') |" >> $GITHUB_STEP_SUMMARY
+              
+              if [[ ${DUPLICATE_PERCENT%.*} -gt 15 ]]; then
+                echo "" >> $GITHUB_STEP_SUMMARY
+                echo "⚠️ **代码重复率过高，建议重构**" >> $GITHUB_STEP_SUMMARY
+              fi
+            fi
+          fi
+
+      - name: 技术债务分析
+        working-directory: desktop_app
+        run: |
+          echo "### 💳 技术债务" >> $GITHUB_STEP_SUMMARY
+          
+          # 统计 TODO、FIXME、HACK 等标记
+          TODO_COUNT=$(grep -r "TODO\|FIXME\|HACK\|XXX" src --include="*.ts" --include="*.tsx" --include="*.js" --include="*.jsx" | wc -l || echo "0")
+          
+          echo "| 类型 | 数量 |" >> $GITHUB_STEP_SUMMARY
+          echo "|------|------|" >> $GITHUB_STEP_SUMMARY
+          echo "| 技术债务标记 | $TODO_COUNT |" >> $GITHUB_STEP_SUMMARY
+          
+          if [[ $TODO_COUNT -gt 50 ]]; then
+            echo "" >> $GITHUB_STEP_SUMMARY
+            echo "⚠️ **技术债务较多，建议定期清理**" >> $GITHUB_STEP_SUMMARY
+          fi
+
+  # 质量门禁
+  quality-gate:
+    name: 质量门禁
+    runs-on: ubuntu-latest
+    needs: [lint-check, security-scan, coverage-check, complexity-analysis]
+    if: always()
+    steps:
+      - name: 质量门禁检查
+        run: |
+          echo "## 🚪 质量门禁结果" >> $GITHUB_STEP_SUMMARY
+          echo "" >> $GITHUB_STEP_SUMMARY
+          
+          # 检查所有质量检查结果
+          LINT_STATUS="${{ needs.lint-check.result }}"
+          SECURITY_STATUS="${{ needs.security-scan.result }}"
+          COVERAGE_STATUS="${{ needs.coverage-check.result }}"
+          COMPLEXITY_STATUS="${{ needs.complexity-analysis.result }}"
+          
+          echo "| 检查项 | 状态 | 结果 |" >> $GITHUB_STEP_SUMMARY
+          echo "|-------|------|------|" >> $GITHUB_STEP_SUMMARY
+          echo "| 代码风格 | $([ "$LINT_STATUS" = "success" ] && echo '✅' || [ "$LINT_STATUS" = "skipped" ] && echo '⏭️' || echo '❌') | $LINT_STATUS |" >> $GITHUB_STEP_SUMMARY
+          echo "| 安全扫描 | $([ "$SECURITY_STATUS" = "success" ] && echo '✅' || [ "$SECURITY_STATUS" = "skipped" ] && echo '⏭️' || echo '❌') | $SECURITY_STATUS |" >> $GITHUB_STEP_SUMMARY
+          echo "| 测试覆盖率 | $([ "$COVERAGE_STATUS" = "success" ] && echo '✅' || [ "$COVERAGE_STATUS" = "skipped" ] && echo '⏭️' || echo '❌') | $COVERAGE_STATUS |" >> $GITHUB_STEP_SUMMARY
+          echo "| 复杂度分析 | $([ "$COMPLEXITY_STATUS" = "success" ] && echo '✅' || [ "$COMPLEXITY_STATUS" = "skipped" ] && echo '⏭️' || echo '❌') | $COMPLEXITY_STATUS |" >> $GITHUB_STEP_SUMMARY
+          
+          # 计算通过的检查项数量
+          PASSED=0
+          TOTAL=0
+          
+          for status in "$LINT_STATUS" "$SECURITY_STATUS" "$COVERAGE_STATUS" "$COMPLEXITY_STATUS"; do
+            if [[ "$status" != "skipped" ]]; then
+              TOTAL=$((TOTAL + 1))
+              if [[ "$status" = "success" ]]; then
+                PASSED=$((PASSED + 1))
+              fi
+            fi
+          done
+          
+          echo "" >> $GITHUB_STEP_SUMMARY
+          echo "**质量评分**: $PASSED/$TOTAL" >> $GITHUB_STEP_SUMMARY
+          
+          # 质量门禁判断
+          if [[ $PASSED -eq $TOTAL ]] && [[ $TOTAL -gt 0 ]]; then
+            echo "🎉 **质量门禁通过！代码质量良好。**" >> $GITHUB_STEP_SUMMARY
+          elif [[ $LINT_STATUS = "failure" ]] || [[ $SECURITY_STATUS = "failure" ]]; then
+            echo "❌ **质量门禁失败！存在严重的代码质量问题。**" >> $GITHUB_STEP_SUMMARY
+            exit 1
+          else
+            echo "⚠️ **质量门禁警告！建议修复发现的问题。**" >> $GITHUB_STEP_SUMMARY
+          fi
+
+      - name: 质量报告通知
+        if: github.event_name == 'pull_request'
+        run: |
+          # 在 PR 中添加质量报告评论
+          echo "代码质量检查完成，详细结果请查看 Actions 页面。" > quality-comment.md

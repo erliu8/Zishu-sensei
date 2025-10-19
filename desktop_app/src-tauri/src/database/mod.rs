@@ -16,9 +16,21 @@ use tracing::{info, error, warn};
 
 pub mod character_registry;
 pub mod model_config;
+pub mod adapter;
+pub mod theme;
+pub mod workflow;
+pub mod file;
+pub mod encrypted_storage;
+pub mod permission;
+pub mod privacy;
+pub mod region;
+pub mod performance;
 
 use character_registry::CharacterRegistry;
 use model_config::ModelConfigRegistry;
+use adapter::AdapterRegistry;
+use workflow::WorkflowRegistry;
+use permission::PermissionRegistry;
 
 /// Database manager
 pub struct Database {
@@ -28,6 +40,12 @@ pub struct Database {
     pub character_registry: CharacterRegistry,
     /// Model configuration registry
     pub model_config_registry: ModelConfigRegistry,
+    /// Adapter registry
+    pub adapter_registry: AdapterRegistry,
+    /// Workflow registry
+    pub workflow_registry: WorkflowRegistry,
+    /// Permission registry
+    pub permission_registry: PermissionRegistry,
 }
 
 impl Database {
@@ -48,11 +66,26 @@ impl Database {
         
         let character_registry = CharacterRegistry::new(conn.clone());
         let model_config_registry = ModelConfigRegistry::new(conn.clone());
+        let adapter_registry = AdapterRegistry::new(conn.clone());
+        let workflow_registry = WorkflowRegistry::new(conn.clone());
+        let permission_registry = PermissionRegistry::new(conn.clone());
+        
+        // Initialize adapter tables
+        adapter_registry.init_tables()?;
+        
+        // Initialize workflow tables
+        workflow_registry.init_tables()?;
+        
+        // Initialize permission tables
+        permission_registry.init_tables()?;
         
         Ok(Self {
             conn,
             character_registry,
             model_config_registry,
+            adapter_registry,
+            workflow_registry,
+            permission_registry,
         })
     }
     

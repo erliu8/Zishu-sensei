@@ -1,0 +1,446 @@
+/**
+ * 格式化预览组件样式
+ */
+
+.format-preview {
+  background: var(--bg-color, #ffffff);
+  border-radius: 8px;
+  overflow: hidden;
+}
+
+/* 空状态 */
+.preview-empty {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 60px 20px;
+  color: var(--text-secondary, #6b7280);
+  font-size: 16px;
+  text-align: center;
+}
+
+/* 错误状态 */
+.preview-error {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  margin-bottom: 24px;
+  padding: 16px;
+  background: #fef2f2;
+  border: 1px solid #fecaca;
+  border-radius: 8px;
+  color: #dc2626;
+  font-size: 14px;
+}
+
+.error-icon {
+  font-size: 18px;
+  flex-shrink: 0;
+}
+
+.retry-button {
+  background: #dc2626;
+  color: white;
+  border: none;
+  padding: 6px 12px;
+  border-radius: 4px;
+  font-size: 12px;
+  font-weight: 500;
+  cursor: pointer;
+  transition: background-color 0.2s ease;
+  margin-left: auto;
+  flex-shrink: 0;
+}
+
+.retry-button:hover {
+  background: #b91c1c;
+}
+
+/* 加载状态 */
+.preview-loading {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  padding: 60px 20px;
+  color: var(--text-secondary, #6b7280);
+}
+
+.loading-spinner {
+  margin-bottom: 16px;
+}
+
+.spinner {
+  width: 32px;
+  height: 32px;
+  border: 3px solid var(--border-color, #e5e5e5);
+  border-top-color: var(--primary-color, #3b82f6);
+  border-radius: 50%;
+  animation: spin 1s linear infinite;
+}
+
+@keyframes spin {
+  to {
+    transform: rotate(360deg);
+  }
+}
+
+/* 内容区域 */
+.preview-content {
+  display: flex;
+  flex-direction: column;
+  gap: 32px;
+}
+
+/* 预览章节 */
+.preview-section {
+  background: var(--bg-secondary, #f9fafb);
+  border: 1px solid var(--border-color, #e5e5e5);
+  border-radius: 8px;
+  overflow: hidden;
+}
+
+.preview-section h4 {
+  margin: 0;
+  padding: 16px 20px;
+  font-size: 16px;
+  font-weight: 600;
+  color: var(--text-primary, #1f2937);
+  background: var(--bg-color, #ffffff);
+  border-bottom: 1px solid var(--border-color, #e5e5e5);
+}
+
+/* 区域信息 */
+.locale-info {
+  padding: 20px;
+}
+
+.info-row {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 8px 0;
+  border-bottom: 1px solid var(--border-light, #f3f4f6);
+}
+
+.info-row:last-child {
+  border-bottom: none;
+}
+
+.info-label {
+  font-size: 14px;
+  font-weight: 500;
+  color: var(--text-primary, #1f2937);
+}
+
+.info-value {
+  font-size: 14px;
+  color: var(--text-secondary, #6b7280);
+  font-family: 'SF Mono', 'Monaco', 'Consolas', monospace;
+}
+
+/* 预览项目容器 */
+.preview-items {
+  padding: 20px;
+  display: flex;
+  flex-direction: column;
+  gap: 20px;
+}
+
+/* 预览项目 */
+.preview-item {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  padding: 16px;
+  background: var(--bg-color, #ffffff);
+  border: 1px solid var(--border-light, #f3f4f6);
+  border-radius: 6px;
+  transition: all 0.2s ease;
+}
+
+.preview-item:hover {
+  border-color: var(--border-hover, #d1d5db);
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.06);
+}
+
+/* 预览项目头部 */
+.preview-item-header {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 16px;
+}
+
+.preview-label {
+  font-size: 14px;
+  font-weight: 600;
+  color: var(--text-primary, #1f2937);
+  flex-shrink: 0;
+}
+
+.preview-description {
+  font-size: 12px;
+  color: var(--text-secondary, #6b7280);
+  line-height: 1.4;
+  text-align: right;
+  flex: 1;
+}
+
+/* 预览值 */
+.preview-value {
+  display: flex;
+  align-items: baseline;
+  gap: 8px;
+  min-height: 24px;
+}
+
+.formatted-value {
+  font-size: 18px;
+  font-weight: 500;
+  color: var(--text-primary, #1f2937);
+  font-family: 'SF Mono', 'Monaco', 'Consolas', monospace;
+  background: var(--bg-highlight, #f0f9ff);
+  padding: 4px 8px;
+  border-radius: 4px;
+  border: 1px solid var(--border-highlight, #bae6fd);
+}
+
+.value-unit {
+  font-size: 12px;
+  color: var(--text-secondary, #6b7280);
+  font-weight: 400;
+  font-style: italic;
+}
+
+.loading-text {
+  font-size: 14px;
+  color: var(--text-secondary, #6b7280);
+  font-style: italic;
+}
+
+/* 底部 */
+.preview-footer {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  margin-top: 24px;
+  padding-top: 20px;
+  border-top: 1px solid var(--border-color, #e5e5e5);
+  gap: 16px;
+}
+
+.refresh-preview-button {
+  background: var(--primary-color, #3b82f6);
+  color: white;
+  border: none;
+  padding: 10px 16px;
+  border-radius: 6px;
+  font-size: 14px;
+  font-weight: 500;
+  cursor: pointer;
+  transition: all 0.2s ease;
+  flex-shrink: 0;
+}
+
+.refresh-preview-button:hover:not(:disabled) {
+  background: var(--primary-hover, #2563eb);
+  transform: translateY(-1px);
+}
+
+.refresh-preview-button:disabled {
+  opacity: 0.6;
+  cursor: not-allowed;
+  transform: none;
+}
+
+.preview-note {
+  font-size: 12px;
+  color: var(--text-secondary, #6b7280);
+  line-height: 1.4;
+  flex: 1;
+  text-align: right;
+}
+
+/* 响应式设计 */
+@media (max-width: 768px) {
+  .preview-content {
+    gap: 24px;
+  }
+
+  .preview-items {
+    padding: 16px;
+    gap: 16px;
+  }
+
+  .preview-item {
+    padding: 12px;
+  }
+
+  .preview-item-header {
+    flex-direction: column;
+    align-items: flex-start;
+    gap: 8px;
+  }
+
+  .preview-description {
+    text-align: left;
+  }
+
+  .formatted-value {
+    font-size: 16px;
+  }
+
+  .info-row {
+    flex-direction: column;
+    align-items: flex-start;
+    gap: 4px;
+  }
+
+  .preview-footer {
+    flex-direction: column;
+    align-items: stretch;
+    gap: 12px;
+  }
+
+  .preview-note {
+    text-align: center;
+  }
+}
+
+/* 平板设备 */
+@media (max-width: 1024px) and (min-width: 769px) {
+  .preview-items {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 16px;
+  }
+
+  .preview-item {
+    margin: 0;
+  }
+}
+
+/* 大屏幕 */
+@media (min-width: 1200px) {
+  .preview-items {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+    gap: 20px;
+  }
+}
+
+/* 暗色主题 */
+@media (prefers-color-scheme: dark) {
+  .format-preview {
+    --bg-color: #1f2937;
+    --bg-secondary: #111827;
+    --bg-highlight: #1e3a8a;
+    --text-primary: #f9fafb;
+    --text-secondary: #9ca3af;
+    --border-color: #374151;
+    --border-light: #374151;
+    --border-hover: #4b5563;
+    --border-highlight: #3b82f6;
+    --primary-color: #60a5fa;
+    --primary-hover: #3b82f6;
+  }
+
+  .preview-error {
+    background: #7f1d1d;
+    border-color: #dc2626;
+    color: #fca5a5;
+  }
+}
+
+/* 高对比度模式 */
+@media (prefers-contrast: high) {
+  .format-preview {
+    --border-color: #000000;
+    --text-secondary: #000000;
+  }
+
+  .formatted-value {
+    border-width: 2px;
+    font-weight: 600;
+  }
+}
+
+/* 减少动画 */
+@media (prefers-reduced-motion: reduce) {
+  .preview-item,
+  .refresh-preview-button {
+    transition: none;
+  }
+
+  .refresh-preview-button:hover:not(:disabled) {
+    transform: none;
+  }
+
+  .spinner {
+    animation: none;
+  }
+}
+
+/* 焦点样式 */
+.refresh-preview-button:focus-visible {
+  outline: 2px solid var(--primary-color, #3b82f6);
+  outline-offset: 2px;
+}
+
+/* 打印样式 */
+@media print {
+  .format-preview {
+    background: white !important;
+    border: 1px solid #000 !important;
+  }
+
+  .preview-footer {
+    display: none;
+  }
+
+  .formatted-value {
+    background: #f5f5f5 !important;
+    border: 1px solid #ccc !important;
+  }
+}
+
+/* 动画增强 */
+@keyframes fadeInUp {
+  from {
+    opacity: 0;
+    transform: translateY(20px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+.preview-item {
+  animation: fadeInUp 0.3s ease-out;
+}
+
+.preview-item:nth-child(1) { animation-delay: 0.1s; }
+.preview-item:nth-child(2) { animation-delay: 0.2s; }
+.preview-item:nth-child(3) { animation-delay: 0.3s; }
+.preview-item:nth-child(4) { animation-delay: 0.4s; }
+
+/* 状态指示器 */
+.preview-item::before {
+  content: '';
+  position: absolute;
+  top: -1px;
+  left: -1px;
+  right: -1px;
+  height: 3px;
+  background: linear-gradient(90deg, var(--primary-color, #3b82f6), var(--primary-hover, #2563eb));
+  border-radius: 6px 6px 0 0;
+  opacity: 0;
+  transition: opacity 0.2s ease;
+}
+
+.preview-item:hover::before {
+  opacity: 1;
+}
+

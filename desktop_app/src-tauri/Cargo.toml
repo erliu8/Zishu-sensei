@@ -44,6 +44,9 @@ tracing-appender = "0.2"
 config = "0.13"
 directories = "5.0"
 
+# 系统语言检测
+sys-locale = "0.3"
+
 # 文件系统操作
 walkdir = "2.4"
 notify = "6.1"
@@ -55,9 +58,20 @@ sqlx = { version = "0.7", features = ["runtime-tokio-rustls", "sqlite"] }
 # 加密和安全
 sha2 = "0.10"
 uuid = { version = "1.6", features = ["v4", "serde"] }
+# AES-GCM 加密
+aes-gcm = "0.10"
+# 密钥派生（PBKDF2, Argon2）
+argon2 = "0.5"
+# 密钥链集成（跨平台密钥存储）
+keyring = "2.2"
+# 额外的加密工具
+ring = "0.17"
+# 安全随机数生成
+getrandom = "0.2"
 
 # 时间处理
 chrono = { version = "0.4", features = ["serde"] }
+chrono-tz = "0.8"
 
 # 错误处理
 anyhow = "1.0"
@@ -115,6 +129,7 @@ handlebars = "4.4"
 # 并发和同步
 parking_lot = "0.12"
 dashmap = "5.5"
+lazy_static = "1.4"
 
 # 性能监控
 metrics = "0.21"

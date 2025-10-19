@@ -13,6 +13,7 @@ mod utils;
 mod adapter;
 mod system_monitor;
 mod database;
+mod workflow;
 
 use commands::*;
 use state::*;
@@ -264,6 +265,15 @@ async fn app_setup(app: &tauri::AppHandle) -> Result<(), Box<dyn std::error::Err
     let app_state = AppState::new(app.clone()).await?;
     app.manage(app_state);
     
+    // 初始化安全审计日志
+    let app_data_dir = app.path_resolver()
+        .app_data_dir()
+        .ok_or("无法获取应用数据目录")?;
+    let audit_db_path = app_data_dir.join("security_audit.db");
+    utils::security_audit::init_global_audit_logger(&audit_db_path)
+        .map_err(|e| format!("初始化审计日志失败: {}", e))?;
+    info!("安全审计日志系统已初始化");
+    
     // 初始化数据库
     database::init_database(app.clone()).await?;
     
@@ -303,6 +313,11 @@ async fn app_setup(app: &tauri::AppHandle) -> Result<(), Box<dyn std::error::Err
         }
         
         info!("主窗口配置完成");
+    }
+    
+    // 初始化语言设置
+    if let Err(e) = commands::language::initialize_language_settings(app).await {
+        tracing::warn!("语言设置初始化失败: {}", e);
     }
     
     // 启动后台任务
@@ -455,7 +470,7 @@ async fn main() {
             commands::system::get_log_stats,
             commands::system::clean_old_logs,
             
-            // 适配器命令
+            // 适配器命令 - 后端集成
             commands::adapter::get_adapters,
             commands::adapter::install_adapter,
             commands::adapter::uninstall_adapter,
@@ -467,6 +482,37 @@ async fn main() {
             commands::adapter::load_adapter,
             commands::adapter::unload_adapter,
             commands::adapter::get_adapter_status,
+            
+            // 适配器命令 - 本地管理
+            commands::adapter::get_installed_adapters,
+            commands::adapter::get_enabled_adapters,
+            commands::adapter::get_installed_adapter,
+            commands::adapter::toggle_adapter,
+            commands::adapter::remove_installed_adapter,
+            
+            // 适配器命令 - 版本管理
+            commands::adapter::get_adapter_versions,
+            commands::adapter::add_adapter_version,
+            
+            // 适配器命令 - 依赖管理
+            commands::adapter::get_adapter_dependencies,
+            commands::adapter::add_adapter_dependency,
+            commands::adapter::remove_adapter_dependency,
+            
+            // 适配器命令 - 权限管理
+            commands::adapter::get_adapter_permissions,
+            commands::adapter::grant_adapter_permission,
+            commands::adapter::check_adapter_permission,
+            commands::adapter::add_adapter_permission,
+            
+            // 市场命令
+            commands::market::search_market_products,
+            commands::market::get_market_product,
+            commands::market::get_featured_products,
+            commands::market::get_product_reviews,
+            commands::market::download_market_product,
+            commands::market::check_product_updates,
+            commands::market::get_market_categories,
             
             // 桌面命令
             commands::desktop::get_desktop_info,
@@ -486,8 +532,195 @@ async fn main() {
             commands::shortcuts::get_shortcut_statistics,
             commands::shortcuts::check_shortcut_conflict,
             commands::shortcuts::validate_shortcut_config,
+            
+            // 工作流命令
+            commands::workflow::create_workflow,
+            commands::workflow::update_workflow,
+            commands::workflow::delete_workflow,
+            commands::workflow::get_workflow,
+            commands::workflow::list_workflows,
+            commands::workflow::execute_workflow,
+            commands::workflow::cancel_workflow_execution,
+            commands::workflow::pause_workflow_execution,
+            commands::workflow::resume_workflow_execution,
+            commands::workflow::get_workflow_execution_status,
+            commands::workflow::list_workflow_executions,
+            commands::workflow::schedule_workflow,
+            commands::workflow::unschedule_workflow,
+            commands::workflow::list_scheduled_workflows,
+            commands::workflow::start_workflow_scheduler,
+            commands::workflow::stop_workflow_scheduler,
+            commands::workflow::get_workflow_scheduler_status,
+            commands::workflow::get_builtin_templates,
+            commands::workflow::get_builtin_template,
+            
+            // 触发器命令
+            commands::workflow::create_event_trigger,
+            commands::workflow::list_event_triggers,
+            commands::workflow::remove_event_trigger,
+            commands::workflow::trigger_event,
+            commands::workflow::create_webhook_trigger,
+            commands::workflow::list_webhook_triggers,
+            commands::workflow::remove_webhook_trigger,
+            commands::workflow::trigger_webhook,
+            
+            // 文件管理命令
+            commands::file::upload_file,
+            commands::file::get_file,
+            commands::file::read_file_content,
+            commands::file::list_files_by_filter,
+            commands::file::update_file,
+            commands::file::delete_file,
+            commands::file::delete_file_permanent,
+            commands::file::batch_delete,
+            commands::file::get_file_history_records,
+            commands::file::get_file_statistics,
+            commands::file::search_files_by_keyword,
+            commands::file::cleanup_old_files,
+            commands::file::export_file,
+            commands::file::copy_file,
+            commands::file::get_file_url,
+            
+            // 加密命令
+            commands::encryption::encrypt_text,
+            commands::encryption::decrypt_text,
+            commands::encryption::generate_master_key,
+            commands::encryption::load_key,
+            commands::encryption::rotate_key,
+            commands::encryption::delete_key,
+            commands::encryption::key_exists,
+            commands::encryption::get_key_info,
+            commands::encryption::unload_key,
+            commands::encryption::store_encrypted_field,
+            commands::encryption::retrieve_encrypted_field,
+            commands::encryption::delete_encrypted_field,
+            commands::encryption::mask_sensitive_data,
+            commands::encryption::mask_all_sensitive,
+            commands::encryption::query_audit_logs,
+            commands::encryption::cleanup_audit_logs,
+            commands::encryption::get_audit_statistics,
+            
+            // 权限命令
+            commands::permission::get_all_permissions,
+            commands::permission::get_permission_by_type,
+            commands::permission::get_permissions_by_category,
+            commands::permission::request_permission,
+            commands::permission::grant_permission,
+            commands::permission::deny_permission,
+            commands::permission::revoke_permission,
+            commands::permission::check_permission,
+            commands::permission::get_entity_grants,
+            commands::permission::get_pending_grants,
+            commands::permission::cleanup_expired_grants,
+            commands::permission::log_permission_usage,
+            commands::permission::get_permission_usage_logs,
+            commands::permission::get_permission_stats,
+            commands::permission::create_permission_group,
+            commands::permission::get_permission_group,
+            commands::permission::get_all_permission_groups,
+            commands::permission::grant_permission_group,
+            
+            // 内存管理命令
+            commands::memory::get_memory_info,
+            commands::memory::register_memory_pool,
+            commands::memory::update_memory_pool_stats,
+            commands::memory::get_memory_pool_stats,
+            commands::memory::create_memory_snapshot,
+            commands::memory::get_memory_snapshots,
+            commands::memory::detect_memory_leaks,
+            commands::memory::get_memory_leak_reports,
+            commands::memory::cleanup_memory,
+            commands::memory::set_memory_thresholds,
+            commands::memory::get_memory_thresholds,
+            commands::memory::should_auto_cleanup_memory,
+            commands::memory::get_memory_status,
+            commands::memory::get_memory_summary,
+            
+            // 渲染性能命令
+            commands::rendering::record_render_performance,
+            commands::rendering::record_frame_performance,
+            commands::rendering::update_webgl_stats,
+            commands::rendering::get_render_stats,
+            commands::rendering::get_optimization_suggestions,
+            commands::rendering::get_render_records,
+            commands::rendering::get_frame_records,
+            commands::rendering::get_webgl_stats,
+            commands::rendering::clear_render_records,
+            commands::rendering::set_slow_render_threshold,
+            commands::rendering::set_max_records,
+            
+            // 语言设置命令
+            commands::language::save_language_setting,
+            commands::language::load_language_settings,
+            commands::language::detect_system_language,
+            commands::language::update_language_settings,
+            commands::language::reset_language_settings,
+            commands::language::get_supported_languages,
+            
+            // 区域适配命令
+            commands::region::detect_system_region,
+            commands::region::get_recommended_regions,
+            commands::region::get_user_region_preferences,
+            commands::region::save_user_region_preferences,
+            commands::region::delete_user_region_preferences,
+            commands::region::get_all_region_configs,
+            commands::region::get_region_config,
+            commands::region::cache_region_config,
+            commands::region::initialize_region_system,
+            commands::region::format_datetime,
+            commands::region::format_date,
+            commands::region::format_time,
+            commands::region::format_number,
+            commands::region::format_currency,
+            commands::region::format_temperature,
+            commands::region::format_distance,
+            commands::region::format_weight,
+            commands::region::format_file_size,
+            commands::region::format_percentage,
+            commands::region::convert_temperature,
+            commands::region::convert_distance,
+            commands::region::convert_weight,
+            commands::region::cleanup_expired_region_cache,
+            commands::region::get_region_format_stats,
+            
+            // 性能监控命令
+            commands::performance::record_performance_metric,
+            commands::performance::record_performance_metrics_batch,
+            commands::performance::get_performance_metrics,
+            commands::performance::get_performance_summary,
+            commands::performance::record_user_operation,
+            commands::performance::get_user_operations,
+            commands::performance::get_user_operation_stats,
+            commands::performance::record_network_metric,
+            commands::performance::get_network_metrics,
+            commands::performance::get_network_stats,
+            commands::performance::record_performance_snapshot,
+            commands::performance::get_performance_snapshots,
+            commands::performance::get_performance_alerts,
+            commands::performance::resolve_performance_alert,
+            commands::performance::get_alert_stats,
+            commands::performance::get_monitor_config,
+            commands::performance::update_monitor_config,
+            commands::performance::start_performance_monitoring,
+            commands::performance::stop_performance_monitoring,
+            commands::performance::is_monitoring_active,
+            commands::performance::cleanup_performance_data,
+            commands::performance::get_monitoring_status,
+            commands::performance::generate_performance_report,
         ])
         .manage(commands::shortcuts::ShortcutRegistry::new())
+        .manage(commands::memory::MemoryManagerState::new())
+        .manage(std::sync::Arc::new(std::sync::Mutex::new(commands::rendering::RenderingState::default())))
+        .manage(commands::region::RegionState::default())
+        .manage({
+            let app_data_dir = std::env::var("APPDATA").unwrap_or_else(|_| {
+                dirs::config_dir()
+                    .map(|d| d.to_string_lossy().to_string())
+                    .unwrap_or_else(|| "./data".to_string())
+            });
+            let db_path = format!("{}/zishu-sensei/performance.db", app_data_dir);
+            commands::performance::PerformanceMonitorState::new(&db_path).expect("初始化性能监控状态失败")
+        })
         .build(tauri::generate_context!());
     
     match app_result {

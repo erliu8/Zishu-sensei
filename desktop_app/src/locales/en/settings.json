@@ -1,0 +1,110 @@
+{
+  "title": "Settings",
+  "general": {
+    "title": "General Settings",
+    "language": "Language",
+    "theme": "Theme",
+    "autoStart": "Auto Start",
+    "minimizeToTray": "Minimize to Tray",
+    "notifications": "Notifications",
+    "updates": "Auto Updates",
+    "dataCollection": "Data Collection",
+    "crashReports": "Crash Reports"
+  },
+  "appearance": {
+    "title": "Appearance",
+    "theme": "Theme",
+    "darkMode": "Dark Mode",
+    "lightMode": "Light Mode",
+    "autoMode": "Follow System",
+    "fontSize": "Font Size",
+    "fontFamily": "Font Family",
+    "transparency": "Transparency",
+    "animations": "Animations",
+    "windowSize": "Window Size",
+    "position": "Position"
+  },
+  "character": {
+    "title": "Character Settings",
+    "model": "Model",
+    "personality": "Personality",
+    "voice": "Voice",
+    "animations": "Animations",
+    "expressions": "Expressions",
+    "outfits": "Outfits",
+    "accessories": "Accessories",
+    "background": "Background"
+  },
+  "ai": {
+    "title": "AI Settings",
+    "provider": "Provider",
+    "model": "Model",
+    "apiKey": "API Key",
+    "baseUrl": "Base URL",
+    "temperature": "Creativity",
+    "maxTokens": "Max Tokens",
+    "timeout": "Timeout",
+    "retries": "Retries",
+    "systemPrompt": "System Prompt"
+  },
+  "privacy": {
+    "title": "Privacy Settings",
+    "dataCollection": "Data Collection",
+    "analytics": "Analytics",
+    "crashReports": "Crash Reports",
+    "userFeedback": "User Feedback",
+    "chatHistory": "Chat History",
+    "localStorage": "Local Storage",
+    "cloudSync": "Cloud Sync",
+    "encryption": "Encryption"
+  },
+  "advanced": {
+    "title": "Advanced Settings",
+    "debugMode": "Debug Mode",
+    "developerTools": "Developer Tools",
+    "experimentalFeatures": "Experimental Features",
+    "performanceMode": "Performance Mode",
+    "memoryLimit": "Memory Limit",
+    "cacheSize": "Cache Size",
+    "logLevel": "Log Level",
+    "backup": "Backup Settings"
+  },
+  "shortcuts": {
+    "title": "Shortcuts",
+    "global": "Global Shortcuts",
+    "chat": "Chat Shortcuts",
+    "window": "Window Shortcuts",
+    "custom": "Custom Shortcuts",
+    "reset": "Reset to Default",
+    "conflictWarning": "Shortcut Conflict"
+  },
+  "about": {
+    "title": "About",
+    "version": "Version",
+    "buildDate": "Build Date",
+    "license": "License",
+    "credits": "Credits",
+    "support": "Support",
+    "feedback": "Feedback",
+    "website": "Website",
+    "github": "GitHub"
+  },
+  "actions": {
+    "save": "Save Settings",
+    "reset": "Reset Settings",
+    "import": "Import Settings",
+    "export": "Export Settings",
+    "backup": "Backup Settings",
+    "restore": "Restore Settings"
+  },
+  "messages": {
+    "saveSuccess": "Settings saved successfully!",
+    "saveError": "Failed to save settings, please try again.",
+    "resetConfirm": "Are you sure you want to reset all settings? This action cannot be undone.",
+    "resetSuccess": "Settings have been reset to default values.",
+    "importSuccess": "Settings imported successfully!",
+    "importError": "Failed to import settings, please check the file format.",
+    "exportSuccess": "Settings exported successfully!",
+    "restartRequired": "Some settings require restarting the app to take effect."
+  }
+}

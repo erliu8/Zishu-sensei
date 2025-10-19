@@ -1,0 +1,380 @@
+/**
+ * 区域选择器组件样式
+ */
+
+.region-selector {
+  position: relative;
+  width: 100%;
+}
+
+.region-selector.disabled {
+  opacity: 0.6;
+  cursor: not-allowed;
+}
+
+/* 触发器样式 */
+.region-selector-trigger {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  width: 100%;
+  padding: 12px 16px;
+  border: 1px solid var(--border-color, #e5e5e5);
+  border-radius: 6px;
+  background: var(--bg-color, #ffffff);
+  cursor: pointer;
+  transition: all 0.2s ease;
+  min-height: 44px;
+}
+
+.region-selector-trigger:hover:not(.disabled) {
+  border-color: var(--border-hover, #d1d5db);
+}
+
+.region-selector-trigger.open {
+  border-color: var(--primary-color, #3b82f6);
+  box-shadow: 0 0 0 3px rgba(59, 130, 246, 0.1);
+}
+
+.region-selector.disabled .region-selector-trigger {
+  cursor: not-allowed;
+  background: var(--bg-disabled, #f9fafb);
+}
+
+/* 内容区域 */
+.region-selector-content {
+  flex: 1;
+  min-width: 0;
+}
+
+.selected-region {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.selected-region-name {
+  font-size: 14px;
+  font-weight: 500;
+  color: var(--text-primary, #1f2937);
+}
+
+.selected-region-code {
+  font-size: 12px;
+  color: var(--text-secondary, #6b7280);
+}
+
+.region-placeholder {
+  font-size: 14px;
+  color: var(--text-placeholder, #9ca3af);
+}
+
+/* 箭头图标 */
+.region-selector-arrow {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  margin-left: 12px;
+  color: var(--text-secondary, #6b7280);
+  transition: transform 0.2s ease;
+}
+
+.region-selector-arrow.rotated {
+  transform: rotate(180deg);
+}
+
+/* 下拉菜单 */
+.region-dropdown {
+  position: absolute;
+  top: calc(100% + 4px);
+  left: 0;
+  right: 0;
+  z-index: 1000;
+  background: var(--bg-color, #ffffff);
+  border: 1px solid var(--border-color, #e5e5e5);
+  border-radius: 8px;
+  box-shadow: 0 10px 25px rgba(0, 0, 0, 0.15);
+  overflow: hidden;
+  max-height: 400px;
+}
+
+/* 搜索框 */
+.region-search {
+  padding: 16px;
+  border-bottom: 1px solid var(--border-color, #e5e5e5);
+  background: var(--bg-secondary, #f9fafb);
+}
+
+.region-search input {
+  width: 100%;
+  padding: 10px 12px;
+  border: 1px solid var(--border-color, #e5e5e5);
+  border-radius: 6px;
+  font-size: 14px;
+  background: var(--bg-color, #ffffff);
+  color: var(--text-primary, #1f2937);
+  transition: border-color 0.2s ease;
+}
+
+.region-search input:focus {
+  outline: none;
+  border-color: var(--primary-color, #3b82f6);
+  box-shadow: 0 0 0 3px rgba(59, 130, 246, 0.1);
+}
+
+.region-search input::placeholder {
+  color: var(--text-placeholder, #9ca3af);
+}
+
+/* 选项容器 */
+.region-options {
+  max-height: 320px;
+  overflow-y: auto;
+  overscroll-behavior: contain;
+}
+
+/* 加载状态 */
+.region-loading,
+.region-empty {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 40px 20px;
+  color: var(--text-secondary, #6b7280);
+  font-size: 14px;
+}
+
+/* 区域组 */
+.region-group {
+  border-bottom: 1px solid var(--border-light, #f3f4f6);
+}
+
+.region-group:last-child {
+  border-bottom: none;
+}
+
+.region-group-title {
+  padding: 12px 16px 8px;
+  font-size: 12px;
+  font-weight: 600;
+  color: var(--text-secondary, #6b7280);
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+  background: var(--bg-group, #f9fafb);
+}
+
+/* 区域选项 */
+.region-option {
+  padding: 12px 16px;
+  cursor: pointer;
+  border-bottom: 1px solid var(--border-light, #f3f4f6);
+  transition: background-color 0.2s ease;
+  position: relative;
+}
+
+.region-option:last-child {
+  border-bottom: none;
+}
+
+.region-option:hover {
+  background: var(--bg-hover, #f3f4f6);
+}
+
+.region-option.recommended {
+  position: relative;
+}
+
+.region-option.recommended:before {
+  content: '';
+  position: absolute;
+  left: 0;
+  top: 0;
+  bottom: 0;
+  width: 3px;
+  background: var(--primary-color, #3b82f6);
+}
+
+/* 选项主要信息 */
+.region-option-main {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  margin-bottom: 4px;
+}
+
+.region-name {
+  font-size: 14px;
+  font-weight: 500;
+  color: var(--text-primary, #1f2937);
+}
+
+.region-code {
+  font-size: 12px;
+  color: var(--text-secondary, #6b7280);
+  font-family: 'SF Mono', 'Monaco', 'Consolas', monospace;
+}
+
+.recommended-badge {
+  font-size: 10px;
+  padding: 2px 6px;
+  background: var(--primary-color, #3b82f6);
+  color: white;
+  border-radius: 10px;
+  font-weight: 500;
+  text-transform: uppercase;
+  letter-spacing: 0.3px;
+}
+
+/* 选项次要信息 */
+.region-option-sub {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+}
+
+.region-english-name {
+  font-size: 12px;
+  color: var(--text-secondary, #6b7280);
+  flex: 1;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.region-details {
+  font-size: 11px;
+  color: var(--text-tertiary, #9ca3af);
+  font-family: 'SF Mono', 'Monaco', 'Consolas', monospace;
+  white-space: nowrap;
+}
+
+/* 背景遮罩 */
+.region-selector-backdrop {
+  position: fixed;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  z-index: 999;
+  background: transparent;
+}
+
+/* 滚动条样式 */
+.region-options::-webkit-scrollbar {
+  width: 6px;
+}
+
+.region-options::-webkit-scrollbar-track {
+  background: var(--bg-secondary, #f9fafb);
+}
+
+.region-options::-webkit-scrollbar-thumb {
+  background: var(--border-color, #e5e5e5);
+  border-radius: 3px;
+}
+
+.region-options::-webkit-scrollbar-thumb:hover {
+  background: var(--text-secondary, #6b7280);
+}
+
+/* 响应式设计 */
+@media (max-width: 768px) {
+  .region-dropdown {
+    max-height: 60vh;
+  }
+
+  .region-options {
+    max-height: calc(60vh - 80px);
+  }
+
+  .region-option {
+    padding: 16px;
+  }
+
+  .region-option-sub {
+    flex-direction: column;
+    align-items: flex-start;
+    gap: 4px;
+  }
+
+  .region-details {
+    align-self: flex-end;
+  }
+}
+
+/* 暗色主题 */
+@media (prefers-color-scheme: dark) {
+  .region-selector {
+    --bg-color: #1f2937;
+    --bg-secondary: #111827;
+    --bg-hover: #374151;
+    --bg-group: #1f2937;
+    --bg-disabled: #374151;
+    --text-primary: #f9fafb;
+    --text-secondary: #9ca3af;
+    --text-tertiary: #6b7280;
+    --text-placeholder: #6b7280;
+    --border-color: #374151;
+    --border-hover: #4b5563;
+    --border-light: #374151;
+    --primary-color: #60a5fa;
+  }
+}
+
+/* 高对比度模式 */
+@media (prefers-contrast: high) {
+  .region-selector {
+    --border-color: #000000;
+    --text-secondary: #000000;
+  }
+}
+
+/* 减少动画 */
+@media (prefers-reduced-motion: reduce) {
+  .region-selector-trigger,
+  .region-selector-arrow,
+  .region-option,
+  .region-search input {
+    transition: none;
+  }
+}
+
+/* 焦点样式 */
+.region-selector-trigger:focus-visible {
+  outline: 2px solid var(--primary-color, #3b82f6);
+  outline-offset: 2px;
+}
+
+.region-search input:focus-visible {
+  outline: 2px solid var(--primary-color, #3b82f6);
+  outline-offset: 2px;
+}
+
+.region-option:focus-visible {
+  outline: 2px solid var(--primary-color, #3b82f6);
+  outline-offset: -2px;
+}
+
+/* 键盘导航 */
+.region-option[aria-selected="true"] {
+  background: var(--primary-color, #3b82f6);
+  color: white;
+}
+
+.region-option[aria-selected="true"] .region-name,
+.region-option[aria-selected="true"] .region-code,
+.region-option[aria-selected="true"] .region-english-name,
+.region-option[aria-selected="true"] .region-details {
+  color: white;
+}
+
+/* 打字机效果（可选） */
+@keyframes typewriter {
+  from { width: 0; }
+  to { width: 100%; }
+}
+
+.region-search input:focus::placeholder {
+  animation: typewriter 0.5s steps(20) 1s both;
+}

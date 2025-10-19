@@ -1,0 +1,22 @@
+# 文件操作系统需要的依赖项
+# 请将以下依赖添加到 Cargo.toml 的 [dependencies] 部分
+
+# 已存在的依赖（确保版本匹配）
+serde = { version = "1.0", features = ["derive"] }
+serde_json = "1.0"
+tauri = { version = "1.5", features = ["shell-open"] }
+rusqlite = { version = "0.29", features = ["bundled"] }
+chrono = { version = "0.4", features = ["serde"] }
+uuid = { version = "1.6", features = ["v4", "serde"] }
+
+# 文件哈希计算
+sha2 = "0.10"
+
+# Base64 编码（用于文件预览）
+base64 = "0.21"
+
+# 未来可选依赖（缩略图生成）
+# image = "0.24"        # 图片处理
+# pdf = "0.8"           # PDF 处理
+# ffmpeg-next = "6.0"   # 视频处理
+

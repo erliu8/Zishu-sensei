@@ -1,0 +1,110 @@
+{
+  "title": "设置",
+  "general": {
+    "title": "通用设置",
+    "language": "语言",
+    "theme": "主题",
+    "autoStart": "开机自启",
+    "minimizeToTray": "最小化到托盘",
+    "notifications": "通知",
+    "updates": "自动更新",
+    "dataCollection": "数据收集",
+    "crashReports": "崩溃报告"
+  },
+  "appearance": {
+    "title": "外观设置",
+    "theme": "主题",
+    "darkMode": "深色模式",
+    "lightMode": "浅色模式",
+    "autoMode": "跟随系统",
+    "fontSize": "字体大小",
+    "fontFamily": "字体",
+    "transparency": "透明度",
+    "animations": "动画效果",
+    "windowSize": "窗口大小",
+    "position": "位置"
+  },
+  "character": {
+    "title": "角色设置",
+    "model": "模型",
+    "personality": "性格",
+    "voice": "语音",
+    "animations": "动画",
+    "expressions": "表情",
+    "outfits": "服装",
+    "accessories": "配饰",
+    "background": "背景"
+  },
+  "ai": {
+    "title": "AI设置",
+    "provider": "服务商",
+    "model": "模型",
+    "apiKey": "API密钥",
+    "baseUrl": "基础URL",
+    "temperature": "创造性",
+    "maxTokens": "最大令牌数",
+    "timeout": "超时时间",
+    "retries": "重试次数",
+    "systemPrompt": "系统提示"
+  },
+  "privacy": {
+    "title": "隐私设置",
+    "dataCollection": "数据收集",
+    "analytics": "分析统计",
+    "crashReports": "崩溃报告",
+    "userFeedback": "用户反馈",
+    "chatHistory": "对话历史",
+    "localStorage": "本地存储",
+    "cloudSync": "云同步",
+    "encryption": "加密"
+  },
+  "advanced": {
+    "title": "高级设置",
+    "debugMode": "调试模式",
+    "developerTools": "开发者工具",
+    "experimentalFeatures": "实验性功能",
+    "performanceMode": "性能模式",
+    "memoryLimit": "内存限制",
+    "cacheSize": "缓存大小",
+    "logLevel": "日志级别",
+    "backup": "备份设置"
+  },
+  "shortcuts": {
+    "title": "快捷键",
+    "global": "全局快捷键",
+    "chat": "对话快捷键",
+    "window": "窗口快捷键",
+    "custom": "自定义快捷键",
+    "reset": "重置为默认",
+    "conflictWarning": "快捷键冲突"
+  },
+  "about": {
+    "title": "关于",
+    "version": "版本",
+    "buildDate": "构建日期",
+    "license": "许可证",
+    "credits": "致谢",
+    "support": "技术支持",
+    "feedback": "意见反馈",
+    "website": "官方网站",
+    "github": "GitHub"
+  },
+  "actions": {
+    "save": "保存设置",
+    "reset": "重置设置",
+    "import": "导入设置",
+    "export": "导出设置",
+    "backup": "备份设置",
+    "restore": "恢复设置"
+  },
+  "messages": {
+    "saveSuccess": "设置保存成功！",
+    "saveError": "设置保存失败，请重试。",
+    "resetConfirm": "确定要重置所有设置吗？此操作无法撤销。",
+    "resetSuccess": "设置已重置为默认值。",
+    "importSuccess": "设置导入成功！",
+    "importError": "设置导入失败，请检查文件格式。",
+    "exportSuccess": "设置导出成功！",
+    "restartRequired": "某些设置需要重启应用后生效。"
+  }
+}

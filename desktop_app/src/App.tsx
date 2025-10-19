@@ -33,6 +33,7 @@ import type { ShortcutConfig } from '@/types/shortcuts'
 // 工具导入
 import { getAdjustedShortcuts } from '@/config/shortcutPresets'
 import { ShortcutStorageManager } from '@/utils/shortcutStorage'
+import { initializeGlobalErrorCatcher } from '@/utils/globalErrorCatcher'
 
 // 常量定义
 const WINDOW_MODES = {
@@ -100,38 +101,17 @@ const App: React.FC = () => {
     const { minimizeWindow, closeWindow } = useWindowManager()
     const shortcuts = useKeyboardShortcuts()
 
-    // ==================== 键盘快捷键系统 ====================
-    // 初始化快捷键
-    useEffect(() => {
-        console.log('🎹 [App] 初始化快捷键系统')
-        
-        // 从本地存储加载配置
-        const storedData = ShortcutStorageManager.load()
-        
-        // 获取预设快捷键
-        const presets = getAdjustedShortcuts()
-        
-        // 合并配置
-        const finalShortcuts = ShortcutStorageManager.merge(presets, storedData)
-        
-        // 注册所有快捷键
-        finalShortcuts.forEach(shortcut => {
-            const fullShortcut: ShortcutConfig = {
-                ...shortcut,
-                callback: getShortcutCallback(shortcut.id),
-            }
-            
-            shortcuts.register(fullShortcut)
-        })
-        
-        console.log(`✅ [App] 已注册 ${finalShortcuts.length} 个快捷键`)
-        
-        // 清理函数
-        return () => {
-            shortcuts.unregisterAll()
-        }
-    }, []) // 只在组件挂载时执行一次
+    // ==================== 事件处理器 ====================
+    const handleWindowModeChange = useCallback((mode: WindowMode) => {
+        setAppState(prev => ({ ...prev, windowMode: mode }))
 
+        // 通知 Tauri 后端窗口模式变化
+        if (isTauriEnv) {
+            invoke('set_window_mode', { mode }).catch(console.error)
+        }
+    }, [isTauriEnv])
+
+    // ==================== 键盘快捷键系统 ====================
     // 快捷键回调函数工厂
     const getShortcutCallback = useCallback((shortcutId: string) => {
         return () => {
@@ -265,6 +245,48 @@ const App: React.FC = () => {
         isTauriEnv,
     ])
 
+    // 初始化快捷键和错误监控
+    useEffect(() => {
+        console.log('🎹 [App] 初始化快捷键系统')
+        
+        // 初始化全局错误捕获器
+        initializeGlobalErrorCatcher({
+            enableJSErrorCapture: true,
+            enablePromiseRejectionCapture: true,
+            enableResourceErrorCapture: true,
+            enableConsoleErrorCapture: false, // 避免过多噪音
+            autoReport: true,
+            debugMode: process.env.NODE_ENV === 'development',
+        })
+        console.log('🛡️ [App] 全局错误捕获器已初始化')
+        
+        // 从本地存储加载配置
+        const storedData = ShortcutStorageManager.load()
+        
+        // 获取预设快捷键
+        const presets = getAdjustedShortcuts()
+        
+        // 合并配置
+        const finalShortcuts = ShortcutStorageManager.merge(presets, storedData)
+        
+        // 注册所有快捷键
+        finalShortcuts.forEach(shortcut => {
+            const fullShortcut: ShortcutConfig = {
+                ...shortcut,
+                callback: getShortcutCallback(shortcut.id),
+            }
+            
+            shortcuts.register(fullShortcut)
+        })
+        
+        console.log(`✅ [App] 已注册 ${finalShortcuts.length} 个快捷键`)
+        
+        // 清理函数
+        return () => {
+            shortcuts.unregisterAll()
+        }
+    }, [getShortcutCallback, shortcuts]) // 添加必要的依赖
+
     // 保存快捷键配置到本地存储
     useEffect(() => {
         const handleStorageSync = () => {
@@ -280,16 +302,7 @@ const App: React.FC = () => {
         }
     }, [shortcuts])
 
-    // ==================== 事件处理器 ====================
-    const handleWindowModeChange = useCallback((mode: WindowMode) => {
-        setAppState(prev => ({ ...prev, windowMode: mode }))
-
-        // 通知 Tauri 后端窗口模式变化
-        if (isTauriEnv) {
-            invoke('set_window_mode', { mode }).catch(console.error)
-        }
-    }, [isTauriEnv])
-
+    // ==================== 其他事件处理器 ====================
     const handleContextMenu = useCallback((event: React.MouseEvent, providedOptions?: ContextMenuOption[]) => {
         console.log('🖱️ [App] handleContextMenu 被调用:', { 
             button: event.button, 

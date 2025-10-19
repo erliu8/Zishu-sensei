@@ -1,0 +1,91 @@
+# Dependabot 配置文件
+# 自动检查和更新依赖项
+
+version: 2
+updates:
+  # NPM 依赖更新
+  - package-ecosystem: "npm"
+    directory: "/desktop_app"
+    schedule:
+      interval: "weekly"
+      day: "monday"
+      time: "02:00"
+      timezone: "Asia/Shanghai"
+    open-pull-requests-limit: 5
+    reviewers:
+      - "maintainer-team"
+    assignees:
+      - "lead-developer"
+    commit-message:
+      prefix: "chore"
+      prefix-development: "chore"
+      include: "scope"
+    labels:
+      - "dependencies"
+      - "npm"
+    ignore:
+      # 忽略主版本更新 (可能有破坏性变更)
+      - dependency-name: "*"
+        update-types: ["version-update:semver-major"]
+      # 忽略特定包的更新
+      - dependency-name: "electron"
+        update-types: ["version-update:semver-major", "version-update:semver-minor"]
+
+  # Cargo 依赖更新
+  - package-ecosystem: "cargo"
+    directory: "/desktop_app/src-tauri"
+    schedule:
+      interval: "weekly"
+      day: "tuesday"
+      time: "02:00"
+      timezone: "Asia/Shanghai"
+    open-pull-requests-limit: 3
+    reviewers:
+      - "rust-team"
+    assignees:
+      - "rust-lead"
+    commit-message:
+      prefix: "chore"
+      include: "scope"
+    labels:
+      - "dependencies"
+      - "rust"
+      - "cargo"
+    ignore:
+      # 忽略主版本更新
+      - dependency-name: "*"
+        update-types: ["version-update:semver-major"]
+
+  # GitHub Actions 工作流更新
+  - package-ecosystem: "github-actions"
+    directory: "/"
+    schedule:
+      interval: "monthly"
+      day: "first-monday"
+      time: "02:00"
+      timezone: "Asia/Shanghai"
+    open-pull-requests-limit: 2
+    reviewers:
+      - "devops-team"
+    commit-message:
+      prefix: "ci"
+      include: "scope"
+    labels:
+      - "dependencies"
+      - "github-actions"
+      - "ci/cd"
+
+  # Docker 依赖更新 (如果有)
+  - package-ecosystem: "docker"
+    directory: "/"
+    schedule:
+      interval: "monthly"
+    open-pull-requests-limit: 2
+    reviewers:
+      - "devops-team"
+    commit-message:
+      prefix: "chore"
+      include: "scope"
+    labels:
+      - "dependencies"
+      - "docker"

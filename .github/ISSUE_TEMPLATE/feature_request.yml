@@ -1,77 +1,212 @@
-name: 🚀 Feature Request
-description: Suggest a new feature or enhancement
-title: "[Feature]: "
-labels: ["enhancement", "feature-request"]
+name: ✨ 功能请求
+description: 建议一个新功能或改进
+title: "[Feature] "
+labels: ["enhancement", "needs-triage"]
+assignees: []
+
 body:
   - type: markdown
     attributes:
       value: |
-        Thanks for suggesting a new feature!
+        感谢你提出功能建议！
+        
+        在提交之前，请确保：
+        - 你已经搜索了现有的 issues 和功能请求
+        - 这个功能符合项目的目标和范围
+        - 你已经考虑了功能的可行性
+
+  - type: checkboxes
+    id: checklist
+    attributes:
+      label: 提交前检查
+      options:
+        - label: 我已经搜索了现有的 issues 和功能请求
+          required: true
+        - label: 我已经阅读了项目文档和路线图
+          required: true
+        - label: 这个功能符合项目的目标
+          required: true
 
   - type: dropdown
-    id: component
+    id: feature-type
     attributes:
-      label: Component
-      description: Which component should this feature be added to?
+      label: 功能类型
+      description: 这是什么类型的功能请求？
       options:
-        - Desktop App
-        - Community Frontend
-        - Community Backend
-        - Python Core
-        - Documentation
-        - Other
+        - 新功能
+        - 功能改进
+        - 用户体验优化
+        - 性能优化
+        - 集成/插件
+        - API 扩展
+        - 其他
+    validations:
+      required: true
+
+  - type: dropdown
+    id: priority
+    attributes:
+      label: 优先级
+      description: 你认为这个功能的优先级如何？
+      options:
+        - 高 - 核心功能，急需
+        - 中 - 重要功能，希望尽快实现
+        - 低 - 不错的功能，可以等待
+        - 很低 - 可有可无的功能
     validations:
       required: true
 
   - type: textarea
-    id: problem
+    id: problem-description
     attributes:
-      label: Problem Statement
-      description: Is your feature request related to a problem? Please describe.
-      placeholder: I'm always frustrated when [...]
+      label: 问题描述
+      description: 你遇到了什么问题？这个功能要解决什么需求？
+      placeholder: 描述你遇到的问题或需求...
     validations:
       required: true
 
   - type: textarea
-    id: solution
+    id: solution-description
     attributes:
-      label: Proposed Solution
-      description: Describe the solution you'd like
-      placeholder: A clear and concise description of what you want to happen.
+      label: 解决方案
+      description: 你希望看到什么样的解决方案？
+      placeholder: 详细描述你期望的功能...
     validations:
       required: true
 
   - type: textarea
     id: alternatives
     attributes:
-      label: Alternatives Considered
-      description: Describe alternatives you've considered
-      placeholder: A clear and concise description of any alternative solutions or features you've considered.
+      label: 替代方案
+      description: 你考虑过哪些替代解决方案？
+      placeholder: 描述你考虑过的其他方案...
 
   - type: textarea
-    id: additional
+    id: use-cases
     attributes:
-      label: Additional Context
-      description: Add any other context or screenshots about the feature request here.
-
-  - type: dropdown
-    id: priority
-    attributes:
-      label: Priority
-      description: How important is this feature to you?
-      options:
-        - Low - Nice to have
-        - Medium - Would be beneficial
-        - High - Important for my use case
-        - Critical - Blocking my work
+      label: 使用场景
+      description: 这个功能的具体使用场景是什么？
+      placeholder: |
+        场景 1: ...
+        场景 2: ...
+        场景 3: ...
     validations:
       required: true
+
+  - type: textarea
+    id: user-stories
+    attributes:
+      label: 用户故事
+      description: 以用户故事的形式描述这个功能
+      placeholder: |
+        作为一个 [用户角色]，
+        我希望 [功能描述]，
+        以便 [价值/目标]。
+    validations:
+      required: true
+
+  - type: dropdown
+    id: target-users
+    attributes:
+      label: 目标用户
+      description: 这个功能主要面向哪些用户？
+      multiple: true
+      options:
+        - 初学者
+        - 中级用户
+        - 高级用户
+        - 开发者
+        - 教师
+        - 学生
+        - 企业用户
+        - 个人用户
+    validations:
+      required: true
+
+  - type: textarea
+    id: mockups
+    attributes:
+      label: 界面设计/原型
+      description: 如果涉及 UI 变更，请提供设计图或原型
+      placeholder: 拖拽图片到这里或描述界面设计...
+
+  - type: textarea
+    id: technical-considerations
+    attributes:
+      label: 技术考虑
+      description: 你认为实现这个功能需要考虑哪些技术问题？
+      placeholder: |
+        - 技术难点
+        - 性能影响
+        - 兼容性问题
+        - 安全考虑
+        - 等等...
+
+  - type: dropdown
+    id: complexity
+    attributes:
+      label: 实现复杂度
+      description: 你认为这个功能的实现复杂度如何？
+      options:
+        - 简单 - 几小时到一天
+        - 中等 - 几天到一周
+        - 复杂 - 几周到一个月
+        - 很复杂 - 一个月以上
+        - 不确定
+    validations:
+      required: true
+
+  - type: textarea
+    id: acceptance-criteria
+    attributes:
+      label: 验收标准
+      description: 什么情况下可以认为这个功能已经完成？
+      placeholder: |
+        - [ ] 功能点 1
+        - [ ] 功能点 2
+        - [ ] 功能点 3
+        - [ ] 测试通过
+        - [ ] 文档更新
+
+  - type: dropdown
+    id: breaking-changes
+    attributes:
+      label: 破坏性变更
+      description: 这个功能是否可能引入破坏性变更？
+      options:
+        - 否 - 完全向后兼容
+        - 可能 - 需要仔细设计
+        - 是 - 会有破坏性变更
+        - 不确定
+    validations:
+      required: true
+
+  - type: textarea
+    id: related-features
+    attributes:
+      label: 相关功能
+      description: 这个功能与现有的哪些功能相关？
+      placeholder: 列出相关的功能或模块...
+
+  - type: textarea
+    id: additional-context
+    attributes:
+      label: 其他信息
+      description: 添加任何其他相关信息
+      placeholder: |
+        - 参考资料
+        - 竞品分析
+        - 用户反馈
+        - 等等...
 
   - type: checkboxes
     id: contribution
     attributes:
-      label: Contribution
-      description: Would you be willing to contribute this feature?
+      label: 贡献意愿
+      description: 你是否愿意帮助实现这个功能？
       options:
-        - label: I'm willing to submit a PR to implement this feature
-
+        - label: 我愿意提交 PR 来实现这个功能
+        - label: 我可以帮助设计和规划
+        - label: 我可以帮助测试功能
+        - label: 我可以帮助编写文档
+        - label: 我可以提供设计资源

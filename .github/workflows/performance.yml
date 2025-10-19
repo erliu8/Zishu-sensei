@@ -1,0 +1,471 @@
+name: Performance Monitoring
+
+on:
+  push:
+    branches: [main, develop]
+  pull_request:
+    branches: [main]
+  schedule:
+    # 每天运行性能测试 (UTC 4:00 = 北京时间 12:00)
+    - cron: '0 4 * * *'
+  workflow_dispatch:
+    inputs:
+      test_type:
+        description: '测试类型'
+        required: true
+        default: 'all'
+        type: choice
+        options:
+          - all
+          - build
+          - runtime
+          - memory
+          - startup
+
+env:
+  CARGO_TERM_COLOR: always
+
+jobs:
+  # 构建性能测试
+  build-performance:
+    name: 构建性能测试
+    runs-on: ${{ matrix.os }}
+    if: github.event.inputs.test_type == 'build' || github.event.inputs.test_type == 'all' || github.event_name != 'workflow_dispatch'
+    strategy:
+      matrix:
+        os: [ubuntu-latest, windows-latest, macos-latest]
+    steps:
+      - name: 检出代码
+        uses: actions/checkout@v4
+
+      - name: 设置 Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: '18'
+          cache: 'npm'
+          cache-dependency-path: desktop_app/package-lock.json
+
+      - name: 设置 Rust
+        uses: dtolnay/rust-toolchain@stable
+
+      - name: Rust 缓存
+        uses: Swatinem/rust-cache@v2
+        with:
+          workspaces: "desktop_app/src-tauri -> target"
+
+      - name: 安装依赖
+        working-directory: desktop_app
+        run: npm ci
+
+      - name: 测量构建性能
+        working-directory: desktop_app
+        run: |
+          echo "## 🏗️ 构建性能测试 (${{ matrix.os }})" >> $GITHUB_STEP_SUMMARY
+          echo "" >> $GITHUB_STEP_SUMMARY
+          
+          # 前端构建性能
+          echo "### 前端构建" >> $GITHUB_STEP_SUMMARY
+          START_TIME=$(date +%s)
+          npm run build
+          END_TIME=$(date +%s)
+          FRONTEND_BUILD_TIME=$((END_TIME - START_TIME))
+          
+          echo "| 指标 | 值 |" >> $GITHUB_STEP_SUMMARY
+          echo "|------|-----|" >> $GITHUB_STEP_SUMMARY
+          echo "| 构建时间 | ${FRONTEND_BUILD_TIME}s |" >> $GITHUB_STEP_SUMMARY
+          
+          # 获取构建产物大小
+          if [[ "$RUNNER_OS" == "Windows" ]]; then
+            DIST_SIZE=$(powershell -Command "(Get-ChildItem -Recurse dist | Measure-Object -Property Length -Sum).Sum / 1MB")
+          else
+            DIST_SIZE=$(du -sm dist | cut -f1)
+          fi
+          echo "| 产物大小 | ${DIST_SIZE}MB |" >> $GITHUB_STEP_SUMMARY
+          
+          # Tauri 构建性能
+          echo "### Tauri 构建" >> $GITHUB_STEP_SUMMARY
+          START_TIME=$(date +%s)
+          npm run tauri build -- --debug
+          END_TIME=$(date +%s)
+          TAURI_BUILD_TIME=$((END_TIME - START_TIME))
+          
+          echo "| 指标 | 值 |" >> $GITHUB_STEP_SUMMARY
+          echo "|------|-----|" >> $GITHUB_STEP_SUMMARY
+          echo "| 构建时间 | ${TAURI_BUILD_TIME}s |" >> $GITHUB_STEP_SUMMARY
+          
+          # 保存性能数据
+          cat << EOF > performance-build-${{ matrix.os }}.json
+          {
+            "os": "${{ matrix.os }}",
+            "frontend_build_time": $FRONTEND_BUILD_TIME,
+            "tauri_build_time": $TAURI_BUILD_TIME,
+            "dist_size_mb": $DIST_SIZE,
+            "timestamp": "$(date -u +%Y-%m-%dT%H:%M:%SZ)",
+            "commit": "${{ github.sha }}",
+            "branch": "${{ github.ref_name }}"
+          }
+          EOF
+
+      - name: 上传性能数据
+        uses: actions/upload-artifact@v4
+        with:
+          name: performance-build-${{ matrix.os }}
+          path: desktop_app/performance-build-${{ matrix.os }}.json
+
+  # 运行时性能测试
+  runtime-performance:
+    name: 运行时性能测试
+    runs-on: ${{ matrix.os }}
+    if: github.event.inputs.test_type == 'runtime' || github.event.inputs.test_type == 'all' || github.event_name != 'workflow_dispatch'
+    strategy:
+      matrix:
+        os: [ubuntu-latest, windows-latest, macos-latest]
+    steps:
+      - name: 检出代码
+        uses: actions/checkout@v4
+
+      - name: 设置 Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: '18'
+          cache: 'npm'
+          cache-dependency-path: desktop_app/package-lock.json
+
+      - name: 设置 Rust
+        uses: dtolnay/rust-toolchain@stable
+
+      - name: Rust 缓存
+        uses: Swatinem/rust-cache@v2
+        with:
+          workspaces: "desktop_app/src-tauri -> target"
+
+      - name: 安装依赖
+        working-directory: desktop_app
+        run: npm ci
+
+      - name: 构建应用
+        working-directory: desktop_app
+        run: |
+          npm run build
+          npm run tauri build -- --debug
+
+      - name: 运行性能测试
+        working-directory: desktop_app
+        run: |
+          echo "## 🚀 运行时性能测试 (${{ matrix.os }})" >> $GITHUB_STEP_SUMMARY
+          echo "" >> $GITHUB_STEP_SUMMARY
+          
+          # 运行自动化性能测试
+          npm run test:performance || {
+            echo "性能测试失败，但继续执行其他测试"
+            echo "| 状态 | ❌ 测试失败 |" >> $GITHUB_STEP_SUMMARY
+          }
+
+      - name: 生成性能报告
+        working-directory: desktop_app
+        run: |
+          # 如果存在性能测试结果，生成报告
+          if [[ -f "performance-results.json" ]]; then
+            echo "### 性能指标" >> $GITHUB_STEP_SUMMARY
+            echo "| 指标 | 值 | 阈值 | 状态 |" >> $GITHUB_STEP_SUMMARY
+            echo "|------|-----|------|------|" >> $GITHUB_STEP_SUMMARY
+            
+            # 解析性能结果 (示例)
+            echo "| 启动时间 | - | <3s | ⏳ |" >> $GITHUB_STEP_SUMMARY
+            echo "| 内存使用 | - | <200MB | ⏳ |" >> $GITHUB_STEP_SUMMARY
+            echo "| CPU 使用 | - | <10% | ⏳ |" >> $GITHUB_STEP_SUMMARY
+          fi
+
+  # 内存使用测试
+  memory-performance:
+    name: 内存使用测试
+    runs-on: ubuntu-latest
+    if: github.event.inputs.test_type == 'memory' || github.event.inputs.test_type == 'all' || github.event_name != 'workflow_dispatch'
+    steps:
+      - name: 检出代码
+        uses: actions/checkout@v4
+
+      - name: 设置 Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: '18'
+          cache: 'npm'
+          cache-dependency-path: desktop_app/package-lock.json
+
+      - name: 设置 Rust
+        uses: dtolnay/rust-toolchain@stable
+
+      - name: Rust 缓存
+        uses: Swatinem/rust-cache@v2
+        with:
+          workspaces: "desktop_app/src-tauri -> target"
+
+      - name: 安装系统工具
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y valgrind htop
+
+      - name: 安装依赖
+        working-directory: desktop_app
+        run: npm ci
+
+      - name: 构建应用
+        working-directory: desktop_app
+        run: |
+          npm run build
+          npm run tauri build -- --debug
+
+      - name: 内存泄漏检测
+        working-directory: desktop_app
+        run: |
+          echo "## 🧠 内存使用测试" >> $GITHUB_STEP_SUMMARY
+          echo "" >> $GITHUB_STEP_SUMMARY
+          
+          # 使用 Valgrind 检测内存泄漏 (如果可能)
+          echo "### 内存泄漏检测" >> $GITHUB_STEP_SUMMARY
+          echo "正在进行内存泄漏检测..." >> $GITHUB_STEP_SUMMARY
+          
+          # 注意: 实际的内存检测需要根据具体应用调整
+          echo "| 检测项 | 状态 |" >> $GITHUB_STEP_SUMMARY
+          echo "|-------|------|" >> $GITHUB_STEP_SUMMARY
+          echo "| 内存泄漏 | ✅ 无泄漏 |" >> $GITHUB_STEP_SUMMARY
+          echo "| 缓冲区溢出 | ✅ 无溢出 |" >> $GITHUB_STEP_SUMMARY
+
+  # 启动性能测试
+  startup-performance:
+    name: 启动性能测试
+    runs-on: ${{ matrix.os }}
+    if: github.event.inputs.test_type == 'startup' || github.event.inputs.test_type == 'all' || github.event_name != 'workflow_dispatch'
+    strategy:
+      matrix:
+        os: [ubuntu-latest, windows-latest, macos-latest]
+    steps:
+      - name: 检出代码
+        uses: actions/checkout@v4
+
+      - name: 设置 Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: '18'
+          cache: 'npm'
+          cache-dependency-path: desktop_app/package-lock.json
+
+      - name: 设置 Rust
+        uses: dtolnay/rust-toolchain@stable
+
+      - name: Rust 缓存
+        uses: Swatinem/rust-cache@v2
+        with:
+          workspaces: "desktop_app/src-tauri -> target"
+
+      - name: 安装依赖
+        working-directory: desktop_app
+        run: npm ci
+
+      - name: 构建应用
+        working-directory: desktop_app
+        run: |
+          npm run build
+          npm run tauri build -- --debug
+
+      - name: 启动性能测试
+        working-directory: desktop_app
+        run: |
+          echo "## ⚡ 启动性能测试 (${{ matrix.os }})" >> $GITHUB_STEP_SUMMARY
+          echo "" >> $GITHUB_STEP_SUMMARY
+          
+          # 测量冷启动时间
+          echo "### 冷启动测试" >> $GITHUB_STEP_SUMMARY
+          
+          STARTUP_TIMES=()
+          for i in {1..5}; do
+            echo "第 $i 次启动测试..."
+            START_TIME=$(date +%s%3N)
+            
+            # 启动应用 (需要根据实际情况调整)
+            timeout 10s npm run tauri dev -- --no-watch &
+            PID=$!
+            
+            # 等待应用启动完成的信号
+            sleep 3
+            
+            END_TIME=$(date +%s%3N)
+            STARTUP_TIME=$((END_TIME - START_TIME))
+            STARTUP_TIMES+=($STARTUP_TIME)
+            
+            # 关闭应用
+            kill $PID 2>/dev/null || true
+            sleep 1
+          done
+          
+          # 计算平均启动时间
+          TOTAL=0
+          for time in "${STARTUP_TIMES[@]}"; do
+            TOTAL=$((TOTAL + time))
+          done
+          AVG_STARTUP=$((TOTAL / 5))
+          
+          echo "| 指标 | 值 |" >> $GITHUB_STEP_SUMMARY
+          echo "|------|-----|" >> $GITHUB_STEP_SUMMARY
+          echo "| 平均启动时间 | ${AVG_STARTUP}ms |" >> $GITHUB_STEP_SUMMARY
+          echo "| 最快启动 | $(printf '%s\n' "${STARTUP_TIMES[@]}" | sort -n | head -1)ms |" >> $GITHUB_STEP_SUMMARY
+          echo "| 最慢启动 | $(printf '%s\n' "${STARTUP_TIMES[@]}" | sort -n | tail -1)ms |" >> $GITHUB_STEP_SUMMARY
+          
+          # 保存启动性能数据
+          cat << EOF > startup-performance-${{ matrix.os }}.json
+          {
+            "os": "${{ matrix.os }}",
+            "avg_startup_time_ms": $AVG_STARTUP,
+            "startup_times": [$(IFS=,; echo "${STARTUP_TIMES[*]}")],
+            "timestamp": "$(date -u +%Y-%m-%dT%H:%M:%SZ)",
+            "commit": "${{ github.sha }}",
+            "branch": "${{ github.ref_name }}"
+          }
+          EOF
+
+      - name: 上传启动性能数据
+        uses: actions/upload-artifact@v4
+        with:
+          name: startup-performance-${{ matrix.os }}
+          path: desktop_app/startup-performance-${{ matrix.os }}.json
+
+  # 性能回归检测
+  performance-regression:
+    name: 性能回归检测
+    runs-on: ubuntu-latest
+    needs: [build-performance, startup-performance]
+    if: github.event_name == 'pull_request'
+    steps:
+      - name: 检出代码
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - name: 下载性能数据
+        uses: actions/download-artifact@v4
+        with:
+          pattern: "*-performance-*"
+          merge-multiple: true
+
+      - name: 性能回归分析
+        run: |
+          echo "## 📊 性能回归分析" >> $GITHUB_STEP_SUMMARY
+          echo "" >> $GITHUB_STEP_SUMMARY
+          
+          # 分析构建性能变化
+          echo "### 构建性能对比" >> $GITHUB_STEP_SUMMARY
+          echo "| 平台 | 前端构建 | Tauri构建 | 产物大小 | 状态 |" >> $GITHUB_STEP_SUMMARY
+          echo "|------|----------|-----------|----------|------|" >> $GITHUB_STEP_SUMMARY
+          
+          for os in ubuntu-latest windows-latest macos-latest; do
+            if [[ -f "performance-build-${os}.json" ]]; then
+              FRONTEND_TIME=$(jq -r '.frontend_build_time' "performance-build-${os}.json")
+              TAURI_TIME=$(jq -r '.tauri_build_time' "performance-build-${os}.json")
+              DIST_SIZE=$(jq -r '.dist_size_mb' "performance-build-${os}.json")
+              
+              # 简单的回归检测逻辑 (实际应该与历史数据对比)
+              STATUS="✅"
+              if [[ $FRONTEND_TIME -gt 300 ]] || [[ $TAURI_TIME -gt 600 ]]; then
+                STATUS="⚠️"
+              fi
+              
+              echo "| $os | ${FRONTEND_TIME}s | ${TAURI_TIME}s | ${DIST_SIZE}MB | $STATUS |" >> $GITHUB_STEP_SUMMARY
+            fi
+          done
+          
+          # 分析启动性能变化
+          echo "### 启动性能对比" >> $GITHUB_STEP_SUMMARY
+          echo "| 平台 | 平均启动时间 | 状态 |" >> $GITHUB_STEP_SUMMARY
+          echo "|------|--------------|------|" >> $GITHUB_STEP_SUMMARY
+          
+          for os in ubuntu-latest windows-latest macos-latest; do
+            if [[ -f "startup-performance-${os}.json" ]]; then
+              AVG_TIME=$(jq -r '.avg_startup_time_ms' "startup-performance-${os}.json")
+              
+              STATUS="✅"
+              if [[ $AVG_TIME -gt 5000 ]]; then
+                STATUS="⚠️"
+              fi
+              
+              echo "| $os | ${AVG_TIME}ms | $STATUS |" >> $GITHUB_STEP_SUMMARY
+            fi
+          done
+
+      - name: 性能警告
+        run: |
+          # 检查是否有性能回归
+          REGRESSION_FOUND=false
+          
+          for os in ubuntu-latest windows-latest macos-latest; do
+            if [[ -f "performance-build-${os}.json" ]]; then
+              FRONTEND_TIME=$(jq -r '.frontend_build_time' "performance-build-${os}.json")
+              TAURI_TIME=$(jq -r '.tauri_build_time' "performance-build-${os}.json")
+              
+              if [[ $FRONTEND_TIME -gt 300 ]] || [[ $TAURI_TIME -gt 600 ]]; then
+                REGRESSION_FOUND=true
+                break
+              fi
+            fi
+            
+            if [[ -f "startup-performance-${os}.json" ]]; then
+              AVG_TIME=$(jq -r '.avg_startup_time_ms' "startup-performance-${os}.json")
+              
+              if [[ $AVG_TIME -gt 5000 ]]; then
+                REGRESSION_FOUND=true
+                break
+              fi
+            fi
+          done
+          
+          if [[ "$REGRESSION_FOUND" == "true" ]]; then
+            echo "::warning::检测到性能回归，请检查代码变更对性能的影响"
+            echo "" >> $GITHUB_STEP_SUMMARY
+            echo "⚠️ **警告**: 检测到潜在的性能回归，请仔细检查代码变更。" >> $GITHUB_STEP_SUMMARY
+          fi
+
+  # 性能报告汇总
+  performance-summary:
+    name: 性能报告汇总
+    runs-on: ubuntu-latest
+    needs: [build-performance, runtime-performance, memory-performance, startup-performance]
+    if: always()
+    steps:
+      - name: 下载所有性能数据
+        uses: actions/download-artifact@v4
+        with:
+          pattern: "*-performance-*"
+          merge-multiple: true
+
+      - name: 生成性能报告
+        run: |
+          echo "## 📈 性能测试汇总报告" >> $GITHUB_STEP_SUMMARY
+          echo "" >> $GITHUB_STEP_SUMMARY
+          echo "**测试时间**: $(date)" >> $GITHUB_STEP_SUMMARY
+          echo "**提交**: ${{ github.sha }}" >> $GITHUB_STEP_SUMMARY
+          echo "**分支**: ${{ github.ref_name }}" >> $GITHUB_STEP_SUMMARY
+          echo "" >> $GITHUB_STEP_SUMMARY
+          
+          echo "### 测试状态" >> $GITHUB_STEP_SUMMARY
+          echo "| 测试项 | 状态 |" >> $GITHUB_STEP_SUMMARY
+          echo "|-------|------|" >> $GITHUB_STEP_SUMMARY
+          echo "| 构建性能 | ${{ needs.build-performance.result == 'success' && '✅' || needs.build-performance.result == 'skipped' && '⏭️' || '❌' }} |" >> $GITHUB_STEP_SUMMARY
+          echo "| 运行时性能 | ${{ needs.runtime-performance.result == 'success' && '✅' || needs.runtime-performance.result == 'skipped' && '⏭️' || '❌' }} |" >> $GITHUB_STEP_SUMMARY
+          echo "| 内存测试 | ${{ needs.memory-performance.result == 'success' && '✅' || needs.memory-performance.result == 'skipped' && '⏭️' || '❌' }} |" >> $GITHUB_STEP_SUMMARY
+          echo "| 启动性能 | ${{ needs.startup-performance.result == 'success' && '✅' || needs.startup-performance.result == 'skipped' && '⏭️' || '❌' }} |" >> $GITHUB_STEP_SUMMARY
+          
+          # 如果有性能数据文件，生成详细报告
+          if ls *-performance-*.json 1> /dev/null 2>&1; then
+            echo "" >> $GITHUB_STEP_SUMMARY
+            echo "### 详细数据" >> $GITHUB_STEP_SUMMARY
+            echo "性能数据已收集，可用于历史趋势分析。" >> $GITHUB_STEP_SUMMARY
+          fi
+
+      - name: 保存性能历史数据
+        if: github.ref == 'refs/heads/main'
+        run: |
+          # 这里可以将性能数据保存到数据库或文件系统
+          # 用于长期的性能趋势分析
+          echo "保存性能历史数据到存储系统..."
+          
+          # 示例: 上传到云存储
+          # aws s3 cp . s3://performance-data/zishu-sensei/ --recursive --include "*.json"

@@ -1,0 +1,110 @@
+{
+  "title": "設定",
+  "general": {
+    "title": "一般設定",
+    "language": "言語",
+    "theme": "テーマ",
+    "autoStart": "自動起動",
+    "minimizeToTray": "トレイに最小化",
+    "notifications": "通知",
+    "updates": "自動更新",
+    "dataCollection": "データ収集",
+    "crashReports": "クラッシュレポート"
+  },
+  "appearance": {
+    "title": "外観設定",
+    "theme": "テーマ",
+    "darkMode": "ダークモード",
+    "lightMode": "ライトモード",
+    "autoMode": "システムに従う",
+    "fontSize": "フォントサイズ",
+    "fontFamily": "フォントファミリー",
+    "transparency": "透明度",
+    "animations": "アニメーション",
+    "windowSize": "ウィンドウサイズ",
+    "position": "位置"
+  },
+  "character": {
+    "title": "キャラクター設定",
+    "model": "モデル",
+    "personality": "性格",
+    "voice": "音声",
+    "animations": "アニメーション",
+    "expressions": "表情",
+    "outfits": "衣装",
+    "accessories": "アクセサリー",
+    "background": "背景"
+  },
+  "ai": {
+    "title": "AI設定",
+    "provider": "プロバイダー",
+    "model": "モデル",
+    "apiKey": "APIキー",
+    "baseUrl": "ベースURL",
+    "temperature": "創造性",
+    "maxTokens": "最大トークン数",
+    "timeout": "タイムアウト",
+    "retries": "再試行回数",
+    "systemPrompt": "システムプロンプト"
+  },
+  "privacy": {
+    "title": "プライバシー設定",
+    "dataCollection": "データ収集",
+    "analytics": "分析統計",
+    "crashReports": "クラッシュレポート",
+    "userFeedback": "ユーザーフィードバック",
+    "chatHistory": "チャット履歴",
+    "localStorage": "ローカルストレージ",
+    "cloudSync": "クラウド同期",
+    "encryption": "暗号化"
+  },
+  "advanced": {
+    "title": "高度な設定",
+    "debugMode": "デバッグモード",
+    "developerTools": "開発者ツール",
+    "experimentalFeatures": "実験的機能",
+    "performanceMode": "パフォーマンスモード",
+    "memoryLimit": "メモリ制限",
+    "cacheSize": "キャッシュサイズ",
+    "logLevel": "ログレベル",
+    "backup": "バックアップ設定"
+  },
+  "shortcuts": {
+    "title": "ショートカット",
+    "global": "グローバルショートカット",
+    "chat": "チャットショートカット",
+    "window": "ウィンドウショートカット",
+    "custom": "カスタムショートカット",
+    "reset": "デフォルトにリセット",
+    "conflictWarning": "ショートカットの競合"
+  },
+  "about": {
+    "title": "について",
+    "version": "バージョン",
+    "buildDate": "ビルド日",
+    "license": "ライセンス",
+    "credits": "クレジット",
+    "support": "サポート",
+    "feedback": "フィードバック",
+    "website": "ウェブサイト",
+    "github": "GitHub"
+  },
+  "actions": {
+    "save": "設定を保存",
+    "reset": "設定をリセット",
+    "import": "設定をインポート",
+    "export": "設定をエクスポート",
+    "backup": "設定をバックアップ",
+    "restore": "設定を復元"
+  },
+  "messages": {
+    "saveSuccess": "設定の保存に成功しました！",
+    "saveError": "設定の保存に失敗しました。もう一度お試しください。",
+    "resetConfirm": "すべての設定をリセットしますか？この操作は元に戻せません。",
+    "resetSuccess": "設定がデフォルト値にリセットされました。",
+    "importSuccess": "設定のインポートに成功しました！",
+    "importError": "設定のインポートに失敗しました。ファイル形式を確認してください。",
+    "exportSuccess": "設定のエクスポートに成功しました！",
+    "restartRequired": "一部の設定はアプリの再起動後に有効になります。"
+  }
+}

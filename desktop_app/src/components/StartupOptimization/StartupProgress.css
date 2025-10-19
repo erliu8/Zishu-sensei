@@ -1,0 +1,672 @@
+/**
+ * 启动进度组件样式
+ */
+
+.startup-progress {
+  position: fixed;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  z-index: 10000;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-family: var(--font-family, system-ui, sans-serif);
+  transition: opacity 0.5s ease;
+}
+
+.startup-progress.completed {
+  animation: fadeOut 1s ease 0.5s forwards;
+}
+
+@keyframes fadeOut {
+  to {
+    opacity: 0;
+    visibility: hidden;
+  }
+}
+
+.startup-backdrop {
+  position: absolute;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  background: linear-gradient(135deg, 
+    var(--primary-gradient-start, #667eea) 0%,
+    var(--primary-gradient-middle, #764ba2) 50%,
+    var(--primary-gradient-end, #f093fb) 100%);
+  opacity: 0.95;
+}
+
+.startup-content {
+  position: relative;
+  background: var(--background-color, #ffffff);
+  border-radius: 20px;
+  padding: 40px;
+  max-width: 600px;
+  width: 90%;
+  max-height: 80vh;
+  overflow-y: auto;
+  box-shadow: 
+    0 25px 50px rgba(0, 0, 0, 0.15),
+    0 0 0 1px rgba(255, 255, 255, 0.1);
+  backdrop-filter: blur(20px);
+  animation: slideInScale 0.8s cubic-bezier(0.34, 1.56, 0.64, 1);
+}
+
+@keyframes slideInScale {
+  0% {
+    opacity: 0;
+    transform: translateY(30px) scale(0.9);
+  }
+  100% {
+    opacity: 1;
+    transform: translateY(0) scale(1);
+  }
+}
+
+/* 启动头部 */
+.startup-header {
+  text-align: center;
+  margin-bottom: 32px;
+}
+
+.startup-logo {
+  margin-bottom: 20px;
+}
+
+.logo-animation {
+  display: inline-flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 12px;
+  transition: transform 0.3s ease;
+}
+
+.logo-animation.animating {
+  transform: scale(1.05);
+}
+
+.logo-circle {
+  width: 64px;
+  height: 64px;
+  border: 4px solid var(--primary-color, #667eea);
+  border-top: 4px solid transparent;
+  border-radius: 50%;
+  animation: logoSpin 2s linear infinite;
+  position: relative;
+}
+
+.logo-circle::before {
+  content: '';
+  position: absolute;
+  top: 50%;
+  left: 50%;
+  width: 32px;
+  height: 32px;
+  background: var(--primary-color, #667eea);
+  border-radius: 50%;
+  transform: translate(-50%, -50%);
+  opacity: 0.3;
+  animation: pulse 2s ease-in-out infinite;
+}
+
+@keyframes logoSpin {
+  0% { transform: rotate(0deg); }
+  100% { transform: rotate(360deg); }
+}
+
+@keyframes pulse {
+  0%, 100% { transform: translate(-50%, -50%) scale(1); opacity: 0.3; }
+  50% { transform: translate(-50%, -50%) scale(1.2); opacity: 0.6; }
+}
+
+.logo-text {
+  font-size: 16px;
+  font-weight: 600;
+  color: var(--primary-color, #667eea);
+  letter-spacing: 0.5px;
+}
+
+.startup-title {
+  margin: 0 0 8px 0;
+  font-size: 24px;
+  font-weight: 700;
+  color: var(--text-primary, #2d3748);
+  letter-spacing: -0.5px;
+}
+
+.startup-message {
+  margin: 0;
+  font-size: 16px;
+  color: var(--text-secondary, #718096);
+  opacity: 0.9;
+}
+
+/* 进度条 */
+.startup-progress-bar {
+  margin-bottom: 32px;
+}
+
+.progress-container {
+  position: relative;
+  width: 100%;
+  height: 12px;
+  background: var(--background-secondary, #f7fafc);
+  border-radius: 6px;
+  overflow: hidden;
+  margin-bottom: 12px;
+  box-shadow: inset 0 2px 4px rgba(0, 0, 0, 0.1);
+}
+
+.progress-fill {
+  height: 100%;
+  background: linear-gradient(90deg, 
+    var(--primary-color, #667eea) 0%,
+    var(--accent-color, #764ba2) 100%);
+  border-radius: 6px;
+  transition: width 0.6s cubic-bezier(0.4, 0, 0.2, 1);
+  position: relative;
+  box-shadow: 0 2px 8px rgba(102, 126, 234, 0.3);
+}
+
+.progress-fill.animating {
+  animation: progressGlow 0.6s ease;
+}
+
+@keyframes progressGlow {
+  0% { box-shadow: 0 2px 8px rgba(102, 126, 234, 0.3); }
+  50% { box-shadow: 0 4px 16px rgba(102, 126, 234, 0.6); }
+  100% { box-shadow: 0 2px 8px rgba(102, 126, 234, 0.3); }
+}
+
+.progress-fill::after {
+  content: '';
+  position: absolute;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  background: linear-gradient(90deg, 
+    transparent 0%,
+    rgba(255, 255, 255, 0.4) 50%,
+    transparent 100%);
+  animation: progressShimmer 2s infinite;
+}
+
+@keyframes progressShimmer {
+  0% { transform: translateX(-100%); }
+  100% { transform: translateX(100%); }
+}
+
+.progress-glow {
+  position: absolute;
+  top: -2px;
+  left: -2px;
+  right: -2px;
+  bottom: -2px;
+  background: linear-gradient(90deg, 
+    var(--primary-color, #667eea),
+    var(--accent-color, #764ba2));
+  border-radius: 8px;
+  opacity: 0.2;
+  filter: blur(4px);
+  z-index: -1;
+}
+
+.progress-text {
+  text-align: center;
+  font-size: 14px;
+  font-weight: 600;
+  color: var(--text-primary, #2d3748);
+}
+
+/* 阶段列表 */
+.startup-stages {
+  margin-bottom: 24px;
+}
+
+.stages-title {
+  margin: 0 0 16px 0;
+  font-size: 16px;
+  font-weight: 600;
+  color: var(--text-primary, #2d3748);
+}
+
+.stages-list {
+  max-height: 240px;
+  overflow-y: auto;
+  padding-right: 8px;
+}
+
+.stages-list::-webkit-scrollbar {
+  width: 4px;
+}
+
+.stages-list::-webkit-scrollbar-track {
+  background: var(--background-secondary, #f7fafc);
+  border-radius: 2px;
+}
+
+.stages-list::-webkit-scrollbar-thumb {
+  background: var(--border-color, #e2e8f0);
+  border-radius: 2px;
+}
+
+.stages-list::-webkit-scrollbar-thumb:hover {
+  background: var(--text-secondary, #718096);
+}
+
+.stage-item {
+  display: flex;
+  align-items: center;
+  padding: 12px 16px;
+  margin-bottom: 8px;
+  border-radius: 12px;
+  background: var(--background-tertiary, #fafafa);
+  border: 1px solid transparent;
+  transition: all 0.3s ease;
+  position: relative;
+  overflow: hidden;
+}
+
+.stage-item::before {
+  content: '';
+  position: absolute;
+  left: 0;
+  top: 0;
+  bottom: 0;
+  width: 4px;
+  background: var(--border-color, #e2e8f0);
+  transition: background 0.3s ease;
+}
+
+.stage-item.current {
+  background: var(--primary-background, #f0f4ff);
+  border-color: var(--primary-color, #667eea);
+  transform: translateX(4px);
+}
+
+.stage-item.current::before {
+  background: var(--primary-color, #667eea);
+}
+
+.stage-item.completed::before {
+  background: var(--success-color, #48bb78);
+}
+
+.stage-item.failed::before {
+  background: var(--error-color, #f56565);
+}
+
+.stage-item.running {
+  animation: stageRunning 2s ease-in-out infinite;
+}
+
+@keyframes stageRunning {
+  0%, 100% { background-color: var(--primary-background, #f0f4ff); }
+  50% { background-color: var(--accent-background, #f5f0ff); }
+}
+
+.stage-icon {
+  position: relative;
+  margin-right: 16px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.stage-emoji {
+  font-size: 18px;
+  margin-right: 8px;
+}
+
+.stage-status-indicator {
+  width: 8px;
+  height: 8px;
+  border-radius: 50%;
+  background: var(--border-color, #e2e8f0);
+  transition: all 0.3s ease;
+}
+
+.stage-status-indicator.pending {
+  background: var(--border-color, #e2e8f0);
+}
+
+.stage-status-indicator.running {
+  background: var(--primary-color, #667eea);
+  animation: indicatorPulse 1.5s ease-in-out infinite;
+}
+
+.stage-status-indicator.completed {
+  background: var(--success-color, #48bb78);
+}
+
+.stage-status-indicator.failed {
+  background: var(--error-color, #f56565);
+}
+
+.stage-status-indicator.skipped {
+  background: var(--warning-color, #ed8936);
+}
+
+@keyframes indicatorPulse {
+  0%, 100% { transform: scale(1); opacity: 1; }
+  50% { transform: scale(1.5); opacity: 0.7; }
+}
+
+.stage-content {
+  flex: 1;
+  min-width: 0;
+}
+
+.stage-name {
+  font-size: 14px;
+  font-weight: 500;
+  color: var(--text-primary, #2d3748);
+  margin-bottom: 2px;
+  line-height: 1.3;
+}
+
+.stage-status {
+  font-size: 12px;
+  color: var(--text-secondary, #718096);
+  display: flex;
+  align-items: center;
+  gap: 4px;
+}
+
+.stage-progress {
+  font-weight: 500;
+  color: var(--primary-color, #667eea);
+}
+
+.stage-duration {
+  font-size: 11px;
+  color: var(--text-tertiary, #a0aec0);
+  font-weight: 500;
+  background: var(--background-secondary, #f7fafc);
+  padding: 2px 6px;
+  border-radius: 4px;
+  margin-left: 8px;
+}
+
+/* 启动提示 */
+.startup-tips {
+  margin-bottom: 20px;
+}
+
+.tip-item {
+  display: flex;
+  align-items: center;
+  padding: 8px 12px;
+  margin-bottom: 6px;
+  background: var(--info-background, #ebf8ff);
+  border-radius: 8px;
+  font-size: 13px;
+  color: var(--info-text, #2b6cb0);
+  animation: tipSlideIn 0.5s ease;
+}
+
+@keyframes tipSlideIn {
+  from {
+    opacity: 0;
+    transform: translateY(10px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+/* 完成状态 */
+.startup-complete {
+  text-align: center;
+  padding: 20px;
+  animation: completeSlideIn 0.8s ease;
+}
+
+@keyframes completeSlideIn {
+  from {
+    opacity: 0;
+    transform: translateY(20px) scale(0.9);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0) scale(1);
+  }
+}
+
+.complete-icon {
+  font-size: 48px;
+  margin-bottom: 16px;
+  animation: completeBounce 1s ease;
+}
+
+@keyframes completeBounce {
+  0%, 20%, 50%, 80%, 100% { transform: translateY(0); }
+  40% { transform: translateY(-10px); }
+  60% { transform: translateY(-5px); }
+}
+
+.complete-message {
+  margin: 0 0 16px 0;
+  font-size: 18px;
+  font-weight: 600;
+  color: var(--success-color, #48bb78);
+}
+
+.complete-stats {
+  display: flex;
+  justify-content: center;
+  gap: 20px;
+  font-size: 12px;
+  color: var(--text-secondary, #718096);
+}
+
+.complete-stats span {
+  padding: 4px 8px;
+  background: var(--background-secondary, #f7fafc);
+  border-radius: 4px;
+}
+
+/* 错误状态 */
+.startup-error {
+  text-align: center;
+  padding: 20px;
+}
+
+.error-icon {
+  font-size: 48px;
+  margin-bottom: 16px;
+}
+
+.error-message {
+  margin: 0 0 20px 0;
+  font-size: 16px;
+  color: var(--error-color, #f56565);
+}
+
+.retry-button {
+  padding: 12px 24px;
+  background: var(--primary-color, #667eea);
+  color: white;
+  border: none;
+  border-radius: 8px;
+  font-size: 14px;
+  font-weight: 500;
+  cursor: pointer;
+  transition: all 0.2s ease;
+}
+
+.retry-button:hover {
+  background: var(--primary-color-hover, #5a67d8);
+  transform: translateY(-1px);
+}
+
+.retry-button:active {
+  transform: translateY(0);
+}
+
+/* 简化版样式 */
+.simple-startup-progress .startup-content {
+  padding: 32px;
+  max-width: 400px;
+}
+
+.simple-startup-progress .startup-title {
+  font-size: 20px;
+}
+
+.simple-startup-progress .logo-circle {
+  width: 48px;
+  height: 48px;
+}
+
+/* 暗色主题支持 */
+[data-theme="dark"] .startup-content {
+  background: var(--dark-background, #1a202c);
+  color: var(--dark-text-primary, #f7fafc);
+}
+
+[data-theme="dark"] .startup-title {
+  color: var(--dark-text-primary, #f7fafc);
+}
+
+[data-theme="dark"] .startup-message {
+  color: var(--dark-text-secondary, #a0aec0);
+}
+
+[data-theme="dark"] .progress-container {
+  background: var(--dark-background-secondary, #2d3748);
+}
+
+[data-theme="dark"] .stage-item {
+  background: var(--dark-background-tertiary, #2d3748);
+  border-color: var(--dark-border-color, #4a5568);
+}
+
+[data-theme="dark"] .stage-item.current {
+  background: var(--dark-primary-background, #1e2a4a);
+  border-color: var(--dark-primary-color, #4299e1);
+}
+
+[data-theme="dark"] .stage-name {
+  color: var(--dark-text-primary, #f7fafc);
+}
+
+[data-theme="dark"] .stage-status {
+  color: var(--dark-text-secondary, #a0aec0);
+}
+
+[data-theme="dark"] .stage-duration {
+  background: var(--dark-background-secondary, #2d3748);
+  color: var(--dark-text-tertiary, #718096);
+}
+
+[data-theme="dark"] .tip-item {
+  background: var(--dark-info-background, #1e3a5f);
+  color: var(--dark-info-text, #90cdf4);
+}
+
+[data-theme="dark"] .complete-stats span {
+  background: var(--dark-background-secondary, #2d3748);
+}
+
+/* 响应式设计 */
+@media (max-width: 768px) {
+  .startup-content {
+    padding: 24px 20px;
+    border-radius: 16px;
+    width: 95%;
+  }
+  
+  .startup-title {
+    font-size: 20px;
+  }
+  
+  .logo-circle {
+    width: 48px;
+    height: 48px;
+  }
+  
+  .stage-item {
+    padding: 10px 12px;
+  }
+  
+  .stage-emoji {
+    font-size: 16px;
+  }
+  
+  .complete-stats {
+    flex-direction: column;
+    gap: 8px;
+  }
+}
+
+@media (max-width: 480px) {
+  .startup-content {
+    padding: 20px 16px;
+  }
+  
+  .startup-title {
+    font-size: 18px;
+  }
+  
+  .startup-message {
+    font-size: 14px;
+  }
+  
+  .stages-list {
+    max-height: 200px;
+  }
+}
+
+/* 高对比度模式支持 */
+@media (prefers-contrast: high) {
+  .startup-content {
+    border: 2px solid var(--border-color, #e2e8f0);
+  }
+  
+  .progress-container {
+    border: 1px solid var(--border-color, #e2e8f0);
+  }
+  
+  .stage-item {
+    border-width: 2px;
+  }
+}
+
+/* 减少动画（针对用户偏好） */
+@media (prefers-reduced-motion: reduce) {
+  .startup-content {
+    animation: none;
+  }
+  
+  .logo-circle {
+    animation: none;
+    border-color: var(--primary-color, #667eea);
+  }
+  
+  .logo-circle::before {
+    animation: none;
+  }
+  
+  .progress-fill::after {
+    animation: none;
+  }
+  
+  .stage-item.running {
+    animation: none;
+  }
+  
+  .stage-status-indicator.running {
+    animation: none;
+  }
+  
+  .complete-icon {
+    animation: none;
+  }
+}

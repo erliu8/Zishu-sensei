@@ -1,0 +1,49 @@
+{
+  "title": "チャット",
+  "placeholder": "メッセージを入力...",
+  "send": "送信",
+  "clear": "チャットをクリア",
+  "history": "履歴",
+  "newChat": "新しいチャット",
+  "typing": "入力中...",
+  "thinking": "考え中...",
+  "generating": "生成中...",
+  "messages": {
+    "welcome": "こんにちは！私は紫舒先生です。お会いできて嬉しいです！何かお手伝いできることはありますか？",
+    "error": "申し訳ございません。エラーが発生しました。後でもう一度お試しください。",
+    "networkError": "ネットワーク接続に失敗しました。ネットワーク設定を確認してください。",
+    "tooLong": "メッセージが長すぎます。短くしてもう一度お試しください。",
+    "empty": "メッセージを入力してください。",
+    "rateLimited": "送信頻度が高すぎます。少し待ってからお試しください。"
+  },
+  "actions": {
+    "copy": "コピー",
+    "delete": "削除",
+    "edit": "編集",
+    "retry": "再試行",
+    "like": "いいね",
+    "dislike": "よくない",
+    "share": "共有",
+    "report": "報告"
+  },
+  "settings": {
+    "title": "チャット設定",
+    "model": "AIモデル",
+    "temperature": "創造性",
+    "maxTokens": "最大長",
+    "systemPrompt": "システムプロンプト",
+    "autoSave": "自動保存",
+    "soundEnabled": "音声通知",
+    "animationEnabled": "アニメーション効果"
+  },
+  "export": {
+    "title": "チャットをエクスポート",
+    "format": "形式",
+    "markdown": "Markdown",
+    "json": "JSON",
+    "text": "プレーンテキスト",
+    "pdf": "PDF",
+    "success": "エクスポートに成功しました！",
+    "error": "エクスポートに失敗しました。もう一度お試しください。"
+  }
+}

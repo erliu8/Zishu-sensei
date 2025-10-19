@@ -1,0 +1,664 @@
+/**
+ * 内存监控面板样式
+ */
+
+.memory-monitor-panel {
+  display: flex;
+  flex-direction: column;
+  height: 100%;
+  background-color: #fff;
+  border-radius: 8px;
+  overflow: hidden;
+}
+
+/* 标题栏 */
+.memory-panel-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 16px 20px;
+  border-bottom: 1px solid #e8e8e8;
+}
+
+.memory-panel-header h2 {
+  margin: 0;
+  font-size: 18px;
+  font-weight: 600;
+}
+
+.memory-panel-actions {
+  display: flex;
+  gap: 8px;
+}
+
+/* 状态栏 */
+.memory-status-bar {
+  display: flex;
+  align-items: center;
+  gap: 24px;
+  padding: 12px 20px;
+  background-color: #fafafa;
+  border-left: 4px solid #52c41a;
+}
+
+.memory-status-item {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.memory-status-item .label {
+  font-size: 14px;
+  color: #666;
+}
+
+.memory-status-item .value {
+  font-size: 14px;
+  font-weight: 600;
+}
+
+.memory-status-item .value.trend-increasing {
+  color: #f5222d;
+}
+
+.memory-status-item .value.trend-decreasing {
+  color: #52c41a;
+}
+
+.memory-status-item .value.trend-stable {
+  color: #1890ff;
+}
+
+/* 标签页 */
+.memory-panel-tabs {
+  display: flex;
+  border-bottom: 1px solid #e8e8e8;
+  padding: 0 20px;
+}
+
+.memory-panel-tabs .tab {
+  position: relative;
+  padding: 12px 16px;
+  border: none;
+  background: none;
+  cursor: pointer;
+  font-size: 14px;
+  color: #666;
+  transition: color 0.3s;
+}
+
+.memory-panel-tabs .tab:hover {
+  color: #1890ff;
+}
+
+.memory-panel-tabs .tab.active {
+  color: #1890ff;
+  font-weight: 600;
+}
+
+.memory-panel-tabs .tab.active::after {
+  content: '';
+  position: absolute;
+  bottom: -1px;
+  left: 0;
+  right: 0;
+  height: 2px;
+  background-color: #1890ff;
+}
+
+.memory-panel-tabs .tab .badge {
+  display: inline-block;
+  margin-left: 4px;
+  padding: 0 6px;
+  border-radius: 10px;
+  background-color: #f5222d;
+  color: #fff;
+  font-size: 12px;
+  line-height: 18px;
+}
+
+/* 标签页内容 */
+.memory-panel-content {
+  flex: 1;
+  padding: 20px;
+  overflow-y: auto;
+}
+
+/* 通用卡片 */
+.memory-card {
+  margin-bottom: 16px;
+  padding: 16px;
+  border: 1px solid #e8e8e8;
+  border-radius: 8px;
+  background-color: #fff;
+}
+
+.memory-card h3 {
+  margin: 0 0 16px 0;
+  font-size: 16px;
+  font-weight: 600;
+}
+
+/* 信息网格 */
+.memory-info-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+  gap: 12px;
+  margin-bottom: 12px;
+}
+
+.info-item {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+}
+
+.info-item .info-label {
+  font-size: 14px;
+  color: #666;
+}
+
+.info-item .info-value {
+  font-size: 14px;
+  font-weight: 600;
+  color: #333;
+}
+
+/* 进度条 */
+.memory-progress-bar {
+  height: 8px;
+  background-color: #f0f0f0;
+  border-radius: 4px;
+  overflow: hidden;
+}
+
+.memory-progress-fill {
+  height: 100%;
+  transition: width 0.3s ease, background-color 0.3s ease;
+}
+
+/* 概览标签 */
+.overview-tab {
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+}
+
+/* 内存池标签 */
+.pools-tab {
+  display: flex;
+  flex-direction: column;
+}
+
+.pools-list {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(300px, 1fr));
+  gap: 16px;
+}
+
+.pool-card {
+  padding: 16px;
+  border: 1px solid #e8e8e8;
+  border-radius: 8px;
+  background-color: #fff;
+}
+
+.pool-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 12px;
+}
+
+.pool-header h4 {
+  margin: 0;
+  font-size: 14px;
+  font-weight: 600;
+}
+
+.pool-usage {
+  font-size: 16px;
+  font-weight: 700;
+  color: #1890ff;
+}
+
+.pool-stats {
+  margin-bottom: 12px;
+}
+
+.pool-stat {
+  display: flex;
+  justify-content: space-between;
+  margin-bottom: 8px;
+  font-size: 13px;
+}
+
+.pool-stat .label {
+  color: #666;
+}
+
+.pool-stat .value {
+  font-weight: 600;
+  color: #333;
+}
+
+.pool-progress {
+  height: 6px;
+  background-color: #f0f0f0;
+  border-radius: 3px;
+  overflow: hidden;
+}
+
+.pool-progress-fill {
+  height: 100%;
+  transition: width 0.3s ease, background-color 0.3s ease;
+}
+
+/* 泄漏检测标签 */
+.leaks-tab {
+  display: flex;
+  flex-direction: column;
+}
+
+.leaks-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 16px;
+}
+
+.leaks-header h3 {
+  margin: 0;
+  font-size: 16px;
+  font-weight: 600;
+}
+
+.leaks-list {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+}
+
+.leak-card {
+  padding: 16px;
+  border: 1px solid #e8e8e8;
+  border-left: 4px solid #f5222d;
+  border-radius: 8px;
+  background-color: #fff;
+}
+
+.leak-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 12px;
+}
+
+.leak-header h4 {
+  margin: 0;
+  font-size: 14px;
+  font-weight: 600;
+}
+
+.leak-severity {
+  padding: 2px 8px;
+  border-radius: 4px;
+  background-color: rgba(245, 34, 45, 0.1);
+  font-size: 12px;
+  font-weight: 600;
+}
+
+.leak-info {
+  margin-bottom: 12px;
+}
+
+.leak-detail {
+  display: flex;
+  justify-content: space-between;
+  margin-bottom: 6px;
+  font-size: 13px;
+}
+
+.leak-detail .label {
+  color: #666;
+}
+
+.leak-detail .value {
+  font-weight: 600;
+  color: #333;
+}
+
+.leak-suggestion {
+  padding: 8px;
+  background-color: #fffbe6;
+  border-left: 3px solid #faad14;
+  font-size: 13px;
+  color: #666;
+}
+
+.leak-suggestion strong {
+  color: #333;
+}
+
+/* 快照历史标签 */
+.snapshots-tab {
+  display: flex;
+  flex-direction: column;
+}
+
+.snapshots-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 16px;
+}
+
+.snapshots-header h3 {
+  margin: 0;
+  font-size: 16px;
+  font-weight: 600;
+}
+
+.snapshots-list {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+.snapshot-card {
+  padding: 12px 16px;
+  border: 1px solid #e8e8e8;
+  border-radius: 8px;
+  background-color: #fff;
+  transition: box-shadow 0.3s;
+}
+
+.snapshot-card:hover {
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+}
+
+.snapshot-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 8px;
+}
+
+.snapshot-time {
+  font-size: 13px;
+  color: #666;
+}
+
+.snapshot-memory {
+  font-size: 14px;
+  font-weight: 600;
+  color: #1890ff;
+}
+
+.snapshot-stats {
+  display: flex;
+  gap: 24px;
+}
+
+.snapshot-stat {
+  display: flex;
+  gap: 8px;
+  font-size: 12px;
+}
+
+.snapshot-stat .label {
+  color: #999;
+}
+
+.snapshot-stat .value {
+  color: #666;
+  font-weight: 600;
+}
+
+/* 设置标签 */
+.settings-tab {
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+}
+
+.settings-form {
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+}
+
+.form-group {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+}
+
+.form-group label {
+  font-size: 14px;
+  color: #333;
+}
+
+.form-group input[type='number'] {
+  width: 120px;
+  padding: 6px 12px;
+  border: 1px solid #d9d9d9;
+  border-radius: 4px;
+  font-size: 14px;
+}
+
+.form-group input[type='number']:focus {
+  outline: none;
+  border-color: #1890ff;
+  box-shadow: 0 0 0 2px rgba(24, 144, 255, 0.2);
+}
+
+.optimization-status {
+  font-size: 14px;
+  line-height: 1.8;
+}
+
+.optimization-status .description {
+  color: #666;
+}
+
+/* 空状态 */
+.empty-state {
+  padding: 60px 20px;
+  text-align: center;
+}
+
+.empty-state p {
+  margin: 0;
+  font-size: 14px;
+  color: #999;
+}
+
+/* 按钮 */
+.btn {
+  padding: 6px 16px;
+  border: none;
+  border-radius: 4px;
+  font-size: 14px;
+  cursor: pointer;
+  transition: all 0.3s;
+}
+
+.btn:disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
+}
+
+.btn-primary {
+  background-color: #1890ff;
+  color: #fff;
+}
+
+.btn-primary:hover:not(:disabled) {
+  background-color: #40a9ff;
+}
+
+.btn-secondary {
+  background-color: #fff;
+  color: #1890ff;
+  border: 1px solid #1890ff;
+}
+
+.btn-secondary:hover:not(:disabled) {
+  background-color: #f0f7ff;
+}
+
+/* 暗色主题 */
+@media (prefers-color-scheme: dark) {
+  .memory-monitor-panel {
+    background-color: #1f1f1f;
+  }
+
+  .memory-panel-header {
+    border-bottom-color: #333;
+  }
+
+  .memory-panel-header h2 {
+    color: #e8e8e8;
+  }
+
+  .memory-status-bar {
+    background-color: #2a2a2a;
+  }
+
+  .memory-status-item .label {
+    color: #999;
+  }
+
+  .memory-status-item .value {
+    color: #e8e8e8;
+  }
+
+  .memory-panel-tabs {
+    border-bottom-color: #333;
+  }
+
+  .memory-panel-tabs .tab {
+    color: #999;
+  }
+
+  .memory-panel-tabs .tab:hover {
+    color: #40a9ff;
+  }
+
+  .memory-panel-tabs .tab.active {
+    color: #40a9ff;
+  }
+
+  .memory-card,
+  .pool-card,
+  .leak-card,
+  .snapshot-card {
+    background-color: #2a2a2a;
+    border-color: #333;
+  }
+
+  .memory-card h3,
+  .pool-header h4,
+  .leak-header h4 {
+    color: #e8e8e8;
+  }
+
+  .info-item .info-label,
+  .pool-stat .label,
+  .leak-detail .label,
+  .snapshot-time,
+  .snapshot-stat .label {
+    color: #999;
+  }
+
+  .info-item .info-value,
+  .pool-stat .value,
+  .leak-detail .value,
+  .snapshot-stat .value {
+    color: #e8e8e8;
+  }
+
+  .memory-progress-bar,
+  .pool-progress {
+    background-color: #3a3a3a;
+  }
+
+  .leak-suggestion {
+    background-color: #3a3a3a;
+    color: #999;
+  }
+
+  .form-group label {
+    color: #e8e8e8;
+  }
+
+  .form-group input[type='number'] {
+    background-color: #2a2a2a;
+    border-color: #444;
+    color: #e8e8e8;
+  }
+
+  .optimization-status {
+    color: #e8e8e8;
+  }
+
+  .optimization-status .description {
+    color: #999;
+  }
+
+  .empty-state p {
+    color: #666;
+  }
+
+  .btn-secondary {
+    background-color: #2a2a2a;
+    color: #40a9ff;
+    border-color: #40a9ff;
+  }
+
+  .btn-secondary:hover:not(:disabled) {
+    background-color: #3a3a3a;
+  }
+}
+
+/* 响应式 */
+@media (max-width: 768px) {
+  .memory-panel-header {
+    flex-direction: column;
+    align-items: flex-start;
+    gap: 12px;
+  }
+
+  .memory-status-bar {
+    flex-wrap: wrap;
+    gap: 12px;
+  }
+
+  .memory-panel-tabs {
+    overflow-x: auto;
+  }
+
+  .memory-info-grid {
+    grid-template-columns: 1fr;
+  }
+
+  .pools-list {
+    grid-template-columns: 1fr;
+  }
+
+  .snapshots-list {
+    gap: 12px;
+  }
+
+  .form-group {
+    flex-direction: column;
+    align-items: flex-start;
+    gap: 8px;
+  }
+
+  .form-group input[type='number'] {
+    width: 100%;
+  }
+}
+

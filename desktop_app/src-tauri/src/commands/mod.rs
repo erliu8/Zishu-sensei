@@ -89,6 +89,33 @@ pub mod shortcuts;
 /// 模型配置管理命令
 pub mod model_config;
 
+/// 文件管理命令
+pub mod file;
+
+/// 加密相关命令
+pub mod encryption;
+
+/// 权限管理命令
+pub mod permission;
+
+/// 隐私保护命令
+pub mod privacy;
+
+/// 内存管理命令
+pub mod memory;
+
+/// 渲染性能命令
+pub mod rendering;
+
+/// 语言设置命令
+pub mod language;
+
+/// 区域适配命令
+pub mod region;
+
+/// 性能监控命令
+pub mod performance;
+
 // ================================
 // 公共命令类型定义
 // ================================
@@ -618,6 +645,21 @@ pub use shortcuts::*;
 
 // 模型配置命令
 pub use model_config::*;
+
+// 加密命令
+pub use encryption::*;
+
+// 权限命令
+pub use permission::*;
+
+// 隐私命令
+pub use privacy::*;
+
+// 语言命令
+pub use language::*;
+
+// 区域命令
+pub use region::*;
 
 // ================================
 // 测试模块

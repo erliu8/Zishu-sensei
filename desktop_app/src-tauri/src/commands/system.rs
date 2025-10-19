@@ -612,6 +612,269 @@ pub async fn read_from_clipboard(
 }
 
 // ================================
+// 系统托盘命令
+// ================================
+
+/// 更新托盘图标
+#[tauri::command]
+pub async fn update_tray_icon(
+    icon_path: String,
+    app_handle: AppHandle,
+) -> Result<CommandResponse<bool>, String> {
+    info!("更新托盘图标: {}", icon_path);
+    
+    use crate::events::tray::helpers;
+    
+    match helpers::update_tray_icon(&app_handle, &icon_path) {
+        Ok(_) => {
+            Ok(CommandResponse::success_with_message(
+                true,
+                "托盘图标已更新".to_string(),
+            ))
+        }
+        Err(e) => {
+            error!("更新托盘图标失败: {}", e);
+            Ok(CommandResponse::error(e))
+        }
+    }
+}
+
+/// 更新托盘工具提示
+#[tauri::command]
+pub async fn update_tray_tooltip(
+    tooltip: String,
+    app_handle: AppHandle,
+) -> Result<CommandResponse<bool>, String> {
+    info!("更新托盘提示: {}", tooltip);
+    
+    use crate::events::tray::helpers;
+    
+    match helpers::update_tray_tooltip(&app_handle, &tooltip) {
+        Ok(_) => {
+            Ok(CommandResponse::success_with_message(
+                true,
+                "托盘提示已更新".to_string(),
+            ))
+        }
+        Err(e) => {
+            error!("更新托盘提示失败: {}", e);
+            Ok(CommandResponse::error(e))
+        }
+    }
+}
+
+/// 显示托盘通知
+#[tauri::command]
+pub async fn show_tray_notification(
+    title: String,
+    body: String,
+    app_handle: AppHandle,
+) -> Result<CommandResponse<bool>, String> {
+    info!("显示托盘通知: {}", title);
+    
+    use tauri::api::notification::Notification;
+    
+    match Notification::new(&app_handle.config().tauri.bundle.identifier)
+        .title(&title)
+        .body(&body)
+        .show()
+    {
+        Ok(_) => {
+            Ok(CommandResponse::success_with_message(
+                true,
+                "通知已显示".to_string(),
+            ))
+        }
+        Err(e) => {
+            error!("显示通知失败: {}", e);
+            Ok(CommandResponse::error(format!("显示通知失败: {}", e)))
+        }
+    }
+}
+
+/// 更新托盘状态
+#[tauri::command]
+pub async fn update_tray_status(
+    status: String,
+    tooltip: Option<String>,
+    state: State<'_, AppState>,
+    app_handle: AppHandle,
+) -> Result<CommandResponse<bool>, String> {
+    info!("更新托盘状态: {}", status);
+    
+    use crate::state::tray_state::TrayStatus;
+    
+    // 解析状态
+    let tray_status = match status.as_str() {
+        "idle" => TrayStatus::Idle,
+        "active" => TrayStatus::Active,
+        "busy" => TrayStatus::Busy,
+        "notification" => TrayStatus::Notification,
+        "error" => TrayStatus::Error,
+        _ => TrayStatus::Idle,
+    };
+    
+    // 更新状态
+    state.tray.update_status(tray_status.clone());
+    
+    // 更新托盘提示
+    if let Some(tooltip_text) = tooltip {
+        use crate::events::tray::helpers;
+        if let Err(e) = helpers::update_tray_tooltip(&app_handle, &tooltip_text) {
+            warn!("更新托盘提示失败: {}", e);
+        }
+    }
+    
+    // 发送状态更新事件到前端
+    if let Err(e) = app_handle.emit_all("tray-status-changed", &tray_status) {
+        warn!("发送托盘状态变更事件失败: {}", e);
+    }
+    
+    Ok(CommandResponse::success_with_message(
+        true,
+        format!("托盘状态已更新为: {}", status),
+    ))
+}
+
+/// 获取托盘状态
+#[tauri::command]
+pub async fn get_tray_status(
+    state: State<'_, AppState>,
+) -> Result<CommandResponse<serde_json::Value>, String> {
+    info!("获取托盘状态");
+    
+    let status = state.tray.get_status();
+    let stats = state.tray.get_stats();
+    
+    Ok(CommandResponse::success(serde_json::json!({
+        "status": status,
+        "stats": stats,
+    })))
+}
+
+/// 添加最近对话
+#[tauri::command]
+pub async fn add_recent_conversation(
+    conversation_id: String,
+    title: String,
+    preview: String,
+    state: State<'_, AppState>,
+) -> Result<CommandResponse<bool>, String> {
+    info!("添加最近对话: {}", conversation_id);
+    
+    state.tray.add_recent_conversation(conversation_id, title, preview);
+    
+    Ok(CommandResponse::success_with_message(
+        true,
+        "已添加到最近对话".to_string(),
+    ))
+}
+
+/// 获取最近对话
+#[tauri::command]
+pub async fn get_recent_conversations(
+    limit: Option<usize>,
+    state: State<'_, AppState>,
+) -> Result<CommandResponse<Vec<serde_json::Value>>, String> {
+    info!("获取最近对话");
+    
+    let conversations = state.tray.get_recent_conversations(limit.unwrap_or(5));
+    
+    let result: Vec<serde_json::Value> = conversations
+        .iter()
+        .map(|conv| serde_json::json!({
+            "id": conv.id,
+            "title": conv.title,
+            "preview": conv.preview,
+            "timestamp": conv.timestamp,
+        }))
+        .collect();
+    
+    Ok(CommandResponse::success(result))
+}
+
+/// 清空最近对话
+#[tauri::command]
+pub async fn clear_recent_conversations(
+    state: State<'_, AppState>,
+) -> Result<CommandResponse<bool>, String> {
+    info!("清空最近对话");
+    
+    state.tray.clear_recent_conversations();
+    
+    Ok(CommandResponse::success_with_message(
+        true,
+        "已清空最近对话".to_string(),
+    ))
+}
+
+// ================================
+// 系统监控命令
+// ================================
+
+/// 获取系统监控信息
+#[tauri::command]
+pub async fn get_system_monitor_stats(
+    app_handle: AppHandle,
+) -> Result<CommandResponse<serde_json::Value>, String> {
+    info!("获取系统监控信息");
+    
+    use crate::system_monitor;
+    
+    match system_monitor::get_system_monitor_stats(&app_handle) {
+        Some(stats) => {
+            Ok(CommandResponse::success(serde_json::to_value(stats).unwrap_or_default()))
+        }
+        None => {
+            warn!("系统监控未初始化");
+            Ok(CommandResponse::error("系统监控未初始化".to_string()))
+        }
+    }
+}
+
+/// 启动系统监控
+#[tauri::command]
+pub async fn start_system_monitor(
+    app_handle: AppHandle,
+) -> Result<CommandResponse<bool>, String> {
+    info!("启动系统监控");
+    
+    match crate::system_monitor::start_system_monitor(app_handle).await {
+        Ok(_) => {
+            Ok(CommandResponse::success_with_message(
+                true,
+                "系统监控已启动".to_string(),
+            ))
+        }
+        Err(e) => {
+            error!("启动系统监控失败: {}", e);
+            Ok(CommandResponse::error(format!("启动系统监控失败: {}", e)))
+        }
+    }
+}
+
+/// 停止系统监控
+#[tauri::command]
+pub async fn stop_system_monitor(
+    app_handle: AppHandle,
+) -> Result<CommandResponse<bool>, String> {
+    info!("停止系统监控");
+    
+    match crate::system_monitor::stop_system_monitor(&app_handle).await {
+        Ok(_) => {
+            Ok(CommandResponse::success_with_message(
+                true,
+                "系统监控已停止".to_string(),
+            ))
+        }
+        Err(e) => {
+            error!("停止系统监控失败: {}", e);
+            Ok(CommandResponse::error(format!("停止系统监控失败: {}", e)))
+        }
+    }
+}
+
+// ================================
 // Logger Commands
 // ================================
 

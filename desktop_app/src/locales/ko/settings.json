@@ -1,0 +1,110 @@
+{
+  "title": "설정",
+  "general": {
+    "title": "일반 설정",
+    "language": "언어",
+    "theme": "테마",
+    "autoStart": "자동 시작",
+    "minimizeToTray": "트레이로 최소화",
+    "notifications": "알림",
+    "updates": "자동 업데이트",
+    "dataCollection": "데이터 수집",
+    "crashReports": "충돌 보고서"
+  },
+  "appearance": {
+    "title": "외관 설정",
+    "theme": "테마",
+    "darkMode": "다크 모드",
+    "lightMode": "라이트 모드",
+    "autoMode": "시스템 따라가기",
+    "fontSize": "글꼴 크기",
+    "fontFamily": "글꼴",
+    "transparency": "투명도",
+    "animations": "애니메이션",
+    "windowSize": "창 크기",
+    "position": "위치"
+  },
+  "character": {
+    "title": "캐릭터 설정",
+    "model": "모델",
+    "personality": "성격",
+    "voice": "음성",
+    "animations": "애니메이션",
+    "expressions": "표정",
+    "outfits": "의상",
+    "accessories": "액세서리",
+    "background": "배경"
+  },
+  "ai": {
+    "title": "AI 설정",
+    "provider": "제공업체",
+    "model": "모델",
+    "apiKey": "API 키",
+    "baseUrl": "기본 URL",
+    "temperature": "창의성",
+    "maxTokens": "최대 토큰 수",
+    "timeout": "타임아웃",
+    "retries": "재시도 횟수",
+    "systemPrompt": "시스템 프롬프트"
+  },
+  "privacy": {
+    "title": "개인정보 설정",
+    "dataCollection": "데이터 수집",
+    "analytics": "분석 통계",
+    "crashReports": "충돌 보고서",
+    "userFeedback": "사용자 피드백",
+    "chatHistory": "채팅 기록",
+    "localStorage": "로컬 저장소",
+    "cloudSync": "클라우드 동기화",
+    "encryption": "암호화"
+  },
+  "advanced": {
+    "title": "고급 설정",
+    "debugMode": "디버그 모드",
+    "developerTools": "개발자 도구",
+    "experimentalFeatures": "실험적 기능",
+    "performanceMode": "성능 모드",
+    "memoryLimit": "메모리 제한",
+    "cacheSize": "캐시 크기",
+    "logLevel": "로그 레벨",
+    "backup": "백업 설정"
+  },
+  "shortcuts": {
+    "title": "단축키",
+    "global": "전역 단축키",
+    "chat": "채팅 단축키",
+    "window": "창 단축키",
+    "custom": "사용자 정의 단축키",
+    "reset": "기본값으로 재설정",
+    "conflictWarning": "단축키 충돌"
+  },
+  "about": {
+    "title": "정보",
+    "version": "버전",
+    "buildDate": "빌드 날짜",
+    "license": "라이선스",
+    "credits": "크레딧",
+    "support": "지원",
+    "feedback": "피드백",
+    "website": "웹사이트",
+    "github": "GitHub"
+  },
+  "actions": {
+    "save": "설정 저장",
+    "reset": "설정 재설정",
+    "import": "설정 가져오기",
+    "export": "설정 내보내기",
+    "backup": "설정 백업",
+    "restore": "설정 복원"
+  },
+  "messages": {
+    "saveSuccess": "설정이 성공적으로 저장되었습니다!",
+    "saveError": "설정 저장에 실패했습니다. 다시 시도해 주세요.",
+    "resetConfirm": "모든 설정을 재설정하시겠습니까? 이 작업은 되돌릴 수 없습니다.",
+    "resetSuccess": "설정이 기본값으로 재설정되었습니다.",
+    "importSuccess": "설정을 성공적으로 가져왔습니다!",
+    "importError": "설정 가져오기에 실패했습니다. 파일 형식을 확인해 주세요.",
+    "exportSuccess": "설정을 성공적으로 내보냈습니다!",
+    "restartRequired": "일부 설정은 앱을 재시작한 후에 적용됩니다."
+  }
+}

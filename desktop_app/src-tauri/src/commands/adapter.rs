@@ -512,6 +512,398 @@ pub async fn get_adapter_status(
 }
 
 // ================================
+// 本地适配器管理命令
+// ================================
+
+use crate::database::get_database;
+use crate::database::adapter::{InstalledAdapter, AdapterInstallStatus, AdapterVersion, AdapterDependency, AdapterPermission};
+
+/// 获取本地已安装的适配器列表
+#[tauri::command]
+pub async fn get_installed_adapters(
+    app_handle: AppHandle,
+    state: State<'_, AppState>,
+) -> Result<CommandResponse<Vec<InstalledAdapter>>, String> {
+    info!("获取本地已安装的适配器列表");
+    
+    let db = get_database().ok_or("数据库未初始化")?;
+    
+    match db.adapter_registry.get_all_adapters() {
+        Ok(adapters) => {
+            info!("成功获取 {} 个已安装适配器", adapters.len());
+            Ok(CommandResponse::success(adapters))
+        }
+        Err(e) => {
+            error!("获取已安装适配器失败: {}", e);
+            Ok(CommandResponse::error(format!("获取已安装适配器失败: {}", e)))
+        }
+    }
+}
+
+/// 获取已启用的适配器列表
+#[tauri::command]
+pub async fn get_enabled_adapters(
+    app_handle: AppHandle,
+    state: State<'_, AppState>,
+) -> Result<CommandResponse<Vec<InstalledAdapter>>, String> {
+    info!("获取已启用的适配器列表");
+    
+    let db = get_database().ok_or("数据库未初始化")?;
+    
+    match db.adapter_registry.get_enabled_adapters() {
+        Ok(adapters) => {
+            info!("成功获取 {} 个已启用适配器", adapters.len());
+            Ok(CommandResponse::success(adapters))
+        }
+        Err(e) => {
+            error!("获取已启用适配器失败: {}", e);
+            Ok(CommandResponse::error(format!("获取已启用适配器失败: {}", e)))
+        }
+    }
+}
+
+/// 获取单个已安装适配器的详情
+#[tauri::command]
+pub async fn get_installed_adapter(
+    adapter_id: String,
+    app_handle: AppHandle,
+    state: State<'_, AppState>,
+) -> Result<CommandResponse<InstalledAdapter>, String> {
+    info!("获取已安装适配器详情: {}", adapter_id);
+    
+    let db = get_database().ok_or("数据库未初始化")?;
+    
+    match db.adapter_registry.get_adapter(&adapter_id) {
+        Ok(Some(adapter)) => {
+            info!("成功获取适配器详情: {}", adapter.name);
+            Ok(CommandResponse::success(adapter))
+        }
+        Ok(None) => {
+            warn!("适配器不存在: {}", adapter_id);
+            Ok(CommandResponse::error(format!("适配器不存在: {}", adapter_id)))
+        }
+        Err(e) => {
+            error!("获取适配器详情失败: {}", e);
+            Ok(CommandResponse::error(format!("获取适配器详情失败: {}", e)))
+        }
+    }
+}
+
+/// 启用/禁用适配器
+#[tauri::command]
+pub async fn toggle_adapter(
+    adapter_id: String,
+    enabled: bool,
+    app_handle: AppHandle,
+    state: State<'_, AppState>,
+) -> Result<CommandResponse<bool>, String> {
+    info!("{}适配器: {}", if enabled { "启用" } else { "禁用" }, adapter_id);
+    
+    let db = get_database().ok_or("数据库未初始化")?;
+    
+    match db.adapter_registry.set_adapter_enabled(&adapter_id, enabled) {
+        Ok(_) => {
+            info!("适配器 {} 已{}", adapter_id, if enabled { "启用" } else { "禁用" });
+            Ok(CommandResponse::success_with_message(
+                true,
+                format!("适配器已{}", if enabled { "启用" } else { "禁用" }),
+            ))
+        }
+        Err(e) => {
+            error!("{}适配器失败: {}", if enabled { "启用" } else { "禁用" }, e);
+            Ok(CommandResponse::error(format!("操作失败: {}", e)))
+        }
+    }
+}
+
+/// 删除已安装的适配器
+#[tauri::command]
+pub async fn remove_installed_adapter(
+    adapter_id: String,
+    app_handle: AppHandle,
+    state: State<'_, AppState>,
+) -> Result<CommandResponse<bool>, String> {
+    info!("删除已安装的适配器: {}", adapter_id);
+    
+    let db = get_database().ok_or("数据库未初始化")?;
+    
+    // 获取适配器信息
+    let adapter = match db.adapter_registry.get_adapter(&adapter_id) {
+        Ok(Some(adapter)) => adapter,
+        Ok(None) => {
+            return Ok(CommandResponse::error(format!("适配器不存在: {}", adapter_id)));
+        }
+        Err(e) => {
+            return Ok(CommandResponse::error(format!("获取适配器信息失败: {}", e)));
+        }
+    };
+    
+    // 删除文件
+    if std::path::Path::new(&adapter.install_path).exists() {
+        if let Err(e) = std::fs::remove_dir_all(&adapter.install_path) {
+            warn!("删除适配器文件失败: {}", e);
+        }
+    }
+    
+    // 从数据库删除
+    match db.adapter_registry.delete_adapter(&adapter_id) {
+        Ok(_) => {
+            info!("适配器 {} 已删除", adapter_id);
+            Ok(CommandResponse::success_with_message(
+                true,
+                "适配器已删除".to_string(),
+            ))
+        }
+        Err(e) => {
+            error!("删除适配器失败: {}", e);
+            Ok(CommandResponse::error(format!("删除适配器失败: {}", e)))
+        }
+    }
+}
+
+// ================================
+// 版本管理命令
+// ================================
+
+/// 获取适配器的版本历史
+#[tauri::command]
+pub async fn get_adapter_versions(
+    adapter_id: String,
+    app_handle: AppHandle,
+    state: State<'_, AppState>,
+) -> Result<CommandResponse<Vec<AdapterVersion>>, String> {
+    info!("获取适配器版本历史: {}", adapter_id);
+    
+    let db = get_database().ok_or("数据库未初始化")?;
+    
+    match db.adapter_registry.get_versions(&adapter_id) {
+        Ok(versions) => {
+            info!("成功获取 {} 个版本记录", versions.len());
+            Ok(CommandResponse::success(versions))
+        }
+        Err(e) => {
+            error!("获取版本历史失败: {}", e);
+            Ok(CommandResponse::error(format!("获取版本历史失败: {}", e)))
+        }
+    }
+}
+
+/// 添加适配器版本记录
+#[tauri::command]
+pub async fn add_adapter_version(
+    version: AdapterVersion,
+    app_handle: AppHandle,
+    state: State<'_, AppState>,
+) -> Result<CommandResponse<bool>, String> {
+    info!("添加适配器版本: {} - {}", version.adapter_id, version.version);
+    
+    let db = get_database().ok_or("数据库未初始化")?;
+    
+    match db.adapter_registry.add_version(version) {
+        Ok(_) => {
+            info!("版本记录添加成功");
+            Ok(CommandResponse::success_with_message(
+                true,
+                "版本记录已添加".to_string(),
+            ))
+        }
+        Err(e) => {
+            error!("添加版本记录失败: {}", e);
+            Ok(CommandResponse::error(format!("添加版本记录失败: {}", e)))
+        }
+    }
+}
+
+// ================================
+// 依赖管理命令
+// ================================
+
+/// 获取适配器的依赖列表
+#[tauri::command]
+pub async fn get_adapter_dependencies(
+    adapter_id: String,
+    app_handle: AppHandle,
+    state: State<'_, AppState>,
+) -> Result<CommandResponse<Vec<AdapterDependency>>, String> {
+    info!("获取适配器依赖: {}", adapter_id);
+    
+    let db = get_database().ok_or("数据库未初始化")?;
+    
+    match db.adapter_registry.get_dependencies(&adapter_id) {
+        Ok(dependencies) => {
+            info!("成功获取 {} 个依赖", dependencies.len());
+            Ok(CommandResponse::success(dependencies))
+        }
+        Err(e) => {
+            error!("获取依赖列表失败: {}", e);
+            Ok(CommandResponse::error(format!("获取依赖列表失败: {}", e)))
+        }
+    }
+}
+
+/// 添加适配器依赖
+#[tauri::command]
+pub async fn add_adapter_dependency(
+    dependency: AdapterDependency,
+    app_handle: AppHandle,
+    state: State<'_, AppState>,
+) -> Result<CommandResponse<bool>, String> {
+    info!("添加适配器依赖: {} -> {}", dependency.adapter_id, dependency.dependency_id);
+    
+    let db = get_database().ok_or("数据库未初始化")?;
+    
+    match db.adapter_registry.add_dependency(dependency) {
+        Ok(_) => {
+            info!("依赖添加成功");
+            Ok(CommandResponse::success_with_message(
+                true,
+                "依赖已添加".to_string(),
+            ))
+        }
+        Err(e) => {
+            error!("添加依赖失败: {}", e);
+            Ok(CommandResponse::error(format!("添加依赖失败: {}", e)))
+        }
+    }
+}
+
+/// 删除适配器依赖
+#[tauri::command]
+pub async fn remove_adapter_dependency(
+    adapter_id: String,
+    dependency_id: String,
+    app_handle: AppHandle,
+    state: State<'_, AppState>,
+) -> Result<CommandResponse<bool>, String> {
+    info!("删除适配器依赖: {} -> {}", adapter_id, dependency_id);
+    
+    let db = get_database().ok_or("数据库未初始化")?;
+    
+    match db.adapter_registry.delete_dependency(&adapter_id, &dependency_id) {
+        Ok(_) => {
+            info!("依赖删除成功");
+            Ok(CommandResponse::success_with_message(
+                true,
+                "依赖已删除".to_string(),
+            ))
+        }
+        Err(e) => {
+            error!("删除依赖失败: {}", e);
+            Ok(CommandResponse::error(format!("删除依赖失败: {}", e)))
+        }
+    }
+}
+
+// ================================
+// 权限管理命令
+// ================================
+
+/// 获取适配器的权限列表
+#[tauri::command]
+pub async fn get_adapter_permissions(
+    adapter_id: String,
+    app_handle: AppHandle,
+    state: State<'_, AppState>,
+) -> Result<CommandResponse<Vec<AdapterPermission>>, String> {
+    info!("获取适配器权限: {}", adapter_id);
+    
+    let db = get_database().ok_or("数据库未初始化")?;
+    
+    match db.adapter_registry.get_permissions(&adapter_id) {
+        Ok(permissions) => {
+            info!("成功获取 {} 个权限", permissions.len());
+            Ok(CommandResponse::success(permissions))
+        }
+        Err(e) => {
+            error!("获取权限列表失败: {}", e);
+            Ok(CommandResponse::error(format!("获取权限列表失败: {}", e)))
+        }
+    }
+}
+
+/// 授予/撤销适配器权限
+#[tauri::command]
+pub async fn grant_adapter_permission(
+    adapter_id: String,
+    permission_type: String,
+    granted: bool,
+    app_handle: AppHandle,
+    state: State<'_, AppState>,
+) -> Result<CommandResponse<bool>, String> {
+    info!(
+        "{}适配器权限: {} - {}",
+        if granted { "授予" } else { "撤销" },
+        adapter_id,
+        permission_type
+    );
+    
+    let db = get_database().ok_or("数据库未初始化")?;
+    
+    match db.adapter_registry.grant_permission(&adapter_id, &permission_type, granted) {
+        Ok(_) => {
+            info!("权限操作成功");
+            Ok(CommandResponse::success_with_message(
+                true,
+                format!("权限已{}", if granted { "授予" } else { "撤销" }),
+            ))
+        }
+        Err(e) => {
+            error!("权限操作失败: {}", e);
+            Ok(CommandResponse::error(format!("权限操作失败: {}", e)))
+        }
+    }
+}
+
+/// 检查适配器权限
+#[tauri::command]
+pub async fn check_adapter_permission(
+    adapter_id: String,
+    permission_type: String,
+    app_handle: AppHandle,
+    state: State<'_, AppState>,
+) -> Result<CommandResponse<bool>, String> {
+    info!("检查适配器权限: {} - {}", adapter_id, permission_type);
+    
+    let db = get_database().ok_or("数据库未初始化")?;
+    
+    match db.adapter_registry.check_permission(&adapter_id, &permission_type) {
+        Ok(granted) => {
+            Ok(CommandResponse::success(granted))
+        }
+        Err(e) => {
+            error!("检查权限失败: {}", e);
+            Ok(CommandResponse::error(format!("检查权限失败: {}", e)))
+        }
+    }
+}
+
+/// 添加适配器权限
+#[tauri::command]
+pub async fn add_adapter_permission(
+    permission: AdapterPermission,
+    app_handle: AppHandle,
+    state: State<'_, AppState>,
+) -> Result<CommandResponse<bool>, String> {
+    info!("添加适配器权限: {} - {}", permission.adapter_id, permission.permission_type);
+    
+    let db = get_database().ok_or("数据库未初始化")?;
+    
+    match db.adapter_registry.add_permission(permission) {
+        Ok(_) => {
+            info!("权限添加成功");
+            Ok(CommandResponse::success_with_message(
+                true,
+                "权限已添加".to_string(),
+            ))
+        }
+        Err(e) => {
+            error!("添加权限失败: {}", e);
+            Ok(CommandResponse::error(format!("添加权限失败: {}", e)))
+        }
+    }
+}
+
+// ================================
 // Backend API Functions
 // ================================
 
@@ -976,6 +1368,150 @@ pub fn get_command_metadata() -> std::collections::HashMap<String, CommandMetada
         input_type: Some("Option<String>".to_string()),
         output_type: Some("serde_json::Value".to_string()),
         required_permission: PermissionLevel::Public,
+        is_async: true,
+        category: "adapter".to_string(),
+    });
+    
+    // 本地适配器管理命令
+    metadata.insert("get_installed_adapters".to_string(), CommandMetadata {
+        name: "get_installed_adapters".to_string(),
+        description: "获取本地已安装的适配器列表".to_string(),
+        input_type: None,
+        output_type: Some("Vec<InstalledAdapter>".to_string()),
+        required_permission: PermissionLevel::Public,
+        is_async: true,
+        category: "adapter".to_string(),
+    });
+    
+    metadata.insert("get_enabled_adapters".to_string(), CommandMetadata {
+        name: "get_enabled_adapters".to_string(),
+        description: "获取已启用的适配器列表".to_string(),
+        input_type: None,
+        output_type: Some("Vec<InstalledAdapter>".to_string()),
+        required_permission: PermissionLevel::Public,
+        is_async: true,
+        category: "adapter".to_string(),
+    });
+    
+    metadata.insert("get_installed_adapter".to_string(), CommandMetadata {
+        name: "get_installed_adapter".to_string(),
+        description: "获取单个已安装适配器的详情".to_string(),
+        input_type: Some("String".to_string()),
+        output_type: Some("InstalledAdapter".to_string()),
+        required_permission: PermissionLevel::Public,
+        is_async: true,
+        category: "adapter".to_string(),
+    });
+    
+    metadata.insert("toggle_adapter".to_string(), CommandMetadata {
+        name: "toggle_adapter".to_string(),
+        description: "启用/禁用适配器".to_string(),
+        input_type: Some("(String, bool)".to_string()),
+        output_type: Some("bool".to_string()),
+        required_permission: PermissionLevel::User,
+        is_async: true,
+        category: "adapter".to_string(),
+    });
+    
+    metadata.insert("remove_installed_adapter".to_string(), CommandMetadata {
+        name: "remove_installed_adapter".to_string(),
+        description: "删除已安装的适配器".to_string(),
+        input_type: Some("String".to_string()),
+        output_type: Some("bool".to_string()),
+        required_permission: PermissionLevel::User,
+        is_async: true,
+        category: "adapter".to_string(),
+    });
+    
+    // 版本管理命令
+    metadata.insert("get_adapter_versions".to_string(), CommandMetadata {
+        name: "get_adapter_versions".to_string(),
+        description: "获取适配器的版本历史".to_string(),
+        input_type: Some("String".to_string()),
+        output_type: Some("Vec<AdapterVersion>".to_string()),
+        required_permission: PermissionLevel::Public,
+        is_async: true,
+        category: "adapter".to_string(),
+    });
+    
+    metadata.insert("add_adapter_version".to_string(), CommandMetadata {
+        name: "add_adapter_version".to_string(),
+        description: "添加适配器版本记录".to_string(),
+        input_type: Some("AdapterVersion".to_string()),
+        output_type: Some("bool".to_string()),
+        required_permission: PermissionLevel::User,
+        is_async: true,
+        category: "adapter".to_string(),
+    });
+    
+    // 依赖管理命令
+    metadata.insert("get_adapter_dependencies".to_string(), CommandMetadata {
+        name: "get_adapter_dependencies".to_string(),
+        description: "获取适配器的依赖列表".to_string(),
+        input_type: Some("String".to_string()),
+        output_type: Some("Vec<AdapterDependency>".to_string()),
+        required_permission: PermissionLevel::Public,
+        is_async: true,
+        category: "adapter".to_string(),
+    });
+    
+    metadata.insert("add_adapter_dependency".to_string(), CommandMetadata {
+        name: "add_adapter_dependency".to_string(),
+        description: "添加适配器依赖".to_string(),
+        input_type: Some("AdapterDependency".to_string()),
+        output_type: Some("bool".to_string()),
+        required_permission: PermissionLevel::User,
+        is_async: true,
+        category: "adapter".to_string(),
+    });
+    
+    metadata.insert("remove_adapter_dependency".to_string(), CommandMetadata {
+        name: "remove_adapter_dependency".to_string(),
+        description: "删除适配器依赖".to_string(),
+        input_type: Some("(String, String)".to_string()),
+        output_type: Some("bool".to_string()),
+        required_permission: PermissionLevel::User,
+        is_async: true,
+        category: "adapter".to_string(),
+    });
+    
+    // 权限管理命令
+    metadata.insert("get_adapter_permissions".to_string(), CommandMetadata {
+        name: "get_adapter_permissions".to_string(),
+        description: "获取适配器的权限列表".to_string(),
+        input_type: Some("String".to_string()),
+        output_type: Some("Vec<AdapterPermission>".to_string()),
+        required_permission: PermissionLevel::Public,
+        is_async: true,
+        category: "adapter".to_string(),
+    });
+    
+    metadata.insert("grant_adapter_permission".to_string(), CommandMetadata {
+        name: "grant_adapter_permission".to_string(),
+        description: "授予/撤销适配器权限".to_string(),
+        input_type: Some("(String, String, bool)".to_string()),
+        output_type: Some("bool".to_string()),
+        required_permission: PermissionLevel::User,
+        is_async: true,
+        category: "adapter".to_string(),
+    });
+    
+    metadata.insert("check_adapter_permission".to_string(), CommandMetadata {
+        name: "check_adapter_permission".to_string(),
+        description: "检查适配器权限".to_string(),
+        input_type: Some("(String, String)".to_string()),
+        output_type: Some("bool".to_string()),
+        required_permission: PermissionLevel::Public,
+        is_async: true,
+        category: "adapter".to_string(),
+    });
+    
+    metadata.insert("add_adapter_permission".to_string(), CommandMetadata {
+        name: "add_adapter_permission".to_string(),
+        description: "添加适配器权限".to_string(),
+        input_type: Some("AdapterPermission".to_string()),
+        output_type: Some("bool".to_string()),
+        required_permission: PermissionLevel::User,
         is_async: true,
         category: "adapter".to_string(),
     });

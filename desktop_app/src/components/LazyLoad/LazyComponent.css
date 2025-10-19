@@ -1,0 +1,240 @@
+/**
+ * 懒加载组件样式
+ */
+
+.lazy-component-container {
+  position: relative;
+  min-height: 50px;
+}
+
+.lazy-component-placeholder {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  padding: 20px;
+  background-color: var(--background-secondary, #f5f5f5);
+  border: 2px dashed var(--border-color, #ddd);
+  border-radius: 8px;
+  transition: all 0.3s ease;
+}
+
+.lazy-component-placeholder:hover {
+  background-color: var(--background-hover, #f0f0f0);
+  border-color: var(--primary-color, #007bff);
+}
+
+.lazy-component-error {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  padding: 20px;
+  background-color: var(--error-background, #fee);
+  border: 1px solid var(--error-border, #fcc);
+  border-radius: 8px;
+  color: var(--error-text, #c33);
+}
+
+.lazy-component-error p {
+  margin: 0 0 10px 0;
+  text-align: center;
+}
+
+.load-button,
+.retry-button {
+  padding: 8px 16px;
+  background-color: var(--primary-color, #007bff);
+  color: white;
+  border: none;
+  border-radius: 4px;
+  cursor: pointer;
+  font-size: 14px;
+  transition: background-color 0.2s ease;
+}
+
+.load-button:hover,
+.retry-button:hover {
+  background-color: var(--primary-color-hover, #0056b3);
+}
+
+.retry-button {
+  background-color: var(--error-color, #dc3545);
+}
+
+.retry-button:hover {
+  background-color: var(--error-color-hover, #c82333);
+}
+
+.load-button:disabled,
+.retry-button:disabled {
+  opacity: 0.6;
+  cursor: not-allowed;
+}
+
+/* 加载状态动画 */
+.lazy-component-loading {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 20px;
+}
+
+.lazy-component-loading::after {
+  content: '';
+  width: 20px;
+  height: 20px;
+  border: 2px solid var(--primary-color, #007bff);
+  border-top: 2px solid transparent;
+  border-radius: 50%;
+  animation: spin 1s linear infinite;
+}
+
+@keyframes spin {
+  0% { transform: rotate(0deg); }
+  100% { transform: rotate(360deg); }
+}
+
+/* 渐入动画 */
+.lazy-component-fade-in {
+  animation: fadeIn 0.3s ease-in-out;
+}
+
+@keyframes fadeIn {
+  from {
+    opacity: 0;
+    transform: translateY(10px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+/* 骨架屏样式 */
+.lazy-component-skeleton {
+  background: linear-gradient(90deg, #f0f0f0 25%, #e0e0e0 50%, #f0f0f0 75%);
+  background-size: 200% 100%;
+  animation: loading 1.5s infinite;
+  border-radius: 4px;
+}
+
+@keyframes loading {
+  0% {
+    background-position: 200% 0;
+  }
+  100% {
+    background-position: -200% 0;
+  }
+}
+
+.skeleton-line {
+  height: 16px;
+  margin-bottom: 8px;
+}
+
+.skeleton-line:last-child {
+  margin-bottom: 0;
+  width: 60%;
+}
+
+.skeleton-avatar {
+  width: 40px;
+  height: 40px;
+  border-radius: 50%;
+}
+
+.skeleton-button {
+  width: 80px;
+  height: 32px;
+  border-radius: 4px;
+}
+
+.skeleton-card {
+  width: 100%;
+  height: 120px;
+  border-radius: 8px;
+}
+
+/* 响应式设计 */
+@media (max-width: 768px) {
+  .lazy-component-placeholder,
+  .lazy-component-error {
+    padding: 15px;
+    font-size: 14px;
+  }
+  
+  .load-button,
+  .retry-button {
+    padding: 6px 12px;
+    font-size: 12px;
+  }
+}
+
+/* 暗色主题支持 */
+[data-theme="dark"] .lazy-component-placeholder {
+  background-color: var(--dark-background-secondary, #2d2d2d);
+  border-color: var(--dark-border-color, #444);
+  color: var(--dark-text-color, #e0e0e0);
+}
+
+[data-theme="dark"] .lazy-component-placeholder:hover {
+  background-color: var(--dark-background-hover, #3d3d3d);
+  border-color: var(--dark-primary-color, #4a90e2);
+}
+
+[data-theme="dark"] .lazy-component-error {
+  background-color: var(--dark-error-background, #3d1a1a);
+  border-color: var(--dark-error-border, #5a2d2d);
+  color: var(--dark-error-text, #ff6b6b);
+}
+
+[data-theme="dark"] .lazy-component-skeleton {
+  background: linear-gradient(90deg, #2d2d2d 25%, #1d1d1d 50%, #2d2d2d 75%);
+}
+
+/* 可访问性支持 */
+.lazy-component-container:focus-within {
+  outline: 2px solid var(--focus-color, #007bff);
+  outline-offset: 2px;
+}
+
+.load-button:focus,
+.retry-button:focus {
+  outline: 2px solid var(--focus-color, #007bff);
+  outline-offset: 2px;
+}
+
+/* 减少动画（针对用户偏好） */
+@media (prefers-reduced-motion: reduce) {
+  .lazy-component-fade-in {
+    animation: none;
+  }
+  
+  .lazy-component-skeleton {
+    animation: none;
+    background: var(--skeleton-static-color, #f0f0f0);
+  }
+  
+  .lazy-component-loading::after {
+    animation: none;
+    border: 2px solid var(--primary-color, #007bff);
+  }
+}
+
+/* 高对比度模式支持 */
+@media (prefers-contrast: high) {
+  .lazy-component-placeholder {
+    border-width: 3px;
+    border-style: solid;
+  }
+  
+  .lazy-component-error {
+    border-width: 2px;
+  }
+  
+  .load-button,
+  .retry-button {
+    border: 2px solid currentColor;
+  }
+}

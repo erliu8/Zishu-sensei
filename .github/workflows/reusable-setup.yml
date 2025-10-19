@@ -1,0 +1,112 @@
+name: Reusable Setup
+
+on:
+  workflow_call:
+    inputs:
+      node-version:
+        description: 'Node.js version to use'
+        required: false
+        type: string
+        default: '18'
+      rust-toolchain:
+        description: 'Rust toolchain to use'
+        required: false
+        type: string
+        default: 'stable'
+      cache-key-suffix:
+        description: 'Additional suffix for cache key'
+        required: false
+        type: string
+        default: ''
+      install-deps:
+        description: 'Whether to install dependencies'
+        required: false
+        type: boolean
+        default: true
+      working-directory:
+        description: 'Working directory for npm operations'
+        required: false
+        type: string
+        default: 'desktop_app'
+    outputs:
+      node-cache-hit:
+        description: 'Whether Node.js cache was hit'
+        value: ${{ jobs.setup.outputs.node-cache-hit }}
+      rust-cache-hit:
+        description: 'Whether Rust cache was hit'
+        value: ${{ jobs.setup.outputs.rust-cache-hit }}
+
+jobs:
+  setup:
+    name: Setup Environment
+    runs-on: ${{ matrix.os }}
+    strategy:
+      matrix:
+        os: [ubuntu-latest]
+    outputs:
+      node-cache-hit: ${{ steps.node-cache.outputs.cache-hit }}
+      rust-cache-hit: ${{ steps.rust-cache.outputs.cache-hit }}
+    steps:
+      - name: 检出代码
+        uses: actions/checkout@v4
+
+      - name: 设置 Node.js
+        uses: actions/setup-node@v4
+        id: node-setup
+        with:
+          node-version: ${{ inputs.node-version }}
+          cache: 'npm'
+          cache-dependency-path: ${{ inputs.working-directory }}/package-lock.json
+
+      - name: Node.js 缓存状态
+        id: node-cache
+        run: |
+          echo "cache-hit=${{ steps.node-setup.outputs.cache-hit }}" >> $GITHUB_OUTPUT
+
+      - name: 设置 Rust
+        uses: dtolnay/rust-toolchain@stable
+        with:
+          toolchain: ${{ inputs.rust-toolchain }}
+          components: rustfmt, clippy
+
+      - name: Rust 缓存
+        uses: Swatinem/rust-cache@v2
+        id: rust-cache
+        with:
+          workspaces: "${{ inputs.working-directory }}/src-tauri -> target"
+          key: ${{ inputs.cache-key-suffix }}
+
+      - name: 安装 Node.js 依赖
+        if: inputs.install-deps
+        working-directory: ${{ inputs.working-directory }}
+        run: |
+          if [[ "${{ steps.node-setup.outputs.cache-hit }}" != "true" ]]; then
+            echo "缓存未命中，安装依赖..."
+            npm ci
+          else
+            echo "缓存命中，跳过依赖安装"
+          fi
+
+      - name: 验证安装
+        working-directory: ${{ inputs.working-directory }}
+        run: |
+          echo "Node.js 版本: $(node --version)"
+          echo "npm 版本: $(npm --version)"
+          echo "Rust 版本: $(rustc --version)"
+          echo "Cargo 版本: $(cargo --version)"
+          
+          # 验证关键依赖
+          if [[ -f "package.json" ]]; then
+            echo "✅ package.json 存在"
+          fi
+          
+          if [[ -f "src-tauri/Cargo.toml" ]]; then
+            echo "✅ Cargo.toml 存在"
+          fi
+          
+          # 检查 Tauri CLI
+          if npx @tauri-apps/cli --version > /dev/null 2>&1; then
+            echo "✅ Tauri CLI 可用: $(npx @tauri-apps/cli --version)"
+          else
+            echo "⚠️ Tauri CLI 不可用"
+          fi

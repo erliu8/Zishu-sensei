@@ -1,0 +1,49 @@
+{
+  "title": "Chat",
+  "placeholder": "Type a message...",
+  "send": "Send",
+  "clear": "Clear Chat",
+  "history": "History",
+  "newChat": "New Chat",
+  "typing": "Typing...",
+  "thinking": "Thinking...",
+  "generating": "Generating...",
+  "messages": {
+    "welcome": "Hello! I'm Zishu Sensei, nice to meet you! How can I help you today?",
+    "error": "Sorry, an error occurred. Please try again later.",
+    "networkError": "Network connection failed, please check your network settings.",
+    "tooLong": "Message is too long, please shorten it and try again.",
+    "empty": "Please enter a message.",
+    "rateLimited": "Sending too frequently, please wait a moment."
+  },
+  "actions": {
+    "copy": "Copy",
+    "delete": "Delete",
+    "edit": "Edit",
+    "retry": "Retry",
+    "like": "Like",
+    "dislike": "Dislike",
+    "share": "Share",
+    "report": "Report"
+  },
+  "settings": {
+    "title": "Chat Settings",
+    "model": "AI Model",
+    "temperature": "Creativity",
+    "maxTokens": "Max Length",
+    "systemPrompt": "System Prompt",
+    "autoSave": "Auto Save",
+    "soundEnabled": "Sound Notifications",
+    "animationEnabled": "Animation Effects"
+  },
+  "export": {
+    "title": "Export Chat",
+    "format": "Format",
+    "markdown": "Markdown",
+    "json": "JSON",
+    "text": "Plain Text",
+    "pdf": "PDF",
+    "success": "Export successful!",
+    "error": "Export failed, please try again."
+  }
+}
