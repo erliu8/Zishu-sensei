@@ -25,6 +25,7 @@ pub mod permission;
 pub mod privacy;
 pub mod region;
 pub mod performance;
+pub mod update;
 
 use character_registry::CharacterRegistry;
 use model_config::ModelConfigRegistry;

@@ -470,6 +470,24 @@ async fn main() {
             commands::system::get_log_stats,
             commands::system::clean_old_logs,
             
+            // 更新管理命令
+            commands::update::init_update_manager,
+            commands::update::check_for_updates,
+            commands::update::download_update,
+            commands::update::install_update,
+            commands::update::install_update_with_tauri,
+            commands::update::cancel_download,
+            commands::update::rollback_to_version,
+            commands::update::get_update_config,
+            commands::update::save_update_config,
+            commands::update::get_version_history,
+            commands::update::get_update_stats,
+            commands::update::cleanup_old_files,
+            commands::update::restart_application,
+            commands::update::listen_update_events,
+            commands::update::check_tauri_updater_available,
+            commands::update::get_current_version,
+            
             // 适配器命令 - 后端集成
             commands::adapter::get_adapters,
             commands::adapter::install_adapter,
@@ -707,11 +725,30 @@ async fn main() {
             commands::performance::cleanup_performance_data,
             commands::performance::get_monitoring_status,
             commands::performance::generate_performance_report,
+            
+            // 日志系统命令
+            commands::logging::init_logging_system,
+            commands::logging::write_log_entry,
+            commands::logging::search_logs,
+            commands::logging::get_log_statistics,
+            commands::logging::export_logs,
+            commands::logging::cleanup_old_logs,
+            commands::logging::get_log_config,
+            commands::logging::update_log_config,
+            commands::logging::get_remote_log_config,
+            commands::logging::update_remote_log_config,
+            commands::logging::upload_logs_to_remote,
+            commands::logging::get_log_system_status,
+            commands::logging::flush_log_buffer,
+            commands::logging::get_log_files,
+            commands::logging::delete_log_file,
+            commands::logging::compress_log_files,
         ])
         .manage(commands::shortcuts::ShortcutRegistry::new())
         .manage(commands::memory::MemoryManagerState::new())
         .manage(std::sync::Arc::new(std::sync::Mutex::new(commands::rendering::RenderingState::default())))
         .manage(commands::region::RegionState::default())
+        .manage(commands::update::UpdateManagerState::new())
         .manage({
             let app_data_dir = std::env::var("APPDATA").unwrap_or_else(|_| {
                 dirs::config_dir()
@@ -720,6 +757,17 @@ async fn main() {
             });
             let db_path = format!("{}/zishu-sensei/performance.db", app_data_dir);
             commands::performance::PerformanceMonitorState::new(&db_path).expect("初始化性能监控状态失败")
+        })
+        .manage({
+            let app_data_dir = std::env::var("APPDATA").unwrap_or_else(|_| {
+                dirs::config_dir()
+                    .map(|d| d.to_string_lossy().to_string())
+                    .unwrap_or_else(|| "./data".to_string())
+            });
+            let log_db_path = format!("{}/zishu-sensei/logs.db", app_data_dir);
+            tauri::async_runtime::block_on(async {
+                database::logging::LogDatabase::new(log_db_path)
+            }).expect("初始化日志数据库失败")
         })
         .build(tauri::generate_context!());
     

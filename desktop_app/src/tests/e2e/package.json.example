@@ -1,0 +1,16 @@
+{
+  "scripts": {
+    "test:e2e": "playwright test",
+    "test:e2e:headed": "playwright test --headed",
+    "test:e2e:debug": "playwright test --debug",
+    "test:e2e:basic": "playwright test basic-workflow",
+    "test:e2e:adapter": "playwright test adapter-management",
+    "test:e2e:character": "playwright test character-switch",
+    "test:e2e:report": "playwright show-report tests/e2e/report",
+    "test:e2e:ui": "playwright test --ui"
+  },
+  "devDependencies": {
+    "@playwright/test": "^1.40.0"
+  }
+}
+

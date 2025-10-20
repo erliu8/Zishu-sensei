@@ -11,6 +11,7 @@ pub mod permission_checker;
 pub mod data_cleanup;
 pub mod anonymizer;
 pub mod memory_manager;
+pub mod update_manager;
 
 pub use config::{
     get_app_log_dir,

@@ -1,0 +1,22 @@
+# 性能测试生成的文件
+
+# 性能报告
+performance-report/
+*.perf.json
+*.perf.html
+
+# 内存快照
+*.heapsnapshot
+*.memprofile
+
+# 性能分析文件
+*.cpuprofile
+*.trace
+
+# 临时文件
+*.tmp
+*.temp
+
+# 日志文件
+performance-*.log
+

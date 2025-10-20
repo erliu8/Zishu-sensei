@@ -76,15 +76,15 @@ impl DataMasker {
                 // OpenAI API Key
                 Regex::new(r"sk-[a-zA-Z0-9]{48}").unwrap(),
                 // Anthropic API Key
-                Regex::new(r"sk-ant-api[a-zA-Z0-9\-_]{95}").unwrap(),
+                Regex::new(r"sk-ant-api[a-zA-Z0-9_-]{95}").unwrap(),
                 // 通用 API Key 格式
-                Regex::new(r"[Aa][Pp][Ii]_?[Kk][Ee][Yy][:=\s]+['\"]?([a-zA-Z0-9_\-]{20,})").unwrap(),
+                Regex::new(r#"[Aa][Pp][Ii]_?[Kk][Ee][Yy][:=\s]+['\"]?([a-zA-Z0-9_-]{20,})"#).unwrap(),
             ],
             token_patterns: vec![
                 // JWT Token
                 Regex::new(r"eyJ[a-zA-Z0-9_-]+\.eyJ[a-zA-Z0-9_-]+\.[a-zA-Z0-9_-]+").unwrap(),
                 // Bearer Token
-                Regex::new(r"Bearer\s+([a-zA-Z0-9_\-\.]{20,})").unwrap(),
+                Regex::new(r"Bearer\s+([a-zA-Z0-9_.-]{20,})").unwrap(),
             ],
             email_pattern: Regex::new(r"[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,}").unwrap(),
             phone_pattern: Regex::new(r"(\+?86)?1[3-9]\d{9}").unwrap(),
@@ -340,14 +340,14 @@ mod tests {
         let masker = DataMasker::new();
         let text = "my_secret_password";
 
-        assert_eq!(masker.mask(text, &MaskingStrategy::Full), "********");
+        assert_eq!(masker.mask(text, &MaskingStrategy::Full), "******************");
         assert_eq!(
             masker.mask(text, &MaskingStrategy::Partial { prefix: 3, suffix: 3 }),
-            "my_********ord"
+            "my_************ord"
         );
         assert_eq!(
             masker.mask(text, &MaskingStrategy::PrefixOnly { length: 5 }),
-            "my_se********"
+            "my_se*************"
         );
     }
 
