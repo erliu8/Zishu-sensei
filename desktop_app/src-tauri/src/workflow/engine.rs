@@ -1,18 +1,21 @@
 use super::models::*;
 use super::expression::ExpressionEvaluator;
-use crate::chat::ChatService;
+// use crate::chat::ChatService;  // TODO: Implement ChatService
 use anyhow::{Result, anyhow};
 use serde_json::Value as JsonValue;
 use std::collections::HashMap;
 use std::sync::Arc;
+use tauri::AppHandle;
 use tokio::sync::{RwLock, Semaphore};
 use tracing::{info, warn, error, debug};
 use uuid::Uuid;
+use std::pin::Pin;
+use std::future::Future;
 
 /// Workflow execution engine
 pub struct WorkflowEngine {
-    /// Chat service for AI interactions
-    chat_service: Arc<ChatService>,
+    /// Application handle
+    app_handle: AppHandle,
     /// Active workflow executions
     executions: Arc<RwLock<HashMap<String, WorkflowExecution>>>,
 }
@@ -62,11 +65,31 @@ pub enum StepStatus {
 
 impl WorkflowEngine {
     /// Create a new workflow engine
-    pub fn new(chat_service: Arc<ChatService>) -> Self {
-        Self {
-            chat_service,
+    pub fn new(app_handle: AppHandle) -> Result<Self> {
+        Ok(Self {
+            app_handle,
             executions: Arc::new(RwLock::new(HashMap::new())),
-        }
+        })
+    }
+
+    /// Execute a workflow by ID
+    pub async fn execute_workflow_by_id(
+        &self,
+        workflow_id: &str,
+        initial_variables: HashMap<String, JsonValue>,
+    ) -> Result<String> {
+        // Get workflow from database
+        let db = crate::database::get_database()
+            .ok_or_else(|| anyhow!("数据库未初始化"))?;
+        
+        let db_workflow = db.workflow_registry.get_workflow(workflow_id)
+            .map_err(|e| anyhow!("获取工作流失败: {}", e))?
+            .ok_or_else(|| anyhow!("工作流不存在: {}", workflow_id))?;
+        
+        let workflow = crate::workflow::adapter::db_to_workflow(&db_workflow)
+            .map_err(|e| anyhow!("转换工作流失败: {}", e))?;
+        
+        self.execute_workflow(workflow, initial_variables).await
     }
 
     /// Execute a workflow
@@ -100,10 +123,11 @@ impl WorkflowEngine {
 
         // Execute in background
         let engine = self.clone();
+        let execution_id_clone = execution_id.clone();
         tokio::spawn(async move {
-            if let Err(e) = engine.execute_workflow_internal(workflow, execution_id.clone()).await {
+            if let Err(e) = engine.execute_workflow_internal(workflow, execution_id_clone.clone()).await {
                 error!("工作流执行失败: {}", e);
-                engine.mark_execution_failed(execution_id, e.to_string()).await;
+                engine.mark_execution_failed(execution_id_clone, e.to_string()).await;
             }
         });
 
@@ -196,30 +220,36 @@ impl WorkflowEngine {
     }
 
     /// Execute a single step
-    async fn execute_step(&self, execution_id: &str, step: &WorkflowStep) -> Result<StepResult> {
-        let start_time = chrono::Utc::now().timestamp();
-        
-        info!("执行步骤: {} (类型: {})", step.name, step.step_type);
+    fn execute_step<'a>(
+        &'a self,
+        execution_id: &'a str,
+        step: &'a WorkflowStep,
+    ) -> Pin<Box<dyn Future<Output = Result<StepResult>> + Send + 'a>> {
+        Box::pin(async move {
+            let start_time = chrono::Utc::now().timestamp();
+            
+            info!("执行步骤: {} (类型: {})", step.name, step.step_type);
 
-        let output = match step.step_type.as_str() {
-            "chat" => self.execute_chat_step(execution_id, step).await?,
-            "transform" => self.execute_transform_step(execution_id, step).await?,
-            "condition" => self.execute_condition_step(execution_id, step).await?,
-            "loop" => self.execute_loop_step(execution_id, step).await?,
-            "parallel" => self.execute_parallel_step(execution_id, step).await?,
-            "delay" => self.execute_delay_step(execution_id, step).await?,
-            _ => {
-                return Err(anyhow!("未知的步骤类型: {}", step.step_type));
-            }
-        };
+            let output = match step.step_type.as_str() {
+                "chat" => self.execute_chat_step(execution_id, step).await?,
+                "transform" => self.execute_transform_step(execution_id, step).await?,
+                "condition" => self.execute_condition_step(execution_id, step).await?,
+                "loop" => self.execute_loop_step(execution_id, step).await?,
+                "parallel" => self.execute_parallel_step(execution_id, step).await?,
+                "delay" => self.execute_delay_step(execution_id, step).await?,
+                _ => {
+                    return Err(anyhow!("未知的步骤类型: {}", step.step_type));
+                }
+            };
 
-        Ok(StepResult {
-            step_id: step.id.clone(),
-            status: StepStatus::Completed,
-            output: Some(output),
-            error: None,
-            start_time,
-            end_time: Some(chrono::Utc::now().timestamp()),
+            Ok(StepResult {
+                step_id: step.id.clone(),
+                status: StepStatus::Completed,
+                output: Some(output),
+                error: None,
+                start_time,
+                end_time: Some(chrono::Utc::now().timestamp()),
+            })
         })
     }
 
@@ -669,7 +699,7 @@ impl WorkflowEngine {
 impl Clone for WorkflowEngine {
     fn clone(&self) -> Self {
         Self {
-            chat_service: self.chat_service.clone(),
+            app_handle: self.app_handle.clone(),
             executions: self.executions.clone(),
         }
     }

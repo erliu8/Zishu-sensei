@@ -279,7 +279,7 @@ pub fn auto_cleanup_expired_data(
 
     // 自动清除旧日志
     if settings.auto_clear_logs_days > 0 {
-        if let Ok(result) = cleanup_manager.cleanup_old_data(settings.auto_clear_logs_days) {
+        if let Ok(result) = cleanup_manager.cleanup_old_data(settings.auto_clear_logs_days as i64) {
             total_result.items_deleted += result.items_deleted;
             total_result.space_freed_bytes += result.space_freed_bytes;
             total_result.errors.extend(result.errors);

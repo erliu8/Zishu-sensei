@@ -288,12 +288,14 @@ impl PerformanceDatabase {
     pub fn record_metric(&self, metric: &PerformanceMetric) -> Result<i64> {
         let conn = Connection::open(&self.db_path)?;
         
-        let timestamp = metric.timestamp.unwrap_or_else(|| {
+        let timestamp = if metric.timestamp == 0 {
             SystemTime::now()
                 .duration_since(UNIX_EPOCH)
                 .unwrap()
                 .as_millis() as i64
-        });
+        } else {
+            metric.timestamp
+        };
 
         conn.execute(
             "INSERT INTO performance_metrics 
@@ -373,12 +375,14 @@ impl PerformanceDatabase {
     pub fn record_snapshot(&self, snapshot: &PerformanceSnapshot) -> Result<i64> {
         let conn = Connection::open(&self.db_path)?;
 
-        let timestamp = snapshot.timestamp.unwrap_or_else(|| {
+        let timestamp = if snapshot.timestamp == 0 {
             SystemTime::now()
                 .duration_since(UNIX_EPOCH)
                 .unwrap()
                 .as_millis() as i64
-        });
+        } else {
+            snapshot.timestamp
+        };
 
         conn.execute(
             "INSERT INTO performance_snapshots 
@@ -411,12 +415,14 @@ impl PerformanceDatabase {
     pub fn record_alert(&self, alert: &PerformanceAlert) -> Result<i64> {
         let conn = Connection::open(&self.db_path)?;
 
-        let timestamp = alert.timestamp.unwrap_or_else(|| {
+        let timestamp = if alert.timestamp == 0 {
             SystemTime::now()
                 .duration_since(UNIX_EPOCH)
                 .unwrap()
                 .as_millis() as i64
-        });
+        } else {
+            alert.timestamp
+        };
 
         conn.execute(
             "INSERT INTO performance_alerts 
@@ -453,21 +459,21 @@ impl PerformanceDatabase {
         
         let mut query = "SELECT id, metric_name, metric_value, unit, category, component, timestamp, metadata 
                          FROM performance_metrics WHERE 1=1".to_string();
-        let mut params = Vec::new();
+        let mut params: Vec<Box<dyn rusqlite::ToSql>> = Vec::new();
 
         if let Some(cat) = category {
             query.push_str(" AND category = ?");
-            params.push(cat);
+            params.push(Box::new(cat.to_string()));
         }
 
         if let Some(start) = start_time {
             query.push_str(" AND timestamp >= ?");
-            params.push(&start.to_string());
+            params.push(Box::new(start.to_string()));
         }
 
         if let Some(end) = end_time {
             query.push_str(" AND timestamp <= ?");
-            params.push(&end.to_string());
+            params.push(Box::new(end.to_string()));
         }
 
         query.push_str(" ORDER BY timestamp DESC");
@@ -477,7 +483,8 @@ impl PerformanceDatabase {
         }
 
         let mut stmt = conn.prepare(&query)?;
-        let metric_iter = stmt.query_map(params_from_iter(params.iter()), |row| {
+        let params_refs: Vec<&dyn rusqlite::ToSql> = params.iter().map(|s| s.as_ref() as &dyn rusqlite::ToSql).collect();
+        let metric_iter = stmt.query_map(params_refs.as_slice(), |row| {
             Ok(PerformanceMetric {
                 id: Some(row.get(0)?),
                 metric_name: row.get(1)?,
@@ -511,21 +518,21 @@ impl PerformanceDatabase {
         let mut query = "SELECT id, operation_type, target_element, start_time, end_time, 
                                response_time, success, error_message, metadata 
                          FROM user_operations WHERE 1=1".to_string();
-        let mut params = Vec::new();
+        let mut params: Vec<Box<dyn rusqlite::ToSql>> = Vec::new();
 
         if let Some(op_type) = operation_type {
             query.push_str(" AND operation_type = ?");
-            params.push(op_type);
+            params.push(Box::new(op_type.to_string()));
         }
 
         if let Some(start) = start_time {
             query.push_str(" AND start_time >= ?");
-            params.push(&start.to_string());
+            params.push(Box::new(start.to_string()));
         }
 
         if let Some(end) = end_time {
             query.push_str(" AND end_time <= ?");
-            params.push(&end.to_string());
+            params.push(Box::new(end.to_string()));
         }
 
         query.push_str(" ORDER BY start_time DESC");
@@ -535,7 +542,8 @@ impl PerformanceDatabase {
         }
 
         let mut stmt = conn.prepare(&query)?;
-        let operation_iter = stmt.query_map(params_from_iter(params.iter()), |row| {
+        let params_refs: Vec<&dyn rusqlite::ToSql> = params.iter().map(|s| s.as_ref() as &dyn rusqlite::ToSql).collect();
+        let operation_iter = stmt.query_map(params_refs.as_slice(), |row| {
             Ok(UserOperation {
                 id: Some(row.get(0)?),
                 operation_type: row.get(1)?,
@@ -570,16 +578,16 @@ impl PerformanceDatabase {
                                dns_time, connect_time, ssl_time, send_time, wait_time, 
                                receive_time, total_time, timestamp, error_type, error_message 
                          FROM network_metrics WHERE 1=1".to_string();
-        let mut params = Vec::new();
+        let mut params: Vec<Box<dyn rusqlite::ToSql>> = Vec::new();
 
         if let Some(start) = start_time {
             query.push_str(" AND timestamp >= ?");
-            params.push(&start.to_string());
+            params.push(Box::new(start.to_string()));
         }
 
         if let Some(end) = end_time {
             query.push_str(" AND timestamp <= ?");
-            params.push(&end.to_string());
+            params.push(Box::new(end.to_string()));
         }
 
         query.push_str(" ORDER BY timestamp DESC");
@@ -589,7 +597,8 @@ impl PerformanceDatabase {
         }
 
         let mut stmt = conn.prepare(&query)?;
-        let metric_iter = stmt.query_map(params_from_iter(params.iter()), |row| {
+        let params_refs: Vec<&dyn rusqlite::ToSql> = params.iter().map(|s| s.as_ref() as &dyn rusqlite::ToSql).collect();
+        let metric_iter = stmt.query_map(params_refs.as_slice(), |row| {
             Ok(NetworkMetric {
                 id: Some(row.get(0)?),
                 url: row.get(1)?,
@@ -631,16 +640,16 @@ impl PerformanceDatabase {
                                fps, render_time, active_connections, open_files, thread_count, 
                                heap_size, gc_time, timestamp, app_state, load_average 
                          FROM performance_snapshots WHERE 1=1".to_string();
-        let mut params = Vec::new();
+        let mut params: Vec<Box<dyn rusqlite::ToSql>> = Vec::new();
 
         if let Some(start) = start_time {
             query.push_str(" AND timestamp >= ?");
-            params.push(&start.to_string());
+            params.push(Box::new(start.to_string()));
         }
 
         if let Some(end) = end_time {
             query.push_str(" AND timestamp <= ?");
-            params.push(&end.to_string());
+            params.push(Box::new(end.to_string()));
         }
 
         query.push_str(" ORDER BY timestamp DESC");
@@ -650,7 +659,8 @@ impl PerformanceDatabase {
         }
 
         let mut stmt = conn.prepare(&query)?;
-        let snapshot_iter = stmt.query_map(params_from_iter(params.iter()), |row| {
+        let params_refs: Vec<&dyn rusqlite::ToSql> = params.iter().map(|s| s.as_ref() as &dyn rusqlite::ToSql).collect();
+        let snapshot_iter = stmt.query_map(params_refs.as_slice(), |row| {
             Ok(PerformanceSnapshot {
                 id: Some(row.get(0)?),
                 cpu_usage: row.get(1)?,
@@ -691,21 +701,21 @@ impl PerformanceDatabase {
         let mut query = "SELECT id, alert_type, severity, message, threshold, actual_value, 
                                component, duration, resolved, resolved_at, timestamp, metadata 
                          FROM performance_alerts WHERE 1=1".to_string();
-        let mut params = Vec::new();
+        let mut params: Vec<Box<dyn rusqlite::ToSql>> = Vec::new();
 
         if let Some(res) = resolved {
             query.push_str(" AND resolved = ?");
-            params.push(&res.to_string());
+            params.push(Box::new(res.to_string()));
         }
 
         if let Some(start) = start_time {
             query.push_str(" AND timestamp >= ?");
-            params.push(&start.to_string());
+            params.push(Box::new(start.to_string()));
         }
 
         if let Some(end) = end_time {
             query.push_str(" AND timestamp <= ?");
-            params.push(&end.to_string());
+            params.push(Box::new(end.to_string()));
         }
 
         query.push_str(" ORDER BY timestamp DESC");
@@ -715,7 +725,8 @@ impl PerformanceDatabase {
         }
 
         let mut stmt = conn.prepare(&query)?;
-        let alert_iter = stmt.query_map(params_from_iter(params.iter()), |row| {
+        let params_refs: Vec<&dyn rusqlite::ToSql> = params.iter().map(|s| s.as_ref() as &dyn rusqlite::ToSql).collect();
+        let alert_iter = stmt.query_map(params_refs.as_slice(), |row| {
             Ok(PerformanceAlert {
                 id: Some(row.get(0)?),
                 alert_type: row.get(1)?,
@@ -878,13 +889,3 @@ impl PerformanceDatabase {
     }
 }
 
-/// 辅助函数：转换参数
-fn params_from_iter<I>(iter: I) -> Vec<&dyn rusqlite::ToSql>
-where
-    I: IntoIterator,
-    I::Item: AsRef<str>,
-{
-    iter.into_iter()
-        .map(|s| s.as_ref() as &dyn rusqlite::ToSql)
-        .collect()
-}

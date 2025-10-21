@@ -10,10 +10,21 @@ use rusqlite::{Connection, params, Result as SqliteResult};
 use serde::{Deserialize, Serialize};
 use std::path::PathBuf;
 use std::sync::Arc;
-use parking_lot::RwLock;
 use tauri::AppHandle;
 use tracing::{info, error, warn};
+use r2d2;
+use r2d2_sqlite::SqliteConnectionManager;
 
+/// Database connection pool type
+pub type DbPool = r2d2::Pool<SqliteConnectionManager>;
+
+// 数据库后端
+pub mod backends;
+pub mod postgres_backend;
+pub mod redis_backend;
+pub mod qdrant_backend;
+
+// 现有模块
 pub mod character_registry;
 pub mod model_config;
 pub mod adapter;
@@ -27,6 +38,9 @@ pub mod region;
 pub mod performance;
 pub mod update;
 
+// 导出错误类型
+pub mod error;
+
 use character_registry::CharacterRegistry;
 use model_config::ModelConfigRegistry;
 use adapter::AdapterRegistry;
@@ -35,8 +49,8 @@ use permission::PermissionRegistry;
 
 /// Database manager
 pub struct Database {
-    /// Connection to SQLite database
-    conn: Arc<RwLock<Connection>>,
+    /// Database connection pool
+    pool: DbPool,
     /// Character registry
     pub character_registry: CharacterRegistry,
     /// Model configuration registry
@@ -51,25 +65,28 @@ pub struct Database {
 
 impl Database {
     /// Create a new database connection
-    pub fn new(db_path: PathBuf) -> SqliteResult<Self> {
+    pub fn new(db_path: PathBuf) -> Result<Self, Box<dyn std::error::Error + Send + Sync>> {
         info!("初始化数据库: {:?}", db_path);
         
         // Ensure parent directory exists
         if let Some(parent) = db_path.parent() {
-            std::fs::create_dir_all(parent).ok();
+            std::fs::create_dir_all(parent)?;
         }
         
-        let conn = Connection::open(&db_path)?;
-        let conn = Arc::new(RwLock::new(conn));
+        // Create connection pool
+        let manager = SqliteConnectionManager::file(&db_path);
+        let pool = r2d2::Pool::builder()
+            .max_size(15) // Maximum number of connections
+            .build(manager)?;
         
         // Initialize schema
-        Self::init_schema(&conn)?;
+        Self::init_schema(&pool)?;
         
-        let character_registry = CharacterRegistry::new(conn.clone());
-        let model_config_registry = ModelConfigRegistry::new(conn.clone());
-        let adapter_registry = AdapterRegistry::new(conn.clone());
-        let workflow_registry = WorkflowRegistry::new(conn.clone());
-        let permission_registry = PermissionRegistry::new(conn.clone());
+        let character_registry = CharacterRegistry::new(pool.clone());
+        let model_config_registry = ModelConfigRegistry::new(pool.clone());
+        let adapter_registry = AdapterRegistry::new(pool.clone());
+        let workflow_registry = WorkflowRegistry::new(pool.clone());
+        let permission_registry = PermissionRegistry::new(pool.clone());
         
         // Initialize adapter tables
         adapter_registry.init_tables()?;
@@ -81,7 +98,7 @@ impl Database {
         permission_registry.init_tables()?;
         
         Ok(Self {
-            conn,
+            pool,
             character_registry,
             model_config_registry,
             adapter_registry,
@@ -91,8 +108,8 @@ impl Database {
     }
     
     /// Initialize database schema
-    fn init_schema(conn: &Arc<RwLock<Connection>>) -> SqliteResult<()> {
-        let conn = conn.write();
+    fn init_schema(pool: &DbPool) -> Result<(), Box<dyn std::error::Error + Send + Sync>> {
+        let conn = pool.get()?;
         
         // Enable foreign keys
         conn.execute("PRAGMA foreign_keys = ON", [])?;
@@ -235,9 +252,9 @@ impl Database {
         Ok(())
     }
     
-    /// Get database connection
-    pub fn get_connection(&self) -> Arc<RwLock<Connection>> {
-        self.conn.clone()
+    /// Get database connection pool
+    pub fn get_pool(&self) -> DbPool {
+        self.pool.clone()
     }
 }
 

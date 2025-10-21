@@ -7,13 +7,13 @@
 //! - 权限组和角色管理
 //! - 权限依赖和继承
 
-use rusqlite::{Connection, params, Result as SqliteResult, Row};
+use rusqlite::{Connection, OptionalExtension, params, Result as SqliteResult, Row};
 use serde::{Deserialize, Serialize};
 use std::collections::HashMap;
 use std::sync::Arc;
-use parking_lot::RwLock;
 use chrono::{DateTime, Utc};
 use tracing::{info, error, warn};
+use crate::database::DbPool;
 
 // ================================
 // 权限类型定义
@@ -379,18 +379,18 @@ pub struct PermissionStats {
 
 /// 权限注册表
 pub struct PermissionRegistry {
-    conn: Arc<RwLock<Connection>>,
+    pool: DbPool,
 }
 
 impl PermissionRegistry {
     /// 创建新的权限注册表
-    pub fn new(conn: Arc<RwLock<Connection>>) -> Self {
-        Self { conn }
+    pub fn new(pool: DbPool) -> Self {
+        Self { pool }
     }
 
     /// 初始化数据库表
     pub fn init_tables(&self) -> SqliteResult<()> {
-        let conn = self.conn.write();
+        let conn = self.pool.get().map_err(|e| rusqlite::Error::ToSqlConversionFailure(Box::new(e)))?;
 
         // 权限定义表
         conn.execute(
@@ -534,7 +534,9 @@ impl PermissionRegistry {
 
         for (name, ptype, display, desc, category, dangerous) in default_permissions {
             // 检查是否已存在
-            let exists: bool = self.conn.read().query_row(
+            let conn = self.pool.get()
+                .map_err(|e| rusqlite::Error::ToSqlConversionFailure(Box::new(e)))?;
+            let exists: bool = conn.query_row(
                 "SELECT COUNT(*) > 0 FROM permissions WHERE name = ?1",
                 params![name],
                 |row| row.get(0),
@@ -576,7 +578,7 @@ impl PermissionRegistry {
         is_revocable: bool,
         dependencies: Vec<String>,
     ) -> SqliteResult<i64> {
-        let conn = self.conn.write();
+        let conn = self.pool.get().map_err(|e| rusqlite::Error::ToSqlConversionFailure(Box::new(e)))?;
         let now = Utc::now().timestamp();
         let deps_json = serde_json::to_string(&dependencies).unwrap_or_default();
 
@@ -605,7 +607,7 @@ impl PermissionRegistry {
 
     /// 获取所有权限定义
     pub fn get_all_permissions(&self) -> SqliteResult<Vec<Permission>> {
-        let conn = self.conn.read();
+        let conn = self.pool.get().map_err(|e| rusqlite::Error::ToSqlConversionFailure(Box::new(e)))?;
         
         let mut stmt = conn.prepare(
             "SELECT id, name, permission_type, level, display_name, description, category,
@@ -639,7 +641,7 @@ impl PermissionRegistry {
 
     /// 获取权限定义（按类型）
     pub fn get_permission_by_type(&self, permission_type: &PermissionType) -> SqliteResult<Option<Permission>> {
-        let conn = self.conn.read();
+        let conn = self.pool.get().map_err(|e| rusqlite::Error::ToSqlConversionFailure(Box::new(e)))?;
         
         let result = conn.query_row(
             "SELECT id, name, permission_type, level, display_name, description, category,
@@ -676,7 +678,7 @@ impl PermissionRegistry {
 
     /// 获取分类的权限列表
     pub fn get_permissions_by_category(&self, category: &str) -> SqliteResult<Vec<Permission>> {
-        let conn = self.conn.read();
+        let conn = self.pool.get().map_err(|e| rusqlite::Error::ToSqlConversionFailure(Box::new(e)))?;
         
         let mut stmt = conn.prepare(
             "SELECT id, name, permission_type, level, display_name, description, category,
@@ -722,7 +724,7 @@ impl PermissionRegistry {
         level: PermissionLevel,
         scope: Option<String>,
     ) -> SqliteResult<i64> {
-        let conn = self.conn.write();
+        let conn = self.pool.get().map_err(|e| rusqlite::Error::ToSqlConversionFailure(Box::new(e)))?;
         let now = Utc::now().timestamp();
 
         // 检查是否已存在
@@ -778,7 +780,7 @@ impl PermissionRegistry {
         granted_by: Option<String>,
         expires_at: Option<DateTime<Utc>>,
     ) -> SqliteResult<()> {
-        let conn = self.conn.write();
+        let conn = self.pool.get().map_err(|e| rusqlite::Error::ToSqlConversionFailure(Box::new(e)))?;
         let now = Utc::now().timestamp();
         let expires_ts = expires_at.map(|dt| dt.timestamp());
 
@@ -816,7 +818,7 @@ impl PermissionRegistry {
         scope: Option<String>,
         reason: Option<String>,
     ) -> SqliteResult<()> {
-        let conn = self.conn.write();
+        let conn = self.pool.get().map_err(|e| rusqlite::Error::ToSqlConversionFailure(Box::new(e)))?;
         let now = Utc::now().timestamp();
 
         conn.execute(
@@ -840,7 +842,7 @@ impl PermissionRegistry {
         scope: Option<String>,
         reason: Option<String>,
     ) -> SqliteResult<()> {
-        let conn = self.conn.write();
+        let conn = self.pool.get().map_err(|e| rusqlite::Error::ToSqlConversionFailure(Box::new(e)))?;
         let now = Utc::now().timestamp();
 
         conn.execute(
@@ -864,7 +866,7 @@ impl PermissionRegistry {
         level: &PermissionLevel,
         scope: Option<&str>,
     ) -> SqliteResult<bool> {
-        let conn = self.conn.read();
+        let conn = self.pool.get().map_err(|e| rusqlite::Error::ToSqlConversionFailure(Box::new(e)))?;
         let now = Utc::now().timestamp();
 
         // 查找匹配的授权记录
@@ -895,7 +897,7 @@ impl PermissionRegistry {
         entity_type: &str,
         entity_id: &str,
     ) -> SqliteResult<Vec<PermissionGrant>> {
-        let conn = self.conn.read();
+        let conn = self.pool.get().map_err(|e| rusqlite::Error::ToSqlConversionFailure(Box::new(e)))?;
         
         let mut stmt = conn.prepare(
             "SELECT id, entity_type, entity_id, permission_type, level, status, scope,
@@ -931,7 +933,7 @@ impl PermissionRegistry {
 
     /// 获取待审核的权限请求
     pub fn get_pending_grants(&self) -> SqliteResult<Vec<PermissionGrant>> {
-        let conn = self.conn.read();
+        let conn = self.pool.get().map_err(|e| rusqlite::Error::ToSqlConversionFailure(Box::new(e)))?;
         
         let mut stmt = conn.prepare(
             "SELECT id, entity_type, entity_id, permission_type, level, status, scope,
@@ -967,7 +969,7 @@ impl PermissionRegistry {
 
     /// 清理过期的权限授权
     pub fn cleanup_expired_grants(&self) -> SqliteResult<usize> {
-        let conn = self.conn.write();
+        let conn = self.pool.get().map_err(|e| rusqlite::Error::ToSqlConversionFailure(Box::new(e)))?;
         let now = Utc::now().timestamp();
 
         let count = conn.execute(
@@ -1002,7 +1004,7 @@ impl PermissionRegistry {
         ip_address: Option<String>,
         metadata: Option<HashMap<String, serde_json::Value>>,
     ) -> SqliteResult<i64> {
-        let conn = self.conn.write();
+        let conn = self.pool.get().map_err(|e| rusqlite::Error::ToSqlConversionFailure(Box::new(e)))?;
         let now = Utc::now().timestamp();
         let metadata_json = metadata.map(|m| serde_json::to_string(&m).ok()).flatten();
 
@@ -1039,7 +1041,7 @@ impl PermissionRegistry {
         limit: Option<i64>,
         offset: Option<i64>,
     ) -> SqliteResult<Vec<PermissionUsageLog>> {
-        let conn = self.conn.read();
+        let conn = self.pool.get().map_err(|e| rusqlite::Error::ToSqlConversionFailure(Box::new(e)))?;
         
         let mut query = String::from(
             "SELECT id, entity_type, entity_id, permission_type, level, resource, action,
@@ -1104,7 +1106,7 @@ impl PermissionRegistry {
 
     /// 获取权限统计信息
     pub fn get_permission_stats(&self, entity_type: &str, entity_id: &str) -> SqliteResult<PermissionStats> {
-        let conn = self.conn.read();
+        let conn = self.pool.get().map_err(|e| rusqlite::Error::ToSqlConversionFailure(Box::new(e)))?;
 
         let total_grants: i64 = conn.query_row(
             "SELECT COUNT(*) FROM permission_grants WHERE entity_type = ?1 AND entity_id = ?2",
@@ -1182,7 +1184,7 @@ impl PermissionRegistry {
         description: String,
         permissions: Vec<PermissionType>,
     ) -> SqliteResult<i64> {
-        let conn = self.conn.write();
+        let conn = self.pool.get().map_err(|e| rusqlite::Error::ToSqlConversionFailure(Box::new(e)))?;
         let now = Utc::now().timestamp();
         let perms_json = serde_json::to_string(&permissions).unwrap_or_default();
 
@@ -1199,7 +1201,7 @@ impl PermissionRegistry {
 
     /// 获取权限组
     pub fn get_permission_group(&self, name: &str) -> SqliteResult<Option<PermissionGroup>> {
-        let conn = self.conn.read();
+        let conn = self.pool.get().map_err(|e| rusqlite::Error::ToSqlConversionFailure(Box::new(e)))?;
         
         let result = conn.query_row(
             "SELECT id, name, display_name, description, permissions, created_at
@@ -1230,7 +1232,7 @@ impl PermissionRegistry {
 
     /// 获取所有权限组
     pub fn get_all_permission_groups(&self) -> SqliteResult<Vec<PermissionGroup>> {
-        let conn = self.conn.read();
+        let conn = self.pool.get().map_err(|e| rusqlite::Error::ToSqlConversionFailure(Box::new(e)))?;
         
         let mut stmt = conn.prepare(
             "SELECT id, name, display_name, description, permissions, created_at

@@ -13,10 +13,10 @@
 use rusqlite::{Connection, params, Result as SqliteResult, Row};
 use serde::{Deserialize, Serialize};
 use std::sync::Arc;
-use parking_lot::RwLock;
 use chrono::Utc;
 use tracing::{info, error, warn};
 use std::collections::HashMap;
+use crate::database::DbPool;
 
 // ================================
 // 数据结构定义
@@ -97,13 +97,13 @@ pub struct ValidationResult {
 
 /// 模型配置管理器
 pub struct ModelConfigRegistry {
-    conn: Arc<RwLock<Connection>>,
+    pool: DbPool,
 }
 
 impl ModelConfigRegistry {
     /// 创建新的配置管理器
-    pub fn new(conn: Arc<RwLock<Connection>>) -> Self {
-        Self { conn }
+    pub fn new(pool: DbPool) -> Self {
+        Self { pool }
     }
 
     // ==================== 配置 CRUD 操作 ====================
@@ -119,7 +119,7 @@ impl ModelConfigRegistry {
             ));
         }
 
-        let conn = self.conn.write();
+        let conn = self.pool.get().map_err(|e| rusqlite::Error::ToSqlConversionFailure(Box::new(e)))?;
         let timestamp = Utc::now().timestamp();
 
         // 检查是否已存在
@@ -169,7 +169,7 @@ impl ModelConfigRegistry {
             )?;
 
             // 记录历史
-            if let Ok(Some(old)) = old_config {
+            if let Some(old) = old_config {
                 self.add_history_internal(
                     &conn,
                     &config.id,
@@ -228,13 +228,13 @@ impl ModelConfigRegistry {
 
     /// 获取配置
     pub fn get_config(&self, config_id: &str) -> SqliteResult<Option<ModelConfigData>> {
-        let conn = self.conn.read();
+        let conn = self.pool.get().map_err(|e| rusqlite::Error::ToSqlConversionFailure(Box::new(e)))?;
         self.get_config_by_id_internal(&conn, config_id)
     }
 
     /// 删除配置
     pub fn delete_config(&self, config_id: &str) -> SqliteResult<()> {
-        let conn = self.conn.write();
+        let conn = self.pool.get().map_err(|e| rusqlite::Error::ToSqlConversionFailure(Box::new(e)))?;
 
         // 获取配置用于历史记录
         let old_config = self.get_config_by_id_internal(&conn, config_id)?;
@@ -267,7 +267,7 @@ impl ModelConfigRegistry {
 
     /// 获取所有配置
     pub fn get_all_configs(&self) -> SqliteResult<Vec<ModelConfigData>> {
-        let conn = self.conn.read();
+        let conn = self.pool.get().map_err(|e| rusqlite::Error::ToSqlConversionFailure(Box::new(e)))?;
         
         let mut stmt = conn.prepare(
             "SELECT id, name, model_id, adapter_id, temperature, top_p, top_k, 
@@ -287,7 +287,7 @@ impl ModelConfigRegistry {
 
     /// 获取启用的配置
     pub fn get_enabled_configs(&self) -> SqliteResult<Vec<ModelConfigData>> {
-        let conn = self.conn.read();
+        let conn = self.pool.get().map_err(|e| rusqlite::Error::ToSqlConversionFailure(Box::new(e)))?;
         
         let mut stmt = conn.prepare(
             "SELECT id, name, model_id, adapter_id, temperature, top_p, top_k, 
@@ -307,7 +307,7 @@ impl ModelConfigRegistry {
 
     /// 获取默认配置
     pub fn get_default_config(&self) -> SqliteResult<Option<ModelConfigData>> {
-        let conn = self.conn.read();
+        let conn = self.pool.get().map_err(|e| rusqlite::Error::ToSqlConversionFailure(Box::new(e)))?;
         
         let mut stmt = conn.prepare(
             "SELECT id, name, model_id, adapter_id, temperature, top_p, top_k, 
@@ -329,7 +329,7 @@ impl ModelConfigRegistry {
 
     /// 设置默认配置
     pub fn set_default_config(&self, config_id: &str) -> SqliteResult<()> {
-        let conn = self.conn.write();
+        let conn = self.pool.get().map_err(|e| rusqlite::Error::ToSqlConversionFailure(Box::new(e)))?;
 
         // 检查配置是否存在
         if !self.config_exists_internal(&conn, config_id)? {
@@ -354,7 +354,7 @@ impl ModelConfigRegistry {
 
     /// 按模型ID查询配置
     pub fn get_configs_by_model(&self, model_id: &str) -> SqliteResult<Vec<ModelConfigData>> {
-        let conn = self.conn.read();
+        let conn = self.pool.get().map_err(|e| rusqlite::Error::ToSqlConversionFailure(Box::new(e)))?;
         
         let mut stmt = conn.prepare(
             "SELECT id, name, model_id, adapter_id, temperature, top_p, top_k, 
@@ -374,7 +374,7 @@ impl ModelConfigRegistry {
 
     /// 按适配器ID查询配置
     pub fn get_configs_by_adapter(&self, adapter_id: &str) -> SqliteResult<Vec<ModelConfigData>> {
-        let conn = self.conn.read();
+        let conn = self.pool.get().map_err(|e| rusqlite::Error::ToSqlConversionFailure(Box::new(e)))?;
         
         let mut stmt = conn.prepare(
             "SELECT id, name, model_id, adapter_id, temperature, top_p, top_k, 
@@ -396,7 +396,7 @@ impl ModelConfigRegistry {
 
     /// 获取配置历史记录
     pub fn get_config_history(&self, config_id: &str, limit: Option<u32>) -> SqliteResult<Vec<ModelConfigHistory>> {
-        let conn = self.conn.read();
+        let conn = self.pool.get().map_err(|e| rusqlite::Error::ToSqlConversionFailure(Box::new(e)))?;
         
         let query = if let Some(lim) = limit {
             format!(
@@ -432,7 +432,7 @@ impl ModelConfigRegistry {
 
     /// 获取所有历史记录
     pub fn get_all_history(&self, limit: Option<u32>) -> SqliteResult<Vec<ModelConfigHistory>> {
-        let conn = self.conn.read();
+        let conn = self.pool.get().map_err(|e| rusqlite::Error::ToSqlConversionFailure(Box::new(e)))?;
         
         let query = if let Some(lim) = limit {
             format!(
@@ -466,7 +466,7 @@ impl ModelConfigRegistry {
 
     /// 清理历史记录（保留最近N条）
     pub fn cleanup_history(&self, keep_count: u32) -> SqliteResult<usize> {
-        let conn = self.conn.write();
+        let conn = self.pool.get().map_err(|e| rusqlite::Error::ToSqlConversionFailure(Box::new(e)))?;
         
         let affected = conn.execute(
             "DELETE FROM model_config_history 
@@ -791,13 +791,22 @@ mod tests {
     use super::*;
     use tempfile::TempDir;
     use std::path::PathBuf;
+    use r2d2_sqlite::SqliteConnectionManager;
+    use r2d2::Pool;
 
-    fn setup_test_db() -> (TempDir, Arc<RwLock<Connection>>) {
+    fn setup_test_db() -> (TempDir, DbPool) {
         let temp_dir = TempDir::new().unwrap();
         let db_path = temp_dir.path().join("test.db");
-        let conn = Connection::open(db_path).unwrap();
+        
+        // Create connection pool
+        let manager = SqliteConnectionManager::file(&db_path);
+        let pool = Pool::builder()
+            .max_size(5)
+            .build(manager)
+            .unwrap();
         
         // 创建测试表结构
+        let conn = pool.get().unwrap();
         conn.execute(
             "CREATE TABLE model_configs (
                 id TEXT PRIMARY KEY,
@@ -833,8 +842,10 @@ mod tests {
             )",
             [],
         ).unwrap();
+        
+        drop(conn);
 
-        (temp_dir, Arc::new(RwLock::new(conn)))
+        (temp_dir, pool)
     }
 
     #[test]

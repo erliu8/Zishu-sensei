@@ -587,30 +587,34 @@ impl UpdateDatabase {
     /// 获取或创建更新配置
     pub fn get_or_create_update_config(&mut self) -> SqlResult<UpdateConfig> {
         // 先尝试获取现有配置
-        let mut stmt = self.conn.prepare("SELECT * FROM update_config LIMIT 1")?;
-        let config_iter = stmt.query_map([], |row| {
-            Ok(UpdateConfig {
-                id: Some(row.get(0)?),
-                auto_check_enabled: row.get(1)?,
-                check_interval_hours: row.get(2)?,
-                auto_download_enabled: row.get(3)?,
-                auto_install_enabled: row.get(4)?,
-                include_prerelease: row.get(5)?,
-                update_channel: row.get(6)?,
-                allowed_network_types: row.get(7)?,
-                max_retry_count: row.get(8)?,
-                download_timeout_seconds: row.get(9)?,
-                backup_before_update: row.get(10)?,
-                max_backup_count: row.get(11)?,
-                last_check_time: row.get::<_, Option<String>>(12)?
-                    .map(|s| DateTime::parse_from_rfc3339(&s).unwrap().with_timezone(&Utc)),
-                created_at: DateTime::parse_from_rfc3339(&row.get::<_, String>(13)?).unwrap().with_timezone(&Utc),
-                updated_at: DateTime::parse_from_rfc3339(&row.get::<_, String>(14)?).unwrap().with_timezone(&Utc),
-            })
-        })?;
+        let existing_config = {
+            let mut stmt = self.conn.prepare("SELECT * FROM update_config LIMIT 1")?;
+            let mut config_iter = stmt.query_map([], |row| {
+                Ok(UpdateConfig {
+                    id: Some(row.get(0)?),
+                    auto_check_enabled: row.get(1)?,
+                    check_interval_hours: row.get(2)?,
+                    auto_download_enabled: row.get(3)?,
+                    auto_install_enabled: row.get(4)?,
+                    include_prerelease: row.get(5)?,
+                    update_channel: row.get(6)?,
+                    allowed_network_types: row.get(7)?,
+                    max_retry_count: row.get(8)?,
+                    download_timeout_seconds: row.get(9)?,
+                    backup_before_update: row.get(10)?,
+                    max_backup_count: row.get(11)?,
+                    last_check_time: row.get::<_, Option<String>>(12)?
+                        .map(|s| DateTime::parse_from_rfc3339(&s).unwrap().with_timezone(&Utc)),
+                    created_at: DateTime::parse_from_rfc3339(&row.get::<_, String>(13)?).unwrap().with_timezone(&Utc),
+                    updated_at: DateTime::parse_from_rfc3339(&row.get::<_, String>(14)?).unwrap().with_timezone(&Utc),
+                })
+            })?;
 
-        for config in config_iter {
-            return Ok(config?);
+            config_iter.next().transpose()?
+        }; // stmt and config_iter are dropped here
+
+        if let Some(config) = existing_config {
+            return Ok(config);
         }
 
         // 如果没有配置，创建默认配置
@@ -705,7 +709,7 @@ impl UpdateDatabase {
             [keep_count],
         )?;
 
-        Ok(deleted)
+        Ok(deleted as i32)
     }
 
     /// 获取更新统计信息

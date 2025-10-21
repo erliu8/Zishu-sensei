@@ -1,0 +1,50 @@
+{
+  "window": {
+    "width": 400,
+    "height": 600,
+    "always_on_top": true,
+    "transparent": true,
+    "decorations": false,
+    "resizable": true,
+    "position": null
+  },
+  "character": {
+    "current_character": "shizuku",
+    "scale": 1.0,
+    "auto_idle": true,
+    "interaction_enabled": true
+  },
+  "theme": {
+    "current_theme": "anime",
+    "custom_css": null
+  },
+  "system": {
+    "auto_start": false,
+    "minimize_to_tray": true,
+    "close_to_tray": true,
+    "show_notifications": true,
+    "language": "en",
+    "log_level": "info"
+  },
+  "ai": {
+    "default_adapter": "openai-gpt4",
+    "temperature": 0.7,
+    "max_tokens": 2048,
+    "timeout_seconds": 30,
+    "retry_attempts": 3
+  },
+  "privacy": {
+    "data_collection": false,
+    "analytics": false,
+    "crash_reports": true,
+    "chat_history_enabled": true,
+    "encryption_enabled": true
+  },
+  "performance": {
+    "enable_hardware_acceleration": true,
+    "frame_rate_limit": 60,
+    "memory_limit_mb": 512,
+    "cache_size_mb": 100
+  }
+}
+

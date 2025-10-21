@@ -7,7 +7,7 @@
 //! - 权限使用记录
 //! - 权限统计分析
 
-use tauri::{AppHandle, State};
+use tauri::{AppHandle, Manager, State};
 use serde::{Deserialize, Serialize};
 use tracing::{info, error, warn};
 use std::collections::HashMap;
@@ -240,11 +240,15 @@ pub async fn request_permission(
     
     let db = get_database().ok_or("数据库未初始化")?;
     
+    let entity_id = request.entity_id.clone();
+    let permission_type = request.permission_type.clone();
+    let level = request.level.clone();
+    
     match db.permission_registry.request_permission(
         request.entity_type,
-        request.entity_id.clone(),
-        request.permission_type.clone(),
-        request.level,
+        entity_id.clone(),
+        permission_type.clone(),
+        level.clone(),
         request.scope,
     ) {
         Ok(id) => {
@@ -253,9 +257,9 @@ pub async fn request_permission(
             // 触发权限请求事件，通知前端显示授权对话框
             let _ = app_handle.emit_all("permission-request", serde_json::json!({
                 "id": id,
-                "entity_id": request.entity_id,
-                "permission_type": request.permission_type,
-                "level": request.level,
+                "entity_id": entity_id,
+                "permission_type": permission_type,
+                "level": level,
             }));
             
             Ok(CommandResponse::success_with_message(
@@ -294,7 +298,7 @@ pub async fn grant_permission(
         request.entity_type.clone(),
         request.entity_id.clone(),
         request.permission_type.clone(),
-        request.level,
+        request.level.clone(),
         request.scope.clone(),
         request.granted_by,
         expires_at,
@@ -303,18 +307,14 @@ pub async fn grant_permission(
             info!("权限授予成功");
             
             // 记录审计日志
-            if let Err(e) = crate::utils::security_audit::log_security_event(
-                "permission_granted",
-                Some(&request.entity_id),
-                Some(format!(
-                    "授予权限: {} (级别: {})",
+            crate::utils::security_audit::log_audit_success(
+                crate::utils::security_audit::AuditEventType::PermissionChange,
+                &format!(
+                    "授予权限: {} (级别: {:?})",
                     request.permission_type, request.level
-                )),
-                "high",
-                None,
-            ) {
-                warn!("记录审计日志失败: {}", e);
-            }
+                ),
+                Some(&request.entity_id),
+            );
             
             // 触发权限授予事件
             let _ = app_handle.emit_all("permission-granted", serde_json::json!({
@@ -359,19 +359,15 @@ pub async fn deny_permission(
             info!("权限已拒绝");
             
             // 记录审计日志
-            if let Err(e) = crate::utils::security_audit::log_security_event(
-                "permission_denied",
-                Some(&request.entity_id),
-                Some(format!(
+            crate::utils::security_audit::log_audit_success(
+                crate::utils::security_audit::AuditEventType::PermissionChange,
+                &format!(
                     "拒绝权限: {} (原因: {})",
                     request.permission_type,
                     request.reason.as_deref().unwrap_or("未提供原因")
-                )),
-                "medium",
-                None,
-            ) {
-                warn!("记录审计日志失败: {}", e);
-            }
+                ),
+                Some(&request.entity_id),
+            );
             
             // 触发权限拒绝事件
             let _ = app_handle.emit_all("permission-denied", serde_json::json!({
@@ -415,19 +411,15 @@ pub async fn revoke_permission(
             info!("权限已撤销");
             
             // 记录审计日志
-            if let Err(e) = crate::utils::security_audit::log_security_event(
-                "permission_revoked",
-                Some(&request.entity_id),
-                Some(format!(
+            crate::utils::security_audit::log_audit_success(
+                crate::utils::security_audit::AuditEventType::PermissionChange,
+                &format!(
                     "撤销权限: {} (原因: {})",
                     request.permission_type,
                     request.reason.as_deref().unwrap_or("未提供原因")
-                )),
-                "high",
-                None,
-            ) {
-                warn!("记录审计日志失败: {}", e);
-            }
+                ),
+                Some(&request.entity_id),
+            );
             
             // 触发权限撤销事件
             let _ = app_handle.emit_all("permission-revoked", serde_json::json!({
@@ -754,15 +746,11 @@ pub async fn grant_permission_group(
             info!("权限组授予成功");
             
             // 记录审计日志
-            if let Err(e) = crate::utils::security_audit::log_security_event(
-                "permission_group_granted",
+            crate::utils::security_audit::log_audit_success(
+                crate::utils::security_audit::AuditEventType::PermissionChange,
+                &format!("授予权限组: {}", request.group_name),
                 Some(&request.entity_id),
-                Some(format!("授予权限组: {}", request.group_name)),
-                "high",
-                None,
-            ) {
-                warn!("记录审计日志失败: {}", e);
-            }
+            );
             
             Ok(CommandResponse::success_with_message(
                 true,

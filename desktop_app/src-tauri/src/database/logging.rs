@@ -16,7 +16,8 @@ use serde::{Deserialize, Serialize};
 use std::collections::HashMap;
 use std::path::Path;
 use std::sync::{Arc, Mutex};
-use tokio::sync::RwLock;
+use r2d2;
+use r2d2_sqlite::SqliteConnectionManager;
 
 // ================================
 // 数据库结构和类型
@@ -24,7 +25,7 @@ use tokio::sync::RwLock;
 
 /// 日志数据库管理器
 pub struct LogDatabase {
-    connection: Arc<RwLock<Connection>>,
+    pool: r2d2::Pool<SqliteConnectionManager>,
 }
 
 /// 日志过滤条件
@@ -165,15 +166,16 @@ impl From<StoredLogEntry> for LogEntry {
 impl LogDatabase {
     /// 创建新的日志数据库实例
     pub async fn new<P: AsRef<Path>>(db_path: P) -> LoggerResult<Self> {
-        let connection = Connection::open(db_path.as_ref())
+        let manager = SqliteConnectionManager::file(db_path.as_ref());
+        let pool = r2d2::Pool::builder()
+            .max_size(5)
+            .build(manager)
             .map_err(|e| LoggerError::Io(std::io::Error::new(
                 std::io::ErrorKind::Other,
-                format!("打开数据库失败: {}", e)
+                format!("创建连接池失败: {}", e)
             )))?;
         
-        let db = Self {
-            connection: Arc::new(RwLock::new(connection)),
-        };
+        let db = Self { pool };
         
         db.initialize_schema().await?;
         Ok(db)
@@ -181,7 +183,11 @@ impl LogDatabase {
     
     /// 初始化数据库模式
     async fn initialize_schema(&self) -> LoggerResult<()> {
-        let conn = self.connection.write().await;
+        let conn = self.pool.get()
+            .map_err(|e| LoggerError::Io(std::io::Error::new(
+                std::io::ErrorKind::Other,
+                format!("获取连接失败: {}", e)
+            )))?;
         
         // 创建日志表
         conn.execute(
@@ -267,7 +273,11 @@ impl LogDatabase {
     
     /// 插入日志条目
     pub async fn insert_log(&self, entry: &LogEntry) -> LoggerResult<i64> {
-        let conn = self.connection.write().await;
+        let conn = self.pool.get()
+            .map_err(|e| LoggerError::Io(std::io::Error::new(
+                std::io::ErrorKind::Other,
+                format!("获取连接失败: {}", e)
+            )))?;
         
         let timestamp = entry.timestamp.timestamp();
         let local_timestamp = entry.local_time.timestamp();
@@ -317,7 +327,11 @@ impl LogDatabase {
         sort_by: &str,
         sort_order: &str,
     ) -> LoggerResult<(Vec<LogEntry>, usize)> {
-        let conn = self.connection.read().await;
+        let conn = self.pool.get()
+            .map_err(|e| LoggerError::Io(std::io::Error::new(
+                std::io::ErrorKind::Other,
+                format!("获取连接失败: {}", e)
+            )))?;
         
         // 构建WHERE子句
         let (where_clause, params) = self.build_where_clause(&filter);
@@ -379,7 +393,11 @@ impl LogDatabase {
     
     /// 获取日志统计信息
     pub async fn get_statistics(&self, filter: Option<LogFilter>) -> LoggerResult<LogStatistics> {
-        let conn = self.connection.read().await;
+        let conn = self.pool.get()
+            .map_err(|e| LoggerError::Io(std::io::Error::new(
+                std::io::ErrorKind::Other,
+                format!("获取连接失败: {}", e)
+            )))?;
         
         let (where_clause, params) = self.build_where_clause(&filter);
         
@@ -580,7 +598,11 @@ impl LogDatabase {
     
     /// 清理旧日志
     pub async fn cleanup_old_logs(&self, retention_days: u32) -> LoggerResult<usize> {
-        let conn = self.connection.write().await;
+        let conn = self.pool.get()
+            .map_err(|e| LoggerError::Io(std::io::Error::new(
+                std::io::ErrorKind::Other,
+                format!("获取连接失败: {}", e)
+            )))?;
         
         let cutoff_time = Local::now().timestamp() - (retention_days as i64 * 24 * 60 * 60);
         
@@ -612,7 +634,11 @@ impl LogDatabase {
     
     /// 获取待上传的日志
     pub async fn get_pending_upload_logs(&self, limit: usize) -> LoggerResult<Vec<crate::commands::logging::LogEntryWithId>> {
-        let conn = self.connection.read().await;
+        let conn = self.pool.get()
+            .map_err(|e| LoggerError::Io(std::io::Error::new(
+                std::io::ErrorKind::Other,
+                format!("获取连接失败: {}", e)
+            )))?;
         
         let mut stmt = conn.prepare(
             r#"
@@ -649,7 +675,11 @@ impl LogDatabase {
     
     /// 标记日志为已上传
     pub async fn mark_logs_as_uploaded(&self, log_ids: Vec<i64>) -> LoggerResult<()> {
-        let conn = self.connection.write().await;
+        let conn = self.pool.get()
+            .map_err(|e| LoggerError::Io(std::io::Error::new(
+                std::io::ErrorKind::Other,
+                format!("获取连接失败: {}", e)
+            )))?;
         
         for id in log_ids {
             conn.execute(
@@ -666,7 +696,11 @@ impl LogDatabase {
     
     /// 计算待上传日志数量
     pub async fn count_pending_upload_logs(&self) -> LoggerResult<usize> {
-        let conn = self.connection.read().await;
+        let conn = self.pool.get()
+            .map_err(|e| LoggerError::Io(std::io::Error::new(
+                std::io::ErrorKind::Other,
+                format!("获取连接失败: {}", e)
+            )))?;
         
         let count: i64 = conn.query_row(
             "SELECT COUNT(*) FROM logs WHERE uploaded = FALSE",
@@ -682,7 +716,11 @@ impl LogDatabase {
     
     /// 获取/保存远程配置
     pub async fn get_remote_config(&self) -> LoggerResult<crate::commands::logging::RemoteLogConfig> {
-        let conn = self.connection.read().await;
+        let conn = self.pool.get()
+            .map_err(|e| LoggerError::Io(std::io::Error::new(
+                std::io::ErrorKind::Other,
+                format!("获取连接失败: {}", e)
+            )))?;
         
         match conn.query_row(
             "SELECT value FROM log_config WHERE key = 'remote_config'",
@@ -698,7 +736,11 @@ impl LogDatabase {
     }
     
     pub async fn save_remote_config(&self, config: crate::commands::logging::RemoteLogConfig) -> LoggerResult<()> {
-        let conn = self.connection.write().await;
+        let conn = self.pool.get()
+            .map_err(|e| LoggerError::Io(std::io::Error::new(
+                std::io::ErrorKind::Other,
+                format!("获取连接失败: {}", e)
+            )))?;
         
         let config_json = serde_json::to_string(&config)
             .map_err(|e| LoggerError::Serialization(e))?;
@@ -719,7 +761,11 @@ impl LogDatabase {
     
     /// 更新最后上传时间
     pub async fn update_last_upload_time(&self) -> LoggerResult<()> {
-        let conn = self.connection.write().await;
+        let conn = self.pool.get()
+            .map_err(|e| LoggerError::Io(std::io::Error::new(
+                std::io::ErrorKind::Other,
+                format!("获取连接失败: {}", e)
+            )))?;
         
         conn.execute(
             r#"
@@ -737,7 +783,11 @@ impl LogDatabase {
     
     /// 获取最后上传时间
     pub async fn get_last_upload_time(&self) -> LoggerResult<i64> {
-        let conn = self.connection.read().await;
+        let conn = self.pool.get()
+            .map_err(|e| LoggerError::Io(std::io::Error::new(
+                std::io::ErrorKind::Other,
+                format!("获取连接失败: {}", e)
+            )))?;
         
         conn.query_row(
             "SELECT value FROM log_config WHERE key = 'last_upload_time'",

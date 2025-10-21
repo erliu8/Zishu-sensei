@@ -103,7 +103,7 @@ pub async fn get_system_info(
     sys.refresh_all();
     
     // Get OS version
-    let os_version = System::long_os_version().unwrap_or_else(|| {
+    let os_version = sys.long_os_version().unwrap_or_else(|| {
         if cfg!(target_os = "windows") {
             "Windows".to_string()
         } else if cfg!(target_os = "macos") {
@@ -130,7 +130,7 @@ pub async fn get_system_info(
     let cpu_usage = sys.global_cpu_info().cpu_usage();
     
     // Get system uptime
-    let uptime = System::uptime();
+    let uptime = sys.uptime();
     
     let app_version = app_handle.package_info().version.to_string();
     let app_name = app_handle.package_info().name.clone();
@@ -174,103 +174,6 @@ pub async fn get_app_version(
     };
     
     Ok(CommandResponse::success(version_info))
-}
-
-/// Check for application updates
-#[tauri::command]
-pub async fn check_for_updates(
-    app_handle: AppHandle,
-) -> Result<CommandResponse<UpdateInfo>, String> {
-    info!("检查应用更新");
-    
-    let current_version = app_handle.package_info().version.to_string();
-    
-    // 从环境变量或配置中读取更新服务器URL
-    let update_server_url = std::env::var("UPDATE_SERVER_URL")
-        .unwrap_or_else(|_| "https://api.zishu-sensei.com/updates/check".to_string());
-    
-    // 尝试从远程服务器获取最新版本信息
-    match fetch_latest_version(&update_server_url, &current_version).await {
-        Ok(update_info) => {
-            info!("更新检查成功: {:?}", update_info);
-            Ok(CommandResponse::success(update_info))
-        }
-        Err(e) => {
-            warn!("从远程服务器检查更新失败: {}, 返回默认信息", e);
-            
-            // 如果远程检查失败，返回默认信息
-            let fallback_info = UpdateInfo {
-                current_version: current_version.clone(),
-                latest_version: current_version,
-                update_available: false,
-                message: "您已使用最新版本".to_string(),
-                download_url: None,
-                release_notes: None,
-                release_date: None,
-                size: None,
-                mandatory: false,
-            };
-            
-            Ok(CommandResponse::success(fallback_info))
-        }
-    }
-}
-
-/// Fetch latest version from update server
-async fn fetch_latest_version(
-    server_url: &str,
-    current_version: &str,
-) -> Result<UpdateInfo, Box<dyn std::error::Error + Send + Sync>> {
-    use reqwest;
-    
-    let client = reqwest::Client::builder()
-        .timeout(std::time::Duration::from_secs(10))
-        .build()?;
-    
-    let response = client
-        .get(server_url)
-        .query(&[("version", current_version)])
-        .header("User-Agent", format!("Zishu-Sensei/{}", current_version))
-        .send()
-        .await?;
-    
-    if !response.status().is_success() {
-        return Err(format!("服务器返回错误状态: {}", response.status()).into());
-    }
-    
-    let update_data: serde_json::Value = response.json().await?;
-    
-    let latest_version = update_data["latest_version"]
-        .as_str()
-        .ok_or("缺少 latest_version 字段")?
-        .to_string();
-    
-    // 比较版本号
-    let update_available = compare_versions(&latest_version, current_version);
-    
-    let message = if update_available {
-        format!("发现新版本 {} (当前版本: {})", latest_version, current_version)
-    } else {
-        "您已使用最新版本".to_string()
-    };
-    
-    Ok(UpdateInfo {
-        current_version: current_version.to_string(),
-        latest_version,
-        update_available,
-        message,
-        download_url: update_data["download_url"]
-            .as_str()
-            .map(|s| s.to_string()),
-        release_notes: update_data["release_notes"]
-            .as_str()
-            .map(|s| s.to_string()),
-        release_date: update_data["release_date"]
-            .as_str()
-            .map(|s| s.to_string()),
-        size: update_data["size"].as_u64(),
-        mandatory: update_data["mandatory"].as_bool().unwrap_or(false),
-    })
 }
 
 /// Compare two version strings (simple implementation)
@@ -702,20 +605,20 @@ pub async fn update_tray_status(
 ) -> Result<CommandResponse<bool>, String> {
     info!("更新托盘状态: {}", status);
     
-    use crate::state::tray_state::TrayStatus;
+    use crate::state::tray_state::TrayIconState;
     
     // 解析状态
     let tray_status = match status.as_str() {
-        "idle" => TrayStatus::Idle,
-        "active" => TrayStatus::Active,
-        "busy" => TrayStatus::Busy,
-        "notification" => TrayStatus::Notification,
-        "error" => TrayStatus::Error,
-        _ => TrayStatus::Idle,
+        "idle" => TrayIconState::Idle,
+        "active" => TrayIconState::Active,
+        "busy" => TrayIconState::Busy,
+        "notification" => TrayIconState::Notification,
+        "error" => TrayIconState::Error,
+        _ => TrayIconState::Idle,
     };
     
     // 更新状态
-    state.tray.update_status(tray_status.clone());
+    state.tray.set_icon_state(tray_status.clone());
     
     // 更新托盘提示
     if let Some(tooltip_text) = tooltip {
@@ -743,12 +646,14 @@ pub async fn get_tray_status(
 ) -> Result<CommandResponse<serde_json::Value>, String> {
     info!("获取托盘状态");
     
-    let status = state.tray.get_status();
-    let stats = state.tray.get_stats();
+    let status = state.tray.get_icon_state();
+    let resources = state.tray.get_system_resources();
+    let unread_count = state.tray.get_unread_notification_count();
     
     Ok(CommandResponse::success(serde_json::json!({
         "status": status,
-        "stats": stats,
+        "resources": resources,
+        "unread_count": unread_count,
     })))
 }
 
@@ -762,7 +667,18 @@ pub async fn add_recent_conversation(
 ) -> Result<CommandResponse<bool>, String> {
     info!("添加最近对话: {}", conversation_id);
     
-    state.tray.add_recent_conversation(conversation_id, title, preview);
+    use crate::state::tray_state::RecentConversation;
+    use chrono::Utc;
+    
+    let conversation = RecentConversation {
+        id: conversation_id,
+        title,
+        last_message: preview,
+        updated_at: Utc::now(),
+        unread_count: 0,
+    };
+    
+    state.tray.add_or_update_conversation(conversation);
     
     Ok(CommandResponse::success_with_message(
         true,
@@ -778,15 +694,17 @@ pub async fn get_recent_conversations(
 ) -> Result<CommandResponse<Vec<serde_json::Value>>, String> {
     info!("获取最近对话");
     
-    let conversations = state.tray.get_recent_conversations(limit.unwrap_or(5));
+    let conversations = state.tray.get_recent_conversations();
+    let limit = limit.unwrap_or(5);
     
     let result: Vec<serde_json::Value> = conversations
         .iter()
+        .take(limit)
         .map(|conv| serde_json::json!({
             "id": conv.id,
             "title": conv.title,
-            "preview": conv.preview,
-            "timestamp": conv.timestamp,
+            "preview": conv.last_message,
+            "timestamp": conv.updated_at,
         }))
         .collect();
     
@@ -800,7 +718,7 @@ pub async fn clear_recent_conversations(
 ) -> Result<CommandResponse<bool>, String> {
     info!("清空最近对话");
     
-    state.tray.clear_recent_conversations();
+    state.tray.clear_conversations();
     
     Ok(CommandResponse::success_with_message(
         true,

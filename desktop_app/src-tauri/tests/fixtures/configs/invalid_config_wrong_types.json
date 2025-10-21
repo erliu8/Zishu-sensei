@@ -1,0 +1,27 @@
+{
+  "window": {
+    "width": "should-be-number",
+    "height": "should-be-number",
+    "always_on_top": "should-be-boolean",
+    "transparent": 123,
+    "decorations": "true",
+    "resizable": null
+  },
+  "character": {
+    "current_character": 12345,
+    "scale": "should-be-number",
+    "auto_idle": "yes",
+    "interaction_enabled": 1
+  },
+  "theme": {
+    "current_theme": ["should-be-string"],
+    "custom_css": 123
+  },
+  "system": {
+    "auto_start": "false",
+    "minimize_to_tray": 0,
+    "close_to_tray": null,
+    "show_notifications": "true"
+  }
+}
+

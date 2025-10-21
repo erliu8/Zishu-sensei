@@ -1,0 +1,7 @@
+{
+  "name": "Invalid Character",
+  "display_name": "Invalid",
+  "description": "Missing required id field",
+  "type": "live2d"
+}
+

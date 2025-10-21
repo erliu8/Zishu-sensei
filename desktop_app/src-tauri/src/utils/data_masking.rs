@@ -177,7 +177,7 @@ impl DataMasker {
     }
 
     /// 自动检测并脱敏 API 密钥
-    pub fn mask_api_keys(&self, text: &str) -> Cow<str> {
+    pub fn mask_api_keys<'a>(&self, text: &'a str) -> Cow<'a, str> {
         let mut result = Cow::Borrowed(text);
 
         for pattern in &self.api_key_patterns {
@@ -193,7 +193,7 @@ impl DataMasker {
     }
 
     /// 自动检测并脱敏 Token
-    pub fn mask_tokens(&self, text: &str) -> Cow<str> {
+    pub fn mask_tokens<'a>(&self, text: &'a str) -> Cow<'a, str> {
         let mut result = Cow::Borrowed(text);
 
         for pattern in &self.token_patterns {
@@ -209,7 +209,7 @@ impl DataMasker {
     }
 
     /// 脱敏电子邮件
-    pub fn mask_email(&self, text: &str) -> Cow<str> {
+    pub fn mask_email<'a>(&self, text: &'a str) -> Cow<'a, str> {
         self.email_pattern.replace_all(text, |caps: &regex::Captures| {
             let email = caps.get(0).unwrap().as_str();
             if let Some(at_pos) = email.find('@') {
@@ -227,7 +227,7 @@ impl DataMasker {
     }
 
     /// 脱敏电话号码
-    pub fn mask_phone(&self, text: &str) -> Cow<str> {
+    pub fn mask_phone<'a>(&self, text: &'a str) -> Cow<'a, str> {
         self.phone_pattern.replace_all(text, |caps: &regex::Captures| {
             let phone = caps.get(0).unwrap().as_str();
             self.mask_middle(phone, 3)

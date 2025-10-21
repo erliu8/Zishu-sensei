@@ -129,12 +129,13 @@ impl EventTriggerManager {
             }
             
             // 执行工作流
-            match self.engine.execute_workflow(
+            let mut vars = HashMap::new();
+            vars.insert("event_type".to_string(), serde_json::json!(event_type));
+            vars.insert("event_data".to_string(), event_data.clone());
+            
+            match self.engine.execute_workflow_by_id(
                 &trigger.workflow_id,
-                serde_json::json!({
-                    "event_type": event_type,
-                    "event_data": event_data,
-                }),
+                vars,
             ).await {
                 Ok(execution_id) => {
                     info!("事件触发器 {} 成功启动工作流执行: {}", trigger.id, execution_id);
@@ -235,6 +236,18 @@ pub enum HttpMethod {
     PUT,
     DELETE,
     PATCH,
+}
+
+impl std::fmt::Display for HttpMethod {
+    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
+        match self {
+            HttpMethod::GET => write!(f, "GET"),
+            HttpMethod::POST => write!(f, "POST"),
+            HttpMethod::PUT => write!(f, "PUT"),
+            HttpMethod::DELETE => write!(f, "DELETE"),
+            HttpMethod::PATCH => write!(f, "PATCH"),
+        }
+    }
 }
 
 /// Webhook认证
@@ -342,16 +355,17 @@ impl WebhookTriggerManager {
         }
         
         // 执行工作流
-        let execution_id = self.engine.execute_workflow(
+        let mut vars = HashMap::new();
+        vars.insert("webhook_id".to_string(), serde_json::json!(webhook.id));
+        vars.insert("method".to_string(), serde_json::json!(request.method));
+        vars.insert("path".to_string(), serde_json::json!(request.path));
+        vars.insert("headers".to_string(), serde_json::json!(request.headers));
+        vars.insert("query".to_string(), serde_json::json!(request.query));
+        vars.insert("body".to_string(), serde_json::json!(request.body));
+        
+        let execution_id = self.engine.execute_workflow_by_id(
             &webhook.workflow_id,
-            serde_json::json!({
-                "webhook_id": webhook.id,
-                "method": request.method,
-                "path": request.path,
-                "headers": request.headers,
-                "query": request.query,
-                "body": request.body,
-            }),
+            vars,
         ).await?;
         
         info!("Webhook {} 成功启动工作流执行: {}", webhook.id, execution_id);

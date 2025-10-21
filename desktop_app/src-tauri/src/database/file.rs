@@ -1,4 +1,4 @@
-use rusqlite::{params, Connection, Result as SqliteResult};
+use rusqlite::{params, Connection, OptionalExtension, Result as SqliteResult};
 use serde::{Deserialize, Serialize};
 use std::path::Path;
 use chrono::{DateTime, Utc};

@@ -1,4 +1,4 @@
-use crate::commands::CommandMetadata;
+use crate::commands::{CommandMetadata, PermissionLevel};
 use crate::database::update::{UpdateInfo, UpdateConfig, VersionHistory};
 use crate::utils::update_manager::{UpdateManager, UpdateEvent};
 use anyhow::{Result, Context};
@@ -104,8 +104,8 @@ pub async fn check_for_updates(
     info!("Checking for updates (force: {:?})", force);
 
     let manager = {
-        let state_manager = state.manager.lock().unwrap();
-        state_manager.as_ref()
+        state.manager.lock().unwrap()
+            .as_ref()
             .ok_or("Update manager not initialized")?
             .clone()
     };
@@ -138,8 +138,8 @@ pub async fn download_update(
     info!("Starting download for version: {}", version);
 
     let manager = {
-        let state_manager = state.manager.lock().unwrap();
-        state_manager.as_ref()
+        state.manager.lock().unwrap()
+            .as_ref()
             .ok_or("Update manager not initialized")?
             .clone()
     };
@@ -165,8 +165,8 @@ pub async fn install_update(
     info!("Starting installation for version: {}", version);
 
     let manager = {
-        let state_manager = state.manager.lock().unwrap();
-        state_manager.as_ref()
+        state.manager.lock().unwrap()
+            .as_ref()
             .ok_or("Update manager not initialized")?
             .clone()
     };
@@ -191,7 +191,7 @@ pub async fn install_update_with_tauri(
     info!("Installing update using Tauri updater");
 
     // 使用 Tauri 内置更新器
-    match tauri::updater(app_handle.clone()).check().await {
+    match tauri::updater::builder(app_handle.clone()).check().await {
         Ok(update) => {
             if update.is_update_available() {
                 info!("Update available, starting download and install");
@@ -228,8 +228,8 @@ pub async fn cancel_download(
     info!("Canceling download for version: {}", version);
 
     let manager = {
-        let state_manager = state.manager.lock().unwrap();
-        state_manager.as_ref()
+        state.manager.lock().unwrap()
+            .as_ref()
             .ok_or("Update manager not initialized")?
             .clone()
     };
@@ -255,8 +255,8 @@ pub async fn rollback_to_version(
     info!("Rolling back to version: {}", version);
 
     let manager = {
-        let state_manager = state.manager.lock().unwrap();
-        state_manager.as_ref()
+        state.manager.lock().unwrap()
+            .as_ref()
             .ok_or("Update manager not initialized")?
             .clone()
     };
@@ -279,8 +279,8 @@ pub async fn get_update_config(
     state: State<'_, UpdateManagerState>,
 ) -> Result<UpdateConfig, String> {
     let manager = {
-        let state_manager = state.manager.lock().unwrap();
-        state_manager.as_ref()
+        state.manager.lock().unwrap()
+            .as_ref()
             .ok_or("Update manager not initialized")?
             .clone()
     };
@@ -301,8 +301,8 @@ pub async fn save_update_config(
     mut config: UpdateConfig,
 ) -> Result<bool, String> {
     let manager = {
-        let state_manager = state.manager.lock().unwrap();
-        state_manager.as_ref()
+        state.manager.lock().unwrap()
+            .as_ref()
             .ok_or("Update manager not initialized")?
             .clone()
     };
@@ -325,8 +325,8 @@ pub async fn get_version_history(
     state: State<'_, UpdateManagerState>,
 ) -> Result<Vec<VersionHistory>, String> {
     let manager = {
-        let state_manager = state.manager.lock().unwrap();
-        state_manager.as_ref()
+        state.manager.lock().unwrap()
+            .as_ref()
             .ok_or("Update manager not initialized")?
             .clone()
     };
@@ -346,8 +346,8 @@ pub async fn get_update_stats(
     state: State<'_, UpdateManagerState>,
 ) -> Result<HashMap<String, i64>, String> {
     let manager = {
-        let state_manager = state.manager.lock().unwrap();
-        state_manager.as_ref()
+        state.manager.lock().unwrap()
+            .as_ref()
             .ok_or("Update manager not initialized")?
             .clone()
     };
@@ -361,32 +361,6 @@ pub async fn get_update_stats(
     }
 }
 
-/// 清理旧文件
-#[tauri::command]
-pub async fn cleanup_old_files(
-    state: State<'_, UpdateManagerState>,
-) -> Result<bool, String> {
-    info!("Cleaning up old update files");
-
-    let manager = {
-        let state_manager = state.manager.lock().unwrap();
-        state_manager.as_ref()
-            .ok_or("Update manager not initialized")?
-            .clone()
-    };
-
-    match manager.cleanup_old_files().await {
-        Ok(_) => {
-            info!("Cleanup completed successfully");
-            Ok(true)
-        }
-        Err(e) => {
-            error!("Cleanup failed: {}", e);
-            Err(e.to_string())
-        }
-    }
-}
-
 /// 重启应用
 #[tauri::command]
 pub async fn restart_application(
@@ -395,16 +369,9 @@ pub async fn restart_application(
     info!("Restarting application");
 
     // 使用 Tauri 的重启功能
-    match app_handle.restart() {
-        Ok(_) => {
-            info!("Application restart initiated");
-            Ok(true)
-        }
-        Err(e) => {
-            error!("Failed to restart application: {}", e);
-            Err(format!("Failed to restart application: {}", e))
-        }
-    }
+    app_handle.restart();
+    info!("Application restart initiated");
+    Ok(true)
 }
 
 /// 监听更新事件
@@ -440,7 +407,7 @@ pub async fn listen_update_events(
 pub async fn check_tauri_updater_available(
     app_handle: AppHandle,
 ) -> Result<bool, String> {
-    match tauri::updater(app_handle).check().await {
+    match tauri::updater::builder(app_handle).check().await {
         Ok(_) => Ok(true),
         Err(e) => {
             warn!("Tauri updater not available: {}", e);
@@ -462,115 +429,163 @@ pub fn get_command_metadata() -> std::collections::HashMap<String, CommandMetada
     let mut commands = std::collections::HashMap::new();
     
     commands.insert("init_update_manager".to_string(), CommandMetadata {
+        name: "init_update_manager".to_string(),
         description: "初始化更新管理器".to_string(),
-        parameters: vec![],
-        return_type: "boolean".to_string(),
-        example: r#"await invoke('init_update_manager')"#.to_string(),
+        input_type: None,
+        output_type: None,
+        required_permission: PermissionLevel::User,
+        is_async: true,
+        category: "update".to_string(),
     });
 
     commands.insert("check_for_updates".to_string(), CommandMetadata {
+        name: "check_for_updates".to_string(),
         description: "检查应用更新".to_string(),
-        parameters: vec!["force: boolean (optional)".to_string()],
-        return_type: "UpdateCheckResult".to_string(),
-        example: r#"await invoke('check_for_updates', { force: true })"#.to_string(),
+        input_type: None,
+        output_type: None,
+        required_permission: PermissionLevel::User,
+        is_async: true,
+        category: "update".to_string(),
     });
 
     commands.insert("download_update".to_string(), CommandMetadata {
+        name: "download_update".to_string(),
         description: "下载指定版本的更新".to_string(),
-        parameters: vec!["version: string".to_string()],
-        return_type: "string".to_string(),
-        example: r#"await invoke('download_update', { version: '1.1.0' })"#.to_string(),
+        input_type: None,
+        output_type: None,
+        required_permission: PermissionLevel::User,
+        is_async: true,
+        category: "update".to_string(),
     });
 
     commands.insert("install_update".to_string(), CommandMetadata {
+        name: "install_update".to_string(),
         description: "安装已下载的更新".to_string(),
-        parameters: vec!["version: string".to_string()],
-        return_type: "boolean".to_string(),
-        example: r#"await invoke('install_update', { version: '1.1.0' })"#.to_string(),
+        input_type: None,
+        output_type: None,
+        required_permission: PermissionLevel::User,
+        is_async: true,
+        category: "update".to_string(),
     });
 
     commands.insert("install_update_with_tauri".to_string(), CommandMetadata {
+        name: "install_update_with_tauri".to_string(),
         description: "使用 Tauri 内置更新器安装更新".to_string(),
-        parameters: vec![],
-        return_type: "boolean".to_string(),
-        example: r#"await invoke('install_update_with_tauri')"#.to_string(),
+        input_type: None,
+        output_type: None,
+        required_permission: PermissionLevel::User,
+        is_async: true,
+        category: "update".to_string(),
     });
 
     commands.insert("cancel_download".to_string(), CommandMetadata {
+        name: "cancel_download".to_string(),
         description: "取消正在下载的更新".to_string(),
-        parameters: vec!["version: string".to_string()],
-        return_type: "boolean".to_string(),
-        example: r#"await invoke('cancel_download', { version: '1.1.0' })"#.to_string(),
+        input_type: None,
+        output_type: None,
+        required_permission: PermissionLevel::User,
+        is_async: true,
+        category: "update".to_string(),
     });
 
     commands.insert("rollback_to_version".to_string(), CommandMetadata {
+        name: "rollback_to_version".to_string(),
         description: "回滚到指定版本".to_string(),
-        parameters: vec!["version: string".to_string()],
-        return_type: "boolean".to_string(),
-        example: r#"await invoke('rollback_to_version', { version: '1.0.0' })"#.to_string(),
+        input_type: None,
+        output_type: None,
+        required_permission: PermissionLevel::User,
+        is_async: true,
+        category: "update".to_string(),
     });
 
     commands.insert("get_update_config".to_string(), CommandMetadata {
+        name: "get_update_config".to_string(),
         description: "获取更新配置".to_string(),
-        parameters: vec![],
-        return_type: "UpdateConfig".to_string(),
-        example: r#"await invoke('get_update_config')"#.to_string(),
+        input_type: None,
+        output_type: None,
+        required_permission: PermissionLevel::User,
+        is_async: true,
+        category: "update".to_string(),
     });
 
     commands.insert("save_update_config".to_string(), CommandMetadata {
+        name: "save_update_config".to_string(),
         description: "保存更新配置".to_string(),
-        parameters: vec!["config: UpdateConfig".to_string()],
-        return_type: "boolean".to_string(),
-        example: r#"await invoke('save_update_config', { config })"#.to_string(),
+        input_type: None,
+        output_type: None,
+        required_permission: PermissionLevel::User,
+        is_async: true,
+        category: "update".to_string(),
     });
 
     commands.insert("get_version_history".to_string(), CommandMetadata {
+        name: "get_version_history".to_string(),
         description: "获取版本历史记录".to_string(),
-        parameters: vec![],
-        return_type: "VersionHistory[]".to_string(),
-        example: r#"await invoke('get_version_history')"#.to_string(),
+        input_type: None,
+        output_type: None,
+        required_permission: PermissionLevel::User,
+        is_async: true,
+        category: "update".to_string(),
     });
 
     commands.insert("get_update_stats".to_string(), CommandMetadata {
+        name: "get_update_stats".to_string(),
         description: "获取更新统计信息".to_string(),
-        parameters: vec![],
-        return_type: "Record<string, number>".to_string(),
-        example: r#"await invoke('get_update_stats')"#.to_string(),
+        input_type: None,
+        output_type: None,
+        required_permission: PermissionLevel::User,
+        is_async: true,
+        category: "update".to_string(),
     });
 
     commands.insert("cleanup_old_files".to_string(), CommandMetadata {
+        name: "cleanup_old_files".to_string(),
         description: "清理旧的更新文件".to_string(),
-        parameters: vec![],
-        return_type: "boolean".to_string(),
-        example: r#"await invoke('cleanup_old_files')"#.to_string(),
+        input_type: None,
+        output_type: None,
+        required_permission: PermissionLevel::User,
+        is_async: true,
+        category: "update".to_string(),
     });
 
     commands.insert("restart_application".to_string(), CommandMetadata {
+        name: "restart_application".to_string(),
         description: "重启应用程序".to_string(),
-        parameters: vec![],
-        return_type: "boolean".to_string(),
-        example: r#"await invoke('restart_application')"#.to_string(),
+        input_type: None,
+        output_type: None,
+        required_permission: PermissionLevel::User,
+        is_async: true,
+        category: "update".to_string(),
     });
 
     commands.insert("listen_update_events".to_string(), CommandMetadata {
+        name: "listen_update_events".to_string(),
         description: "监听更新事件".to_string(),
-        parameters: vec![],
-        return_type: "boolean".to_string(),
-        example: r#"await invoke('listen_update_events')"#.to_string(),
+        input_type: None,
+        output_type: None,
+        required_permission: PermissionLevel::User,
+        is_async: true,
+        category: "update".to_string(),
     });
 
     commands.insert("check_tauri_updater_available".to_string(), CommandMetadata {
+        name: "check_tauri_updater_available".to_string(),
         description: "检查 Tauri 更新器是否可用".to_string(),
-        parameters: vec![],
-        return_type: "boolean".to_string(),
-        example: r#"await invoke('check_tauri_updater_available')"#.to_string(),
+        input_type: None,
+        output_type: None,
+        required_permission: PermissionLevel::User,
+        is_async: true,
+        category: "update".to_string(),
     });
 
     commands.insert("get_current_version".to_string(), CommandMetadata {
+        name: "get_current_version".to_string(),
         description: "获取当前应用版本".to_string(),
-        parameters: vec![],
-        return_type: "string".to_string(),
-        example: r#"await invoke('get_current_version')"#.to_string(),
+        input_type: None,
+        output_type: None,
+        required_permission: PermissionLevel::User,
+        is_async: true,
+        category: "update".to_string(),
     });
 
     commands

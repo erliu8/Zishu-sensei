@@ -39,7 +39,7 @@ impl WorkflowRegistry {
     /// 创建工作流
     pub async fn create_workflow(&self, mut workflow: Workflow) -> Result<String> {
         // 验证工作流
-        workflow.validate()?;
+        workflow.validate().map_err(|e| anyhow!(e))?;
 
         // 生成ID（如果未提供）
         if workflow.id.is_empty() {
@@ -67,7 +67,7 @@ impl WorkflowRegistry {
     /// 更新工作流
     pub async fn update_workflow(&self, mut workflow: Workflow) -> Result<()> {
         // 验证工作流
-        workflow.validate()?;
+        workflow.validate().map_err(|e| anyhow!(e))?;
 
         // 检查工作流是否存在
         let existing_db = self.db_registry.get_workflow(&workflow.id)
@@ -488,10 +488,10 @@ impl WorkflowRegistry {
         let workflow_json = serde_json::to_string(workflow)?;
         let mut replaced = workflow_json;
 
-        for (key, value) in params {
+        for (key, value) in &params {
             let placeholder = format!("{{{{{}}}}}",  key);
             let value_str = match value {
-                serde_json::Value::String(s) => s,
+                serde_json::Value::String(s) => s.clone(),
                 v => v.to_string(),
             };
             replaced = replaced.replace(&placeholder, &value_str);

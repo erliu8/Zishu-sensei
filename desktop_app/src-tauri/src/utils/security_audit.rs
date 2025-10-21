@@ -7,6 +7,8 @@ use rusqlite::{Connection, Result as SqliteResult, params};
 use serde::{Deserialize, Serialize};
 use std::path::Path;
 use tracing::{info, warn};
+use r2d2;
+use r2d2_sqlite::SqliteConnectionManager;
 
 /// 审计事件类型
 #[derive(Debug, Clone, Serialize, Deserialize, PartialEq, Eq)]
@@ -87,13 +89,19 @@ pub struct AuditEvent {
 
 /// 审计日志管理器
 pub struct SecurityAuditLogger {
-    conn: Connection,
+    pool: r2d2::Pool<SqliteConnectionManager>,
 }
 
 impl SecurityAuditLogger {
     /// 创建或打开审计日志数据库
-    pub fn new(db_path: &Path) -> Result<Self, rusqlite::Error> {
-        let conn = Connection::open(db_path)?;
+    pub fn new(db_path: &Path) -> Result<Self, Box<dyn std::error::Error + Send + Sync>> {
+        let manager = SqliteConnectionManager::file(db_path);
+        let pool = r2d2::Pool::builder()
+            .max_size(5)
+            .build(manager)?;
+        
+        // 获取连接并创建表
+        let conn = pool.get()?;
         
         // 创建审计事件表
         conn.execute(
@@ -143,9 +151,11 @@ impl SecurityAuditLogger {
              ON audit_events(actor)",
             [],
         )?;
+        
+        drop(conn); // 释放连接回池
 
         info!("安全审计日志系统初始化完成");
-        Ok(Self { conn })
+        Ok(Self { pool })
     }
 
     /// 记录审计事件
@@ -153,7 +163,7 @@ impl SecurityAuditLogger {
         let event_type_str = serde_json::to_string(&event.event_type).unwrap();
         let level_str = serde_json::to_string(&event.level).unwrap();
 
-        self.conn.execute(
+        self.pool.get().map_err(|e| rusqlite::Error::ToSqlConversionFailure(Box::new(e)))?.execute(
             "INSERT INTO audit_events 
              (id, event_type, level, description, resource_id, actor, client_ip, 
               metadata, success, error_message, timestamp)
@@ -291,7 +301,8 @@ impl SecurityAuditLogger {
 
         let param_refs: Vec<&dyn rusqlite::ToSql> = params.iter().map(|p| p.as_ref()).collect();
 
-        let mut stmt = self.conn.prepare(&query)?;
+        let conn = self.pool.get().map_err(|e| rusqlite::Error::ToSqlConversionFailure(Box::new(e)))?;
+        let mut stmt = conn.prepare(&query)?;
         let events = stmt
             .query_map(param_refs.as_slice(), |row| {
                 let event_type_str: String = row.get(1)?;
@@ -320,7 +331,8 @@ impl SecurityAuditLogger {
     pub fn cleanup_old_logs(&self, days: i64) -> Result<usize, rusqlite::Error> {
         let cutoff_timestamp = chrono::Utc::now().timestamp() - (days * 86400);
         
-        let count = self.conn.execute(
+        let conn = self.pool.get().map_err(|e| rusqlite::Error::ToSqlConversionFailure(Box::new(e)))?;
+        let count = conn.execute(
             "DELETE FROM audit_events WHERE timestamp < ?1",
             [cutoff_timestamp],
         )?;
@@ -331,19 +343,21 @@ impl SecurityAuditLogger {
 
     /// 获取统计信息
     pub fn get_statistics(&self) -> Result<AuditStatistics, rusqlite::Error> {
-        let total_events: i64 = self.conn.query_row(
+        let conn = self.pool.get().map_err(|e| rusqlite::Error::ToSqlConversionFailure(Box::new(e)))?;
+        
+        let total_events: i64 = conn.query_row(
             "SELECT COUNT(*) FROM audit_events",
             [],
             |row| row.get(0),
         )?;
 
-        let failed_events: i64 = self.conn.query_row(
+        let failed_events: i64 = conn.query_row(
             "SELECT COUNT(*) FROM audit_events WHERE success = 0",
             [],
             |row| row.get(0),
         )?;
 
-        let critical_events: i64 = self.conn.query_row(
+        let critical_events: i64 = conn.query_row(
             "SELECT COUNT(*) FROM audit_events WHERE level = ?1",
             [serde_json::to_string(&AuditLevel::Critical).unwrap()],
             |row| row.get(0),
@@ -385,7 +399,7 @@ lazy_static::lazy_static! {
 }
 
 /// 初始化全局审计日志
-pub fn init_global_audit_logger(db_path: &Path) -> Result<(), rusqlite::Error> {
+pub fn init_global_audit_logger(db_path: &Path) -> Result<(), Box<dyn std::error::Error + Send + Sync>> {
     let logger = SecurityAuditLogger::new(db_path)?;
     *GLOBAL_AUDIT_LOGGER.write().unwrap() = Some(logger);
     Ok(())

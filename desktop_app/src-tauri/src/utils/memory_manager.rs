@@ -317,8 +317,9 @@ impl MemoryManager {
         reports.extend(leaks.clone());
 
         // 保留最近 50 个报告
-        if reports.len() > 50 {
-            reports.drain(0..reports.len() - 50);
+        let reports_len = reports.len();
+        if reports_len > 50 {
+            reports.drain(0..reports_len - 50);
         }
 
         Ok(leaks)
@@ -349,10 +350,12 @@ impl MemoryManager {
         {
             let mut snapshots = self.snapshots.lock().map_err(|e| e.to_string())?;
             let old_count = snapshots.len();
-            if snapshots.len() > 50 {
-                snapshots.drain(0..snapshots.len() - 50);
-                cleaned_objects += old_count - snapshots.len();
-                details.insert("snapshots_cleaned".to_string(), (old_count - snapshots.len()) as u64);
+            let snapshots_len = snapshots.len();
+            if snapshots_len > 50 {
+                snapshots.drain(0..snapshots_len - 50);
+                let new_count = snapshots.len();
+                cleaned_objects += old_count - new_count;
+                details.insert("snapshots_cleaned".to_string(), (old_count - new_count) as u64);
             }
         }
 
@@ -360,10 +363,12 @@ impl MemoryManager {
         {
             let mut reports = self.leak_reports.lock().map_err(|e| e.to_string())?;
             let old_count = reports.len();
-            if reports.len() > 20 {
-                reports.drain(0..reports.len() - 20);
-                cleaned_objects += old_count - reports.len();
-                details.insert("leak_reports_cleaned".to_string(), (old_count - reports.len()) as u64);
+            let reports_len = reports.len();
+            if reports_len > 20 {
+                reports.drain(0..reports_len - 20);
+                let new_count = reports.len();
+                cleaned_objects += old_count - new_count;
+                details.insert("leak_reports_cleaned".to_string(), (old_count - new_count) as u64);
             }
         }
 

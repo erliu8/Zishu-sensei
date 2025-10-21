@@ -223,7 +223,7 @@ impl SystemMonitor {
                 let mut total_rx = 0u64;
                 let mut total_tx = 0u64;
                 
-                for (_interface_name, data) in networks.iter() {
+                for (_interface_name, data) in networks {
                     total_rx += data.total_received();
                     total_tx += data.total_transmitted();
                 }
@@ -255,7 +255,7 @@ impl SystemMonitor {
                 
                 // 获取当前应用进程信息
                 let current_pid = std::process::id();
-                let app_process = sys.process(sysinfo::Pid::from_u32(current_pid)).map(|process| {
+                let app_process = sys.process(sysinfo::Pid::from(current_pid as usize)).map(|process| {
                     ProcessInfo {
                         pid: current_pid,
                         name: process.name().to_string(),

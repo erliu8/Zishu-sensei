@@ -132,7 +132,7 @@ fn convert_monitor(monitor: &Monitor, is_primary: bool) -> Result<MonitorInfo, S
     let orientation = determine_orientation(width, height);
     
     Ok(MonitorInfo {
-        name: monitor.name().clone(),
+        name: monitor.name().map(|s| s.to_string()),
         size: MonitorSize {
             width,
             height,
@@ -203,8 +203,14 @@ fn calculate_virtual_screen(monitors: &[MonitorInfo]) -> VirtualScreen {
 pub async fn get_desktop_info(app_handle: AppHandle) -> Result<CommandResponse<DesktopInfo>, String> {
     info!("获取桌面信息");
     
-    // Get primary monitor
-    let primary_monitor = app_handle
+    // Get primary monitor - use any window to access monitor info
+    let window = app_handle.get_window("main")
+        .ok_or_else(|| {
+            error!("未找到主窗口");
+            "未找到主窗口".to_string()
+        })?;
+    
+    let primary_monitor = window
         .primary_monitor()
         .map_err(|e| {
             error!("获取主显示器失败: {}", e);
@@ -216,7 +222,7 @@ pub async fn get_desktop_info(app_handle: AppHandle) -> Result<CommandResponse<D
         })?;
     
     // Get all available monitors
-    let all_monitors = app_handle
+    let all_monitors = window
         .available_monitors()
         .map_err(|e| {
             error!("获取显示器列表失败: {}", e);
@@ -302,11 +308,14 @@ pub async fn get_monitor_at_position(
 ) -> Result<CommandResponse<Option<MonitorInfo>>, String> {
     info!("获取位置 ({}, {}) 处的显示器信息", x, y);
     
-    let all_monitors = app_handle
+    let window = app_handle.get_window("main")
+        .ok_or_else(|| "未找到主窗口".to_string())?;
+    
+    let all_monitors = window
         .available_monitors()
         .map_err(|e| format!("获取显示器列表失败: {}", e))?;
     
-    let primary_monitor = app_handle
+    let primary_monitor = window
         .primary_monitor()
         .map_err(|e| format!("获取主显示器失败: {}", e))?;
     
@@ -342,7 +351,10 @@ pub async fn get_monitor_at_position(
 pub async fn get_primary_monitor(app_handle: AppHandle) -> Result<CommandResponse<MonitorInfo>, String> {
     info!("获取主显示器信息");
     
-    let primary_monitor = app_handle
+    let window = app_handle.get_window("main")
+        .ok_or_else(|| "未找到主窗口".to_string())?;
+    
+    let primary_monitor = window
         .primary_monitor()
         .map_err(|e| format!("获取主显示器失败: {}", e))?
         .ok_or_else(|| "未找到主显示器".to_string())?;
@@ -357,11 +369,14 @@ pub async fn get_primary_monitor(app_handle: AppHandle) -> Result<CommandRespons
 pub async fn get_all_monitors(app_handle: AppHandle) -> Result<CommandResponse<Vec<MonitorInfo>>, String> {
     info!("获取所有显示器信息");
     
-    let all_monitors = app_handle
+    let window = app_handle.get_window("main")
+        .ok_or_else(|| "未找到主窗口".to_string())?;
+    
+    let all_monitors = window
         .available_monitors()
         .map_err(|e| format!("获取显示器列表失败: {}", e))?;
     
-    let primary_monitor = app_handle
+    let primary_monitor = window
         .primary_monitor()
         .map_err(|e| format!("获取主显示器失败: {}", e))?;
     

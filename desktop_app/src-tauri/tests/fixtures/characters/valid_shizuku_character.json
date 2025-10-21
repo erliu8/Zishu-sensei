@@ -1,0 +1,113 @@
+{
+  "id": "shizuku",
+  "name": "Shizuku",
+  "display_name": "しずく (Shizuku)",
+  "description": "A friendly and energetic Live2D character who loves to help users",
+  "avatar": "shizuku_avatar.png",
+  "type": "live2d",
+  "personality": "friendly, energetic, helpful, curious",
+  "tags": ["anime", "kawaii", "assistant", "default"],
+  "model_path": "/characters/shizuku/model.json",
+  "preview_image": "/characters/shizuku/preview.png",
+  "gender": "female",
+  "size": "medium",
+  "features": [
+    "eye_blink",
+    "lip_sync",
+    "head_tracking",
+    "breathing_animation"
+  ],
+  "motions": [
+    {
+      "id": "idle",
+      "name": "Idle",
+      "file": "motions/idle.motion3.json",
+      "loop": true,
+      "fade_in": 1000,
+      "fade_out": 1000
+    },
+    {
+      "id": "greeting",
+      "name": "Greeting",
+      "file": "motions/greeting.motion3.json",
+      "loop": false,
+      "fade_in": 500,
+      "fade_out": 500
+    },
+    {
+      "id": "thinking",
+      "name": "Thinking",
+      "file": "motions/thinking.motion3.json",
+      "loop": true,
+      "fade_in": 800,
+      "fade_out": 800
+    },
+    {
+      "id": "happy",
+      "name": "Happy",
+      "file": "motions/happy.motion3.json",
+      "loop": false,
+      "fade_in": 500,
+      "fade_out": 500
+    }
+  ],
+  "expressions": [
+    {
+      "id": "normal",
+      "name": "Normal",
+      "file": "expressions/normal.exp3.json"
+    },
+    {
+      "id": "smile",
+      "name": "Smile",
+      "file": "expressions/smile.exp3.json"
+    },
+    {
+      "id": "surprised",
+      "name": "Surprised",
+      "file": "expressions/surprised.exp3.json"
+    },
+    {
+      "id": "thinking",
+      "name": "Thinking",
+      "file": "expressions/thinking.exp3.json"
+    },
+    {
+      "id": "confused",
+      "name": "Confused",
+      "file": "expressions/confused.exp3.json"
+    }
+  ],
+  "config": {
+    "default_expression": "normal",
+    "default_motion": "idle",
+    "scale": 1.0,
+    "position_x": 0.0,
+    "position_y": 0.0,
+    "interaction_enabled": true,
+    "auto_blink": true,
+    "blink_interval_ms": 3000,
+    "breathing_enabled": true,
+    "breathing_interval_ms": 4000,
+    "physics_enabled": true,
+    "config_json": null
+  },
+  "voice_config": {
+    "enabled": true,
+    "provider": "tts",
+    "voice_id": "female_jp_01",
+    "pitch": 1.2,
+    "speed": 1.0,
+    "volume": 0.8
+  },
+  "is_active": true,
+  "enabled": true,
+  "created_at": 1704067200,
+  "updated_at": 1704153600,
+  "custom_data": {
+    "backstory": "Shizuku is a cheerful AI assistant who loves learning new things.",
+    "favorite_color": "blue",
+    "hobbies": ["reading", "music", "chatting"]
+  }
+}
+

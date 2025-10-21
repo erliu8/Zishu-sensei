@@ -13,11 +13,11 @@
 use rusqlite::{Connection, params, Result as SqliteResult, Row};
 use serde::{Deserialize, Serialize};
 use std::sync::Arc;
-use parking_lot::RwLock;
 use chrono::Utc;
 use tracing::{info, error, warn, debug};
 use std::collections::HashMap;
 use serde_json::Value as JsonValue;
+use crate::database::DbPool;
 
 // ================================
 // 数据结构定义
@@ -293,19 +293,20 @@ pub struct WorkflowStatistics {
 // ================================
 
 /// 工作流数据库管理器
+#[derive(Clone)]
 pub struct WorkflowRegistry {
-    conn: Arc<RwLock<Connection>>,
+    pool: DbPool,
 }
 
 impl WorkflowRegistry {
     /// 创建新的工作流管理器
-    pub fn new(conn: Arc<RwLock<Connection>>) -> Self {
-        Self { conn }
+    pub fn new(pool: DbPool) -> Self {
+        Self { pool }
     }
 
     /// 初始化数据库表
-    pub fn init_tables(&self) -> SqliteResult<()> {
-        let conn = self.conn.write();
+    pub fn init_tables(&self) -> Result<(), Box<dyn std::error::Error + Send + Sync>> {
+        let conn = self.pool.get()?;
 
         // 工作流定义表
         conn.execute(
@@ -449,7 +450,7 @@ impl WorkflowRegistry {
 
     /// 创建工作流
     pub fn create_workflow(&self, workflow: WorkflowDefinition) -> SqliteResult<()> {
-        let conn = self.conn.write();
+        let conn = self.pool.get().map_err(|e| rusqlite::Error::ToSqlConversionFailure(Box::new(e)))?;
         
         conn.execute(
             "INSERT INTO workflow_definitions 
@@ -482,7 +483,7 @@ impl WorkflowRegistry {
 
     /// 更新工作流
     pub fn update_workflow(&self, workflow: WorkflowDefinition) -> SqliteResult<()> {
-        let conn = self.conn.write();
+        let conn = self.pool.get().map_err(|e| rusqlite::Error::ToSqlConversionFailure(Box::new(e)))?;
         
         conn.execute(
             "UPDATE workflow_definitions SET
@@ -515,7 +516,7 @@ impl WorkflowRegistry {
 
     /// 获取工作流
     pub fn get_workflow(&self, id: &str) -> SqliteResult<Option<WorkflowDefinition>> {
-        let conn = self.conn.read();
+        let conn = self.pool.get().map_err(|e| rusqlite::Error::ToSqlConversionFailure(Box::new(e)))?;
         
         let mut stmt = conn.prepare(
             "SELECT id, name, description, version, steps, config, status, tags, category,
@@ -550,7 +551,7 @@ impl WorkflowRegistry {
 
     /// 删除工作流
     pub fn delete_workflow(&self, id: &str) -> SqliteResult<()> {
-        let conn = self.conn.write();
+        let conn = self.pool.get().map_err(|e| rusqlite::Error::ToSqlConversionFailure(Box::new(e)))?;
         
         conn.execute("DELETE FROM workflow_definitions WHERE id = ?1", params![id])?;
         
@@ -560,7 +561,7 @@ impl WorkflowRegistry {
 
     /// 获取所有工作流
     pub fn get_all_workflows(&self) -> SqliteResult<Vec<WorkflowDefinition>> {
-        let conn = self.conn.read();
+        let conn = self.pool.get().map_err(|e| rusqlite::Error::ToSqlConversionFailure(Box::new(e)))?;
         
         let mut stmt = conn.prepare(
             "SELECT id, name, description, version, steps, config, status, tags, category,
@@ -592,7 +593,7 @@ impl WorkflowRegistry {
 
     /// 按分类获取工作流
     pub fn get_workflows_by_category(&self, category: &str) -> SqliteResult<Vec<WorkflowDefinition>> {
-        let conn = self.conn.read();
+        let conn = self.pool.get().map_err(|e| rusqlite::Error::ToSqlConversionFailure(Box::new(e)))?;
         
         let mut stmt = conn.prepare(
             "SELECT id, name, description, version, steps, config, status, tags, category,
@@ -625,7 +626,7 @@ impl WorkflowRegistry {
 
     /// 获取所有模板
     pub fn get_templates(&self) -> SqliteResult<Vec<WorkflowDefinition>> {
-        let conn = self.conn.read();
+        let conn = self.pool.get().map_err(|e| rusqlite::Error::ToSqlConversionFailure(Box::new(e)))?;
         
         let mut stmt = conn.prepare(
             "SELECT id, name, description, version, steps, config, status, tags, category,
@@ -660,7 +661,7 @@ impl WorkflowRegistry {
 
     /// 创建执行记录
     pub fn create_execution(&self, execution: WorkflowExecution) -> SqliteResult<()> {
-        let conn = self.conn.write();
+        let conn = self.pool.get().map_err(|e| rusqlite::Error::ToSqlConversionFailure(Box::new(e)))?;
         
         conn.execute(
             "INSERT INTO workflow_executions
@@ -687,7 +688,7 @@ impl WorkflowRegistry {
 
     /// 更新执行记录
     pub fn update_execution(&self, execution: WorkflowExecution) -> SqliteResult<()> {
-        let conn = self.conn.write();
+        let conn = self.pool.get().map_err(|e| rusqlite::Error::ToSqlConversionFailure(Box::new(e)))?;
         
         conn.execute(
             "UPDATE workflow_executions SET
@@ -709,7 +710,7 @@ impl WorkflowRegistry {
 
     /// 获取执行记录
     pub fn get_execution(&self, id: &str) -> SqliteResult<Option<WorkflowExecution>> {
-        let conn = self.conn.read();
+        let conn = self.pool.get().map_err(|e| rusqlite::Error::ToSqlConversionFailure(Box::new(e)))?;
         
         let mut stmt = conn.prepare(
             "SELECT id, workflow_id, workflow_version, status, input_data, output_data,
@@ -745,7 +746,7 @@ impl WorkflowRegistry {
         workflow_id: &str,
         limit: Option<i64>,
     ) -> SqliteResult<Vec<WorkflowExecution>> {
-        let conn = self.conn.read();
+        let conn = self.pool.get().map_err(|e| rusqlite::Error::ToSqlConversionFailure(Box::new(e)))?;
         
         let query = if let Some(limit) = limit {
             format!(
@@ -789,7 +790,7 @@ impl WorkflowRegistry {
 
     /// 创建步骤执行记录
     pub fn create_step_execution(&self, step_exec: StepExecution) -> SqliteResult<()> {
-        let conn = self.conn.write();
+        let conn = self.pool.get().map_err(|e| rusqlite::Error::ToSqlConversionFailure(Box::new(e)))?;
         
         conn.execute(
             "INSERT INTO step_executions
@@ -819,7 +820,7 @@ impl WorkflowRegistry {
 
     /// 更新步骤执行记录
     pub fn update_step_execution(&self, step_exec: StepExecution) -> SqliteResult<()> {
-        let conn = self.conn.write();
+        let conn = self.pool.get().map_err(|e| rusqlite::Error::ToSqlConversionFailure(Box::new(e)))?;
         
         conn.execute(
             "UPDATE step_executions SET
@@ -843,7 +844,7 @@ impl WorkflowRegistry {
 
     /// 获取执行的步骤记录
     pub fn get_execution_steps(&self, execution_id: &str) -> SqliteResult<Vec<StepExecution>> {
-        let conn = self.conn.read();
+        let conn = self.pool.get().map_err(|e| rusqlite::Error::ToSqlConversionFailure(Box::new(e)))?;
         
         let mut stmt = conn.prepare(
             "SELECT id, execution_id, step_id, step_name, step_type, status, input_data,
@@ -878,7 +879,7 @@ impl WorkflowRegistry {
 
     /// 创建调度任务
     pub fn create_schedule(&self, schedule: WorkflowSchedule) -> SqliteResult<()> {
-        let conn = self.conn.write();
+        let conn = self.pool.get().map_err(|e| rusqlite::Error::ToSqlConversionFailure(Box::new(e)))?;
         
         conn.execute(
             "INSERT INTO workflow_schedules
@@ -907,7 +908,7 @@ impl WorkflowRegistry {
 
     /// 更新调度任务
     pub fn update_schedule(&self, schedule: WorkflowSchedule) -> SqliteResult<()> {
-        let conn = self.conn.write();
+        let conn = self.pool.get().map_err(|e| rusqlite::Error::ToSqlConversionFailure(Box::new(e)))?;
         
         conn.execute(
             "UPDATE workflow_schedules SET
@@ -935,7 +936,7 @@ impl WorkflowRegistry {
 
     /// 获取调度任务
     pub fn get_schedule(&self, id: &str) -> SqliteResult<Option<WorkflowSchedule>> {
-        let conn = self.conn.read();
+        let conn = self.pool.get().map_err(|e| rusqlite::Error::ToSqlConversionFailure(Box::new(e)))?;
         
         let mut stmt = conn.prepare(
             "SELECT id, workflow_id, name, schedule_type, schedule_expr, enabled,
@@ -969,7 +970,7 @@ impl WorkflowRegistry {
 
     /// 删除调度任务
     pub fn delete_schedule(&self, id: &str) -> SqliteResult<()> {
-        let conn = self.conn.write();
+        let conn = self.pool.get().map_err(|e| rusqlite::Error::ToSqlConversionFailure(Box::new(e)))?;
         
         conn.execute("DELETE FROM workflow_schedules WHERE id = ?1", params![id])?;
         
@@ -979,7 +980,7 @@ impl WorkflowRegistry {
 
     /// 获取工作流的调度任务
     pub fn get_workflow_schedules(&self, workflow_id: &str) -> SqliteResult<Vec<WorkflowSchedule>> {
-        let conn = self.conn.read();
+        let conn = self.pool.get().map_err(|e| rusqlite::Error::ToSqlConversionFailure(Box::new(e)))?;
         
         let mut stmt = conn.prepare(
             "SELECT id, workflow_id, name, schedule_type, schedule_expr, enabled,
@@ -1011,7 +1012,7 @@ impl WorkflowRegistry {
 
     /// 获取待执行的调度任务
     pub fn get_pending_schedules(&self, current_time: i64) -> SqliteResult<Vec<WorkflowSchedule>> {
-        let conn = self.conn.read();
+        let conn = self.pool.get().map_err(|e| rusqlite::Error::ToSqlConversionFailure(Box::new(e)))?;
         
         let mut stmt = conn.prepare(
             "SELECT id, workflow_id, name, schedule_type, schedule_expr, enabled,
@@ -1067,7 +1068,7 @@ impl WorkflowRegistry {
 
     /// 获取工作流的所有版本
     pub fn get_workflow_versions(&self, workflow_id: &str) -> SqliteResult<Vec<WorkflowVersion>> {
-        let conn = self.conn.read();
+        let conn = self.pool.get().map_err(|e| rusqlite::Error::ToSqlConversionFailure(Box::new(e)))?;
         
         let mut stmt = conn.prepare(
             "SELECT id, workflow_id, version, steps, config, changelog, created_at
@@ -1097,7 +1098,7 @@ impl WorkflowRegistry {
         workflow_id: &str,
         version: &str,
     ) -> SqliteResult<Option<WorkflowVersion>> {
-        let conn = self.conn.read();
+        let conn = self.pool.get().map_err(|e| rusqlite::Error::ToSqlConversionFailure(Box::new(e)))?;
         
         let mut stmt = conn.prepare(
             "SELECT id, workflow_id, version, steps, config, changelog, created_at
@@ -1128,7 +1129,7 @@ impl WorkflowRegistry {
 
     /// 获取工作流统计信息
     pub fn get_workflow_statistics(&self, workflow_id: &str) -> SqliteResult<WorkflowStatistics> {
-        let conn = self.conn.read();
+        let conn = self.pool.get().map_err(|e| rusqlite::Error::ToSqlConversionFailure(Box::new(e)))?;
         
         // 总执行次数
         let total_executions: i64 = conn.query_row(
@@ -1182,7 +1183,7 @@ impl WorkflowRegistry {
 
     /// 搜索工作流
     pub fn search_workflows(&self, keyword: &str) -> SqliteResult<Vec<WorkflowDefinition>> {
-        let conn = self.conn.read();
+        let conn = self.pool.get().map_err(|e| rusqlite::Error::ToSqlConversionFailure(Box::new(e)))?;
         
         let pattern = format!("%{}%", keyword);
         let mut stmt = conn.prepare(
@@ -1219,13 +1220,16 @@ impl WorkflowRegistry {
 mod tests {
     use super::*;
     use tempfile::tempdir;
+    use r2d2_sqlite::SqliteConnectionManager;
+    use r2d2::Pool;
 
     fn create_test_registry() -> WorkflowRegistry {
-        let dir = tempdir().unwrap();
-        let db_path = dir.path().join("test.db");
-        let conn = Connection::open(db_path).unwrap();
-        let conn = Arc::new(RwLock::new(conn));
-        let registry = WorkflowRegistry::new(conn);
+        let manager = SqliteConnectionManager::memory();
+        let pool = Pool::builder()
+            .max_size(5)
+            .build(manager)
+            .unwrap();
+        let registry = WorkflowRegistry::new(pool);
         registry.init_tables().unwrap();
         registry
     }

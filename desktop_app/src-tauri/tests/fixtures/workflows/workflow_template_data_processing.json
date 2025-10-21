@@ -1,0 +1,159 @@
+{
+  "id": "template-data-processing",
+  "name": "Data Processing Template",
+  "description": "Reusable template for data processing workflows",
+  "template_type": "data_processing",
+  "workflow": {
+    "id": "template-workflow-001",
+    "name": "{{workflow_name}}",
+    "description": "{{workflow_description}}",
+    "version": "1.0.0",
+    "status": "draft",
+    "steps": [
+      {
+        "id": "step-load",
+        "name": "Load Data",
+        "step_type": "input",
+        "order": 0,
+        "config": {
+          "source": "{{data_source}}",
+          "format": "{{data_format}}",
+          "output_variable": "raw_data"
+        },
+        "retry_config": {
+          "max_retries": 3,
+          "retry_delay_ms": 1000,
+          "backoff_multiplier": 2.0
+        },
+        "timeout_seconds": 30,
+        "enabled": true
+      },
+      {
+        "id": "step-process",
+        "name": "Process Data",
+        "step_type": "transform",
+        "order": 1,
+        "config": {
+          "operations": "{{processing_operations}}",
+          "output_variable": "processed_data"
+        },
+        "dependencies": ["step-load"],
+        "retry_config": {
+          "max_retries": 2,
+          "retry_delay_ms": 500,
+          "backoff_multiplier": 1.5
+        },
+        "timeout_seconds": 60,
+        "enabled": true
+      },
+      {
+        "id": "step-save",
+        "name": "Save Results",
+        "step_type": "output",
+        "order": 2,
+        "config": {
+          "destination": "{{output_destination}}",
+          "format": "{{output_format}}",
+          "data": "{{processed_data}}"
+        },
+        "dependencies": ["step-process"],
+        "retry_config": {
+          "max_retries": 3,
+          "retry_delay_ms": 1000,
+          "backoff_multiplier": 2.0
+        },
+        "timeout_seconds": 30,
+        "enabled": true
+      }
+    ],
+    "config": {
+      "timeout_seconds": 180,
+      "max_retries": 3,
+      "retry_delay_ms": 1000,
+      "parallel_execution": false,
+      "error_handling": "stop_on_error",
+      "logging_enabled": true,
+      "telemetry_enabled": true
+    },
+    "trigger": null,
+    "tags": ["template", "data", "processing"],
+    "category": "templates",
+    "is_template": true,
+    "template_id": null,
+    "created_at": 1704067200,
+    "updated_at": 1704067200
+  },
+  "parameters": [
+    {
+      "name": "workflow_name",
+      "param_type": "string",
+      "default": "My Data Processing Workflow",
+      "required": true,
+      "description": "Name of the workflow instance",
+      "validation": {
+        "min_length": 3,
+        "max_length": 100
+      }
+    },
+    {
+      "name": "workflow_description",
+      "param_type": "string",
+      "default": "Process data from source to destination",
+      "required": false,
+      "description": "Description of the workflow",
+      "validation": null
+    },
+    {
+      "name": "data_source",
+      "param_type": "string",
+      "default": null,
+      "required": true,
+      "description": "Source of the data (file path, URL, etc.)",
+      "validation": {
+        "pattern": "^(https?://|file://|/)"
+      }
+    },
+    {
+      "name": "data_format",
+      "param_type": "string",
+      "default": "json",
+      "required": true,
+      "description": "Format of the input data",
+      "validation": {
+        "enum": ["json", "csv", "xml", "yaml"]
+      }
+    },
+    {
+      "name": "processing_operations",
+      "param_type": "array",
+      "default": ["validate", "transform"],
+      "required": true,
+      "description": "List of processing operations to apply",
+      "validation": null
+    },
+    {
+      "name": "output_destination",
+      "param_type": "string",
+      "default": null,
+      "required": true,
+      "description": "Destination for processed data",
+      "validation": {
+        "pattern": "^(https?://|file://|/)"
+      }
+    },
+    {
+      "name": "output_format",
+      "param_type": "string",
+      "default": "json",
+      "required": true,
+      "description": "Format of the output data",
+      "validation": {
+        "enum": ["json", "csv", "xml", "yaml"]
+      }
+    }
+  ],
+  "tags": ["template", "data-processing", "reusable"],
+  "created_at": 1704067200,
+  "updated_at": 1704153600
+}
+

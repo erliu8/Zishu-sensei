@@ -82,7 +82,11 @@ pub async fn get_user_region_preferences(
     db: State<'_, crate::database::Database>,
     user_id: Option<String>,
 ) -> Result<RegionPreferences, RegionError> {
-    let conn = db.connection.lock().unwrap();
+    let conn = db.get_pool().get()
+        .map_err(|e| RegionError {
+            message: format!("Database error: {}", e),
+            code: "DATABASE_ERROR".to_string(),
+        })?;
     let preferences = RegionDatabase::get_user_preferences(&conn, user_id.as_deref())?;
     Ok(preferences)
 }
@@ -94,7 +98,11 @@ pub async fn save_user_region_preferences(
     region_state: State<'_, RegionState>,
     preferences: RegionPreferences,
 ) -> Result<i64, RegionError> {
-    let conn = db.connection.lock().unwrap();
+    let conn = db.get_pool().get()
+        .map_err(|e| RegionError {
+            message: format!("Database error: {}", e),
+            code: "DATABASE_ERROR".to_string(),
+        })?;
     let id = RegionDatabase::save_user_preferences(&conn, &preferences)?;
     
     // 更新状态
@@ -147,7 +155,11 @@ pub async fn delete_user_region_preferences(
     region_state: State<'_, RegionState>,
     user_id: Option<String>,
 ) -> Result<usize, RegionError> {
-    let conn = db.connection.lock().unwrap();
+    let conn = db.get_pool().get()
+        .map_err(|e| RegionError {
+            message: format!("Database error: {}", e),
+            code: "DATABASE_ERROR".to_string(),
+        })?;
     let count = RegionDatabase::delete_user_preferences(&conn, user_id.as_deref())?;
     
     // 清理状态
@@ -162,7 +174,11 @@ pub async fn delete_user_region_preferences(
 pub async fn get_all_region_configs(
     db: State<'_, crate::database::Database>,
 ) -> Result<Vec<RegionConfig>, RegionError> {
-    let conn = db.connection.lock().unwrap();
+    let conn = db.get_pool().get()
+        .map_err(|e| RegionError {
+            message: format!("Database error: {}", e),
+            code: "DATABASE_ERROR".to_string(),
+        })?;
     let mut configs = RegionDatabase::get_all_region_configs(&conn)?;
     
     // 如果数据库中没有配置，初始化默认配置
@@ -185,7 +201,11 @@ pub async fn get_region_config(
     db: State<'_, crate::database::Database>,
     locale: String,
 ) -> Result<Option<RegionConfig>, RegionError> {
-    let conn = db.connection.lock().unwrap();
+    let conn = db.get_pool().get()
+        .map_err(|e| RegionError {
+            message: format!("Database error: {}", e),
+            code: "DATABASE_ERROR".to_string(),
+        })?;
     let config = RegionDatabase::get_region_config(&conn, &locale)?;
     Ok(config)
 }
@@ -196,7 +216,11 @@ pub async fn cache_region_config(
     db: State<'_, crate::database::Database>,
     config: RegionConfig,
 ) -> Result<(), RegionError> {
-    let conn = db.connection.lock().unwrap();
+    let conn = db.get_pool().get()
+        .map_err(|e| RegionError {
+            message: format!("Database error: {}", e),
+            code: "DATABASE_ERROR".to_string(),
+        })?;
     RegionDatabase::cache_region_config(&conn, &config)?;
     Ok(())
 }
@@ -208,7 +232,11 @@ pub async fn initialize_region_system(
     region_state: State<'_, RegionState>,
     user_id: Option<String>,
 ) -> Result<RegionPreferences, RegionError> {
-    let conn = db.connection.lock().unwrap();
+    let conn = db.get_pool().get()
+        .map_err(|e| RegionError {
+            message: format!("Database error: {}", e),
+            code: "DATABASE_ERROR".to_string(),
+        })?;
     
     // 初始化数据库表
     RegionDatabase::init(&conn)?;
@@ -455,7 +483,11 @@ pub async fn cleanup_expired_region_cache(
     db: State<'_, crate::database::Database>,
     days: i32,
 ) -> Result<usize, RegionError> {
-    let conn = db.connection.lock().unwrap();
+    let conn = db.get_pool().get()
+        .map_err(|e| RegionError {
+            message: format!("Database error: {}", e),
+            code: "DATABASE_ERROR".to_string(),
+        })?;
     let count = RegionDatabase::cleanup_expired_cache(&conn, days)?;
     Ok(count)
 }

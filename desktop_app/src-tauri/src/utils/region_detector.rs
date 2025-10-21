@@ -367,7 +367,8 @@ impl RegionDetector {
             .args(["show", "--property=Timezone", "--value"])
             .output()
         {
-            let tz = String::from_utf8_lossy(&output.stdout).trim();
+            let tz_string = String::from_utf8_lossy(&output.stdout);
+            let tz = tz_string.trim();
             if !tz.is_empty() {
                 return Some(tz.to_string());
             }

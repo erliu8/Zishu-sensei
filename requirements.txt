@@ -17,6 +17,7 @@ packaging>=22.0.0
 pydantic==2.5.3                     # 数据验证框架
 pydantic-settings==2.1.0            # 配置管理
 email-validator==2.1.0              # 邮箱验证
+semantic-version==2.10.0            # 语义化版本管理
 
 # =============================================================================
 # 数据库相关 (PostgreSQL + SQLAlchemy 2.0)
@@ -47,9 +48,9 @@ celery==5.3.4                       # 分布式任务队列
 kombu==5.3.4                        # 消息传递库
 
 # =============================================================================
-# AI/ML核心框架 (CPU优化版本)
+# AI/ML核心框架 (轻量版本 - 不包含torch，通过Dockerfile单独安装CPU版本)
 # =============================================================================
-torch==2.2.0+cpu                    # PyTorch (CPU版本)
+#torch==2.2.0+cpu                    # PyTorch (CPU版本 - 从Dockerfile安装)
 transformers==4.36.2                # HuggingFace Transformers
 tokenizers==0.15.0                  # 快速分词器
 datasets==2.16.1                    # 数据集处理

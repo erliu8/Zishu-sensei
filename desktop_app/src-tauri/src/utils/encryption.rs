@@ -78,6 +78,7 @@ impl Default for KeyDerivationParams {
 }
 
 /// AES-GCM 加密管理器
+#[derive(Clone)]
 pub struct EncryptionManager {
     master_key: [u8; 32],
 }

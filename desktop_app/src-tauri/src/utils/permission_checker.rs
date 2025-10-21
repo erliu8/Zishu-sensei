@@ -59,17 +59,16 @@ impl PermissionChecker {
             );
 
             // 记录安全审计日志
-            let _ = crate::utils::security_audit::log_security_event(
-                "permission_denied_attempt",
-                Some(entity_id),
-                Some(format!(
+            crate::utils::security_audit::log_audit_failure(
+                crate::utils::security_audit::AuditEventType::AuthorizationCheck,
+                &format!(
                     "尝试使用未授予的权限: {} - {} (资源: {})",
                     permission_type,
                     action,
                     resource.as_deref().unwrap_or("无")
-                )),
-                "medium",
-                None,
+                ),
+                "权限未授予",
+                Some(entity_id),
             );
 
             return Err(format!(

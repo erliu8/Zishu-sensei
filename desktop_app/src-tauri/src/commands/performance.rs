@@ -141,7 +141,7 @@ pub async fn record_performance_metric(
     };
 
     let db = state.db.lock().map_err(|e| e.to_string())?;
-    let record_id = db.record_metric(&metric)?;
+    let record_id = db.record_metric(&metric).map_err(|e| e.to_string())?;
 
     // 更新缓存
     {
@@ -170,7 +170,7 @@ pub async fn record_performance_metrics_batch(
     let mut record_ids = Vec::new();
 
     for metric in metrics {
-        let record_id = db.record_metric(&metric)?;
+        let record_id = db.record_metric(&metric).map_err(|e| e.to_string())?;
         record_ids.push(record_id);
     }
 
@@ -238,7 +238,7 @@ pub async fn record_user_operation(
     };
 
     let db = state.db.lock().map_err(|e| e.to_string())?;
-    let record_id = db.record_user_operation(&operation)?;
+    let record_id = db.record_user_operation(&operation).map_err(|e| e.to_string())?;
 
     // 检查响应时间是否超过阈值，生成警告
     let config = state.config.lock().map_err(|e| e.to_string())?;
@@ -252,7 +252,7 @@ pub async fn record_user_operation(
             message: format!("用户操作响应时间过长: {}ms", response_time),
             threshold: thresholds.response_time_critical as f64,
             actual_value: response_time as f64,
-            component: Some(target_element),
+            component: Some(target_element.clone()),
             duration: response_time / 1000, // 转换为秒
             resolved: false,
             resolved_at: None,
@@ -266,7 +266,7 @@ pub async fn record_user_operation(
             }).to_string(),
         };
         
-        db.record_alert(&alert)?;
+        db.record_alert(&alert).map_err(|e| e.to_string())?;
     } else if response_time > thresholds.response_time_warning {
         let alert = PerformanceAlert {
             id: None,
@@ -275,7 +275,7 @@ pub async fn record_user_operation(
             message: format!("用户操作响应时间较慢: {}ms", response_time),
             threshold: thresholds.response_time_warning as f64,
             actual_value: response_time as f64,
-            component: Some(target_element),
+            component: Some(target_element.clone()),
             duration: response_time / 1000,
             resolved: false,
             resolved_at: None,
@@ -289,7 +289,7 @@ pub async fn record_user_operation(
             }).to_string(),
         };
         
-        db.record_alert(&alert)?;
+        db.record_alert(&alert).map_err(|e| e.to_string())?;
     }
 
     debug!("记录用户操作: {} -> {} ({}ms)", operation_type, target_element, response_time);
@@ -418,7 +418,7 @@ pub async fn record_network_metric(
     };
 
     let db = state.db.lock().map_err(|e| e.to_string())?;
-    let record_id = db.record_network_metric(&metric)?;
+    let record_id = db.record_network_metric(&metric).map_err(|e| e.to_string())?;
 
     // 检查网络性能是否异常
     let config = state.config.lock().map_err(|e| e.to_string())?;
@@ -446,7 +446,7 @@ pub async fn record_network_metric(
             }).to_string(),
         };
         
-        db.record_alert(&alert)?;
+        db.record_alert(&alert).map_err(|e| e.to_string())?;
     }
 
     debug!("记录网络请求: {} {} ({}ms)", method, url, total_time);
@@ -589,7 +589,7 @@ pub async fn record_performance_snapshot(
     };
 
     let db = state.db.lock().map_err(|e| e.to_string())?;
-    let record_id = db.record_snapshot(&snapshot)?;
+    let record_id = db.record_snapshot(&snapshot).map_err(|e| e.to_string())?;
 
     // 检查性能指标是否超过阈值
     let config = state.config.lock().map_err(|e| e.to_string())?;
@@ -698,7 +698,7 @@ pub async fn record_performance_snapshot(
     
     // 记录警告
     for alert in alerts {
-        db.record_alert(&alert)?;
+        db.record_alert(&alert).map_err(|e| e.to_string())?;
     }
 
     debug!("记录性能快照: CPU {:.1}%, 内存 {:.1}%, FPS {:.1}", 

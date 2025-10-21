@@ -5,9 +5,9 @@
 use rusqlite::{Connection, params, Result as SqliteResult, Row};
 use serde::{Deserialize, Serialize};
 use std::sync::Arc;
-use parking_lot::RwLock;
 use chrono::Utc;
 use tracing::{info, error};
+use crate::database::DbPool;
 
 /// Character data structure
 #[derive(Debug, Clone, Serialize, Deserialize)]
@@ -39,18 +39,18 @@ pub struct CharacterConfig {
 
 /// Character registry
 pub struct CharacterRegistry {
-    conn: Arc<RwLock<Connection>>,
+    pool: DbPool,
 }
 
 impl CharacterRegistry {
     /// Create a new character registry
-    pub fn new(conn: Arc<RwLock<Connection>>) -> Self {
-        Self { conn }
+    pub fn new(pool: DbPool) -> Self {
+        Self { pool }
     }
     
     /// Register a new character
     pub fn register_character(&self, character: CharacterData) -> SqliteResult<()> {
-        let conn = self.conn.write();
+        let conn = self.pool.get().map_err(|e| rusqlite::Error::ToSqlConversionFailure(Box::new(e)))?;
         let timestamp = Utc::now().timestamp();
         
         let features_json = serde_json::to_string(&character.features).unwrap_or_default();
@@ -99,7 +99,7 @@ impl CharacterRegistry {
     
     /// Get a character by ID
     pub fn get_character(&self, character_id: &str) -> SqliteResult<Option<CharacterData>> {
-        let conn = self.conn.read();
+        let conn = self.pool.get().map_err(|e| rusqlite::Error::ToSqlConversionFailure(Box::new(e)))?;
         
         let mut stmt = conn.prepare(
             "SELECT id, name, display_name, path, preview_image, description, gender, size, features, is_active
@@ -117,7 +117,7 @@ impl CharacterRegistry {
     
     /// Get all characters
     pub fn get_all_characters(&self) -> SqliteResult<Vec<CharacterData>> {
-        let conn = self.conn.read();
+        let conn = self.pool.get().map_err(|e| rusqlite::Error::ToSqlConversionFailure(Box::new(e)))?;
         
         let mut stmt = conn.prepare(
             "SELECT id, name, display_name, path, preview_image, description, gender, size, features, is_active
@@ -173,7 +173,7 @@ impl CharacterRegistry {
     
     /// Get active character
     pub fn get_active_character(&self) -> SqliteResult<Option<CharacterData>> {
-        let conn = self.conn.read();
+        let conn = self.pool.get().map_err(|e| rusqlite::Error::ToSqlConversionFailure(Box::new(e)))?;
         
         let mut stmt = conn.prepare(
             "SELECT id, name, display_name, path, preview_image, description, gender, size, features, is_active
@@ -191,7 +191,7 @@ impl CharacterRegistry {
     
     /// Set active character
     pub fn set_active_character(&self, character_id: &str) -> SqliteResult<()> {
-        let conn = self.conn.write();
+        let conn = self.pool.get().map_err(|e| rusqlite::Error::ToSqlConversionFailure(Box::new(e)))?;
         
         // Deactivate all characters
         conn.execute("UPDATE characters SET is_active = 0", [])?;
@@ -213,7 +213,7 @@ impl CharacterRegistry {
     
     /// Update character
     pub fn update_character(&self, character: CharacterData) -> SqliteResult<()> {
-        let conn = self.conn.write();
+        let conn = self.pool.get().map_err(|e| rusqlite::Error::ToSqlConversionFailure(Box::new(e)))?;
         let timestamp = Utc::now().timestamp();
         
         let features_json = serde_json::to_string(&character.features).unwrap_or_default();
@@ -245,7 +245,7 @@ impl CharacterRegistry {
     
     /// Delete character
     pub fn delete_character(&self, character_id: &str) -> SqliteResult<()> {
-        let conn = self.conn.write();
+        let conn = self.pool.get().map_err(|e| rusqlite::Error::ToSqlConversionFailure(Box::new(e)))?;
         
         conn.execute("DELETE FROM characters WHERE id = ?1", params![character_id])?;
         
@@ -255,7 +255,7 @@ impl CharacterRegistry {
     
     /// Get character configuration
     pub fn get_character_config(&self, character_id: &str) -> SqliteResult<Option<CharacterConfig>> {
-        let conn = self.conn.read();
+        let conn = self.pool.get().map_err(|e| rusqlite::Error::ToSqlConversionFailure(Box::new(e)))?;
         
         let mut stmt = conn.prepare(
             "SELECT character_id, scale, position_x, position_y, interaction_enabled, config_json
@@ -280,7 +280,7 @@ impl CharacterRegistry {
     
     /// Save character configuration
     pub fn save_character_config(&self, config: CharacterConfig) -> SqliteResult<()> {
-        let conn = self.conn.write();
+        let conn = self.pool.get().map_err(|e| rusqlite::Error::ToSqlConversionFailure(Box::new(e)))?;
         let timestamp = Utc::now().timestamp();
         
         conn.execute(

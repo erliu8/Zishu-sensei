@@ -140,6 +140,7 @@ pub struct FileInfo {
 }
 
 /// 更新管理器
+#[derive(Clone)]
 pub struct UpdateManager {
     /// 数据库连接
     db: Arc<Mutex<UpdateDatabase>>,
@@ -859,7 +860,7 @@ impl UpdateManager {
     /// 获取更新配置
     pub fn get_config(&self) -> Result<UpdateConfig> {
         let mut db = self.db.lock().unwrap();
-        db.get_or_create_update_config()
+        Ok(db.get_or_create_update_config()?)
     }
 
     /// 保存更新配置
@@ -872,13 +873,13 @@ impl UpdateManager {
     /// 获取版本历史
     pub fn get_version_history(&self) -> Result<Vec<VersionHistory>> {
         let db = self.db.lock().unwrap();
-        db.get_version_history()
+        Ok(db.get_version_history()?)
     }
 
     /// 获取更新统计
     pub fn get_update_stats(&self) -> Result<HashMap<String, i64>> {
         let db = self.db.lock().unwrap();
-        db.get_update_stats()
+        Ok(db.get_update_stats()?)
     }
 
     /// 清理旧文件

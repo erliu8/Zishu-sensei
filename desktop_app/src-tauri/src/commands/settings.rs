@@ -339,17 +339,6 @@ pub async fn update_window_config(
     ))
 }
 
-/// Get character configuration
-#[tauri::command]
-pub async fn get_character_config(
-    state: State<'_, AppState>,
-) -> Result<CommandResponse<CharacterConfig>, String> {
-    info!("获取角色配置");
-    
-    let config = state.config.lock().character.clone();
-    Ok(CommandResponse::success(config))
-}
-
 /// Update character configuration
 #[tauri::command]
 pub async fn update_character_config(

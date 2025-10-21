@@ -1,4 +1,4 @@
-use crate::commands::CommandMetadata;
+use crate::commands::{CommandMetadata, PermissionLevel};
 use crate::state::AppState;
 use crate::workflow::{
     Workflow, WorkflowExecution, ScheduledWorkflowInfo, WorkflowTemplate, 
@@ -290,14 +290,14 @@ pub async fn create_workflow_from_template(
 #[tauri::command]
 pub async fn get_builtin_templates() -> Result<Vec<WorkflowTemplate>, String> {
     use crate::workflow::BuiltinTemplates;
-    Ok(BuiltinTemplates::all())
+    Ok(BuiltinTemplates::get_all())
 }
 
 /// Get a specific builtin template by ID
 #[tauri::command]
 pub async fn get_builtin_template(template_id: String) -> Result<WorkflowTemplate, String> {
     use crate::workflow::BuiltinTemplates;
-    BuiltinTemplates::get(&template_id)
+    BuiltinTemplates::get_by_id(&template_id)
         .ok_or_else(|| format!("内置模板不存在: {}", template_id))
 }
 
@@ -468,10 +468,12 @@ pub async fn create_event_trigger(
     state: State<'_, AppState>,
     trigger: EventTrigger,
 ) -> Result<String, String> {
+    let trigger_id = trigger.id.clone();
     state.event_trigger_manager
-        .add_trigger(trigger)
+        .register_trigger(trigger)
         .await
-        .map_err(|e| e.to_string())
+        .map_err(|e| e.to_string())?;
+    Ok(trigger_id)
 }
 
 /// List all event triggers
@@ -480,10 +482,16 @@ pub async fn list_event_triggers(
     state: State<'_, AppState>,
     workflow_id: Option<String>,
 ) -> Result<Vec<EventTrigger>, String> {
-    state.event_trigger_manager
-        .list_triggers(workflow_id.as_deref())
-        .await
-        .map_err(|e| e.to_string())
+    let all_triggers = state.event_trigger_manager.list_triggers().await;
+    
+    // Filter by workflow_id if provided
+    if let Some(wf_id) = workflow_id {
+        Ok(all_triggers.into_iter()
+            .filter(|t| t.workflow_id == wf_id)
+            .collect())
+    } else {
+        Ok(all_triggers)
+    }
 }
 
 /// Remove an event trigger
@@ -493,7 +501,7 @@ pub async fn remove_event_trigger(
     trigger_id: String,
 ) -> Result<(), String> {
     state.event_trigger_manager
-        .remove_trigger(&trigger_id)
+        .unregister_trigger(&trigger_id)
         .await
         .map_err(|e| e.to_string())
 }
@@ -518,10 +526,12 @@ pub async fn create_webhook_trigger(
     workflow_id: String,
     config: WebhookConfig,
 ) -> Result<String, String> {
+    let webhook_id = config.id.clone();
     state.webhook_trigger_manager
-        .create_webhook(&workflow_id, config)
+        .register_webhook(config)
         .await
-        .map_err(|e| e.to_string())
+        .map_err(|e| e.to_string())?;
+    Ok(webhook_id)
 }
 
 /// List webhook triggers
@@ -529,11 +539,17 @@ pub async fn create_webhook_trigger(
 pub async fn list_webhook_triggers(
     state: State<'_, AppState>,
     workflow_id: Option<String>,
-) -> Result<Vec<(String, String, WebhookConfig)>, String> {
-    state.webhook_trigger_manager
-        .list_webhooks(workflow_id.as_deref())
-        .await
-        .map_err(|e| e.to_string())
+) -> Result<Vec<WebhookConfig>, String> {
+    let all_webhooks = state.webhook_trigger_manager.list_webhooks().await;
+    
+    // Filter by workflow_id if provided
+    if let Some(wf_id) = workflow_id {
+        Ok(all_webhooks.into_iter()
+            .filter(|w| w.workflow_id == wf_id)
+            .collect())
+    } else {
+        Ok(all_webhooks)
+    }
 }
 
 /// Remove a webhook trigger
@@ -543,7 +559,7 @@ pub async fn remove_webhook_trigger(
     webhook_id: String,
 ) -> Result<(), String> {
     state.webhook_trigger_manager
-        .remove_webhook(&webhook_id)
+        .unregister_webhook(&webhook_id)
         .await
         .map_err(|e| e.to_string())
 }
@@ -556,7 +572,7 @@ pub async fn trigger_webhook(
     request: WebhookRequest,
 ) -> Result<WebhookResponse, String> {
     state.webhook_trigger_manager
-        .trigger_webhook(&webhook_id, request)
+        .handle_webhook(request)
         .await
         .map_err(|e| e.to_string())
 }
@@ -571,159 +587,221 @@ pub fn get_command_metadata() -> std::collections::HashMap<String, CommandMetada
     metadata.insert(
         "create_workflow".to_string(),
         CommandMetadata {
+            name: "create_workflow".to_string(),
             description: "创建工作流".to_string(),
-            parameters: vec![
-                ("workflow".to_string(), "工作流对象".to_string()),
-            ],
+            input_type: None,
+            output_type: None,
+            required_permission: PermissionLevel::User,
+            is_async: true,
+            category: "workflow".to_string(),
         },
     );
 
     metadata.insert(
         "update_workflow".to_string(),
         CommandMetadata {
+            name: "update_workflow".to_string(),
             description: "更新工作流".to_string(),
-            parameters: vec![
-                ("workflow".to_string(), "工作流对象".to_string()),
-            ],
+            input_type: None,
+            output_type: None,
+            required_permission: PermissionLevel::User,
+            is_async: true,
+            category: "workflow".to_string(),
         },
     );
 
     metadata.insert(
         "delete_workflow".to_string(),
         CommandMetadata {
+            name: "delete_workflow".to_string(),
             description: "删除工作流".to_string(),
-            parameters: vec![
-                ("workflow_id".to_string(), "工作流ID".to_string()),
-            ],
+            input_type: None,
+            output_type: None,
+            required_permission: PermissionLevel::User,
+            is_async: true,
+            category: "workflow".to_string(),
         },
     );
 
     metadata.insert(
         "get_workflow".to_string(),
         CommandMetadata {
+            name: "get_workflow".to_string(),
             description: "获取工作流".to_string(),
-            parameters: vec![
-                ("workflow_id".to_string(), "工作流ID".to_string()),
-            ],
+            input_type: None,
+            output_type: None,
+            required_permission: PermissionLevel::User,
+            is_async: true,
+            category: "workflow".to_string(),
         },
     );
 
     metadata.insert(
         "list_workflows".to_string(),
         CommandMetadata {
+            name: "list_workflows".to_string(),
             description: "列出所有工作流".to_string(),
-            parameters: vec![],
+            input_type: None,
+            output_type: None,
+            required_permission: PermissionLevel::User,
+            is_async: true,
+            category: "workflow".to_string(),
         },
     );
 
     metadata.insert(
         "execute_workflow".to_string(),
         CommandMetadata {
+            name: "execute_workflow".to_string(),
             description: "执行工作流".to_string(),
-            parameters: vec![
-                ("workflow_id".to_string(), "工作流ID".to_string()),
-                ("variables".to_string(), "初始变量".to_string()),
-            ],
+            input_type: None,
+            output_type: None,
+            required_permission: PermissionLevel::User,
+            is_async: true,
+            category: "workflow".to_string(),
         },
     );
 
     metadata.insert(
         "cancel_workflow_execution".to_string(),
         CommandMetadata {
+            name: "cancel_workflow_execution".to_string(),
             description: "取消工作流执行".to_string(),
-            parameters: vec![
-                ("execution_id".to_string(), "执行ID".to_string()),
-            ],
+            input_type: None,
+            output_type: None,
+            required_permission: PermissionLevel::User,
+            is_async: true,
+            category: "workflow".to_string(),
         },
     );
 
     metadata.insert(
         "pause_workflow_execution".to_string(),
         CommandMetadata {
+            name: "pause_workflow_execution".to_string(),
             description: "暂停工作流执行".to_string(),
-            parameters: vec![
-                ("execution_id".to_string(), "执行ID".to_string()),
-            ],
+            input_type: None,
+            output_type: None,
+            required_permission: PermissionLevel::User,
+            is_async: true,
+            category: "workflow".to_string(),
         },
     );
 
     metadata.insert(
         "resume_workflow_execution".to_string(),
         CommandMetadata {
+            name: "resume_workflow_execution".to_string(),
             description: "恢复工作流执行".to_string(),
-            parameters: vec![
-                ("execution_id".to_string(), "执行ID".to_string()),
-            ],
+            input_type: None,
+            output_type: None,
+            required_permission: PermissionLevel::User,
+            is_async: true,
+            category: "workflow".to_string(),
         },
     );
 
     metadata.insert(
         "get_workflow_execution_status".to_string(),
         CommandMetadata {
+            name: "get_workflow_execution_status".to_string(),
             description: "获取工作流执行状态".to_string(),
-            parameters: vec![
-                ("execution_id".to_string(), "执行ID".to_string()),
-            ],
+            input_type: None,
+            output_type: None,
+            required_permission: PermissionLevel::User,
+            is_async: true,
+            category: "workflow".to_string(),
         },
     );
 
     metadata.insert(
         "list_workflow_executions".to_string(),
         CommandMetadata {
+            name: "list_workflow_executions".to_string(),
             description: "列出所有工作流执行".to_string(),
-            parameters: vec![],
+            input_type: None,
+            output_type: None,
+            required_permission: PermissionLevel::User,
+            is_async: true,
+            category: "workflow".to_string(),
         },
     );
 
     metadata.insert(
         "schedule_workflow".to_string(),
         CommandMetadata {
+            name: "schedule_workflow".to_string(),
             description: "调度工作流".to_string(),
-            parameters: vec![
-                ("workflow_id".to_string(), "工作流ID".to_string()),
-            ],
+            input_type: None,
+            output_type: None,
+            required_permission: PermissionLevel::User,
+            is_async: true,
+            category: "workflow".to_string(),
         },
     );
 
     metadata.insert(
         "unschedule_workflow".to_string(),
         CommandMetadata {
+            name: "unschedule_workflow".to_string(),
             description: "取消工作流调度".to_string(),
-            parameters: vec![
-                ("workflow_id".to_string(), "工作流ID".to_string()),
-            ],
+            input_type: None,
+            output_type: None,
+            required_permission: PermissionLevel::User,
+            is_async: true,
+            category: "workflow".to_string(),
         },
     );
 
     metadata.insert(
         "list_scheduled_workflows".to_string(),
         CommandMetadata {
+            name: "list_scheduled_workflows".to_string(),
             description: "列出已调度的工作流".to_string(),
-            parameters: vec![],
+            input_type: None,
+            output_type: None,
+            required_permission: PermissionLevel::User,
+            is_async: true,
+            category: "workflow".to_string(),
         },
     );
 
     metadata.insert(
         "start_workflow_scheduler".to_string(),
         CommandMetadata {
+            name: "start_workflow_scheduler".to_string(),
             description: "启动工作流调度器".to_string(),
-            parameters: vec![],
+            input_type: None,
+            output_type: None,
+            required_permission: PermissionLevel::User,
+            is_async: true,
+            category: "workflow".to_string(),
         },
     );
 
     metadata.insert(
         "stop_workflow_scheduler".to_string(),
         CommandMetadata {
+            name: "stop_workflow_scheduler".to_string(),
             description: "停止工作流调度器".to_string(),
-            parameters: vec![],
+            input_type: None,
+            output_type: None,
+            required_permission: PermissionLevel::User,
+            is_async: true,
+            category: "workflow".to_string(),
         },
     );
 
     metadata.insert(
         "get_workflow_scheduler_status".to_string(),
         CommandMetadata {
+            name: "get_workflow_scheduler_status".to_string(),
             description: "获取工作流调度器状态".to_string(),
-            parameters: vec![],
+            input_type: None,
+            output_type: None,
+            required_permission: PermissionLevel::User,
+            is_async: true,
+            category: "workflow".to_string(),
         },
     );
 
@@ -731,78 +809,104 @@ pub fn get_command_metadata() -> std::collections::HashMap<String, CommandMetada
     metadata.insert(
         "create_workflow_template".to_string(),
         CommandMetadata {
+            name: "create_workflow_template".to_string(),
             description: "创建工作流模板".to_string(),
-            parameters: vec![
-                ("template".to_string(), "模板对象".to_string()),
-            ],
+            input_type: None,
+            output_type: None,
+            required_permission: PermissionLevel::User,
+            is_async: true,
+            category: "workflow".to_string(),
         },
     );
 
     metadata.insert(
         "update_workflow_template".to_string(),
         CommandMetadata {
+            name: "update_workflow_template".to_string(),
             description: "更新工作流模板".to_string(),
-            parameters: vec![
-                ("template".to_string(), "模板对象".to_string()),
-            ],
+            input_type: None,
+            output_type: None,
+            required_permission: PermissionLevel::User,
+            is_async: true,
+            category: "workflow".to_string(),
         },
     );
 
     metadata.insert(
         "delete_workflow_template".to_string(),
         CommandMetadata {
+            name: "delete_workflow_template".to_string(),
             description: "删除工作流模板".to_string(),
-            parameters: vec![
-                ("template_id".to_string(), "模板ID".to_string()),
-            ],
+            input_type: None,
+            output_type: None,
+            required_permission: PermissionLevel::User,
+            is_async: true,
+            category: "workflow".to_string(),
         },
     );
 
     metadata.insert(
         "get_workflow_template".to_string(),
         CommandMetadata {
+            name: "get_workflow_template".to_string(),
             description: "获取工作流模板".to_string(),
-            parameters: vec![
-                ("template_id".to_string(), "模板ID".to_string()),
-            ],
+            input_type: None,
+            output_type: None,
+            required_permission: PermissionLevel::User,
+            is_async: true,
+            category: "workflow".to_string(),
         },
     );
 
     metadata.insert(
         "list_workflow_templates".to_string(),
         CommandMetadata {
+            name: "list_workflow_templates".to_string(),
             description: "列出所有工作流模板".to_string(),
-            parameters: vec![],
+            input_type: None,
+            output_type: None,
+            required_permission: PermissionLevel::User,
+            is_async: true,
+            category: "workflow".to_string(),
         },
     );
 
     metadata.insert(
         "create_workflow_from_template".to_string(),
         CommandMetadata {
+            name: "create_workflow_from_template".to_string(),
             description: "从模板创建工作流".to_string(),
-            parameters: vec![
-                ("template_id".to_string(), "模板ID".to_string()),
-                ("name".to_string(), "工作流名称".to_string()),
-                ("parameters".to_string(), "模板参数".to_string()),
-            ],
+            input_type: None,
+            output_type: None,
+            required_permission: PermissionLevel::User,
+            is_async: true,
+            category: "workflow".to_string(),
         },
     );
 
     metadata.insert(
         "get_builtin_templates".to_string(),
         CommandMetadata {
+            name: "get_builtin_templates".to_string(),
             description: "获取所有内置工作流模板".to_string(),
-            parameters: vec![],
+            input_type: None,
+            output_type: None,
+            required_permission: PermissionLevel::User,
+            is_async: true,
+            category: "workflow".to_string(),
         },
     );
 
     metadata.insert(
         "get_builtin_template".to_string(),
         CommandMetadata {
+            name: "get_builtin_template".to_string(),
             description: "获取指定的内置工作流模板".to_string(),
-            parameters: vec![
-                ("template_id".to_string(), "模板ID".to_string()),
-            ],
+            input_type: None,
+            output_type: None,
+            required_permission: PermissionLevel::User,
+            is_async: true,
+            category: "workflow".to_string(),
         },
     );
 
@@ -810,32 +914,39 @@ pub fn get_command_metadata() -> std::collections::HashMap<String, CommandMetada
     metadata.insert(
         "get_workflow_versions".to_string(),
         CommandMetadata {
+            name: "get_workflow_versions".to_string(),
             description: "获取工作流版本历史".to_string(),
-            parameters: vec![
-                ("workflow_id".to_string(), "工作流ID".to_string()),
-            ],
+            input_type: None,
+            output_type: None,
+            required_permission: PermissionLevel::User,
+            is_async: true,
+            category: "workflow".to_string(),
         },
     );
 
     metadata.insert(
         "get_workflow_version".to_string(),
         CommandMetadata {
+            name: "get_workflow_version".to_string(),
             description: "获取指定版本的工作流".to_string(),
-            parameters: vec![
-                ("workflow_id".to_string(), "工作流ID".to_string()),
-                ("version".to_string(), "版本号".to_string()),
-            ],
+            input_type: None,
+            output_type: None,
+            required_permission: PermissionLevel::User,
+            is_async: true,
+            category: "workflow".to_string(),
         },
     );
 
     metadata.insert(
         "rollback_workflow_to_version".to_string(),
         CommandMetadata {
+            name: "rollback_workflow_to_version".to_string(),
             description: "回滚工作流到指定版本".to_string(),
-            parameters: vec![
-                ("workflow_id".to_string(), "工作流ID".to_string()),
-                ("version".to_string(), "版本号".to_string()),
-            ],
+            input_type: None,
+            output_type: None,
+            required_permission: PermissionLevel::User,
+            is_async: true,
+            category: "workflow".to_string(),
         },
     );
 
@@ -843,32 +954,39 @@ pub fn get_command_metadata() -> std::collections::HashMap<String, CommandMetada
     metadata.insert(
         "export_workflows".to_string(),
         CommandMetadata {
+            name: "export_workflows".to_string(),
             description: "导出工作流".to_string(),
-            parameters: vec![
-                ("workflow_ids".to_string(), "工作流ID列表".to_string()),
-                ("include_templates".to_string(), "是否包含模板".to_string()),
-            ],
+            input_type: None,
+            output_type: None,
+            required_permission: PermissionLevel::User,
+            is_async: true,
+            category: "workflow".to_string(),
         },
     );
 
     metadata.insert(
         "export_all_workflows".to_string(),
         CommandMetadata {
+            name: "export_all_workflows".to_string(),
             description: "导出所有工作流".to_string(),
-            parameters: vec![
-                ("include_templates".to_string(), "是否包含模板".to_string()),
-            ],
+            input_type: None,
+            output_type: None,
+            required_permission: PermissionLevel::User,
+            is_async: true,
+            category: "workflow".to_string(),
         },
     );
 
     metadata.insert(
         "import_workflows".to_string(),
         CommandMetadata {
+            name: "import_workflows".to_string(),
             description: "导入工作流".to_string(),
-            parameters: vec![
-                ("export_data".to_string(), "导出数据".to_string()),
-                ("overwrite".to_string(), "是否覆盖已存在的工作流".to_string()),
-            ],
+            input_type: None,
+            output_type: None,
+            required_permission: PermissionLevel::User,
+            is_async: true,
+            category: "workflow".to_string(),
         },
     );
 
@@ -876,54 +994,65 @@ pub fn get_command_metadata() -> std::collections::HashMap<String, CommandMetada
     metadata.insert(
         "publish_workflow".to_string(),
         CommandMetadata {
+            name: "publish_workflow".to_string(),
             description: "发布工作流".to_string(),
-            parameters: vec![
-                ("workflow_id".to_string(), "工作流ID".to_string()),
-            ],
+            input_type: None,
+            output_type: None,
+            required_permission: PermissionLevel::User,
+            is_async: true,
+            category: "workflow".to_string(),
         },
     );
 
     metadata.insert(
         "archive_workflow".to_string(),
         CommandMetadata {
+            name: "archive_workflow".to_string(),
             description: "归档工作流".to_string(),
-            parameters: vec![
-                ("workflow_id".to_string(), "工作流ID".to_string()),
-            ],
+            input_type: None,
+            output_type: None,
+            required_permission: PermissionLevel::User,
+            is_async: true,
+            category: "workflow".to_string(),
         },
     );
 
     metadata.insert(
         "disable_workflow".to_string(),
         CommandMetadata {
+            name: "disable_workflow".to_string(),
             description: "禁用工作流".to_string(),
-            parameters: vec![
-                ("workflow_id".to_string(), "工作流ID".to_string()),
-            ],
+            input_type: None,
+            output_type: None,
+            required_permission: PermissionLevel::User,
+            is_async: true,
+            category: "workflow".to_string(),
         },
     );
 
     metadata.insert(
         "clone_workflow".to_string(),
         CommandMetadata {
+            name: "clone_workflow".to_string(),
             description: "克隆工作流".to_string(),
-            parameters: vec![
-                ("workflow_id".to_string(), "工作流ID".to_string()),
-                ("new_name".to_string(), "新工作流名称".to_string()),
-            ],
+            input_type: None,
+            output_type: None,
+            required_permission: PermissionLevel::User,
+            is_async: true,
+            category: "workflow".to_string(),
         },
     );
 
     metadata.insert(
         "search_workflows".to_string(),
         CommandMetadata {
+            name: "search_workflows".to_string(),
             description: "搜索工作流".to_string(),
-            parameters: vec![
-                ("keyword".to_string(), "关键词".to_string()),
-                ("status".to_string(), "状态".to_string()),
-                ("tags".to_string(), "标签".to_string()),
-                ("category".to_string(), "分类".to_string()),
-            ],
+            input_type: None,
+            output_type: None,
+            required_permission: PermissionLevel::User,
+            is_async: true,
+            category: "workflow".to_string(),
         },
     );
 
@@ -931,83 +1060,104 @@ pub fn get_command_metadata() -> std::collections::HashMap<String, CommandMetada
     metadata.insert(
         "create_event_trigger".to_string(),
         CommandMetadata {
+            name: "create_event_trigger".to_string(),
             description: "创建事件触发器".to_string(),
-            parameters: vec![
-                ("trigger".to_string(), "触发器配置".to_string()),
-            ],
+            input_type: None,
+            output_type: None,
+            required_permission: PermissionLevel::User,
+            is_async: true,
+            category: "workflow".to_string(),
         },
     );
 
     metadata.insert(
         "list_event_triggers".to_string(),
         CommandMetadata {
+            name: "list_event_triggers".to_string(),
             description: "列出事件触发器".to_string(),
-            parameters: vec![
-                ("workflow_id".to_string(), "工作流ID（可选）".to_string()),
-            ],
+            input_type: None,
+            output_type: None,
+            required_permission: PermissionLevel::User,
+            is_async: true,
+            category: "workflow".to_string(),
         },
     );
 
     metadata.insert(
         "remove_event_trigger".to_string(),
         CommandMetadata {
+            name: "remove_event_trigger".to_string(),
             description: "移除事件触发器".to_string(),
-            parameters: vec![
-                ("trigger_id".to_string(), "触发器ID".to_string()),
-            ],
+            input_type: None,
+            output_type: None,
+            required_permission: PermissionLevel::User,
+            is_async: true,
+            category: "workflow".to_string(),
         },
     );
 
     metadata.insert(
         "trigger_event".to_string(),
         CommandMetadata {
+            name: "trigger_event".to_string(),
             description: "触发事件".to_string(),
-            parameters: vec![
-                ("event_type".to_string(), "事件类型".to_string()),
-                ("event_data".to_string(), "事件数据".to_string()),
-            ],
+            input_type: None,
+            output_type: None,
+            required_permission: PermissionLevel::User,
+            is_async: true,
+            category: "workflow".to_string(),
         },
     );
 
     metadata.insert(
         "create_webhook_trigger".to_string(),
         CommandMetadata {
+            name: "create_webhook_trigger".to_string(),
             description: "创建Webhook触发器".to_string(),
-            parameters: vec![
-                ("workflow_id".to_string(), "工作流ID".to_string()),
-                ("config".to_string(), "Webhook配置".to_string()),
-            ],
+            input_type: None,
+            output_type: None,
+            required_permission: PermissionLevel::User,
+            is_async: true,
+            category: "workflow".to_string(),
         },
     );
 
     metadata.insert(
         "list_webhook_triggers".to_string(),
         CommandMetadata {
+            name: "list_webhook_triggers".to_string(),
             description: "列出Webhook触发器".to_string(),
-            parameters: vec![
-                ("workflow_id".to_string(), "工作流ID（可选）".to_string()),
-            ],
+            input_type: None,
+            output_type: None,
+            required_permission: PermissionLevel::User,
+            is_async: true,
+            category: "workflow".to_string(),
         },
     );
 
     metadata.insert(
         "remove_webhook_trigger".to_string(),
         CommandMetadata {
+            name: "remove_webhook_trigger".to_string(),
             description: "移除Webhook触发器".to_string(),
-            parameters: vec![
-                ("webhook_id".to_string(), "Webhook ID".to_string()),
-            ],
+            input_type: None,
+            output_type: None,
+            required_permission: PermissionLevel::User,
+            is_async: true,
+            category: "workflow".to_string(),
         },
     );
 
     metadata.insert(
         "trigger_webhook".to_string(),
         CommandMetadata {
+            name: "trigger_webhook".to_string(),
             description: "触发Webhook".to_string(),
-            parameters: vec![
-                ("webhook_id".to_string(), "Webhook ID".to_string()),
-                ("request".to_string(), "请求数据".to_string()),
-            ],
+            input_type: None,
+            output_type: None,
+            required_permission: PermissionLevel::User,
+            is_async: true,
+            category: "workflow".to_string(),
         },
     );
 

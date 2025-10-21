@@ -1,0 +1,17 @@
+{
+  "id": "invalid-workflow-001",
+  "name": "Invalid Workflow - No Steps",
+  "description": "This workflow is invalid because it has no steps",
+  "version": "1.0.0",
+  "status": "draft",
+  "steps": [],
+  "config": {
+    "timeout_seconds": 60
+  },
+  "tags": ["invalid", "test"],
+  "category": "test",
+  "is_template": false,
+  "created_at": 1704067200,
+  "updated_at": 1704067200
+}
+

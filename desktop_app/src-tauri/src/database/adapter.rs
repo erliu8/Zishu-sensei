@@ -7,13 +7,13 @@
 //! - 权限配置
 //! - 安装状态
 
-use rusqlite::{Connection, params, Result as SqliteResult, Row};
+use rusqlite::{Connection, OptionalExtension, params, Result as SqliteResult, Row};
 use serde::{Deserialize, Serialize};
 use std::collections::HashMap;
 use std::sync::Arc;
-use parking_lot::RwLock;
 use chrono::{DateTime, Utc};
 use tracing::{info, error, warn};
+use crate::database::DbPool;
 
 // ================================
 // 数据类型定义
@@ -177,18 +177,18 @@ pub struct AdapterPermission {
 
 /// 适配器注册表
 pub struct AdapterRegistry {
-    conn: Arc<RwLock<Connection>>,
+    pool: DbPool,
 }
 
 impl AdapterRegistry {
     /// 创建新的适配器注册表
-    pub fn new(conn: Arc<RwLock<Connection>>) -> Self {
-        Self { conn }
+    pub fn new(pool: DbPool) -> Self {
+        Self { pool }
     }
 
     /// 初始化数据库表
     pub fn init_tables(&self) -> SqliteResult<()> {
-        let conn = self.conn.write();
+        let conn = self.pool.get().map_err(|e| rusqlite::Error::ToSqlConversionFailure(Box::new(e)))?;
 
         // 创建已安装适配器表
         conn.execute(
@@ -296,7 +296,7 @@ impl AdapterRegistry {
 
     /// 添加已安装的适配器
     pub fn add_adapter(&self, adapter: InstalledAdapter) -> SqliteResult<()> {
-        let conn = self.conn.write();
+        let conn = self.pool.get().map_err(|e| rusqlite::Error::ToSqlConversionFailure(Box::new(e)))?;
         
         let config_json = serde_json::to_string(&adapter.config)
             .unwrap_or_else(|_| "{}".to_string());
@@ -338,7 +338,7 @@ impl AdapterRegistry {
 
     /// 获取适配器
     pub fn get_adapter(&self, adapter_id: &str) -> SqliteResult<Option<InstalledAdapter>> {
-        let conn = self.conn.read();
+        let conn = self.pool.get().map_err(|e| rusqlite::Error::ToSqlConversionFailure(Box::new(e)))?;
         
         let mut stmt = conn.prepare(
             "SELECT id, name, display_name, version, install_path, status, enabled,
@@ -356,7 +356,7 @@ impl AdapterRegistry {
 
     /// 获取所有已安装的适配器
     pub fn get_all_adapters(&self) -> SqliteResult<Vec<InstalledAdapter>> {
-        let conn = self.conn.read();
+        let conn = self.pool.get().map_err(|e| rusqlite::Error::ToSqlConversionFailure(Box::new(e)))?;
         
         let mut stmt = conn.prepare(
             "SELECT id, name, display_name, version, install_path, status, enabled,
@@ -375,7 +375,7 @@ impl AdapterRegistry {
 
     /// 获取已启用的适配器
     pub fn get_enabled_adapters(&self) -> SqliteResult<Vec<InstalledAdapter>> {
-        let conn = self.conn.read();
+        let conn = self.pool.get().map_err(|e| rusqlite::Error::ToSqlConversionFailure(Box::new(e)))?;
         
         let mut stmt = conn.prepare(
             "SELECT id, name, display_name, version, install_path, status, enabled,
@@ -394,7 +394,7 @@ impl AdapterRegistry {
 
     /// 更新适配器
     pub fn update_adapter(&self, adapter: InstalledAdapter) -> SqliteResult<()> {
-        let conn = self.conn.write();
+        let conn = self.pool.get().map_err(|e| rusqlite::Error::ToSqlConversionFailure(Box::new(e)))?;
         
         let config_json = serde_json::to_string(&adapter.config)
             .unwrap_or_else(|_| "{}".to_string());
@@ -437,7 +437,7 @@ impl AdapterRegistry {
 
     /// 删除适配器
     pub fn delete_adapter(&self, adapter_id: &str) -> SqliteResult<()> {
-        let conn = self.conn.write();
+        let conn = self.pool.get().map_err(|e| rusqlite::Error::ToSqlConversionFailure(Box::new(e)))?;
         
         conn.execute(
             "DELETE FROM installed_adapters WHERE id = ?1",
@@ -450,7 +450,7 @@ impl AdapterRegistry {
 
     /// 启用/禁用适配器
     pub fn set_adapter_enabled(&self, adapter_id: &str, enabled: bool) -> SqliteResult<()> {
-        let conn = self.conn.write();
+        let conn = self.pool.get().map_err(|e| rusqlite::Error::ToSqlConversionFailure(Box::new(e)))?;
         
         conn.execute(
             "UPDATE installed_adapters SET enabled = ?2, updated_at = ?3 WHERE id = ?1",
@@ -463,7 +463,7 @@ impl AdapterRegistry {
 
     /// 更新适配器状态
     pub fn update_adapter_status(&self, adapter_id: &str, status: AdapterInstallStatus) -> SqliteResult<()> {
-        let conn = self.conn.write();
+        let conn = self.pool.get().map_err(|e| rusqlite::Error::ToSqlConversionFailure(Box::new(e)))?;
         
         conn.execute(
             "UPDATE installed_adapters SET status = ?2, updated_at = ?3 WHERE id = ?1",
@@ -476,7 +476,7 @@ impl AdapterRegistry {
 
     /// 更新最后使用时间
     pub fn update_last_used(&self, adapter_id: &str) -> SqliteResult<()> {
-        let conn = self.conn.write();
+        let conn = self.pool.get().map_err(|e| rusqlite::Error::ToSqlConversionFailure(Box::new(e)))?;
         
         conn.execute(
             "UPDATE installed_adapters SET last_used_at = ?2 WHERE id = ?1",
@@ -492,7 +492,7 @@ impl AdapterRegistry {
 
     /// 添加版本记录
     pub fn add_version(&self, version: AdapterVersion) -> SqliteResult<()> {
-        let conn = self.conn.write();
+        let conn = self.pool.get().map_err(|e| rusqlite::Error::ToSqlConversionFailure(Box::new(e)))?;
         
         conn.execute(
             "INSERT INTO adapter_versions (
@@ -516,7 +516,7 @@ impl AdapterRegistry {
 
     /// 获取适配器的所有版本
     pub fn get_versions(&self, adapter_id: &str) -> SqliteResult<Vec<AdapterVersion>> {
-        let conn = self.conn.read();
+        let conn = self.pool.get().map_err(|e| rusqlite::Error::ToSqlConversionFailure(Box::new(e)))?;
         
         let mut stmt = conn.prepare(
             "SELECT id, adapter_id, version, released_at, changelog, download_url,
@@ -545,7 +545,7 @@ impl AdapterRegistry {
 
     /// 设置当前版本
     pub fn set_current_version(&self, adapter_id: &str, version: &str) -> SqliteResult<()> {
-        let conn = self.conn.write();
+        let conn = self.pool.get().map_err(|e| rusqlite::Error::ToSqlConversionFailure(Box::new(e)))?;
         
         // 清除所有当前版本标记
         conn.execute(
@@ -568,7 +568,7 @@ impl AdapterRegistry {
 
     /// 添加依赖
     pub fn add_dependency(&self, dependency: AdapterDependency) -> SqliteResult<()> {
-        let conn = self.conn.write();
+        let conn = self.pool.get().map_err(|e| rusqlite::Error::ToSqlConversionFailure(Box::new(e)))?;
         
         conn.execute(
             "INSERT INTO adapter_dependencies (
@@ -587,7 +587,7 @@ impl AdapterRegistry {
 
     /// 获取适配器的所有依赖
     pub fn get_dependencies(&self, adapter_id: &str) -> SqliteResult<Vec<AdapterDependency>> {
-        let conn = self.conn.read();
+        let conn = self.pool.get().map_err(|e| rusqlite::Error::ToSqlConversionFailure(Box::new(e)))?;
         
         let mut stmt = conn.prepare(
             "SELECT id, adapter_id, dependency_id, version_requirement, required
@@ -610,7 +610,7 @@ impl AdapterRegistry {
 
     /// 删除依赖
     pub fn delete_dependency(&self, adapter_id: &str, dependency_id: &str) -> SqliteResult<()> {
-        let conn = self.conn.write();
+        let conn = self.pool.get().map_err(|e| rusqlite::Error::ToSqlConversionFailure(Box::new(e)))?;
         
         conn.execute(
             "DELETE FROM adapter_dependencies WHERE adapter_id = ?1 AND dependency_id = ?2",
@@ -626,7 +626,7 @@ impl AdapterRegistry {
 
     /// 添加权限
     pub fn add_permission(&self, permission: AdapterPermission) -> SqliteResult<()> {
-        let conn = self.conn.write();
+        let conn = self.pool.get().map_err(|e| rusqlite::Error::ToSqlConversionFailure(Box::new(e)))?;
         
         conn.execute(
             "INSERT INTO adapter_permissions (
@@ -646,7 +646,7 @@ impl AdapterRegistry {
 
     /// 获取适配器的所有权限
     pub fn get_permissions(&self, adapter_id: &str) -> SqliteResult<Vec<AdapterPermission>> {
-        let conn = self.conn.read();
+        let conn = self.pool.get().map_err(|e| rusqlite::Error::ToSqlConversionFailure(Box::new(e)))?;
         
         let mut stmt = conn.prepare(
             "SELECT id, adapter_id, permission_type, granted, granted_at, description
@@ -671,7 +671,7 @@ impl AdapterRegistry {
 
     /// 更新权限授权状态
     pub fn grant_permission(&self, adapter_id: &str, permission_type: &str, granted: bool) -> SqliteResult<()> {
-        let conn = self.conn.write();
+        let conn = self.pool.get().map_err(|e| rusqlite::Error::ToSqlConversionFailure(Box::new(e)))?;
         
         let granted_at = if granted { Some(Utc::now().timestamp()) } else { None };
         
@@ -692,7 +692,7 @@ impl AdapterRegistry {
 
     /// 检查权限
     pub fn check_permission(&self, adapter_id: &str, permission_type: &str) -> SqliteResult<bool> {
-        let conn = self.conn.read();
+        let conn = self.pool.get().map_err(|e| rusqlite::Error::ToSqlConversionFailure(Box::new(e)))?;
         
         let granted: i32 = conn.query_row(
             "SELECT granted FROM adapter_permissions 
@@ -749,7 +749,7 @@ impl AdapterRegistry {
 
     /// 检查适配器是否存在
     pub fn adapter_exists(&self, adapter_id: &str) -> SqliteResult<bool> {
-        let conn = self.conn.read();
+        let conn = self.pool.get().map_err(|e| rusqlite::Error::ToSqlConversionFailure(Box::new(e)))?;
         
         let count: i64 = conn.query_row(
             "SELECT COUNT(*) FROM installed_adapters WHERE id = ?1",
@@ -762,7 +762,7 @@ impl AdapterRegistry {
 
     /// 获取适配器数量
     pub fn count_adapters(&self) -> SqliteResult<i64> {
-        let conn = self.conn.read();
+        let conn = self.pool.get().map_err(|e| rusqlite::Error::ToSqlConversionFailure(Box::new(e)))?;
         
         let count: i64 = conn.query_row(
             "SELECT COUNT(*) FROM installed_adapters",
@@ -778,11 +778,16 @@ impl AdapterRegistry {
 mod tests {
     use super::*;
     use std::path::PathBuf;
+    use r2d2_sqlite::SqliteConnectionManager;
+    use r2d2::Pool;
 
     fn create_test_db() -> AdapterRegistry {
-        let conn = Connection::open_in_memory().unwrap();
-        let conn = Arc::new(RwLock::new(conn));
-        let registry = AdapterRegistry::new(conn);
+        let manager = SqliteConnectionManager::memory();
+        let pool = Pool::builder()
+            .max_size(5)
+            .build(manager)
+            .unwrap();
+        let registry = AdapterRegistry::new(pool);
         registry.init_tables().unwrap();
         registry
     }

@@ -9,7 +9,10 @@ pub mod chat_state;
 pub mod tray_state;
 
 pub use chat_state::{ChatState, ChatSession, ModelConfig};
-pub use tray_state::TrayState;
+pub use tray_state::{
+    TrayState, TrayIconState, RecentConversation, SystemResources,
+    TrayNotification, NotificationType,
+};
 
 /// Global application state stored in Tauri managed state
 pub struct AppState {
@@ -30,13 +33,17 @@ impl AppState {
         let chat = ChatState::new();
         let tray = Arc::new(TrayState::new());
         
+        // Get database instance
+        let db = crate::database::get_database()
+            .ok_or("数据库未初始化")?;
+        
         // Initialize workflow components
-        let workflow_registry = Arc::new(WorkflowRegistry::new(app_handle.clone()).await?);
+        let db_workflow_registry = Arc::new(db.workflow_registry.clone());
+        let workflow_registry = Arc::new(WorkflowRegistry::new(db_workflow_registry));
         let workflow_engine = Arc::new(WorkflowEngine::new(app_handle.clone())?);
         let workflow_scheduler = Arc::new(WorkflowScheduler::new(
-            workflow_registry.clone(),
             workflow_engine.clone(),
-        )?);
+        ));
         let event_trigger_manager = Arc::new(EventTriggerManager::new(
             app_handle.clone(),
             workflow_engine.clone(),

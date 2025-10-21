@@ -25,12 +25,19 @@ ENV DEBIAN_FRONTEND=noninteractive
 # 複製依賴文件
 COPY requirements.txt .
 
-# 配置 pip 使用清华大学镜像源
-RUN pip config set global.index-url https://pypi.tuna.tsinghua.edu.cn/simple
-RUN pip config set global.trusted-host pypi.tuna.tsinghua.edu.cn
+# 配置 pip 并安装依赖
+RUN pip config set global.index-url https://pypi.tuna.tsinghua.edu.cn/simple && \
+    pip config set global.trusted-host pypi.tuna.tsinghua.edu.cn && \
+    pip install --no-cache-dir --upgrade pip setuptools wheel
 
-# 安裝 Python 依賴
-RUN pip install --no-cache-dir --upgrade pip setuptools wheel
+# 先从PyTorch官方源安装CPU版本 (约200MB，而GPU版本约2GB+)
+RUN pip install --no-cache-dir \
+    torch==2.2.0 \
+    torchvision==0.17.0 \
+    torchaudio==2.2.0 \
+    --index-url https://download.pytorch.org/whl/cpu
+
+# 安装其他Python依赖（从清华镜像）
 RUN pip install --no-cache-dir -r requirements.txt
 
 # 複製項目源代碼

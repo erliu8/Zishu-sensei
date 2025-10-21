@@ -1,0 +1,50 @@
+{
+  "window": {
+    "width": 800,
+    "height": 1000,
+    "always_on_top": false,
+    "transparent": false,
+    "decorations": true,
+    "resizable": true,
+    "position": [100, 100]
+  },
+  "character": {
+    "current_character": "sakura-advanced",
+    "scale": 1.5,
+    "auto_idle": true,
+    "interaction_enabled": true
+  },
+  "theme": {
+    "current_theme": "dark",
+    "custom_css": "body { background-color: #1a1a1a; }"
+  },
+  "system": {
+    "auto_start": true,
+    "minimize_to_tray": true,
+    "close_to_tray": false,
+    "show_notifications": true,
+    "language": "ja",
+    "log_level": "debug"
+  },
+  "ai": {
+    "default_adapter": "claude-3-opus",
+    "temperature": 0.9,
+    "max_tokens": 4096,
+    "timeout_seconds": 60,
+    "retry_attempts": 5
+  },
+  "privacy": {
+    "data_collection": false,
+    "analytics": false,
+    "crash_reports": true,
+    "chat_history_enabled": true,
+    "encryption_enabled": true
+  },
+  "performance": {
+    "enable_hardware_acceleration": true,
+    "frame_rate_limit": 120,
+    "memory_limit_mb": 1024,
+    "cache_size_mb": 200
+  }
+}
+

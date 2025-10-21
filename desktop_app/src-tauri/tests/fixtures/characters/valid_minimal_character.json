@@ -1,0 +1,27 @@
+{
+  "id": "minimal-character",
+  "name": "Minimal Character",
+  "display_name": "Minimal Test",
+  "description": "A minimal character for testing",
+  "avatar": "default_avatar.png",
+  "type": "avatar",
+  "personality": "neutral",
+  "tags": ["test"],
+  "model_path": "",
+  "gender": "unknown",
+  "size": "small",
+  "features": [],
+  "motions": [],
+  "expressions": [],
+  "config": {
+    "scale": 1.0,
+    "position_x": 0.0,
+    "position_y": 0.0,
+    "interaction_enabled": false
+  },
+  "is_active": false,
+  "enabled": true,
+  "created_at": 1704067200,
+  "updated_at": 1704067200
+}
+

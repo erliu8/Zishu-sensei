@@ -193,7 +193,7 @@ impl Anonymizer {
             // IP 地址
             r"\b\d{1,3}\.\d{1,3}\.\d{1,3}\.\d{1,3}\b",
             // API 密钥模式
-            r"(?i)(api[_-]?key|token|secret)['\"]?\s*[:=]\s*['\"]?[\w\-]+",
+            r#"(?i)(api[_-]?key|token|secret)['"]?\s*[:=]\s*['"]?[\w\-]+"#,
         ];
 
         for pattern in sensitive_patterns {
@@ -228,7 +228,7 @@ impl Anonymizer {
         }
 
         // API 密钥脱敏
-        if let Ok(re) = regex::Regex::new(r"(?i)(api[_-]?key|token|secret)['\"]?\s*[:=]\s*['\"]?([\w\-]+)") {
+        if let Ok(re) = regex::Regex::new(r#"(?i)(api[_-]?key|token|secret)['"]?\s*[:=]\s*['"]?([\w\-]+)"#) {
             result = re.replace_all(&result, "$1=[REDACTED]").to_string();
         }
 

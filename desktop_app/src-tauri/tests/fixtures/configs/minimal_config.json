@@ -1,0 +1,26 @@
+{
+  "window": {
+    "width": 400,
+    "height": 600,
+    "always_on_top": true,
+    "transparent": true,
+    "decorations": false,
+    "resizable": true
+  },
+  "character": {
+    "current_character": "minimal-character",
+    "scale": 1.0,
+    "auto_idle": false,
+    "interaction_enabled": false
+  },
+  "theme": {
+    "current_theme": "light"
+  },
+  "system": {
+    "auto_start": false,
+    "minimize_to_tray": false,
+    "close_to_tray": false,
+    "show_notifications": false
+  }
+}
+

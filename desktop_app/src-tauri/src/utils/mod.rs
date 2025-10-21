@@ -12,6 +12,8 @@ pub mod data_cleanup;
 pub mod anonymizer;
 pub mod memory_manager;
 pub mod update_manager;
+pub mod region_detector;
+pub mod region_formatter;
 
 pub use config::{
     get_app_log_dir,
