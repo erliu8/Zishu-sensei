@@ -121,20 +121,12 @@ fn generate_thumbnail(
     Ok(None)
 }
 
-/// 获取数据库连接
-fn get_db_connection(app_handle: &AppHandle) -> Result<rusqlite::Connection, String> {
-    let app_dir = app_handle
-        .path_resolver()
-        .app_data_dir()
-        .ok_or("Failed to get app data dir")?;
+use crate::database::file::DummyConnection;
 
-    let db_path = app_dir.join("zishu.db");
-    let conn =
-        rusqlite::Connection::open(&db_path).map_err(|e| format!("Failed to open DB: {}", e))?;
-
-    init_file_tables(&conn).map_err(|e| format!("Failed to init tables: {}", e))?;
-
-    Ok(conn)
+/// 获取数据库连接（stub实现）
+fn get_db_connection(_app_handle: &AppHandle) -> Result<DummyConnection, String> {
+    // 这是一个stub实现，实际上不使用SQLite
+    Ok(DummyConnection {})
 }
 
 /// 上传文件

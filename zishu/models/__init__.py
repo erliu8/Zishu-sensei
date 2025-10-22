@@ -88,6 +88,46 @@ from .packaging import (
     BuildLogResponse,
 )
 
+from .conversation import (
+    Conversation,
+    Message,
+    MessageAttachment,
+    ConversationParticipant,
+    ConversationContext,
+    # Pydantic schemas
+    ConversationCreate,
+    ConversationUpdate,
+    ConversationResponse,
+    MessageCreate,
+    MessageResponse,
+)
+
+from .character import (
+    Character,
+    CharacterPersonality,
+    CharacterExpression,
+    CharacterVoice,
+    CharacterModel,
+    # Pydantic schemas
+    CharacterCreate,
+    CharacterUpdate,
+    CharacterResponse,
+)
+
+from .workflow import (
+    Workflow,
+    WorkflowNode,
+    WorkflowEdge,
+    WorkflowExecution,
+    WorkflowTemplate,
+    # Pydantic schemas
+    WorkflowCreate,
+    WorkflowUpdate,
+    WorkflowResponse,
+    WorkflowExecutionCreate,
+    WorkflowExecutionResponse,
+)
+
 __all__ = [
     # 用户模型
     "User",
@@ -150,4 +190,38 @@ __all__ = [
     "PackagingTaskUpdate",
     "PackagingTaskResponse",
     "BuildLogResponse",
+    
+    # 对话模型
+    "Conversation",
+    "Message",
+    "MessageAttachment",
+    "ConversationParticipant",
+    "ConversationContext",
+    "ConversationCreate",
+    "ConversationUpdate",
+    "ConversationResponse",
+    "MessageCreate",
+    "MessageResponse",
+    
+    # 角色模型
+    "Character",
+    "CharacterPersonality",
+    "CharacterExpression",
+    "CharacterVoice",
+    "CharacterModel",
+    "CharacterCreate",
+    "CharacterUpdate",
+    "CharacterResponse",
+    
+    # 工作流模型
+    "Workflow",
+    "WorkflowNode",
+    "WorkflowEdge",
+    "WorkflowExecution",
+    "WorkflowTemplate",
+    "WorkflowCreate",
+    "WorkflowUpdate",
+    "WorkflowResponse",
+    "WorkflowExecutionCreate",
+    "WorkflowExecutionResponse",
 ]

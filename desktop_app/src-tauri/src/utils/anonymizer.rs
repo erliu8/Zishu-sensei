@@ -27,7 +27,7 @@ impl Default for AnonymizationOptions {
 }
 
 /// 使用统计数据（匿名化前）
-#[derive(Debug, Clone, Serialize, Deserialize)]
+#[derive(Debug, Clone, Serialize, Deserialize, Default)]
 pub struct UsageStatistics {
     pub user_id: Option<String>,
     pub session_id: String,
@@ -54,7 +54,7 @@ pub struct Location {
 }
 
 /// 匿名化后的使用统计
-#[derive(Debug, Clone, Serialize, Deserialize)]
+#[derive(Debug, Clone, Serialize, Deserialize, Default)]
 pub struct AnonymousStatistics {
     pub anonymous_id: String,
     pub session_hash: String,

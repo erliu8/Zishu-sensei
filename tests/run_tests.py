@@ -103,7 +103,7 @@ class TestRunner:
         
     def run_unit_tests(self, verbose: bool = False, coverage: bool = True) -> int:
         """运行单元测试"""
-        cmd = ["python", "-m", "pytest", "-m", "unit"]
+        cmd = ["python3", "-m", "pytest", "-m", "unit"]
         
         if verbose:
             cmd.append("-v")
@@ -118,7 +118,7 @@ class TestRunner:
     
     def run_integration_tests(self, verbose: bool = False) -> int:
         """运行集成测试"""
-        cmd = ["python", "-m", "pytest", "-m", "integration"]
+        cmd = ["python3", "-m", "pytest", "-m", "integration"]
         
         if verbose:
             cmd.append("-v")
@@ -130,7 +130,7 @@ class TestRunner:
     
     def run_performance_tests(self, verbose: bool = False) -> int:
         """运行性能测试"""
-        cmd = ["python", "-m", "pytest", "-m", "performance", "-s"]
+        cmd = ["python3", "-m", "pytest", "-m", "performance", "-s"]
         
         if verbose:
             cmd.append("-v")
@@ -142,7 +142,7 @@ class TestRunner:
     
     def run_api_tests(self, verbose: bool = False, coverage: bool = True) -> int:
         """运行API测试"""
-        cmd = ["python", "-m", "pytest", "-m", "api"]
+        cmd = ["python3", "-m", "pytest", "-m", "api"]
         
         if verbose:
             cmd.append("-v")
@@ -157,7 +157,7 @@ class TestRunner:
     
     def run_core_tests(self, verbose: bool = False, coverage: bool = True) -> int:
         """运行核心功能测试"""
-        cmd = ["python", "-m", "pytest", "-m", "core"]
+        cmd = ["python3", "-m", "pytest", "-m", "core"]
         
         if verbose:
             cmd.append("-v")
@@ -172,7 +172,7 @@ class TestRunner:
     
     def run_all_tests(self, verbose: bool = False, coverage: bool = True, fast_only: bool = False) -> int:
         """运行所有测试"""
-        cmd = ["python", "-m", "pytest"]
+        cmd = ["python3", "-m", "pytest"]
         
         if verbose:
             cmd.append("-v")
@@ -190,7 +190,7 @@ class TestRunner:
     
     def run_smoke_tests(self, verbose: bool = False) -> int:
         """运行冒烟测试"""
-        cmd = ["python", "-m", "pytest", "-m", "smoke"]
+        cmd = ["python3", "-m", "pytest", "-m", "smoke"]
         
         if verbose:
             cmd.append("-v")
@@ -202,7 +202,7 @@ class TestRunner:
     
     def run_specific_test(self, test_path: str, verbose: bool = False) -> int:
         """运行特定测试"""
-        cmd = ["python", "-m", "pytest"]
+        cmd = ["python3", "-m", "pytest"]
         
         if verbose:
             cmd.append("-v")
@@ -214,7 +214,7 @@ class TestRunner:
     
     def run_failed_tests(self, verbose: bool = False) -> int:
         """重新运行失败的测试"""
-        cmd = ["python", "-m", "pytest", "--lf"]  # --lf = --last-failed
+        cmd = ["python3", "-m", "pytest", "--lf"]  # --lf = --last-failed
         
         if verbose:
             cmd.append("-v")
@@ -226,7 +226,7 @@ class TestRunner:
     
     def run_with_markers(self, markers: List[str], verbose: bool = False) -> int:
         """运行带特定标记的测试"""
-        cmd = ["python", "-m", "pytest"]
+        cmd = ["python3", "-m", "pytest"]
         
         if verbose:
             cmd.append("-v")
@@ -242,7 +242,7 @@ class TestRunner:
     
     def generate_coverage_report(self) -> int:
         """生成覆盖率报告"""
-        cmd = ["python", "-m", "pytest", "--cov=zishu", "--cov-report=html:htmlcov", "--cov-report=xml", "--cov-only"]
+        cmd = ["python3", "-m", "pytest", "--cov=zishu", "--cov-report=html:htmlcov", "--cov-report=xml", "--cov-only"]
         
         print("📊 生成覆盖率报告...")
         result = subprocess.call(cmd, cwd=self.project_root)

@@ -5,26 +5,39 @@
 //! - Character configurations
 //! - User preferences
 //! - Application state
+//! - Integrated support for PostgreSQL, Redis, and Qdrant
 
-use rusqlite::{Connection, params, Result as SqliteResult};
 use serde::{Deserialize, Serialize};
 use std::path::PathBuf;
 use std::sync::Arc;
 use tauri::AppHandle;
 use tracing::{info, error, warn};
-use r2d2;
-use r2d2_sqlite::SqliteConnectionManager;
+use deadpool_postgres::Pool;
 
-/// Database connection pool type
-pub type DbPool = r2d2::Pool<SqliteConnectionManager>;
+/// Database connection pool type (PostgreSQL)
+pub type DbPool = Pool;
 
-// 数据库后端
+// ===================================
+// 数据库后端和服务
+// ===================================
+
+// 后端实现
 pub mod backends;
 pub mod postgres_backend;
 pub mod redis_backend;
 pub mod qdrant_backend;
 
-// 现有模块
+// 统一数据库管理器
+pub mod database_manager;
+
+// 高层服务
+pub mod cache_service;
+pub mod vector_search_service;
+
+// ===================================
+// 核心数据模块
+// ===================================
+
 pub mod character_registry;
 pub mod model_config;
 pub mod adapter;
@@ -37,17 +50,36 @@ pub mod privacy;
 pub mod region;
 pub mod performance;
 pub mod update;
+pub mod logging;
 
 // 导出错误类型
 pub mod error;
+
+// ===================================
+// 导出类型
+// ===================================
 
 use character_registry::CharacterRegistry;
 use model_config::ModelConfigRegistry;
 use adapter::AdapterRegistry;
 use workflow::WorkflowRegistry;
 use permission::PermissionRegistry;
+use update::UpdateRegistry;
+use theme::ThemeRegistry;
+use logging::LoggingRegistry;
+use encrypted_storage::EncryptedStorageRegistry;
 
-/// Database manager
+pub use database_manager::{DatabaseManager, DatabaseManagerConfig, HealthCheckResult};
+pub use cache_service::{CacheService, CacheDecorator};
+pub use vector_search_service::{
+    VectorSearchService, VectorEmbedding,
+    ConversationMessage, Document, Knowledge,
+};
+
+/// Database manager (Legacy - 兼容旧代码)
+/// 
+/// 注意: 推荐使用 `DatabaseManager` 来管理所有数据库连接
+/// 这个结构保留用于向后兼容
 pub struct Database {
     /// Database connection pool
     pool: DbPool,
@@ -61,41 +93,53 @@ pub struct Database {
     pub workflow_registry: WorkflowRegistry,
     /// Permission registry
     pub permission_registry: PermissionRegistry,
+    /// Update registry
+    pub update_registry: UpdateRegistry,
+    /// Theme registry
+    pub theme_registry: ThemeRegistry,
+    /// Logging registry
+    pub logging_registry: LoggingRegistry,
+    /// Encrypted storage registry
+    pub encrypted_storage_registry: EncryptedStorageRegistry,
 }
 
 impl Database {
-    /// Create a new database connection
-    pub fn new(db_path: PathBuf) -> Result<Self, Box<dyn std::error::Error + Send + Sync>> {
-        info!("初始化数据库: {:?}", db_path);
+    /// Create a new database connection with PostgreSQL
+    pub async fn new(database_url: String) -> Result<Self, Box<dyn std::error::Error + Send + Sync>> {
+        info!("初始化 PostgreSQL 数据库: {}", database_url);
         
-        // Ensure parent directory exists
-        if let Some(parent) = db_path.parent() {
-            std::fs::create_dir_all(parent)?;
-        }
+        // Create PostgreSQL connection pool
+        use deadpool_postgres::{Config, Runtime};
+        use tokio_postgres::NoTls;
         
-        // Create connection pool
-        let manager = SqliteConnectionManager::file(&db_path);
-        let pool = r2d2::Pool::builder()
-            .max_size(15) // Maximum number of connections
-            .build(manager)?;
+        let mut cfg = Config::new();
+        cfg.dbname = Some("zishu_sensei");
+        cfg.host = Some("localhost");
+        cfg.user = Some("zishu");
+        cfg.password = Some("zishu");
+        let pool = cfg.create_pool(Some(Runtime::Tokio1), NoTls)?;
         
         // Initialize schema
-        Self::init_schema(&pool)?;
+        Self::init_schema(&pool).await?;
         
         let character_registry = CharacterRegistry::new(pool.clone());
         let model_config_registry = ModelConfigRegistry::new(pool.clone());
         let adapter_registry = AdapterRegistry::new(pool.clone());
         let workflow_registry = WorkflowRegistry::new(pool.clone());
         let permission_registry = PermissionRegistry::new(pool.clone());
+        let update_registry = UpdateRegistry::new(pool.clone());
+        let theme_registry = ThemeRegistry::new(pool.clone());
+        let logging_registry = LoggingRegistry::new(pool.clone());
+        let encrypted_storage_registry = EncryptedStorageRegistry::new(pool.clone());
         
-        // Initialize adapter tables
-        adapter_registry.init_tables()?;
-        
-        // Initialize workflow tables
-        workflow_registry.init_tables()?;
-        
-        // Initialize permission tables
-        permission_registry.init_tables()?;
+        // Initialize tables for all registries
+        adapter_registry.init_tables().await?;
+        workflow_registry.init_tables().await?;
+        permission_registry.init_tables().await?;
+        update_registry.init_tables().await?;
+        theme_registry.init_tables().await?;
+        logging_registry.init_tables().await?;
+        encrypted_storage_registry.init_tables().await?;
         
         Ok(Self {
             pool,
@@ -104,18 +148,19 @@ impl Database {
             adapter_registry,
             workflow_registry,
             permission_registry,
+            update_registry,
+            theme_registry,
+            logging_registry,
+            encrypted_storage_registry,
         })
     }
     
-    /// Initialize database schema
-    fn init_schema(pool: &DbPool) -> Result<(), Box<dyn std::error::Error + Send + Sync>> {
-        let conn = pool.get()?;
-        
-        // Enable foreign keys
-        conn.execute("PRAGMA foreign_keys = ON", [])?;
+    /// Initialize database schema (PostgreSQL)
+    async fn init_schema(pool: &DbPool) -> Result<(), Box<dyn std::error::Error + Send + Sync>> {
+        let client = pool.get().await?;
         
         // Create characters table
-        conn.execute(
+        client.execute(
             "CREATE TABLE IF NOT EXISTS characters (
                 id TEXT PRIMARY KEY,
                 name TEXT NOT NULL,
@@ -125,72 +170,72 @@ impl Database {
                 description TEXT,
                 gender TEXT NOT NULL,
                 size TEXT NOT NULL,
-                features TEXT NOT NULL,
-                is_active INTEGER NOT NULL DEFAULT 0,
-                created_at INTEGER NOT NULL,
-                updated_at INTEGER NOT NULL
+                features JSONB NOT NULL,
+                is_active BOOLEAN NOT NULL DEFAULT false,
+                created_at BIGINT NOT NULL,
+                updated_at BIGINT NOT NULL
             )",
-            [],
-        )?;
+            &[],
+        ).await?;
         
         // Create character_motions table
-        conn.execute(
+        client.execute(
             "CREATE TABLE IF NOT EXISTS character_motions (
-                id INTEGER PRIMARY KEY AUTOINCREMENT,
+                id SERIAL PRIMARY KEY,
                 character_id TEXT NOT NULL,
                 motion_name TEXT NOT NULL,
                 motion_group TEXT NOT NULL,
                 FOREIGN KEY (character_id) REFERENCES characters(id) ON DELETE CASCADE,
                 UNIQUE(character_id, motion_name)
             )",
-            [],
-        )?;
+            &[],
+        ).await?;
         
         // Create character_expressions table
-        conn.execute(
+        client.execute(
             "CREATE TABLE IF NOT EXISTS character_expressions (
-                id INTEGER PRIMARY KEY AUTOINCREMENT,
+                id SERIAL PRIMARY KEY,
                 character_id TEXT NOT NULL,
                 expression_name TEXT NOT NULL,
                 FOREIGN KEY (character_id) REFERENCES characters(id) ON DELETE CASCADE,
                 UNIQUE(character_id, expression_name)
             )",
-            [],
-        )?;
+            &[],
+        ).await?;
         
         // Create character_configs table (for persistent storage)
-        conn.execute(
+        client.execute(
             "CREATE TABLE IF NOT EXISTS character_configs (
                 character_id TEXT PRIMARY KEY,
                 scale REAL NOT NULL DEFAULT 1.0,
                 position_x REAL NOT NULL DEFAULT 0.0,
                 position_y REAL NOT NULL DEFAULT 0.0,
-                interaction_enabled INTEGER NOT NULL DEFAULT 1,
+                interaction_enabled BOOLEAN NOT NULL DEFAULT true,
                 config_json TEXT,
-                updated_at INTEGER NOT NULL,
+                updated_at BIGINT NOT NULL,
                 FOREIGN KEY (character_id) REFERENCES characters(id) ON DELETE CASCADE
             )",
-            [],
-        )?;
+            &[],
+        ).await?;
         
         // Create indexes for performance
-        conn.execute(
+        client.execute(
             "CREATE INDEX IF NOT EXISTS idx_characters_active ON characters(is_active)",
-            [],
-        )?;
+            &[],
+        ).await?;
         
-        conn.execute(
+        client.execute(
             "CREATE INDEX IF NOT EXISTS idx_character_motions_character ON character_motions(character_id)",
-            [],
-        )?;
+            &[],
+        ).await?;
         
-        conn.execute(
+        client.execute(
             "CREATE INDEX IF NOT EXISTS idx_character_expressions_character ON character_expressions(character_id)",
-            [],
-        )?;
+            &[],
+        ).await?;
         
         // Create model_configs table
-        conn.execute(
+        client.execute(
             "CREATE TABLE IF NOT EXISTS model_configs (
                 id TEXT PRIMARY KEY,
                 name TEXT NOT NULL,
@@ -202,51 +247,51 @@ impl Database {
                 max_tokens INTEGER NOT NULL DEFAULT 2048,
                 frequency_penalty REAL NOT NULL DEFAULT 0.0,
                 presence_penalty REAL NOT NULL DEFAULT 0.0,
-                stop_sequences TEXT NOT NULL DEFAULT '[]',
-                is_default INTEGER NOT NULL DEFAULT 0,
-                is_enabled INTEGER NOT NULL DEFAULT 1,
+                stop_sequences JSONB NOT NULL DEFAULT '[]',
+                is_default BOOLEAN NOT NULL DEFAULT false,
+                is_enabled BOOLEAN NOT NULL DEFAULT true,
                 description TEXT,
                 extra_config TEXT,
-                created_at INTEGER NOT NULL,
-                updated_at INTEGER NOT NULL
+                created_at BIGINT NOT NULL,
+                updated_at BIGINT NOT NULL
             )",
-            [],
-        )?;
+            &[],
+        ).await?;
         
         // Create model_config_history table
-        conn.execute(
+        client.execute(
             "CREATE TABLE IF NOT EXISTS model_config_history (
-                id INTEGER PRIMARY KEY AUTOINCREMENT,
+                id SERIAL PRIMARY KEY,
                 config_id TEXT NOT NULL,
                 action TEXT NOT NULL,
                 old_data TEXT,
                 new_data TEXT,
                 reason TEXT,
-                created_at INTEGER NOT NULL
+                created_at BIGINT NOT NULL
             )",
-            [],
-        )?;
+            &[],
+        ).await?;
         
         // Create indexes for model configs
-        conn.execute(
+        client.execute(
             "CREATE INDEX IF NOT EXISTS idx_model_configs_model_id ON model_configs(model_id)",
-            [],
-        )?;
+            &[],
+        ).await?;
         
-        conn.execute(
+        client.execute(
             "CREATE INDEX IF NOT EXISTS idx_model_configs_adapter_id ON model_configs(adapter_id)",
-            [],
-        )?;
+            &[],
+        ).await?;
         
-        conn.execute(
+        client.execute(
             "CREATE INDEX IF NOT EXISTS idx_model_configs_default ON model_configs(is_default)",
-            [],
-        )?;
+            &[],
+        ).await?;
         
-        conn.execute(
+        client.execute(
             "CREATE INDEX IF NOT EXISTS idx_model_config_history_config ON model_config_history(config_id)",
-            [],
-        )?;
+            &[],
+        ).await?;
         
         info!("数据库架构初始化完成");
         Ok(())
@@ -258,22 +303,25 @@ impl Database {
     }
 }
 
-/// Global database instance
+/// Global database instance (Legacy)
 static mut DATABASE: Option<Arc<Database>> = None;
 
-/// Initialize database
+/// Global integrated database manager
+static mut DATABASE_MANAGER: Option<Arc<DatabaseManager>> = None;
+
+/// Initialize database (Legacy - 向后兼容)
 pub async fn init_database(app: AppHandle) -> Result<(), Box<dyn std::error::Error + Send + Sync>> {
     info!("初始化数据库系统");
     
-    // Get database path from app data directory
-    let app_data_dir = app.path_resolver()
-        .app_data_dir()
-        .ok_or("无法获取应用数据目录")?;
+    // Get PostgreSQL connection URL from environment or use default
+    let database_url = std::env::var("DATABASE_URL")
+        .unwrap_or_else(|_| {
+            warn!("DATABASE_URL 未设置，使用默认配置");
+            "postgresql://zishu:zishu@localhost/zishu_sensei".to_string()
+        });
     
-    let db_path = app_data_dir.join("zishu-sensei.db");
-    
-    // Create database
-    let db = Database::new(db_path)?;
+    // Create database connection
+    let db = Database::new(database_url).await?;
     let db = Arc::new(db);
     
     // Load characters from models.json
@@ -293,6 +341,46 @@ pub async fn init_database(app: AppHandle) -> Result<(), Box<dyn std::error::Err
     
     info!("数据库系统初始化完成");
     Ok(())
+}
+
+/// Initialize integrated database manager (推荐)
+/// 
+/// 这个方法初始化完整的多数据库系统，包括 PostgreSQL、Redis 和 Qdrant
+pub async fn init_database_manager() -> Result<Arc<DatabaseManager>, Box<dyn std::error::Error + Send + Sync>> {
+    info!("初始化集成数据库管理器");
+    
+    // 从环境变量加载配置
+    let config = DatabaseManagerConfig::from_env();
+    
+    // 创建数据库管理器
+    let manager = DatabaseManager::new(config).await?;
+    let manager = Arc::new(manager);
+    
+    // 存储全局实例
+    unsafe {
+        DATABASE_MANAGER = Some(manager.clone());
+    }
+    
+    info!("集成数据库管理器初始化完成");
+    Ok(manager)
+}
+
+/// Get integrated database manager
+pub fn get_database_manager() -> Option<Arc<DatabaseManager>> {
+    unsafe { DATABASE_MANAGER.clone() }
+}
+
+/// Initialize all database systems (推荐用于新代码)
+/// 
+/// 这个方法同时初始化传统Database和新的DatabaseManager
+pub async fn init_all_databases(app: AppHandle) -> Result<Arc<DatabaseManager>, Box<dyn std::error::Error + Send + Sync>> {
+    // 先初始化传统数据库（用于兼容）
+    init_database(app).await?;
+    
+    // 再初始化集成数据库管理器
+    let manager = init_database_manager().await?;
+    
+    Ok(manager)
 }
 
 /// Close database

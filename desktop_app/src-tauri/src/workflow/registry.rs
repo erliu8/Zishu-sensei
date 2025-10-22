@@ -211,32 +211,38 @@ impl WorkflowRegistry {
         
         let mut versions = Vec::new();
         for db_version in db_versions {
-            let steps: Vec<WorkflowStep> = serde_json::from_str(&db_version.steps)?;
-            let config: WorkflowConfig = serde_json::from_str(&db_version.config)?;
+            let steps: Vec<WorkflowStep> = db_version.steps
+                .as_ref()
+                .and_then(|v| serde_json::from_value(v.clone()).ok())
+                .unwrap_or_default();
+            let config: WorkflowConfig = db_version.config
+                .as_ref()
+                .and_then(|v| serde_json::from_value(v.clone()).ok())
+                .unwrap_or_default();
             
             let workflow = Workflow {
-                id: db_version.workflow_id.clone(),
-                name: format!("Version {}", db_version.version),
-                description: None,
+                id: db_version.id.clone(),
+                name: db_version.name.clone(),
+                description: db_version.description.clone(),
                 version: db_version.version.clone(),
-                status: WorkflowStatus::Draft,
+                status: db_version.status,
                 steps,
                 config,
                 trigger: None,
                 tags: vec![],
-                category: String::new(),
-                is_template: false,
-                template_id: None,
+                category: db_version.category.clone(),
+                is_template: db_version.is_template,
+                template_id: db_version.template_id.clone(),
                 created_at: db_version.created_at,
-                updated_at: db_version.created_at,
+                updated_at: db_version.updated_at,
             };
             
             versions.push(crate::workflow::models::WorkflowVersion {
-                id: db_version.id,
-                workflow_id: db_version.workflow_id,
-                version: db_version.version,
+                id: 0, // FIXME: need proper version ID
+                workflow_id: db_version.id.clone(),
+                version: db_version.version.clone(),
                 workflow,
-                changelog: db_version.changelog,
+                changelog: None, // FIXME: need changelog field in WorkflowDefinition
                 created_by: None,
                 created_at: db_version.created_at,
             });
@@ -259,7 +265,7 @@ impl WorkflowRegistry {
         let config: WorkflowConfig = serde_json::from_str(&db_version.config)?;
         
         let workflow = Workflow {
-            id: db_version.workflow_id,
+            id: db_version.id.clone(),
             name: format!("Version {}", db_version.version),
             description: None,
             version: db_version.version,

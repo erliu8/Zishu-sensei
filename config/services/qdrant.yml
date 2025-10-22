@@ -1,0 +1,201 @@
+# Qdrant向量数据库配置
+# 用于Zishu-Sensei语义搜索系统
+
+# 连接配置
+connection:
+  # Qdrant服务地址
+  host: localhost
+  port: 6333
+  grpc_port: 6334
+  
+  # API密钥认证
+  api_key: null  # 从环境变量QDRANT_API_KEY读取
+  
+  # 连接选项
+  timeout: 30
+  prefer_grpc: false  # 默认使用HTTP，设为true使用gRPC（更快）
+  https: false
+
+# 向量集合配置
+collections:
+  # 1. 适配器语义搜索
+  adapters_semantic:
+    vector_size: 1536  # OpenAI text-embedding-ada-002
+    distance: Cosine
+    description: "适配器语义搜索集合，用于根据描述和标签搜索适配器"
+    on_disk_payload: true  # 将payload存储在磁盘上以节省内存
+    replication_factor: 1
+    write_consistency_factor: 1
+    
+    # 索引配置
+    hnsw_config:
+      m: 16  # 每个节点的连接数
+      ef_construct: 100  # 构建时的搜索深度
+      full_scan_threshold: 10000  # 小于此值时使用全扫描
+    
+    # 优化器配置
+    optimizer_config:
+      deleted_threshold: 0.2
+      vacuum_min_vector_number: 1000
+      default_segment_number: 0
+      max_segment_size: null
+      memmap_threshold: null
+      indexing_threshold: 20000
+      flush_interval_sec: 5
+      max_optimization_threads: 1
+
+  # 2. 知识库（RAG）
+  knowledge_base:
+    vector_size: 1536
+    distance: Cosine
+    description: "知识库文档向量集合，用于RAG检索增强生成"
+    on_disk_payload: true
+    replication_factor: 1
+    
+    hnsw_config:
+      m: 16
+      ef_construct: 100
+      full_scan_threshold: 10000
+
+  # 3. 对话历史语义搜索
+  conversation_history:
+    vector_size: 1536
+    distance: Cosine
+    description: "对话历史向量集合，用于跨对话语义搜索"
+    on_disk_payload: true
+    replication_factor: 1
+    
+    hnsw_config:
+      m: 16
+      ef_construct: 100
+      full_scan_threshold: 10000
+
+  # 4. 用户文档向量化
+  user_documents:
+    vector_size: 1536
+    distance: Cosine
+    description: "用户上传文档的向量集合"
+    on_disk_payload: true
+    replication_factor: 1
+    
+    hnsw_config:
+      m: 16
+      ef_construct: 100
+      full_scan_threshold: 10000
+
+  # 5. 代码片段语义搜索
+  code_snippets:
+    vector_size: 1536
+    distance: Cosine
+    description: "代码片段向量集合，用于语义代码搜索"
+    on_disk_payload: true
+    replication_factor: 1
+    
+    hnsw_config:
+      m: 16
+      ef_construct: 100
+      full_scan_threshold: 10000
+
+# Embedding配置
+embedding:
+  # 提供商: openai, azure, local
+  provider: openai
+  
+  # OpenAI配置
+  openai:
+    model: text-embedding-ada-002
+    api_key: null  # 从环境变量OPENAI_API_KEY读取
+    api_base: https://api.openai.com/v1
+    max_retries: 3
+    timeout: 30
+    batch_size: 100  # 批量处理大小
+  
+  # Azure OpenAI配置（备选）
+  azure:
+    model: text-embedding-ada-002
+    api_key: null
+    api_base: null  # https://your-resource.openai.azure.com/
+    api_version: 2023-05-15
+    deployment_name: null
+
+# 搜索配置
+search:
+  # 默认搜索参数
+  default_limit: 10
+  max_limit: 100
+  
+  # 搜索质量控制
+  score_threshold: 0.7  # 最低相似度阈值
+  
+  # HNSW搜索参数
+  hnsw_ef: 128  # 搜索时的探索深度，越大越准确但越慢
+  
+  # 是否使用精确搜索（适用于小数据集）
+  exact: false
+
+# 批量操作配置
+batch:
+  # 批量插入配置
+  insert_batch_size: 100
+  insert_parallel: 4  # 并行插入线程数
+  
+  # 批量更新配置
+  update_batch_size: 100
+  
+  # 批量删除配置
+  delete_batch_size: 100
+
+# 性能优化
+performance:
+  # 内存映射阈值（KB）
+  # payload大于此值时使用mmap
+  mmap_threshold: 20480  # 20MB
+  
+  # 向量存储位置
+  # ram: 全部在内存中（最快）
+  # mmap: 使用内存映射（平衡）
+  vectors_on_disk: false  # false=RAM, true=磁盘
+  
+  # 量化配置（减少内存使用）
+  quantization:
+    enabled: false  # 是否启用量化
+    type: scalar  # scalar 或 product
+    always_ram: true  # 量化向量是否始终在RAM中
+
+# 快照和备份
+snapshot:
+  # 自动快照
+  enabled: false
+  interval_hours: 24
+  
+  # 快照保留
+  keep_last: 7  # 保留最近的快照数量
+
+# 监控和日志
+monitoring:
+  # 是否启用性能指标收集
+  metrics_enabled: true
+  
+  # 慢查询阈值（秒）
+  slow_query_threshold: 1.0
+  
+  # 日志级别: DEBUG, INFO, WARN, ERROR
+  log_level: INFO
+
+# 集群配置（可选，单机部署可忽略）
+cluster:
+  enabled: false
+  # 如果启用集群，配置以下参数
+  # p2p_port: 6335
+  # consensus_port: 6336
+
+# 数据持久化
+persistence:
+  # 存储路径（在容器内）
+  storage_path: /qdrant/storage
+  
+  # WAL配置
+  wal:
+    wal_capacity_mb: 32
+    wal_segments_ahead: 0
+

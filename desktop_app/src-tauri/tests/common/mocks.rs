@@ -5,9 +5,7 @@
 use mockall::*;
 use async_trait::async_trait;
 use std::collections::HashMap;
-use rusqlite::{Connection, Result as SqliteResult};
-use std::sync::Arc;
-use parking_lot::RwLock;
+use serde_json::Value;
 
 // ================================
 // 数据库 Mock
@@ -18,28 +16,28 @@ use parking_lot::RwLock;
 #[async_trait]
 pub trait DatabaseService: Send + Sync {
     /// 获取值
-    async fn get(&self, key: &str) -> Result<String, String>;
+    async fn get(&self, collection: &str, key: &str) -> Result<Option<Value>, String>;
     
     /// 设置值
-    async fn set(&self, key: &str, value: &str) -> Result<(), String>;
+    async fn set(&self, collection: &str, key: &str, value: &Value) -> Result<(), String>;
     
     /// 删除键
-    async fn delete(&self, key: &str) -> Result<(), String>;
+    async fn delete(&self, collection: &str, key: &str) -> Result<(), String>;
     
     /// 检查键是否存在
-    async fn exists(&self, key: &str) -> Result<bool, String>;
+    async fn exists(&self, collection: &str, key: &str) -> Result<bool, String>;
     
     /// 列出所有键
-    async fn list_keys(&self, prefix: &str) -> Result<Vec<String>, String>;
+    async fn list_keys(&self, collection: &str) -> Result<Vec<String>, String>;
     
-    /// 清空所有数据
-    async fn clear(&self) -> Result<(), String>;
+    /// 清空集合
+    async fn clear(&self, collection: &str) -> Result<(), String>;
     
     /// 批量获取
-    async fn batch_get(&self, keys: Vec<String>) -> Result<HashMap<String, String>, String>;
+    async fn batch_get(&self, collection: &str, keys: Vec<String>) -> Result<HashMap<String, Value>, String>;
     
     /// 批量设置
-    async fn batch_set(&self, items: HashMap<String, String>) -> Result<(), String>;
+    async fn batch_set(&self, collection: &str, items: HashMap<String, Value>) -> Result<(), String>;
 }
 
 /// 创建默认的 Mock 数据库服务
@@ -48,19 +46,19 @@ pub fn create_mock_database() -> MockDatabaseService {
     
     // 设置默认行为 - get 返回测试值
     mock.expect_get()
-        .returning(|key| Ok(format!("value-{}", key)));
+        .returning(|_, key| Ok(Some(serde_json::json!({"value": format!("value-{}", key)}))));
     
     // 设置默认行为 - set 总是成功
     mock.expect_set()
-        .returning(|_, _| Ok(()));
+        .returning(|_, _, _| Ok(()));
     
     // 设置默认行为 - delete 总是成功
     mock.expect_delete()
-        .returning(|_| Ok(()));
+        .returning(|_, _| Ok(()));
     
     // 设置默认行为 - exists 返回 true
     mock.expect_exists()
-        .returning(|_| Ok(true));
+        .returning(|_, _| Ok(true));
     
     mock
 }
@@ -70,10 +68,10 @@ pub fn create_empty_mock_database() -> MockDatabaseService {
     let mut mock = MockDatabaseService::new();
     
     mock.expect_get()
-        .returning(|_| Err("Key not found".to_string()));
+        .returning(|_, _| Ok(None));
     
     mock.expect_exists()
-        .returning(|_| Ok(false));
+        .returning(|_, _| Ok(false));
     
     mock.expect_list_keys()
         .returning(|_| Ok(vec![]));
@@ -542,15 +540,15 @@ mod tests {
     #[tokio::test]
     async fn test_mock_database_service() {
         let mock = create_mock_database();
-        let result = mock.get("test-key").await;
+        let result = mock.get("collection", "test-key").await;
         assert!(result.is_ok());
     }
 
     #[tokio::test]
     async fn test_empty_mock_database() {
         let mock = create_empty_mock_database();
-        let result = mock.get("test-key").await;
-        assert!(result.is_err());
+        let result = mock.get("collection", "test-key").await;
+        assert!(result.unwrap().is_none());
     }
 
     #[tokio::test]
@@ -574,4 +572,3 @@ mod tests {
         assert_eq!(result.unwrap(), false);
     }
 }
-

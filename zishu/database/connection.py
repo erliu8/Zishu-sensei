@@ -222,24 +222,57 @@ class DatabaseConnectionManager:
 
     async def _create_engines(self) -> None:
         """创建数据库引擎"""
-        engine_kwargs = {
+        # 基础引擎参数
+        base_kwargs = {
             "echo": self.config.echo,
             "echo_pool": self.config.echo_pool,
             **self.config.extra_options,
         }
 
-        # 根据数据库类型设置连接池
+        # 创建异步引擎
+        if self.config.is_async:
+            async_kwargs = base_kwargs.copy()
+            
+            # 根据数据库类型设置异步引擎的连接池
+            if self.config.database_type == "sqlite":
+                # SQLite 异步特殊配置
+                async_kwargs.update(
+                    {
+                        "poolclass": StaticPool,
+                        "connect_args": {"check_same_thread": False},
+                    }
+                )
+            else:
+                # PostgreSQL/MySQL 等异步引擎使用 NullPool 或让 SQLAlchemy 自动选择
+                # 对于异步引擎，连接池参数会被自动处理
+                async_kwargs.update(
+                    {
+                        "pool_size": self.config.pool_size,
+                        "max_overflow": self.config.max_overflow,
+                        "pool_timeout": self.config.pool_timeout,
+                        "pool_recycle": self.config.pool_recycle,
+                    }
+                )
+            
+            self.async_engine = create_async_engine(self.config.url, **async_kwargs)
+            self.logger.info("Created async engine: %s", self.config.database_type)
+
+        # 创建同步引擎（用于迁移等）
+        sync_url = self.config.url.replace("+asyncpg", "").replace("+aiomysql", "")
+        sync_kwargs = base_kwargs.copy()
+        
+        # 根据数据库类型设置同步引擎的连接池
         if self.config.database_type == "sqlite":
             # SQLite 特殊配置
-            engine_kwargs.update(
+            sync_kwargs.update(
                 {
                     "poolclass": StaticPool,
                     "connect_args": {"check_same_thread": False},
                 }
             )
         else:
-            # PostgreSQL/MySQL 等使用连接池
-            engine_kwargs.update(
+            # PostgreSQL/MySQL 等使用 QueuePool
+            sync_kwargs.update(
                 {
                     "poolclass": QueuePool,
                     "pool_size": self.config.pool_size,
@@ -248,15 +281,8 @@ class DatabaseConnectionManager:
                     "pool_recycle": self.config.pool_recycle,
                 }
             )
-
-        # 创建异步引擎
-        if self.config.is_async:
-            self.async_engine = create_async_engine(self.config.url, **engine_kwargs)
-            self.logger.info("Created async engine: %s", self.config.database_type)
-
-        # 创建同步引擎（用于迁移等）
-        sync_url = self.config.url.replace("+asyncpg", "").replace("+aiomysql", "")
-        self.sync_engine = create_engine(sync_url, **engine_kwargs)
+        
+        self.sync_engine = create_engine(sync_url, **sync_kwargs)
         self.logger.info("Created sync engine: %s", self.config.database_type)
 
     def _create_session_factories(self) -> None:

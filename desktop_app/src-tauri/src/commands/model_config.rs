@@ -514,7 +514,7 @@ pub async fn import_model_config_handler(
         let config = db.model_config_registry.import_config(&input.data).map_err(|e| {
             handle_command_error("import_model_config", &format!("导入配置失败: {}", e))
         })?;
-        vec![config.id]
+        vec![config]
     };
     
     let response = ImportConfigResponse {

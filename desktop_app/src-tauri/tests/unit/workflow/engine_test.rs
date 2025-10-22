@@ -72,20 +72,20 @@ fn create_simple_workflow() -> Workflow {
 
 // #[tokio::test]
 // async fn test_execute_workflow_returns_execution_id() {
-    // Arrange
-    let chat_service = create_mock_chat_service();
-    let engine = WorkflowEngine::new(chat_service);
-    let workflow = create_simple_workflow();
-    let variables = HashMap::new();
-    
-    // Act
-    let result = engine.execute_workflow(workflow, variables).await;
-    
-    // Assert
-    assert!(result.is_ok());
-    let execution_id = result.unwrap();
-    assert!(!execution_id.is_empty());
-}
+//     // Arrange
+//     let chat_service = create_mock_chat_service();
+//     let engine = WorkflowEngine::new(chat_service);
+//     let workflow = create_simple_workflow();
+//     let variables = HashMap::new();
+//     
+//     // Act
+//     let result = engine.execute_workflow(workflow, variables).await;
+//     
+//     // Assert
+//     assert!(result.is_ok());
+//     let execution_id = result.unwrap();
+//     assert!(!execution_id.is_empty());
+// }
 
 #[tokio::test]
 async fn test_execute_workflow_creates_execution_state() {

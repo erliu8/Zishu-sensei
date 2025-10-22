@@ -44,6 +44,27 @@ from zishu.models.packaging import (
     BuildArtifact,
     PackageTemplate,
 )
+from zishu.models.conversation import (
+    Conversation,
+    Message,
+    MessageAttachment,
+    ConversationParticipant,
+    ConversationContext,
+)
+from zishu.models.character import (
+    Character,
+    CharacterPersonality,
+    CharacterExpression,
+    CharacterVoice,
+    CharacterModel,
+)
+from zishu.models.workflow import (
+    Workflow,
+    WorkflowNode,
+    WorkflowEdge,
+    WorkflowExecution,
+    WorkflowTemplate,
+)
 
 # Alembic配置对象
 config = context.config

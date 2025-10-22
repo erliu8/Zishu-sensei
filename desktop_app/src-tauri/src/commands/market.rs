@@ -635,7 +635,7 @@ async fn check_updates_for_products(product_ids: &[String]) -> Result<Vec<Produc
     
     for product_id in product_ids {
         // 获取本地安装的版本
-        let local_adapter = db.adapter_registry.get_adapter(product_id)
+        let local_adapter = db.adapter_registry.get_adapter(product_id).await
             .map_err(|e| format!("查询本地适配器失败: {}", e))?;
         
         if let Some(adapter) = local_adapter {

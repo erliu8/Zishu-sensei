@@ -43,8 +43,8 @@ cd "$PROJECT_ROOT"
 echo -e "${BLUE}环境信息:${NC}"
 echo -e "  项目目录: $PROJECT_ROOT"
 echo -e "  虚拟环境: $CLOUD_ENV_PATH/venv"
-echo -e "  Python版本: $(python --version)"
-echo -e "  pip位置: $(which pip)"
+echo -e "  Python版本: $(python3 --version)"
+echo -e "  pip位置: $(which pip3)"
 
 # 如果没有参数，显示帮助信息
 if [ $# -eq 0 ]; then
@@ -59,5 +59,5 @@ if [ $# -eq 0 ]; then
 fi
 
 # 运行传入的命令
-echo -e "\n${GREEN}执行命令: python $@${NC}"
-python "$@"
+echo -e "\n${GREEN}执行命令: python3 $@${NC}"
+python3 "$@"

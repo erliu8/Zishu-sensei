@@ -1,0 +1,145 @@
+# Redis 配置文件
+
+# Redis 服务器配置
+connection:
+  host: localhost
+  port: 6379
+  db: 0
+  password: null  # 如果有密码则填写
+  username: null  # Redis 6+ 支持用户名
+  
+  # 连接池配置
+  max_connections: 50
+  socket_timeout: 5
+  socket_connect_timeout: 5
+  socket_keepalive: true
+  retry_on_timeout: true
+  decode_responses: true
+
+# 缓存配置
+cache:
+  # 默认 TTL（秒）
+  default_ttl: 3600  # 1小时
+  
+  # 键前缀
+  key_prefix: "cache"
+  
+  # 不同类型的缓存 TTL
+  ttl_config:
+    short: 300      # 5分钟 - 搜索结果、列表
+    medium: 1800    # 30分钟 - 用户信息
+    long: 3600      # 1小时 - 适配器详情
+    permanent: null # 永不过期 - 系统配置
+
+# 会话管理配置
+session:
+  # 键前缀
+  key_prefix: "session"
+  
+  # 默认会话过期时间（秒）
+  default_ttl: 7200  # 2小时
+  
+  # 访问时是否自动刷新过期时间
+  auto_refresh: true
+
+# JWT Token 黑名单配置
+jwt_blacklist:
+  # 键前缀
+  key_prefix: "jwt:blacklist"
+
+# 限流配置
+rate_limit:
+  # 键前缀
+  key_prefix: "ratelimit"
+  
+  # 限流算法: sliding_window, fixed_window, token_bucket
+  algorithm: "sliding_window"
+  
+  # 默认限流规则
+  default_rules:
+    # API 全局限流
+    global:
+      max_requests: 100
+      window_seconds: 60
+    
+    # 登录接口
+    auth_login:
+      max_requests: 5
+      window_seconds: 300  # 5分钟内最多5次
+    
+    # 注册接口
+    auth_register:
+      max_requests: 3
+      window_seconds: 3600  # 1小时内最多3次
+    
+    # 聊天接口
+    chat:
+      max_requests: 60
+      window_seconds: 60  # 每分钟60次
+    
+    # 文件上传
+    upload:
+      max_requests: 10
+      window_seconds: 60
+  
+  # 排除的路径（不进行限流）
+  exclude_paths:
+    - /health
+    - /docs
+    - /openapi.json
+    - /static
+
+# IP 黑名单配置
+ip_blacklist:
+  # 黑名单键
+  key: "blacklist:ip"
+  
+  # 是否启用
+  enabled: true
+
+# 分布式锁配置
+lock:
+  # 默认锁超时时间（秒）
+  default_timeout: 60
+  
+  # 阻塞等待超时时间（秒）
+  blocking_timeout: 10
+
+# 计数器配置
+counter:
+  # 计数器同步到数据库的间隔（秒）
+  sync_interval: 3600  # 1小时
+  
+  # 计数器键前缀
+  key_prefix: "counter"
+
+# 消息队列配置
+queue:
+  # 队列键前缀
+  key_prefix: "queue"
+  
+  # 优先级队列
+  priorities:
+    - high
+    - normal
+    - low
+
+# 发布/订阅配置
+pubsub:
+  # 频道前缀
+  channel_prefix: "channel"
+  
+  # 系统广播频道
+  system_broadcast: "system:broadcast"
+
+# 监控配置
+monitoring:
+  # 是否启用健康检查
+  health_check_enabled: true
+  
+  # 健康检查间隔（秒）
+  health_check_interval: 60
+  
+  # 慢查询阈值（秒）
+  slow_query_threshold: 1.0
+

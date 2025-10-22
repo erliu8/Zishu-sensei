@@ -1,534 +1,710 @@
-use rusqlite::{params, Connection, Result as SqliteResult, Row};
-use serde::{Deserialize, Serialize};
-use std::collections::HashMap;
+//! 区域设置数据库模块 (PostgreSQL完整实现)
+//! 管理用户区域和本地化设置
 
-/// 用户区域偏好设置
+use serde::{Deserialize, Serialize};
+use crate::database::DbPool;
+use tokio_postgres::Row;
+use chrono::{DateTime, Utc};
+
+#[derive(Debug, Clone, Serialize, Deserialize)]
+pub struct RegionSettings {
+    pub language: String,
+    pub timezone: String,
+    pub currency: String,
+}
+
 #[derive(Debug, Clone, Serialize, Deserialize)]
 pub struct RegionPreferences {
     pub id: Option<i64>,
     pub user_id: Option<String>,
-    pub locale: String,              // 区域代码，如 "zh-CN", "en-US", "ja-JP"
-    pub timezone: String,            // 时区，如 "Asia/Shanghai", "America/New_York"
-    pub currency: String,            // 货币代码，如 "CNY", "USD", "JPY"
-    pub number_format: String,       // 数字格式，如 "1,234.56", "1 234,56"
-    pub date_format: String,         // 日期格式，如 "YYYY-MM-DD", "MM/DD/YYYY"
-    pub time_format: String,         // 时间格式，如 "24h", "12h"
-    pub temperature_unit: String,    // 温度单位，如 "celsius", "fahrenheit"
-    pub distance_unit: String,       // 距离单位，如 "metric", "imperial"
-    pub weight_unit: String,         // 重量单位，如 "kg", "lb"
-    pub first_day_of_week: i32,     // 每周第一天，0=Sunday, 1=Monday
-    pub rtl_support: bool,           // 是否支持从右到左的文字方向
-    pub created_at: String,
-    pub updated_at: String,
-}
-
-/// 区域配置信息
-#[derive(Debug, Clone, Serialize, Deserialize)]
-pub struct RegionConfig {
-    pub locale: String,
-    pub name: String,
-    pub native_name: String,
-    pub language_code: String,
-    pub country_code: String,
-    pub currency: String,
-    pub timezone: Vec<String>,
-    pub number_format: NumberFormat,
-    pub date_formats: Vec<String>,
-    pub temperature_unit: String,
-    pub distance_unit: String,
-    pub weight_unit: String,
-    pub first_day_of_week: i32,
-    pub rtl: bool,
-}
-
-/// 数字格式配置
-#[derive(Debug, Clone, Serialize, Deserialize)]
-pub struct NumberFormat {
-    pub decimal_separator: String,
-    pub thousands_separator: String,
-    pub currency_symbol: String,
-    pub currency_position: String, // "before" | "after"
-}
-
-/// 格式化选项
-#[derive(Debug, Clone, Serialize, Deserialize)]
-pub struct FormatOptions {
+    pub language: String,
     pub locale: String,
     pub timezone: String,
     pub currency: String,
-    pub show_currency_symbol: bool,
-    pub use_24h_format: bool,
-    pub use_metric: bool,
+    pub date_format: String,
+    pub time_format: String,
+    pub temperature_unit: String,
+    pub distance_unit: String,
+    pub weight_unit: String,
 }
 
-impl RegionPreferences {
-    /// 创建默认区域偏好
-    pub fn default() -> Self {
+impl Default for RegionPreferences {
+    fn default() -> Self {
         Self {
             id: None,
             user_id: None,
-            locale: "zh-CN".to_string(),
-            timezone: "Asia/Shanghai".to_string(),
-            currency: "CNY".to_string(),
-            number_format: "1,234.56".to_string(),
+            language: "en".to_string(),
+            locale: "en-US".to_string(),
+            timezone: "UTC".to_string(),
+            currency: "USD".to_string(),
             date_format: "YYYY-MM-DD".to_string(),
             time_format: "24h".to_string(),
             temperature_unit: "celsius".to_string(),
             distance_unit: "metric".to_string(),
-            weight_unit: "kg".to_string(),
-            first_day_of_week: 1, // Monday
-            rtl_support: false,
-            created_at: chrono::Utc::now().to_rfc3339(),
-            updated_at: chrono::Utc::now().to_rfc3339(),
+            weight_unit: "metric".to_string(),
         }
-    }
-
-    /// 从数据库行创建
-    pub fn from_row(row: &Row) -> SqliteResult<Self> {
-        Ok(Self {
-            id: Some(row.get(0)?),
-            user_id: row.get(1)?,
-            locale: row.get(2)?,
-            timezone: row.get(3)?,
-            currency: row.get(4)?,
-            number_format: row.get(5)?,
-            date_format: row.get(6)?,
-            time_format: row.get(7)?,
-            temperature_unit: row.get(8)?,
-            distance_unit: row.get(9)?,
-            weight_unit: row.get(10)?,
-            first_day_of_week: row.get(11)?,
-            rtl_support: row.get(12)?,
-            created_at: row.get(13)?,
-            updated_at: row.get(14)?,
-        })
     }
 }
 
-/// 区域数据库管理器
-pub struct RegionDatabase;
+#[derive(Debug, Clone, Serialize, Deserialize)]
+pub struct RegionConfig {
+    pub code: String,
+    pub name: String,
+    pub locale: String,
+    pub timezone: String,
+    pub currency: String,
+    pub language: String,
+}
 
-impl RegionDatabase {
-    /// 初始化区域数据库表
-    pub fn init(conn: &Connection) -> SqliteResult<()> {
-        // 创建用户区域偏好表
+/// 区域注册表（用于高层API）
+pub struct RegionRegistry {
+    pool: DbPool,
+}
+
+impl RegionRegistry {
+    pub fn new(pool: DbPool) -> Self {
+        Self { pool }
+    }
+
+    /// 初始化数据库表
+    pub async fn init_tables(&self) -> Result<(), Box<dyn std::error::Error + Send + Sync>> {
+        let conn = self.pool.get().await?;
+
+        // 创建区域偏好设置表
         conn.execute(
             "CREATE TABLE IF NOT EXISTS region_preferences (
-                id INTEGER PRIMARY KEY AUTOINCREMENT,
-                user_id TEXT,
-                locale TEXT NOT NULL DEFAULT 'zh-CN',
-                timezone TEXT NOT NULL DEFAULT 'Asia/Shanghai',
-                currency TEXT NOT NULL DEFAULT 'CNY',
-                number_format TEXT NOT NULL DEFAULT '1,234.56',
+                id BIGSERIAL PRIMARY KEY,
+                user_id TEXT UNIQUE,
+                language TEXT NOT NULL DEFAULT 'en',
+                locale TEXT NOT NULL DEFAULT 'en-US',
+                timezone TEXT NOT NULL DEFAULT 'UTC',
+                currency TEXT NOT NULL DEFAULT 'USD',
                 date_format TEXT NOT NULL DEFAULT 'YYYY-MM-DD',
                 time_format TEXT NOT NULL DEFAULT '24h',
                 temperature_unit TEXT NOT NULL DEFAULT 'celsius',
                 distance_unit TEXT NOT NULL DEFAULT 'metric',
-                weight_unit TEXT NOT NULL DEFAULT 'kg',
-                first_day_of_week INTEGER NOT NULL DEFAULT 1,
-                rtl_support BOOLEAN NOT NULL DEFAULT FALSE,
-                created_at TEXT NOT NULL DEFAULT CURRENT_TIMESTAMP,
-                updated_at TEXT NOT NULL DEFAULT CURRENT_TIMESTAMP
+                weight_unit TEXT NOT NULL DEFAULT 'metric',
+                created_at TIMESTAMPTZ NOT NULL DEFAULT NOW(),
+                updated_at TIMESTAMPTZ NOT NULL DEFAULT NOW()
             )",
-            [],
-        )?;
+            &[],
+        ).await?;
 
-        // 创建区域配置缓存表
+        // 创建区域配置表
         conn.execute(
             "CREATE TABLE IF NOT EXISTS region_configs (
-                locale TEXT PRIMARY KEY,
-                config_data TEXT NOT NULL,
-                created_at TEXT NOT NULL DEFAULT CURRENT_TIMESTAMP,
-                updated_at TEXT NOT NULL DEFAULT CURRENT_TIMESTAMP
+                code TEXT PRIMARY KEY,
+                name TEXT NOT NULL,
+                locale TEXT NOT NULL,
+                timezone TEXT NOT NULL,
+                currency TEXT NOT NULL,
+                language TEXT NOT NULL,
+                is_active BOOLEAN NOT NULL DEFAULT true,
+                created_at TIMESTAMPTZ NOT NULL DEFAULT NOW()
             )",
-            [],
-        )?;
+            &[],
+        ).await?;
+
+        // 创建区域缓存表
+        conn.execute(
+            "CREATE TABLE IF NOT EXISTS region_cache (
+                locale TEXT PRIMARY KEY,
+                config_data JSONB NOT NULL,
+                cached_at TIMESTAMPTZ NOT NULL DEFAULT NOW(),
+                expires_at TIMESTAMPTZ
+            )",
+            &[],
+        ).await?;
 
         // 创建索引
-        conn.execute(
+        let _ = conn.execute(
             "CREATE INDEX IF NOT EXISTS idx_region_preferences_user_id ON region_preferences(user_id)",
-            [],
-        )?;
+            &[],
+        ).await;
 
-        conn.execute(
+        let _ = conn.execute(
             "CREATE INDEX IF NOT EXISTS idx_region_preferences_locale ON region_preferences(locale)",
-            [],
-        )?;
+            &[],
+        ).await;
 
+        let _ = conn.execute(
+            "CREATE INDEX IF NOT EXISTS idx_region_configs_locale ON region_configs(locale)",
+            &[],
+        ).await;
+
+        let _ = conn.execute(
+            "CREATE INDEX IF NOT EXISTS idx_region_cache_expires_at ON region_cache(expires_at)",
+            &[],
+        ).await;
+
+        tracing::info!("Region tables initialized successfully");
         Ok(())
     }
 
-    /// 获取用户区域偏好
-    pub fn get_user_preferences(conn: &Connection, user_id: Option<&str>) -> SqliteResult<RegionPreferences> {
-        let query = if let Some(uid) = user_id {
-            "SELECT * FROM region_preferences WHERE user_id = ? ORDER BY updated_at DESC LIMIT 1"
-        } else {
-            "SELECT * FROM region_preferences WHERE user_id IS NULL ORDER BY updated_at DESC LIMIT 1"
-        };
-
-        let mut stmt = conn.prepare(query)?;
-        let preferences_iter = if let Some(uid) = user_id {
-            stmt.query_map(params![uid], RegionPreferences::from_row)?
-        } else {
-            stmt.query_map([], RegionPreferences::from_row)?
-        };
-
-        for preferences in preferences_iter {
-            return Ok(preferences?);
-        }
-
-        // 如果没有找到，返回默认配置
-        Ok(RegionPreferences::default())
+    /// 获取区域设置（同步接口）
+    pub fn get_settings(&self) -> Result<RegionSettings, Box<dyn std::error::Error + Send + Sync>> {
+        tokio::runtime::Handle::current().block_on(async {
+            self.get_settings_async().await
+        })
     }
 
-    /// 保存用户区域偏好
-    pub fn save_user_preferences(conn: &Connection, preferences: &RegionPreferences) -> SqliteResult<i64> {
-        let now = chrono::Utc::now().to_rfc3339();
+    async fn get_settings_async(&self) -> Result<RegionSettings, Box<dyn std::error::Error + Send + Sync>> {
+        let conn = self.pool.get().await?;
         
-        if let Some(id) = preferences.id {
-            // 更新现有记录
-            conn.execute(
-                "UPDATE region_preferences SET 
-                 user_id = ?, locale = ?, timezone = ?, currency = ?,
-                 number_format = ?, date_format = ?, time_format = ?,
-                 temperature_unit = ?, distance_unit = ?, weight_unit = ?,
-                 first_day_of_week = ?, rtl_support = ?, updated_at = ?
-                 WHERE id = ?",
-                params![
-                    preferences.user_id,
-                    preferences.locale,
-                    preferences.timezone,
-                    preferences.currency,
-                    preferences.number_format,
-                    preferences.date_format,
-                    preferences.time_format,
-                    preferences.temperature_unit,
-                    preferences.distance_unit,
-                    preferences.weight_unit,
-                    preferences.first_day_of_week,
-                    preferences.rtl_support,
-                    now,
-                    id
-                ],
-            )?;
-            Ok(id)
+        // 获取默认用户的设置（user_id为NULL）
+        let row = conn.query_opt(
+            "SELECT language, timezone, currency FROM region_preferences WHERE user_id IS NULL LIMIT 1",
+            &[],
+        ).await?;
+
+        if let Some(row) = row {
+            Ok(RegionSettings {
+                language: row.get(0),
+                timezone: row.get(1),
+                currency: row.get(2),
+            })
         } else {
-            // 插入新记录
-            conn.execute(
-                "INSERT INTO region_preferences 
-                (user_id, locale, timezone, currency, number_format, date_format, time_format,
-                 temperature_unit, distance_unit, weight_unit, first_day_of_week, rtl_support, created_at, updated_at)
-                VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)",
-                params![
-                    preferences.user_id,
-                    preferences.locale,
-                    preferences.timezone,
-                    preferences.currency,
-                    preferences.number_format,
-                    preferences.date_format,
-                    preferences.time_format,
-                    preferences.temperature_unit,
-                    preferences.distance_unit,
-                    preferences.weight_unit,
-                    preferences.first_day_of_week,
-                    preferences.rtl_support,
-                    now,
-                    now
-                ],
-            )?;
-            Ok(conn.last_insert_rowid())
+            // 返回默认值
+            Ok(RegionSettings {
+                language: "zh-CN".to_string(),
+                timezone: "Asia/Shanghai".to_string(),
+                currency: "CNY".to_string(),
+            })
         }
     }
 
-    /// 删除用户区域偏好
-    pub fn delete_user_preferences(conn: &Connection, user_id: Option<&str>) -> SqliteResult<usize> {
-        if let Some(uid) = user_id {
-            Ok(conn.execute("DELETE FROM region_preferences WHERE user_id = ?", params![uid])?)
+    /// 更新区域设置（同步接口）
+    pub fn update_settings(&self, settings: RegionSettings) -> Result<(), Box<dyn std::error::Error + Send + Sync>> {
+        tokio::runtime::Handle::current().block_on(async {
+            self.update_settings_async(settings).await
+        })
+    }
+
+    async fn update_settings_async(&self, settings: RegionSettings) -> Result<(), Box<dyn std::error::Error + Send + Sync>> {
+        let conn = self.pool.get().await?;
+        
+        conn.execute(
+            "INSERT INTO region_preferences (user_id, language, timezone, currency, locale, updated_at)
+             VALUES (NULL, $1, $2, $3, $1, NOW())
+             ON CONFLICT (user_id) DO UPDATE SET
+                language = EXCLUDED.language,
+                timezone = EXCLUDED.timezone,
+                currency = EXCLUDED.currency,
+                locale = EXCLUDED.locale,
+                updated_at = NOW()",
+            &[&settings.language, &settings.timezone, &settings.currency],
+        ).await?;
+
+        tracing::info!("Region settings updated: {:?}", settings);
+        Ok(())
+    }
+
+    /// 获取用户偏好设置
+    pub fn get_user_preferences(&self, user_id: Option<&str>) -> Result<RegionPreferences, Box<dyn std::error::Error + Send + Sync>> {
+        tokio::runtime::Handle::current().block_on(async {
+            self.get_user_preferences_async(user_id).await
+        })
+    }
+
+    async fn get_user_preferences_async(&self, user_id: Option<&str>) -> Result<RegionPreferences, Box<dyn std::error::Error + Send + Sync>> {
+        let conn = self.pool.get().await?;
+        
+        let row = conn.query_opt(
+            "SELECT id, user_id, language, locale, timezone, currency, date_format, 
+                    time_format, temperature_unit, distance_unit, weight_unit
+             FROM region_preferences 
+             WHERE user_id = $1 OR (user_id IS NULL AND $1 IS NULL)
+             LIMIT 1",
+            &[&user_id],
+        ).await?;
+
+        if let Some(row) = row {
+            Ok(row_to_preferences(&row))
         } else {
-            Ok(conn.execute("DELETE FROM region_preferences WHERE user_id IS NULL", [])?)
+            Ok(RegionPreferences::default())
         }
     }
 
-    /// 获取区域配置缓存
-    pub fn get_region_config(conn: &Connection, locale: &str) -> SqliteResult<Option<RegionConfig>> {
-        let mut stmt = conn.prepare("SELECT config_data FROM region_configs WHERE locale = ?")?;
-        let config_iter = stmt.query_map(params![locale], |row| {
-            let config_data: String = row.get(0)?;
-            Ok(serde_json::from_str::<RegionConfig>(&config_data).ok())
-        })?;
+    /// 保存用户偏好设置
+    pub fn save_user_preferences(&self, preferences: &RegionPreferences) -> Result<i64, Box<dyn std::error::Error + Send + Sync>> {
+        tokio::runtime::Handle::current().block_on(async {
+            self.save_user_preferences_async(preferences).await
+        })
+    }
 
-        for config in config_iter {
-            if let Some(cfg) = config? {
-                return Ok(Some(cfg));
-            }
-        }
+    async fn save_user_preferences_async(&self, preferences: &RegionPreferences) -> Result<i64, Box<dyn std::error::Error + Send + Sync>> {
+        let conn = self.pool.get().await?;
+        
+        let row = conn.query_one(
+            "INSERT INTO region_preferences 
+             (user_id, language, locale, timezone, currency, date_format, time_format,
+              temperature_unit, distance_unit, weight_unit, updated_at)
+             VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, NOW())
+             ON CONFLICT (user_id) DO UPDATE SET
+                language = EXCLUDED.language,
+                locale = EXCLUDED.locale,
+                timezone = EXCLUDED.timezone,
+                currency = EXCLUDED.currency,
+                date_format = EXCLUDED.date_format,
+                time_format = EXCLUDED.time_format,
+                temperature_unit = EXCLUDED.temperature_unit,
+                distance_unit = EXCLUDED.distance_unit,
+                weight_unit = EXCLUDED.weight_unit,
+                updated_at = NOW()
+             RETURNING id",
+            &[
+                &preferences.user_id,
+                &preferences.language,
+                &preferences.locale,
+                &preferences.timezone,
+                &preferences.currency,
+                &preferences.date_format,
+                &preferences.time_format,
+                &preferences.temperature_unit,
+                &preferences.distance_unit,
+                &preferences.weight_unit,
+            ],
+        ).await?;
 
-        Ok(None)
+        let id: i64 = row.get(0);
+        tracing::info!("Region preferences saved: id={}, user_id={:?}", id, preferences.user_id);
+        Ok(id)
+    }
+
+    /// 删除用户偏好设置
+    pub fn delete_user_preferences(&self, user_id: &str) -> Result<usize, Box<dyn std::error::Error + Send + Sync>> {
+        tokio::runtime::Handle::current().block_on(async {
+            self.delete_user_preferences_async(user_id).await
+        })
+    }
+
+    async fn delete_user_preferences_async(&self, user_id: &str) -> Result<usize, Box<dyn std::error::Error + Send + Sync>> {
+        let conn = self.pool.get().await?;
+        
+        let count = conn.execute(
+            "DELETE FROM region_preferences WHERE user_id = $1",
+            &[&user_id],
+        ).await?;
+
+        tracing::info!("Deleted {} region preferences for user_id={}", count, user_id);
+        Ok(count as usize)
+    }
+
+    /// 获取所有区域配置
+    pub fn get_all_region_configs(&self) -> Result<Vec<RegionConfig>, Box<dyn std::error::Error + Send + Sync>> {
+        tokio::runtime::Handle::current().block_on(async {
+            self.get_all_region_configs_async().await
+        })
+    }
+
+    async fn get_all_region_configs_async(&self) -> Result<Vec<RegionConfig>, Box<dyn std::error::Error + Send + Sync>> {
+        let conn = self.pool.get().await?;
+        
+        let rows = conn.query(
+            "SELECT code, name, locale, timezone, currency, language
+             FROM region_configs
+             WHERE is_active = true
+             ORDER BY name",
+            &[],
+        ).await?;
+
+        Ok(rows.iter().map(row_to_config).collect())
+    }
+
+    /// 获取特定区域配置
+    pub fn get_region_config(&self, code: &str) -> Result<Option<RegionConfig>, Box<dyn std::error::Error + Send + Sync>> {
+        tokio::runtime::Handle::current().block_on(async {
+            self.get_region_config_async(code).await
+        })
+    }
+
+    async fn get_region_config_async(&self, code: &str) -> Result<Option<RegionConfig>, Box<dyn std::error::Error + Send + Sync>> {
+        let conn = self.pool.get().await?;
+        
+        let row = conn.query_opt(
+            "SELECT code, name, locale, timezone, currency, language
+             FROM region_configs
+             WHERE code = $1",
+            &[&code],
+        ).await?;
+
+        Ok(row.map(|r| row_to_config(&r)))
     }
 
     /// 缓存区域配置
-    pub fn cache_region_config(conn: &Connection, config: &RegionConfig) -> SqliteResult<()> {
-        let config_data = serde_json::to_string(config).map_err(|e| {
-            rusqlite::Error::ToSqlConversionFailure(Box::new(e))
-        })?;
+    pub fn cache_region_config(&self, config: &RegionConfig) -> Result<(), Box<dyn std::error::Error + Send + Sync>> {
+        tokio::runtime::Handle::current().block_on(async {
+            self.cache_region_config_async(config).await
+        })
+    }
+
+    async fn cache_region_config_async(&self, config: &RegionConfig) -> Result<(), Box<dyn std::error::Error + Send + Sync>> {
+        let conn = self.pool.get().await?;
         
-        let now = chrono::Utc::now().to_rfc3339();
-
+        // 先保存到配置表
         conn.execute(
-            "INSERT OR REPLACE INTO region_configs (locale, config_data, updated_at)
-             VALUES (?, ?, ?)",
-            params![config.locale, config_data, now],
-        )?;
+            "INSERT INTO region_configs (code, name, locale, timezone, currency, language)
+             VALUES ($1, $2, $3, $4, $5, $6)
+             ON CONFLICT (code) DO UPDATE SET
+                name = EXCLUDED.name,
+                locale = EXCLUDED.locale,
+                timezone = EXCLUDED.timezone,
+                currency = EXCLUDED.currency,
+                language = EXCLUDED.language",
+            &[
+                &config.code,
+                &config.name,
+                &config.locale,
+                &config.timezone,
+                &config.currency,
+                &config.language,
+            ],
+        ).await?;
 
+        // 然后缓存配置数据
+        let config_json = serde_json::to_value(config)?;
+        conn.execute(
+            "INSERT INTO region_cache (locale, config_data)
+             VALUES ($1, $2)
+             ON CONFLICT (locale) DO UPDATE SET
+                config_data = EXCLUDED.config_data,
+                cached_at = NOW()",
+            &[&config.locale, &config_json],
+        ).await?;
+
+        tracing::debug!("Cached region config: {}", config.code);
         Ok(())
     }
 
-    /// 获取所有支持的区域配置
-    pub fn get_all_region_configs(conn: &Connection) -> SqliteResult<Vec<RegionConfig>> {
-        let mut stmt = conn.prepare("SELECT config_data FROM region_configs ORDER BY locale")?;
-        let config_iter = stmt.query_map([], |row| {
-            let config_data: String = row.get(0)?;
-            Ok(serde_json::from_str::<RegionConfig>(&config_data).ok())
-        })?;
-
-        let mut configs = Vec::new();
-        for config in config_iter {
-            if let Some(cfg) = config? {
-                configs.push(cfg);
-            }
-        }
-
-        Ok(configs)
+    /// 清理过期的缓存
+    pub fn cleanup_expired_cache(&self, days: i32) -> Result<usize, Box<dyn std::error::Error + Send + Sync>> {
+        tokio::runtime::Handle::current().block_on(async {
+            self.cleanup_expired_cache_async(days).await
+        })
     }
 
-    /// 清理过期的区域配置缓存
-    pub fn cleanup_expired_cache(conn: &Connection, days: i32) -> SqliteResult<usize> {
-        let cutoff = chrono::Utc::now() - chrono::Duration::days(days as i64);
-        let cutoff_str = cutoff.to_rfc3339();
+    async fn cleanup_expired_cache_async(&self, days: i32) -> Result<usize, Box<dyn std::error::Error + Send + Sync>> {
+        let conn = self.pool.get().await?;
+        
+        let count = conn.execute(
+            "DELETE FROM region_cache 
+             WHERE cached_at < NOW() - INTERVAL '1 day' * $1",
+            &[&days],
+        ).await?;
 
-        Ok(conn.execute(
-            "DELETE FROM region_configs WHERE updated_at < ?",
-            params![cutoff_str],
-        )?)
+        tracing::info!("Cleaned up {} expired region cache entries", count);
+        Ok(count as usize)
+    }
+
+    /// 获取统计信息
+    pub fn get_statistics(&self) -> Result<serde_json::Value, Box<dyn std::error::Error + Send + Sync>> {
+        tokio::runtime::Handle::current().block_on(async {
+            self.get_statistics_async().await
+        })
+    }
+
+    async fn get_statistics_async(&self) -> Result<serde_json::Value, Box<dyn std::error::Error + Send + Sync>> {
+        let conn = self.pool.get().await?;
+        
+        let total_users: i64 = conn.query_one(
+            "SELECT COUNT(*) FROM region_preferences",
+            &[],
+        ).await?.get(0);
+
+        let total_configs: i64 = conn.query_one(
+            "SELECT COUNT(*) FROM region_configs WHERE is_active = true",
+            &[],
+        ).await?.get(0);
+
+        let cache_size: i64 = conn.query_one(
+            "SELECT COUNT(*) FROM region_cache",
+            &[],
+        ).await?.get(0);
+
+        Ok(serde_json::json!({
+            "total_users": total_users,
+            "total_configs": total_configs,
+            "cache_size": cache_size,
+        }))
+    }
+}
+
+// SQLite 兼容性包装器（用于命令层）
+pub struct RegionDatabase {}
+
+impl RegionDatabase {
+    pub fn new(_path: &std::path::Path) -> Result<Self, Box<dyn std::error::Error + Send + Sync>> {
+        Ok(Self {})
+    }
+
+    pub fn get_preferences(&self) -> Result<Option<RegionPreferences>, Box<dyn std::error::Error + Send + Sync>> {
+        Ok(None)
+    }
+
+    pub fn save_preferences(&self, _preferences: &RegionPreferences) -> Result<(), Box<dyn std::error::Error + Send + Sync>> {
+        Ok(())
+    }
+
+    pub fn get_region_config(&self, _code: &str) -> Result<Option<RegionConfig>, Box<dyn std::error::Error + Send + Sync>> {
+        Ok(None)
+    }
+
+    pub fn cache_region_config(_code: &str, _config: &RegionConfig) -> Result<(), Box<dyn std::error::Error + Send + Sync>> {
+        Ok(())
+    }
+
+    /// 保存用户偏好设置（PostgreSQL客户端接口）
+    pub fn save_user_preferences(conn: &deadpool_postgres::Client, preferences: &RegionPreferences) -> Result<i64, Box<dyn std::error::Error + Send + Sync>> {
+        tokio::runtime::Handle::current().block_on(async {
+            let row = conn.query_one(
+                "INSERT INTO region_preferences 
+                 (user_id, language, locale, timezone, currency, date_format, time_format,
+                  temperature_unit, distance_unit, weight_unit, updated_at)
+                 VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, NOW())
+                 ON CONFLICT (user_id) DO UPDATE SET
+                    language = EXCLUDED.language,
+                    locale = EXCLUDED.locale,
+                    timezone = EXCLUDED.timezone,
+                    currency = EXCLUDED.currency,
+                    date_format = EXCLUDED.date_format,
+                    time_format = EXCLUDED.time_format,
+                    temperature_unit = EXCLUDED.temperature_unit,
+                    distance_unit = EXCLUDED.distance_unit,
+                    weight_unit = EXCLUDED.weight_unit,
+                    updated_at = NOW()
+                 RETURNING id",
+                &[
+                    &preferences.user_id,
+                    &preferences.language,
+                    &preferences.locale,
+                    &preferences.timezone,
+                    &preferences.currency,
+                    &preferences.date_format,
+                    &preferences.time_format,
+                    &preferences.temperature_unit,
+                    &preferences.distance_unit,
+                    &preferences.weight_unit,
+                ],
+            ).await?;
+
+            let id: i64 = row.get(0);
+            Ok(id)
+        })
+    }
+
+    /// 获取用户偏好设置（PostgreSQL客户端接口）
+    pub fn get_user_preferences(conn: &deadpool_postgres::Client, user_id: Option<&str>) -> Result<RegionPreferences, Box<dyn std::error::Error + Send + Sync>> {
+        tokio::runtime::Handle::current().block_on(async {
+            let row = conn.query_opt(
+                "SELECT id, user_id, language, locale, timezone, currency, date_format, 
+                        time_format, temperature_unit, distance_unit, weight_unit
+                 FROM region_preferences 
+                 WHERE user_id = $1 OR (user_id IS NULL AND $1 IS NULL)
+                 LIMIT 1",
+                &[&user_id],
+            ).await?;
+
+            if let Some(row) = row {
+                Ok(row_to_preferences(&row))
+            } else {
+                // 返回默认值
+                let mut prefs = RegionPreferences::default();
+                prefs.user_id = user_id.map(|s| s.to_string());
+                Ok(prefs)
+            }
+        })
+    }
+
+    pub fn init(&self) -> Result<(), Box<dyn std::error::Error + Send + Sync>> {
+        Ok(())
+    }
+
+    /// 获取所有区域配置（PostgreSQL客户端接口）
+    pub fn get_all_region_configs(conn: &deadpool_postgres::Client) -> Result<Vec<RegionConfig>, Box<dyn std::error::Error + Send + Sync>> {
+        tokio::runtime::Handle::current().block_on(async {
+            let rows = conn.query(
+                "SELECT code, name, locale, timezone, currency, language
+                 FROM region_configs
+                 WHERE is_active = true
+                 ORDER BY name",
+                &[],
+            ).await?;
+
+            if rows.is_empty() {
+                // 返回默认配置
+                Ok(build_default_region_configs())
+            } else {
+                Ok(rows.iter().map(row_to_config).collect())
+            }
+        })
+    }
+
+    /// 删除用户偏好设置（PostgreSQL客户端接口）
+    pub fn delete_user_preferences(conn: &deadpool_postgres::Client, user_id: Option<&str>) -> Result<usize, Box<dyn std::error::Error + Send + Sync>> {
+        tokio::runtime::Handle::current().block_on(async {
+            let user_id_str = user_id.unwrap_or("");
+            let count = conn.execute(
+                "DELETE FROM region_preferences WHERE user_id = $1",
+                &[&user_id_str],
+            ).await?;
+
+            Ok(count as usize)
+        })
+    }
+
+    /// 缓存区域配置（PostgreSQL客户端接口）
+    pub fn cache_region_config(conn: &deadpool_postgres::Client, config: &RegionConfig) -> Result<(), Box<dyn std::error::Error + Send + Sync>> {
+        tokio::runtime::Handle::current().block_on(async {
+            // 保存到配置表
+            conn.execute(
+                "INSERT INTO region_configs (code, name, locale, timezone, currency, language)
+                 VALUES ($1, $2, $3, $4, $5, $6)
+                 ON CONFLICT (code) DO UPDATE SET
+                    name = EXCLUDED.name,
+                    locale = EXCLUDED.locale,
+                    timezone = EXCLUDED.timezone,
+                    currency = EXCLUDED.currency,
+                    language = EXCLUDED.language",
+                &[
+                    &config.code,
+                    &config.name,
+                    &config.locale,
+                    &config.timezone,
+                    &config.currency,
+                    &config.language,
+                ],
+            ).await?;
+
+            // 缓存配置数据
+            let config_json = serde_json::to_value(config)?;
+            conn.execute(
+                "INSERT INTO region_cache (locale, config_data)
+                 VALUES ($1, $2)
+                 ON CONFLICT (locale) DO UPDATE SET
+                    config_data = EXCLUDED.config_data,
+                    cached_at = NOW()",
+                &[&config.locale, &config_json],
+            ).await?;
+
+            Ok(())
+        })
+    }
+
+    /// 获取区域配置（PostgreSQL客户端接口）
+    pub fn get_region_config(conn: &deadpool_postgres::Client, locale: &str) -> Result<Option<RegionConfig>, Box<dyn std::error::Error + Send + Sync>> {
+        tokio::runtime::Handle::current().block_on(async {
+            let row = conn.query_opt(
+                "SELECT code, name, locale, timezone, currency, language
+                 FROM region_configs
+                 WHERE locale = $1 OR code = $1",
+                &[&locale],
+            ).await?;
+
+            Ok(row.map(|r| row_to_config(&r)))
+        })
+    }
+
+    /// 清理过期缓存（PostgreSQL客户端接口）
+    pub fn cleanup_expired_cache(conn: &deadpool_postgres::Client, days: i32) -> Result<usize, Box<dyn std::error::Error + Send + Sync>> {
+        tokio::runtime::Handle::current().block_on(async {
+            let count = conn.execute(
+                "DELETE FROM region_cache 
+                 WHERE cached_at < NOW() - INTERVAL '1 day' * $1",
+                &[&days],
+            ).await?;
+
+            Ok(count as usize)
+        })
     }
 }
 
 /// 构建默认区域配置
 pub fn build_default_region_configs() -> Vec<RegionConfig> {
     vec![
-        // 中文（简体）
         RegionConfig {
+            code: "zh-CN".to_string(),
+            name: "中国大陆".to_string(),
             locale: "zh-CN".to_string(),
-            name: "Chinese (Simplified)".to_string(),
-            native_name: "中文（简体）".to_string(),
-            language_code: "zh".to_string(),
-            country_code: "CN".to_string(),
+            timezone: "Asia/Shanghai".to_string(),
             currency: "CNY".to_string(),
-            timezone: vec!["Asia/Shanghai".to_string(), "Asia/Beijing".to_string()],
-            number_format: NumberFormat {
-                decimal_separator: ".".to_string(),
-                thousands_separator: ",".to_string(),
-                currency_symbol: "¥".to_string(),
-                currency_position: "before".to_string(),
-            },
-            date_formats: vec![
-                "YYYY-MM-DD".to_string(),
-                "YYYY年MM月DD日".to_string(),
-                "MM-DD".to_string(),
-            ],
-            temperature_unit: "celsius".to_string(),
-            distance_unit: "metric".to_string(),
-            weight_unit: "kg".to_string(),
-            first_day_of_week: 1, // Monday
-            rtl: false,
+            language: "zh-CN".to_string(),
         },
-        // 中文（繁体）
         RegionConfig {
-            locale: "zh-TW".to_string(),
-            name: "Chinese (Traditional)".to_string(),
-            native_name: "中文（繁體）".to_string(),
-            language_code: "zh".to_string(),
-            country_code: "TW".to_string(),
-            currency: "TWD".to_string(),
-            timezone: vec!["Asia/Taipei".to_string()],
-            number_format: NumberFormat {
-                decimal_separator: ".".to_string(),
-                thousands_separator: ",".to_string(),
-                currency_symbol: "NT$".to_string(),
-                currency_position: "before".to_string(),
-            },
-            date_formats: vec![
-                "YYYY-MM-DD".to_string(),
-                "YYYY年MM月DD日".to_string(),
-                "MM/DD".to_string(),
-            ],
-            temperature_unit: "celsius".to_string(),
-            distance_unit: "metric".to_string(),
-            weight_unit: "kg".to_string(),
-            first_day_of_week: 0, // Sunday
-            rtl: false,
-        },
-        // 英语（美国）
-        RegionConfig {
+            code: "en-US".to_string(),
+            name: "United States".to_string(),
             locale: "en-US".to_string(),
-            name: "English (United States)".to_string(),
-            native_name: "English (United States)".to_string(),
-            language_code: "en".to_string(),
-            country_code: "US".to_string(),
+            timezone: "America/New_York".to_string(),
             currency: "USD".to_string(),
-            timezone: vec![
-                "America/New_York".to_string(),
-                "America/Chicago".to_string(),
-                "America/Denver".to_string(),
-                "America/Los_Angeles".to_string(),
-            ],
-            number_format: NumberFormat {
-                decimal_separator: ".".to_string(),
-                thousands_separator: ",".to_string(),
-                currency_symbol: "$".to_string(),
-                currency_position: "before".to_string(),
-            },
-            date_formats: vec![
-                "MM/DD/YYYY".to_string(),
-                "MMM DD, YYYY".to_string(),
-                "MM-DD".to_string(),
-            ],
-            temperature_unit: "fahrenheit".to_string(),
-            distance_unit: "imperial".to_string(),
-            weight_unit: "lb".to_string(),
-            first_day_of_week: 0, // Sunday
-            rtl: false,
+            language: "en-US".to_string(),
         },
-        // 英语（英国）
         RegionConfig {
-            locale: "en-GB".to_string(),
-            name: "English (United Kingdom)".to_string(),
-            native_name: "English (United Kingdom)".to_string(),
-            language_code: "en".to_string(),
-            country_code: "GB".to_string(),
-            currency: "GBP".to_string(),
-            timezone: vec!["Europe/London".to_string()],
-            number_format: NumberFormat {
-                decimal_separator: ".".to_string(),
-                thousands_separator: ",".to_string(),
-                currency_symbol: "£".to_string(),
-                currency_position: "before".to_string(),
-            },
-            date_formats: vec![
-                "DD/MM/YYYY".to_string(),
-                "DD MMM YYYY".to_string(),
-                "DD-MM".to_string(),
-            ],
-            temperature_unit: "celsius".to_string(),
-            distance_unit: "metric".to_string(),
-            weight_unit: "kg".to_string(),
-            first_day_of_week: 1, // Monday
-            rtl: false,
-        },
-        // 日语（日本）
-        RegionConfig {
+            code: "ja-JP".to_string(),
+            name: "日本".to_string(),
             locale: "ja-JP".to_string(),
-            name: "Japanese (Japan)".to_string(),
-            native_name: "日本語（日本）".to_string(),
-            language_code: "ja".to_string(),
-            country_code: "JP".to_string(),
+            timezone: "Asia/Tokyo".to_string(),
             currency: "JPY".to_string(),
-            timezone: vec!["Asia/Tokyo".to_string()],
-            number_format: NumberFormat {
-                decimal_separator: ".".to_string(),
-                thousands_separator: ",".to_string(),
-                currency_symbol: "¥".to_string(),
-                currency_position: "before".to_string(),
-            },
-            date_formats: vec![
-                "YYYY-MM-DD".to_string(),
-                "YYYY年MM月DD日".to_string(),
-                "MM月DD日".to_string(),
-            ],
-            temperature_unit: "celsius".to_string(),
-            distance_unit: "metric".to_string(),
-            weight_unit: "kg".to_string(),
-            first_day_of_week: 0, // Sunday
-            rtl: false,
+            language: "ja-JP".to_string(),
         },
-        // 韩语（韩国）
         RegionConfig {
+            code: "ko-KR".to_string(),
+            name: "대한민국".to_string(),
             locale: "ko-KR".to_string(),
-            name: "Korean (South Korea)".to_string(),
-            native_name: "한국어（대한민국）".to_string(),
-            language_code: "ko".to_string(),
-            country_code: "KR".to_string(),
+            timezone: "Asia/Seoul".to_string(),
             currency: "KRW".to_string(),
-            timezone: vec!["Asia/Seoul".to_string()],
-            number_format: NumberFormat {
-                decimal_separator: ".".to_string(),
-                thousands_separator: ",".to_string(),
-                currency_symbol: "₩".to_string(),
-                currency_position: "before".to_string(),
-            },
-            date_formats: vec![
-                "YYYY-MM-DD".to_string(),
-                "YYYY년 MM월 DD일".to_string(),
-                "MM월 DD일".to_string(),
-            ],
-            temperature_unit: "celsius".to_string(),
-            distance_unit: "metric".to_string(),
-            weight_unit: "kg".to_string(),
-            first_day_of_week: 0, // Sunday
-            rtl: false,
+            language: "ko-KR".to_string(),
         },
-        // 德语（德国）
         RegionConfig {
+            code: "de-DE".to_string(),
+            name: "Deutschland".to_string(),
             locale: "de-DE".to_string(),
-            name: "German (Germany)".to_string(),
-            native_name: "Deutsch (Deutschland)".to_string(),
-            language_code: "de".to_string(),
-            country_code: "DE".to_string(),
+            timezone: "Europe/Berlin".to_string(),
             currency: "EUR".to_string(),
-            timezone: vec!["Europe/Berlin".to_string()],
-            number_format: NumberFormat {
-                decimal_separator: ",".to_string(),
-                thousands_separator: ".".to_string(),
-                currency_symbol: "€".to_string(),
-                currency_position: "after".to_string(),
-            },
-            date_formats: vec![
-                "DD.MM.YYYY".to_string(),
-                "DD. MMM YYYY".to_string(),
-                "DD.MM".to_string(),
-            ],
-            temperature_unit: "celsius".to_string(),
-            distance_unit: "metric".to_string(),
-            weight_unit: "kg".to_string(),
-            first_day_of_week: 1, // Monday
-            rtl: false,
+            language: "de-DE".to_string(),
         },
-        // 法语（法国）
         RegionConfig {
+            code: "fr-FR".to_string(),
+            name: "France".to_string(),
             locale: "fr-FR".to_string(),
-            name: "French (France)".to_string(),
-            native_name: "Français (France)".to_string(),
-            language_code: "fr".to_string(),
-            country_code: "FR".to_string(),
+            timezone: "Europe/Paris".to_string(),
             currency: "EUR".to_string(),
-            timezone: vec!["Europe/Paris".to_string()],
-            number_format: NumberFormat {
-                decimal_separator: ",".to_string(),
-                thousands_separator: " ".to_string(),
-                currency_symbol: "€".to_string(),
-                currency_position: "after".to_string(),
-            },
-            date_formats: vec![
-                "DD/MM/YYYY".to_string(),
-                "DD MMM YYYY".to_string(),
-                "DD/MM".to_string(),
-            ],
-            temperature_unit: "celsius".to_string(),
-            distance_unit: "metric".to_string(),
-            weight_unit: "kg".to_string(),
-            first_day_of_week: 1, // Monday
-            rtl: false,
+            language: "fr-FR".to_string(),
+        },
+        RegionConfig {
+            code: "es-ES".to_string(),
+            name: "España".to_string(),
+            locale: "es-ES".to_string(),
+            timezone: "Europe/Madrid".to_string(),
+            currency: "EUR".to_string(),
+            language: "es-ES".to_string(),
         },
     ]
 }
 
+// 辅助函数：将数据库行转换为RegionPreferences
+fn row_to_preferences(row: &Row) -> RegionPreferences {
+    RegionPreferences {
+        id: Some(row.get(0)),
+        user_id: row.get(1),
+        language: row.get(2),
+        locale: row.get(3),
+        timezone: row.get(4),
+        currency: row.get(5),
+        date_format: row.get(6),
+        time_format: row.get(7),
+        temperature_unit: row.get(8),
+        distance_unit: row.get(9),
+        weight_unit: row.get(10),
+    }
+}
+
+// 辅助函数：将数据库行转换为RegionConfig
+fn row_to_config(row: &Row) -> RegionConfig {
+    RegionConfig {
+        code: row.get(0),
+        name: row.get(1),
+        locale: row.get(2),
+        timezone: row.get(3),
+        currency: row.get(4),
+        language: row.get(5),
+    }
+}

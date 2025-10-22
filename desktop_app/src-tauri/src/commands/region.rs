@@ -40,8 +40,18 @@ impl From<String> for RegionError {
     }
 }
 
-impl From<rusqlite::Error> for RegionError {
-    fn from(error: rusqlite::Error) -> Self {
+impl From<Box<dyn std::error::Error + Send + Sync>> for RegionError {
+    fn from(err: Box<dyn std::error::Error + Send + Sync>) -> Self {
+        Self {
+            message: err.to_string(),
+            code: "REGION_ERROR".to_string(),
+        }
+    }
+}
+
+// Removed rusqlite dependency - using PostgreSQL now
+impl From<Box<dyn std::error::Error>> for RegionError {
+    fn from(error: Box<dyn std::error::Error>) -> Self {
         Self {
             message: format!("Database error: {}", error),
             code: "DATABASE_ERROR".to_string(),
@@ -82,7 +92,7 @@ pub async fn get_user_region_preferences(
     db: State<'_, crate::database::Database>,
     user_id: Option<String>,
 ) -> Result<RegionPreferences, RegionError> {
-    let conn = db.get_pool().get()
+    let conn = db.get_pool().get().await
         .map_err(|e| RegionError {
             message: format!("Database error: {}", e),
             code: "DATABASE_ERROR".to_string(),
@@ -98,7 +108,7 @@ pub async fn save_user_region_preferences(
     region_state: State<'_, RegionState>,
     preferences: RegionPreferences,
 ) -> Result<i64, RegionError> {
-    let conn = db.get_pool().get()
+    let conn = db.get_pool().get().await
         .map_err(|e| RegionError {
             message: format!("Database error: {}", e),
             code: "DATABASE_ERROR".to_string(),
@@ -155,7 +165,7 @@ pub async fn delete_user_region_preferences(
     region_state: State<'_, RegionState>,
     user_id: Option<String>,
 ) -> Result<usize, RegionError> {
-    let conn = db.get_pool().get()
+    let conn = db.get_pool().get().await
         .map_err(|e| RegionError {
             message: format!("Database error: {}", e),
             code: "DATABASE_ERROR".to_string(),
@@ -174,7 +184,7 @@ pub async fn delete_user_region_preferences(
 pub async fn get_all_region_configs(
     db: State<'_, crate::database::Database>,
 ) -> Result<Vec<RegionConfig>, RegionError> {
-    let conn = db.get_pool().get()
+    let conn = db.get_pool().get().await
         .map_err(|e| RegionError {
             message: format!("Database error: {}", e),
             code: "DATABASE_ERROR".to_string(),
@@ -201,7 +211,7 @@ pub async fn get_region_config(
     db: State<'_, crate::database::Database>,
     locale: String,
 ) -> Result<Option<RegionConfig>, RegionError> {
-    let conn = db.get_pool().get()
+    let conn = db.get_pool().get().await
         .map_err(|e| RegionError {
             message: format!("Database error: {}", e),
             code: "DATABASE_ERROR".to_string(),
@@ -216,7 +226,7 @@ pub async fn cache_region_config(
     db: State<'_, crate::database::Database>,
     config: RegionConfig,
 ) -> Result<(), RegionError> {
-    let conn = db.get_pool().get()
+    let conn = db.get_pool().get().await
         .map_err(|e| RegionError {
             message: format!("Database error: {}", e),
             code: "DATABASE_ERROR".to_string(),
@@ -232,7 +242,7 @@ pub async fn initialize_region_system(
     region_state: State<'_, RegionState>,
     user_id: Option<String>,
 ) -> Result<RegionPreferences, RegionError> {
-    let conn = db.get_pool().get()
+    let conn = db.get_pool().get().await
         .map_err(|e| RegionError {
             message: format!("Database error: {}", e),
             code: "DATABASE_ERROR".to_string(),
@@ -483,7 +493,7 @@ pub async fn cleanup_expired_region_cache(
     db: State<'_, crate::database::Database>,
     days: i32,
 ) -> Result<usize, RegionError> {
-    let conn = db.get_pool().get()
+    let conn = db.get_pool().get().await
         .map_err(|e| RegionError {
             message: format!("Database error: {}", e),
             code: "DATABASE_ERROR".to_string(),

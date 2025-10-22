@@ -1,1039 +1,593 @@
-/**
- * 日志系统数据库存储层
- * 
- * 提供日志的持久化存储和查询功能：
- * - 日志条目的CRUD操作
- * - 高性能的日志搜索和过滤
- * - 日志统计和分析
- * - 日志导出功能
- * - 远程上传状态管理
- */
+//! # 日志记录数据库模块 (PostgreSQL)
+//! 
+//! 提供结构化日志存储、查询、统计和自动清理功能
 
-use crate::utils::logger::{LogEntry, LogLevel, LoggerError, LoggerResult};
-use chrono::{DateTime, Local, Utc};
-use rusqlite::{params, Connection, Result as SqliteResult, Row};
 use serde::{Deserialize, Serialize};
+use crate::database::DbPool;
+use tracing::{info, error, warn, debug};
+use chrono::Utc;
 use std::collections::HashMap;
-use std::path::Path;
-use std::sync::{Arc, Mutex};
-use r2d2;
-use r2d2_sqlite::SqliteConnectionManager;
 
 // ================================
-// 数据库结构和类型
+// 数据结构定义
 // ================================
 
-/// 日志数据库管理器
-pub struct LogDatabase {
-    pool: r2d2::Pool<SqliteConnectionManager>,
+/// 日志级别
+#[derive(Debug, Clone, Copy, PartialEq, Eq, Serialize, Deserialize)]
+#[serde(rename_all = "lowercase")]
+pub enum LogLevel {
+    Trace,
+    Debug,
+    Info,
+    Warn,
+    Error,
+    Fatal,
 }
 
-/// 日志过滤条件
-#[derive(Debug, Clone, Serialize, Deserialize)]
-pub struct LogFilter {
-    /// 日志级别过滤
-    pub levels: Option<Vec<LogLevel>>,
-    /// 模块名称过滤
-    pub modules: Option<Vec<String>>,
-    /// 时间范围过滤（Unix时间戳）
-    pub time_range: Option<TimeRange>,
-    /// 关键词搜索
-    pub keywords: Option<Vec<String>>,
-    /// 标签过滤
-    pub tags: Option<Vec<String>>,
-    /// 是否包含已上传的日志
-    pub include_uploaded: Option<bool>,
-    /// 文件名过滤
-    pub files: Option<Vec<String>>,
-}
-
-/// 时间范围
-#[derive(Debug, Clone, Serialize, Deserialize)]
-pub struct TimeRange {
-    pub start: i64, // Unix时间戳
-    pub end: i64,   // Unix时间戳
-}
-
-/// 日志统计信息
-#[derive(Debug, Clone, Serialize, Deserialize)]
-#[serde(default)]
-pub struct LogStatistics {
-    /// 总日志数量
-    pub total_count: usize,
-    /// 各级别日志数量
-    pub count_by_level: HashMap<String, usize>,
-    /// 各模块日志数量
-    pub count_by_module: HashMap<String, usize>,
-    /// 按小时统计
-    pub count_by_hour: HashMap<String, usize>,
-    /// 按日期统计
-    pub count_by_date: HashMap<String, usize>,
-    /// 错误率
-    pub error_rate: f64,
-    /// 平均日志大小
-    pub average_size: f64,
-    /// 最早日志时间
-    pub earliest_log: Option<i64>,
-    /// 最新日志时间
-    pub latest_log: Option<i64>,
-    /// 上传状态统计
-    pub upload_stats: UploadStatistics,
-}
-
-impl Default for LogStatistics {
-    fn default() -> Self {
-        Self {
-            total_count: 0,
-            count_by_level: HashMap::new(),
-            count_by_module: HashMap::new(),
-            count_by_hour: HashMap::new(),
-            count_by_date: HashMap::new(),
-            error_rate: 0.0,
-            average_size: 0.0,
-            earliest_log: None,
-            latest_log: None,
-            upload_stats: UploadStatistics::default(),
+impl std::fmt::Display for LogLevel {
+    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
+        match self {
+            LogLevel::Trace => write!(f, "trace"),
+            LogLevel::Debug => write!(f, "debug"),
+            LogLevel::Info => write!(f, "info"),
+            LogLevel::Warn => write!(f, "warn"),
+            LogLevel::Error => write!(f, "error"),
+            LogLevel::Fatal => write!(f, "fatal"),
         }
     }
 }
 
-/// 上传统计信息
-#[derive(Debug, Clone, Serialize, Deserialize)]
-#[serde(default)]
-pub struct UploadStatistics {
-    pub total_uploaded: usize,
-    pub pending_upload: usize,
-    pub upload_success_rate: f64,
-    pub last_upload_time: Option<i64>,
-    pub last_upload_batch_size: usize,
-}
-
-impl Default for UploadStatistics {
-    fn default() -> Self {
-        Self {
-            total_uploaded: 0,
-            pending_upload: 0,
-            upload_success_rate: 0.0,
-            last_upload_time: None,
-            last_upload_batch_size: 0,
+impl std::str::FromStr for LogLevel {
+    type Err = String;
+    
+    fn from_str(s: &str) -> Result<Self, Self::Err> {
+        match s.to_lowercase().as_str() {
+            "trace" => Ok(LogLevel::Trace),
+            "debug" => Ok(LogLevel::Debug),
+            "info" => Ok(LogLevel::Info),
+            "warn" => Ok(LogLevel::Warn),
+            "error" => Ok(LogLevel::Error),
+            "fatal" => Ok(LogLevel::Fatal),
+            _ => Err(format!("无效的日志级别: {}", s)),
         }
     }
 }
 
-/// 扩展的日志条目（包含数据库ID）
+/// 日志条目
 #[derive(Debug, Clone, Serialize, Deserialize)]
-pub struct StoredLogEntry {
+pub struct LogEntry {
+    pub level: String,
+    pub message: String,
+    pub module: Option<String>,
+    pub timestamp: i64,
+}
+
+/// 扩展日志条目
+#[derive(Debug, Clone, Serialize, Deserialize)]
+pub struct LogEntryExtended {
     pub id: i64,
-    pub timestamp: DateTime<Utc>,
-    pub local_time: DateTime<Local>,
-    pub level: LogLevel,
+    pub level: String,
     pub message: String,
     pub module: Option<String>,
     pub file: Option<String>,
-    pub line: Option<u32>,
+    pub line: Option<i32>,
     pub thread: Option<String>,
-    pub data: Option<String>, // JSON字符串
-    pub stack: Option<String>,
-    pub tags: Vec<String>,
-    pub uploaded: bool,
-    pub upload_attempts: i32,
-    pub created_at: DateTime<Local>,
-    pub size_bytes: i32,
+    pub context: Option<String>,
+    pub timestamp: String,
 }
 
-impl From<StoredLogEntry> for LogEntry {
-    fn from(stored: StoredLogEntry) -> Self {
-        LogEntry {
-            timestamp: stored.timestamp,
-            local_time: stored.local_time,
-            level: stored.level,
-            message: stored.message,
-            module: stored.module,
-            file: stored.file,
-            line: stored.line,
-            thread: stored.thread,
-            data: stored.data.and_then(|s| serde_json::from_str(&s).ok()),
-            stack: stored.stack,
-            tags: stored.tags,
-        }
-    }
+/// 日志过滤器
+#[derive(Debug, Clone, Serialize, Deserialize)]
+pub struct LogFilter {
+    pub level: Option<String>,
+    pub module: Option<String>,
+    pub start_time: Option<i64>,
+    pub end_time: Option<i64>,
+    pub keyword: Option<String>,
+    pub limit: Option<i32>,
+    pub offset: Option<i32>,
+}
+
+/// 日志统计
+#[derive(Debug, Clone, Serialize, Deserialize)]
+pub struct LogStatistics {
+    pub total_logs: i64,
+    pub level_counts: HashMap<String, i64>,
+    pub module_counts: HashMap<String, i64>,
+    pub recent_errors: i64,
+    pub recent_warnings: i64,
 }
 
 // ================================
-// 数据库实现
+// 日志注册表
 // ================================
 
-impl LogDatabase {
-    /// 创建新的日志数据库实例
-    pub async fn new<P: AsRef<Path>>(db_path: P) -> LoggerResult<Self> {
-        let manager = SqliteConnectionManager::file(db_path.as_ref());
-        let pool = r2d2::Pool::builder()
-            .max_size(5)
-            .build(manager)
-            .map_err(|e| LoggerError::Io(std::io::Error::new(
-                std::io::ErrorKind::Other,
-                format!("创建连接池失败: {}", e)
-            )))?;
-        
-        let db = Self { pool };
-        
-        db.initialize_schema().await?;
-        Ok(db)
+pub struct LoggingRegistry {
+    pool: DbPool,
+}
+
+impl LoggingRegistry {
+    pub fn new(pool: DbPool) -> Self {
+        Self { pool }
     }
-    
-    /// 初始化数据库模式
-    async fn initialize_schema(&self) -> LoggerResult<()> {
-        let conn = self.pool.get()
-            .map_err(|e| LoggerError::Io(std::io::Error::new(
-                std::io::ErrorKind::Other,
-                format!("获取连接失败: {}", e)
-            )))?;
-        
-        // 创建日志表
-        conn.execute(
-            r#"
-            CREATE TABLE IF NOT EXISTS logs (
-                id INTEGER PRIMARY KEY AUTOINCREMENT,
-                timestamp INTEGER NOT NULL,
-                local_timestamp INTEGER NOT NULL,
-                level INTEGER NOT NULL,
+
+    /// 初始化数据库表
+    pub async fn init_tables(&self) -> Result<(), Box<dyn std::error::Error + Send + Sync>> {
+        let client = self.pool.get().await?;
+
+        // 创建日志表（支持时间分区）
+        client.execute(
+            "CREATE TABLE IF NOT EXISTS logs (
+                id BIGSERIAL PRIMARY KEY,
+                level TEXT NOT NULL,
                 message TEXT NOT NULL,
                 module TEXT,
                 file TEXT,
                 line INTEGER,
                 thread TEXT,
-                data TEXT, -- JSON字符串
-                stack TEXT,
-                tags TEXT, -- JSON数组字符串
-                uploaded BOOLEAN NOT NULL DEFAULT FALSE,
-                upload_attempts INTEGER NOT NULL DEFAULT 0,
-                created_at INTEGER NOT NULL,
-                size_bytes INTEGER NOT NULL DEFAULT 0
-            )
-            "#,
-            [],
-        ).map_err(|e| LoggerError::Io(std::io::Error::new(
-            std::io::ErrorKind::Other,
-            format!("创建日志表失败: {}", e)
-        )))?;
-        
+                context TEXT,
+                timestamp TIMESTAMP NOT NULL DEFAULT NOW()
+            )",
+            &[],
+        ).await?;
+
         // 创建索引
         let indexes = vec![
-            "CREATE INDEX IF NOT EXISTS idx_logs_timestamp ON logs(timestamp)",
             "CREATE INDEX IF NOT EXISTS idx_logs_level ON logs(level)",
             "CREATE INDEX IF NOT EXISTS idx_logs_module ON logs(module)",
-            "CREATE INDEX IF NOT EXISTS idx_logs_uploaded ON logs(uploaded)",
-            "CREATE INDEX IF NOT EXISTS idx_logs_created_at ON logs(created_at)",
-            "CREATE INDEX IF NOT EXISTS idx_logs_level_timestamp ON logs(level, timestamp)",
-            "CREATE INDEX IF NOT EXISTS idx_logs_module_timestamp ON logs(module, timestamp)",
+            "CREATE INDEX IF NOT EXISTS idx_logs_timestamp ON logs(timestamp DESC)",
+            "CREATE INDEX IF NOT EXISTS idx_logs_level_timestamp ON logs(level, timestamp DESC)",
         ];
-        
+
         for index_sql in indexes {
-            conn.execute(index_sql, []).map_err(|e| LoggerError::Io(std::io::Error::new(
-                std::io::ErrorKind::Other,
-                format!("创建索引失败: {}", e)
-            )))?;
+            client.execute(index_sql, &[]).await?;
         }
-        
-        // 创建配置表
-        conn.execute(
-            r#"
-            CREATE TABLE IF NOT EXISTS log_config (
-                key TEXT PRIMARY KEY,
-                value TEXT NOT NULL,
-                updated_at INTEGER NOT NULL
-            )
-            "#,
-            [],
-        ).map_err(|e| LoggerError::Io(std::io::Error::new(
-            std::io::ErrorKind::Other,
-            format!("创建配置表失败: {}", e)
-        )))?;
-        
-        // 创建上传记录表
-        conn.execute(
-            r#"
-            CREATE TABLE IF NOT EXISTS upload_history (
-                id INTEGER PRIMARY KEY AUTOINCREMENT,
-                upload_time INTEGER NOT NULL,
-                batch_size INTEGER NOT NULL,
-                success BOOLEAN NOT NULL,
-                error_message TEXT,
-                log_ids TEXT -- JSON数组
-            )
-            "#,
-            [],
-        ).map_err(|e| LoggerError::Io(std::io::Error::new(
-            std::io::ErrorKind::Other,
-            format!("创建上传历史表失败: {}", e)
-        )))?;
-        
+
+        info!("✅ 日志记录表初始化完成");
         Ok(())
     }
-    
-    /// 插入日志条目
-    pub async fn insert_log(&self, entry: &LogEntry) -> LoggerResult<i64> {
-        let conn = self.pool.get()
-            .map_err(|e| LoggerError::Io(std::io::Error::new(
-                std::io::ErrorKind::Other,
-                format!("获取连接失败: {}", e)
-            )))?;
-        
-        let timestamp = entry.timestamp.timestamp();
-        let local_timestamp = entry.local_time.timestamp();
-        let level = entry.level as i32;
-        let data_json = entry.data.as_ref()
-            .map(|d| serde_json::to_string(d).unwrap_or_default());
-        let tags_json = serde_json::to_string(&entry.tags).unwrap_or_default();
-        let size_bytes = serde_json::to_string(&entry).unwrap_or_default().len() as i32;
-        let created_at = Local::now().timestamp();
-        
-        let id = conn.execute(
-            r#"
-            INSERT INTO logs (
-                timestamp, local_timestamp, level, message, module, file, line,
-                thread, data, stack, tags, created_at, size_bytes
-            ) VALUES (?1, ?2, ?3, ?4, ?5, ?6, ?7, ?8, ?9, ?10, ?11, ?12, ?13)
-            "#,
-            params![
-                timestamp,
-                local_timestamp,
-                level,
-                entry.message,
-                entry.module,
-                entry.file,
-                entry.line,
-                entry.thread,
-                data_json,
-                entry.stack,
-                tags_json,
-                created_at,
-                size_bytes
-            ],
-        ).map_err(|e| LoggerError::Io(std::io::Error::new(
-            std::io::ErrorKind::Other,
-            format!("插入日志失败: {}", e)
-        )))?;
-        
-        Ok(conn.last_insert_rowid())
+
+    /// 记录日志
+    pub fn log(&self, entry: LogEntry) -> Result<(), Box<dyn std::error::Error + Send + Sync>> {
+        let handle = tokio::runtime::Handle::current();
+        handle.block_on(async {
+            self.log_async(entry).await
+        })
     }
-    
-    /// 搜索日志条目
-    pub async fn search_logs(
+
+    /// 记录日志（异步）
+    pub async fn log_async(&self, entry: LogEntry) -> Result<(), Box<dyn std::error::Error + Send + Sync>> {
+        let client = self.pool.get().await?;
+
+        let timestamp = chrono::DateTime::from_timestamp(entry.timestamp, 0)
+            .unwrap_or_else(|| Utc::now());
+
+        client.execute(
+            "INSERT INTO logs (level, message, module, timestamp)
+            VALUES ($1, $2, $3, $4)",
+            &[&entry.level, &entry.message, &entry.module, &timestamp],
+        ).await?;
+
+        Ok(())
+    }
+
+    /// 批量记录日志
+    pub async fn log_batch_async(&self, entries: Vec<LogEntry>) -> Result<(), Box<dyn std::error::Error + Send + Sync>> {
+        if entries.is_empty() {
+            return Ok(());
+        }
+
+        let client = self.pool.get().await?;
+
+        // 使用事务批量插入
+        let transaction = client.transaction().await?;
+
+        for entry in entries {
+            let timestamp = chrono::DateTime::from_timestamp(entry.timestamp, 0)
+                .unwrap_or_else(|| Utc::now());
+
+            transaction.execute(
+                "INSERT INTO logs (level, message, module, timestamp)
+                VALUES ($1, $2, $3, $4)",
+                &[&entry.level, &entry.message, &entry.module, &timestamp],
+            ).await?;
+        }
+
+        transaction.commit().await?;
+
+        debug!("📝 批量记录了 {} 条日志", entries.len());
+        Ok(())
+    }
+
+    /// 扩展日志记录
+    pub async fn log_extended_async(
         &self,
-        filter: Option<LogFilter>,
-        page: usize,
-        page_size: usize,
-        sort_by: &str,
-        sort_order: &str,
-    ) -> LoggerResult<(Vec<LogEntry>, usize)> {
-        let conn = self.pool.get()
-            .map_err(|e| LoggerError::Io(std::io::Error::new(
-                std::io::ErrorKind::Other,
-                format!("获取连接失败: {}", e)
-            )))?;
-        
-        // 构建WHERE子句
-        let (where_clause, params) = self.build_where_clause(&filter);
-        
-        // 构建排序子句
-        let order_by = match sort_by {
-            "level" => "level",
-            "module" => "module",
-            "message" => "message",
-            "created_at" => "created_at",
-            _ => "timestamp",
-        };
-        
-        let order_direction = if sort_order.to_lowercase() == "asc" { "ASC" } else { "DESC" };
-        
-        // 计算总数
-        let count_sql = format!("SELECT COUNT(*) FROM logs {}", where_clause);
-        let total: usize = conn.query_row(&count_sql, &params[..], |row| {
-            Ok(row.get::<_, i64>(0)? as usize)
-        }).map_err(|e| LoggerError::Io(std::io::Error::new(
-            std::io::ErrorKind::Other,
-            format!("查询日志总数失败: {}", e)
-        )))?;
-        
-        // 查询日志条目
-        let offset = (page.saturating_sub(1)) * page_size;
-        let query_sql = format!(
-            r#"
-            SELECT id, timestamp, local_timestamp, level, message, module, file, line,
-                   thread, data, stack, tags, uploaded, upload_attempts, created_at, size_bytes
-            FROM logs {}
-            ORDER BY {} {}
-            LIMIT {} OFFSET {}
-            "#,
-            where_clause, order_by, order_direction, page_size, offset
-        );
-        
-        let mut stmt = conn.prepare(&query_sql).map_err(|e| LoggerError::Io(std::io::Error::new(
-            std::io::ErrorKind::Other,
-            format!("准备查询语句失败: {}", e)
-        )))?;
-        
-        let logs: Result<Vec<LogEntry>, _> = stmt.query_map(&params[..], |row| {
-            self.row_to_stored_log_entry(row)
-        }).map_err(|e| LoggerError::Io(std::io::Error::new(
-            std::io::ErrorKind::Other,
-            format!("执行查询失败: {}", e)
-        )))?.collect::<Result<Vec<_>, _>>().map(|stored_logs| {
-            stored_logs.into_iter().map(|stored| stored.into()).collect()
-        });
-        
-        let logs = logs.map_err(|e| LoggerError::Io(std::io::Error::new(
-            std::io::ErrorKind::Other,
-            format!("解析查询结果失败: {}", e)
-        )))?;
-        
-        Ok((logs, total))
+        level: &str,
+        message: &str,
+        module: Option<&str>,
+        file: Option<&str>,
+        line: Option<i32>,
+        thread: Option<&str>,
+        context: Option<&str>,
+    ) -> Result<(), Box<dyn std::error::Error + Send + Sync>> {
+        let client = self.pool.get().await?;
+
+        client.execute(
+            "INSERT INTO logs (level, message, module, file, line, thread, context, timestamp)
+            VALUES ($1, $2, $3, $4, $5, $6, $7, NOW())",
+            &[&level, &message, &module, &file, &line, &thread, &context],
+        ).await?;
+
+        Ok(())
     }
-    
-    /// 获取日志统计信息
-    pub async fn get_statistics(&self, filter: Option<LogFilter>) -> LoggerResult<LogStatistics> {
-        let conn = self.pool.get()
-            .map_err(|e| LoggerError::Io(std::io::Error::new(
-                std::io::ErrorKind::Other,
-                format!("获取连接失败: {}", e)
-            )))?;
-        
-        let (where_clause, params) = self.build_where_clause(&filter);
-        
-        // 基本统计
-        let total_count_sql = format!("SELECT COUNT(*) FROM logs {}", where_clause);
-        let total_count: usize = conn.query_row(&total_count_sql, &params[..], |row| {
-            Ok(row.get::<_, i64>(0)? as usize)
-        }).unwrap_or(0);
-        
+
+    /// 获取日志
+    pub fn get_logs(&self, limit: usize) -> Result<Vec<LogEntry>, Box<dyn std::error::Error + Send + Sync>> {
+        let handle = tokio::runtime::Handle::current();
+        handle.block_on(async {
+            self.get_logs_async(limit as i32).await
+        })
+    }
+
+    /// 获取日志（异步）
+    pub async fn get_logs_async(&self, limit: i32) -> Result<Vec<LogEntry>, Box<dyn std::error::Error + Send + Sync>> {
+        let client = self.pool.get().await?;
+
+        let rows = client.query(
+            "SELECT level, message, module, EXTRACT(EPOCH FROM timestamp)::BIGINT as timestamp
+            FROM logs
+            ORDER BY timestamp DESC
+            LIMIT $1",
+            &[&limit],
+        ).await?;
+
+        let logs = rows.iter().map(|row| LogEntry {
+            level: row.get("level"),
+            message: row.get("message"),
+            module: row.get("module"),
+            timestamp: row.get("timestamp"),
+        }).collect();
+
+        Ok(logs)
+    }
+
+    /// 按过滤器查询日志
+    pub async fn query_logs_async(&self, filter: LogFilter) -> Result<Vec<LogEntryExtended>, Box<dyn std::error::Error + Send + Sync>> {
+        let client = self.pool.get().await?;
+
+        let mut query = String::from(
+            "SELECT id, level, message, module, file, line, thread, context, timestamp
+            FROM logs
+            WHERE 1=1"
+        );
+
+        let mut params: Vec<Box<dyn tokio_postgres::types::ToSql + Send + Sync>> = vec![];
+        let mut param_idx = 1;
+
+        if let Some(ref level) = filter.level {
+            query.push_str(&format!(" AND level = ${}", param_idx));
+            params.push(Box::new(level.clone()));
+            param_idx += 1;
+        }
+
+        if let Some(ref module) = filter.module {
+            query.push_str(&format!(" AND module = ${}", param_idx));
+            params.push(Box::new(module.clone()));
+            param_idx += 1;
+        }
+
+        if let Some(start) = filter.start_time {
+            let start_dt = chrono::DateTime::from_timestamp(start, 0).unwrap_or_else(|| Utc::now());
+            query.push_str(&format!(" AND timestamp >= ${}", param_idx));
+            params.push(Box::new(start_dt));
+            param_idx += 1;
+        }
+
+        if let Some(end) = filter.end_time {
+            let end_dt = chrono::DateTime::from_timestamp(end, 0).unwrap_or_else(|| Utc::now());
+            query.push_str(&format!(" AND timestamp <= ${}", param_idx));
+            params.push(Box::new(end_dt));
+            param_idx += 1;
+        }
+
+        if let Some(ref keyword) = filter.keyword {
+            let pattern = format!("%{}%", keyword);
+            query.push_str(&format!(" AND message ILIKE ${}", param_idx));
+            params.push(Box::new(pattern));
+            param_idx += 1;
+        }
+
+        query.push_str(" ORDER BY timestamp DESC");
+
+        if let Some(limit) = filter.limit {
+            query.push_str(&format!(" LIMIT ${}", param_idx));
+            params.push(Box::new(limit));
+            param_idx += 1;
+        }
+
+        if let Some(offset) = filter.offset {
+            query.push_str(&format!(" OFFSET ${}", param_idx));
+            params.push(Box::new(offset));
+        }
+
+        let param_refs: Vec<&(dyn tokio_postgres::types::ToSql + Sync)> = 
+            params.iter().map(|p| p.as_ref() as &(dyn tokio_postgres::types::ToSql + Sync)).collect();
+
+        let rows = client.query(&query, &param_refs).await?;
+
+        let logs = rows.iter().map(|row| LogEntryExtended {
+            id: row.get("id"),
+            level: row.get("level"),
+            message: row.get("message"),
+            module: row.get("module"),
+            file: row.get("file"),
+            line: row.get("line"),
+            thread: row.get("thread"),
+            context: row.get("context"),
+            timestamp: row.get::<_, chrono::DateTime<Utc>>("timestamp").to_rfc3339(),
+        }).collect();
+
+        debug!("🔍 查询到 {} 条日志", logs.len());
+        Ok(logs)
+    }
+
+    /// 获取日志统计
+    pub async fn get_statistics_async(&self) -> Result<LogStatistics, Box<dyn std::error::Error + Send + Sync>> {
+        let client = self.pool.get().await?;
+
+        // 总日志数
+        let total_row = client.query_one(
+            "SELECT COUNT(*) as count FROM logs",
+            &[],
+        ).await?;
+        let total_logs: i64 = total_row.get("count");
+
         // 按级别统计
-        let level_stats_sql = format!(
-            "SELECT level, COUNT(*) FROM logs {} GROUP BY level",
-            where_clause
-        );
-        let mut stmt = conn.prepare(&level_stats_sql).unwrap();
-        let level_rows = stmt.query_map(&params[..], |row| {
-            Ok((row.get::<_, i32>(0)?, row.get::<_, i64>(1)? as usize))
-        }).unwrap();
-        
-        let mut count_by_level = HashMap::new();
-        for row_result in level_rows {
-            if let Ok((level_num, count)) = row_result {
-                let level = match level_num {
-                    0 => "TRACE",
-                    1 => "DEBUG", 
-                    2 => "INFO",
-                    3 => "WARN",
-                    4 => "ERROR",
-                    5 => "FATAL",
-                    _ => "UNKNOWN",
-                };
-                count_by_level.insert(level.to_string(), count);
-            }
+        let level_rows = client.query(
+            "SELECT level, COUNT(*) as count FROM logs GROUP BY level",
+            &[],
+        ).await?;
+
+        let mut level_counts = HashMap::new();
+        for row in level_rows {
+            let level: String = row.get("level");
+            let count: i64 = row.get("count");
+            level_counts.insert(level, count);
         }
-        
+
         // 按模块统计
-        let module_stats_sql = format!(
-            "SELECT COALESCE(module, 'unknown'), COUNT(*) FROM logs {} GROUP BY module",
-            where_clause
-        );
-        let mut stmt = conn.prepare(&module_stats_sql).unwrap();
-        let module_rows = stmt.query_map(&params[..], |row| {
-            Ok((row.get::<_, String>(0)?, row.get::<_, i64>(1)? as usize))
-        }).unwrap();
-        
-        let mut count_by_module = HashMap::new();
-        for row_result in module_rows {
-            if let Ok((module, count)) = row_result {
-                count_by_module.insert(module, count);
-            }
-        }
-        
-        // 按小时统计
-        let hour_stats_sql = format!(
-            r#"
-            SELECT strftime('%Y-%m-%d %H', datetime(timestamp, 'unixepoch', 'localtime')) as hour,
-                   COUNT(*) 
-            FROM logs {} 
-            GROUP BY hour 
-            ORDER BY hour DESC 
-            LIMIT 24
-            "#,
-            where_clause
-        );
-        let mut stmt = conn.prepare(&hour_stats_sql).unwrap();
-        let hour_rows = stmt.query_map(&params[..], |row| {
-            Ok((row.get::<_, String>(0)?, row.get::<_, i64>(1)? as usize))
-        }).unwrap();
-        
-        let mut count_by_hour = HashMap::new();
-        for row_result in hour_rows {
-            if let Ok((hour, count)) = row_result {
-                count_by_hour.insert(hour, count);
-            }
-        }
-        
-        // 按日期统计
-        let date_stats_sql = format!(
-            r#"
-            SELECT strftime('%Y-%m-%d', datetime(timestamp, 'unixepoch', 'localtime')) as date,
-                   COUNT(*) 
-            FROM logs {} 
-            GROUP BY date 
-            ORDER BY date DESC 
-            LIMIT 30
-            "#,
-            where_clause
-        );
-        let mut stmt = conn.prepare(&date_stats_sql).unwrap();
-        let date_rows = stmt.query_map(&params[..], |row| {
-            Ok((row.get::<_, String>(0)?, row.get::<_, i64>(1)? as usize))
-        }).unwrap();
-        
-        let mut count_by_date = HashMap::new();
-        for row_result in date_rows {
-            if let Ok((date, count)) = row_result {
-                count_by_date.insert(date, count);
-            }
-        }
-        
-        // 错误率计算
-        let error_count: usize = count_by_level.get("ERROR").unwrap_or(&0) + 
-                                 count_by_level.get("FATAL").unwrap_or(&0);
-        let error_rate = if total_count > 0 {
-            error_count as f64 / total_count as f64 * 100.0
-        } else {
-            0.0
-        };
-        
-        // 平均大小
-        let avg_size_sql = format!("SELECT AVG(size_bytes) FROM logs {}", where_clause);
-        let average_size: f64 = conn.query_row(&avg_size_sql, &params[..], |row| {
-            Ok(row.get::<_, f64>(0).unwrap_or(0.0))
-        }).unwrap_or(0.0);
-        
-        // 时间范围
-        let time_range_sql = format!(
-            "SELECT MIN(timestamp), MAX(timestamp) FROM logs {}",
-            where_clause
-        );
-        let (earliest_log, latest_log): (Option<i64>, Option<i64>) = 
-            conn.query_row(&time_range_sql, &params[..], |row| {
-                Ok((
-                    row.get::<_, Option<i64>>(0)?,
-                    row.get::<_, Option<i64>>(1)?
-                ))
-            }).unwrap_or((None, None));
-        
-        // 上传统计
-        let upload_stats = self.get_upload_statistics_sync(&conn)?;
-        
-        Ok(LogStatistics {
-            total_count,
-            count_by_level,
-            count_by_module,
-            count_by_hour,
-            count_by_date,
-            error_rate,
-            average_size,
-            earliest_log,
-            latest_log,
-            upload_stats,
-        })
-    }
-    
-    /// 导出日志
-    pub async fn export_logs(
-        &self,
-        filter: Option<LogFilter>,
-        format: &str,
-        file_path: &str,
-    ) -> LoggerResult<usize> {
-        use std::fs::File;
-        use std::io::Write;
-        
-        let (logs, total) = self.search_logs(filter, 1, usize::MAX, "timestamp", "asc").await?;
-        
-        let mut file = File::create(file_path).map_err(|e| LoggerError::Io(e))?;
-        
-        match format.to_lowercase().as_str() {
-            "json" => {
-                let json = serde_json::to_string_pretty(&logs)
-                    .map_err(|e| LoggerError::Serialization(e))?;
-                file.write_all(json.as_bytes()).map_err(|e| LoggerError::Io(e))?;
-            }
-            "csv" => {
-                // CSV 头部
-                writeln!(file, "timestamp,level,module,message,file,line,tags")
-                    .map_err(|e| LoggerError::Io(e))?;
-                
-                for log in &logs {
-                    let tags = log.tags.join(";");
-                    writeln!(
-                        file,
-                        "{},{},{},{},{},{},{}",
-                        log.timestamp.timestamp(),
-                        log.level.as_str(),
-                        log.module.as_deref().unwrap_or(""),
-                        log.message.replace(",", "\\,").replace("\n", "\\n"),
-                        log.file.as_deref().unwrap_or(""),
-                        log.line.unwrap_or(0),
-                        tags
-                    ).map_err(|e| LoggerError::Io(e))?;
-                }
-            }
-            "txt" => {
-                for log in &logs {
-                    writeln!(file, "{}", log.to_text()).map_err(|e| LoggerError::Io(e))?;
-                }
-            }
-            _ => {
-                return Err(LoggerError::InvalidLevel(format!("不支持的导出格式: {}", format)));
-            }
-        }
-        
-        Ok(total)
-    }
-    
-    /// 清理旧日志
-    pub async fn cleanup_old_logs(&self, retention_days: u32) -> LoggerResult<usize> {
-        let conn = self.pool.get()
-            .map_err(|e| LoggerError::Io(std::io::Error::new(
-                std::io::ErrorKind::Other,
-                format!("获取连接失败: {}", e)
-            )))?;
-        
-        let cutoff_time = Local::now().timestamp() - (retention_days as i64 * 24 * 60 * 60);
-        
-        let deleted = conn.execute(
-            "DELETE FROM logs WHERE created_at < ?1",
-            params![cutoff_time],
-        ).map_err(|e| LoggerError::Io(std::io::Error::new(
-            std::io::ErrorKind::Other,
-            format!("清理旧日志失败: {}", e)
-        )))?;
-        
-        // 清理上传历史
-        conn.execute(
-            "DELETE FROM upload_history WHERE upload_time < ?1",
-            params![cutoff_time],
-        ).map_err(|e| LoggerError::Io(std::io::Error::new(
-            std::io::ErrorKind::Other,
-            format!("清理上传历史失败: {}", e)
-        )))?;
-        
-        // 优化数据库
-        conn.execute("VACUUM", []).map_err(|e| LoggerError::Io(std::io::Error::new(
-            std::io::ErrorKind::Other,
-            format!("优化数据库失败: {}", e)
-        )))?;
-        
-        Ok(deleted)
-    }
-    
-    /// 获取待上传的日志
-    pub async fn get_pending_upload_logs(&self, limit: usize) -> LoggerResult<Vec<crate::commands::logging::LogEntryWithId>> {
-        let conn = self.pool.get()
-            .map_err(|e| LoggerError::Io(std::io::Error::new(
-                std::io::ErrorKind::Other,
-                format!("获取连接失败: {}", e)
-            )))?;
-        
-        let mut stmt = conn.prepare(
-            r#"
-            SELECT id, timestamp, local_timestamp, level, message, module, file, line,
-                   thread, data, stack, tags, uploaded, upload_attempts, created_at, size_bytes
+        let module_rows = client.query(
+            "SELECT COALESCE(module, 'unknown') as module, COUNT(*) as count 
             FROM logs 
-            WHERE uploaded = FALSE 
-            ORDER BY created_at ASC 
-            LIMIT ?1
-            "#,
-        ).map_err(|e| LoggerError::Io(std::io::Error::new(
-            std::io::ErrorKind::Other,
-            format!("准备查询语句失败: {}", e)
-        )))?;
-        
-        let logs: Result<Vec<_>, _> = stmt.query_map([limit], |row| {
-            let stored = self.row_to_stored_log_entry(row)?;
-            Ok(crate::commands::logging::LogEntryWithId {
-                entry: stored.clone().into(),
-                id: Some(stored.id),
-                uploaded: stored.uploaded,
-                created_at: Some(stored.created_at.timestamp()),
-            })
-        }).map_err(|e| LoggerError::Io(std::io::Error::new(
-            std::io::ErrorKind::Other,
-            format!("执行查询失败: {}", e)
-        )))?.collect();
-        
-        logs.map_err(|e| LoggerError::Io(std::io::Error::new(
-            std::io::ErrorKind::Other,
-            format!("解析查询结果失败: {}", e)
-        )))
-    }
-    
-    /// 标记日志为已上传
-    pub async fn mark_logs_as_uploaded(&self, log_ids: Vec<i64>) -> LoggerResult<()> {
-        let conn = self.pool.get()
-            .map_err(|e| LoggerError::Io(std::io::Error::new(
-                std::io::ErrorKind::Other,
-                format!("获取连接失败: {}", e)
-            )))?;
-        
-        for id in log_ids {
-            conn.execute(
-                "UPDATE logs SET uploaded = TRUE, upload_attempts = upload_attempts + 1 WHERE id = ?1",
-                params![id],
-            ).map_err(|e| LoggerError::Io(std::io::Error::new(
-                std::io::ErrorKind::Other,
-                format!("标记日志已上传失败: {}", e)
-            )))?;
+            GROUP BY module 
+            ORDER BY count DESC 
+            LIMIT 20",
+            &[],
+        ).await?;
+
+        let mut module_counts = HashMap::new();
+        for row in module_rows {
+            let module: String = row.get("module");
+            let count: i64 = row.get("count");
+            module_counts.insert(module, count);
         }
+
+        // 最近24小时的错误和警告
+        let recent_cutoff = Utc::now() - chrono::Duration::hours(24);
         
-        Ok(())
-    }
-    
-    /// 计算待上传日志数量
-    pub async fn count_pending_upload_logs(&self) -> LoggerResult<usize> {
-        let conn = self.pool.get()
-            .map_err(|e| LoggerError::Io(std::io::Error::new(
-                std::io::ErrorKind::Other,
-                format!("获取连接失败: {}", e)
-            )))?;
-        
-        let count: i64 = conn.query_row(
-            "SELECT COUNT(*) FROM logs WHERE uploaded = FALSE",
-            [],
-            |row| row.get(0)
-        ).map_err(|e| LoggerError::Io(std::io::Error::new(
-            std::io::ErrorKind::Other,
-            format!("统计待上传日志失败: {}", e)
-        )))?;
-        
-        Ok(count as usize)
-    }
-    
-    /// 获取/保存远程配置
-    pub async fn get_remote_config(&self) -> LoggerResult<crate::commands::logging::RemoteLogConfig> {
-        let conn = self.pool.get()
-            .map_err(|e| LoggerError::Io(std::io::Error::new(
-                std::io::ErrorKind::Other,
-                format!("获取连接失败: {}", e)
-            )))?;
-        
-        match conn.query_row(
-            "SELECT value FROM log_config WHERE key = 'remote_config'",
-            [],
-            |row| row.get::<_, String>(0)
-        ) {
-            Ok(config_json) => {
-                serde_json::from_str(&config_json)
-                    .map_err(|e| LoggerError::Serialization(e))
-            }
-            Err(_) => Ok(crate::commands::logging::RemoteLogConfig::default()),
-        }
-    }
-    
-    pub async fn save_remote_config(&self, config: crate::commands::logging::RemoteLogConfig) -> LoggerResult<()> {
-        let conn = self.pool.get()
-            .map_err(|e| LoggerError::Io(std::io::Error::new(
-                std::io::ErrorKind::Other,
-                format!("获取连接失败: {}", e)
-            )))?;
-        
-        let config_json = serde_json::to_string(&config)
-            .map_err(|e| LoggerError::Serialization(e))?;
-        
-        conn.execute(
-            r#"
-            INSERT OR REPLACE INTO log_config (key, value, updated_at) 
-            VALUES ('remote_config', ?1, ?2)
-            "#,
-            params![config_json, Local::now().timestamp()],
-        ).map_err(|e| LoggerError::Io(std::io::Error::new(
-            std::io::ErrorKind::Other,
-            format!("保存远程配置失败: {}", e)
-        )))?;
-        
-        Ok(())
-    }
-    
-    /// 更新最后上传时间
-    pub async fn update_last_upload_time(&self) -> LoggerResult<()> {
-        let conn = self.pool.get()
-            .map_err(|e| LoggerError::Io(std::io::Error::new(
-                std::io::ErrorKind::Other,
-                format!("获取连接失败: {}", e)
-            )))?;
-        
-        conn.execute(
-            r#"
-            INSERT OR REPLACE INTO log_config (key, value, updated_at) 
-            VALUES ('last_upload_time', ?1, ?1)
-            "#,
-            params![Local::now().timestamp()],
-        ).map_err(|e| LoggerError::Io(std::io::Error::new(
-            std::io::ErrorKind::Other,
-            format!("更新上传时间失败: {}", e)
-        )))?;
-        
-        Ok(())
-    }
-    
-    /// 获取最后上传时间
-    pub async fn get_last_upload_time(&self) -> LoggerResult<i64> {
-        let conn = self.pool.get()
-            .map_err(|e| LoggerError::Io(std::io::Error::new(
-                std::io::ErrorKind::Other,
-                format!("获取连接失败: {}", e)
-            )))?;
-        
-        conn.query_row(
-            "SELECT value FROM log_config WHERE key = 'last_upload_time'",
-            [],
-            |row| row.get::<_, String>(0).and_then(|s| s.parse().map_err(|_| rusqlite::Error::InvalidColumnType(0, "last_upload_time".to_string(), rusqlite::types::Type::Text)))
-        ).map_err(|e| LoggerError::Io(std::io::Error::new(
-            std::io::ErrorKind::Other,
-            format!("获取上传时间失败: {}", e)
-        )))
-    }
-    
-    // ================================
-    // 私有辅助方法
-    // ================================
-    
-    /// 构建WHERE子句
-    fn build_where_clause(&self, filter: &Option<LogFilter>) -> (String, Vec<rusqlite::types::Value>) {
-        let mut conditions = Vec::new();
-        let mut params = Vec::new();
-        
-        if let Some(filter) = filter {
-            // 级别过滤
-            if let Some(ref levels) = filter.levels {
-                if !levels.is_empty() {
-                    let level_nums: Vec<i32> = levels.iter().map(|l| *l as i32).collect();
-                    let placeholders: Vec<String> = level_nums.iter().map(|_| "?".to_string()).collect();
-                    conditions.push(format!("level IN ({})", placeholders.join(",")));
-                    for level_num in level_nums {
-                        params.push(rusqlite::types::Value::Integer(level_num as i64));
-                    }
-                }
-            }
-            
-            // 模块过滤
-            if let Some(ref modules) = filter.modules {
-                if !modules.is_empty() {
-                    let placeholders: Vec<String> = modules.iter().map(|_| "?".to_string()).collect();
-                    conditions.push(format!("module IN ({})", placeholders.join(",")));
-                    for module in modules {
-                        params.push(rusqlite::types::Value::Text(module.clone()));
-                    }
-                }
-            }
-            
-            // 时间范围过滤
-            if let Some(ref time_range) = filter.time_range {
-                conditions.push("timestamp >= ? AND timestamp <= ?".to_string());
-                params.push(rusqlite::types::Value::Integer(time_range.start));
-                params.push(rusqlite::types::Value::Integer(time_range.end));
-            }
-            
-            // 关键词搜索
-            if let Some(ref keywords) = filter.keywords {
-                for keyword in keywords {
-                    conditions.push("(message LIKE ? OR module LIKE ? OR data LIKE ?)".to_string());
-                    let pattern = format!("%{}%", keyword);
-                    params.push(rusqlite::types::Value::Text(pattern.clone()));
-                    params.push(rusqlite::types::Value::Text(pattern.clone()));
-                    params.push(rusqlite::types::Value::Text(pattern));
-                }
-            }
-            
-            // 上传状态过滤
-            if let Some(include_uploaded) = filter.include_uploaded {
-                if !include_uploaded {
-                    conditions.push("uploaded = FALSE".to_string());
-                }
-            }
-            
-            // 文件过滤
-            if let Some(ref files) = filter.files {
-                if !files.is_empty() {
-                    let placeholders: Vec<String> = files.iter().map(|_| "?".to_string()).collect();
-                    conditions.push(format!("file IN ({})", placeholders.join(",")));
-                    for file in files {
-                        params.push(rusqlite::types::Value::Text(file.clone()));
-                    }
-                }
-            }
-        }
-        
-        let where_clause = if conditions.is_empty() {
-            String::new()
-        } else {
-            format!("WHERE {}", conditions.join(" AND "))
-        };
-        
-        (where_clause, params)
-    }
-    
-    /// 将数据库行转换为StoredLogEntry
-    fn row_to_stored_log_entry(&self, row: &Row) -> SqliteResult<StoredLogEntry> {
-        let tags_json: String = row.get("tags")?;
-        let tags: Vec<String> = serde_json::from_str(&tags_json).unwrap_or_default();
-        
-        let timestamp_secs: i64 = row.get("timestamp")?;
-        let local_timestamp_secs: i64 = row.get("local_timestamp")?;
-        let created_at_secs: i64 = row.get("created_at")?;
-        
-        Ok(StoredLogEntry {
-            id: row.get("id")?,
-            timestamp: DateTime::from_timestamp(timestamp_secs, 0).unwrap_or_else(|| Utc::now()),
-            local_time: DateTime::from_timestamp(local_timestamp_secs, 0)
-                .map(|utc| utc.with_timezone(&Local::now().timezone()))
-                .unwrap_or_else(|| Local::now()),
-            level: match row.get::<_, i32>("level")? {
-                0 => LogLevel::Trace,
-                1 => LogLevel::Debug,
-                2 => LogLevel::Info,
-                3 => LogLevel::Warn,
-                4 => LogLevel::Error,
-                5 => LogLevel::Fatal,
-                _ => LogLevel::Info,
-            },
-            message: row.get("message")?,
-            module: row.get("module")?,
-            file: row.get("file")?,
-            line: row.get("line")?,
-            thread: row.get("thread")?,
-            data: row.get("data")?,
-            stack: row.get("stack")?,
-            tags,
-            uploaded: row.get("uploaded")?,
-            upload_attempts: row.get("upload_attempts")?,
-            created_at: DateTime::from_timestamp(created_at_secs, 0)
-                .map(|utc| utc.with_timezone(&Local::now().timezone()))
-                .unwrap_or_else(|| Local::now()),
-            size_bytes: row.get("size_bytes")?,
+        let recent_errors_row = client.query_one(
+            "SELECT COUNT(*) as count FROM logs WHERE level = 'error' AND timestamp >= $1",
+            &[&recent_cutoff],
+        ).await?;
+        let recent_errors: i64 = recent_errors_row.get("count");
+
+        let recent_warnings_row = client.query_one(
+            "SELECT COUNT(*) as count FROM logs WHERE level = 'warn' AND timestamp >= $1",
+            &[&recent_cutoff],
+        ).await?;
+        let recent_warnings: i64 = recent_warnings_row.get("count");
+
+        Ok(LogStatistics {
+            total_logs,
+            level_counts,
+            module_counts,
+            recent_errors,
+            recent_warnings,
         })
     }
-    
-    /// 获取上传统计信息（同步版本）
-    fn get_upload_statistics_sync(&self, conn: &Connection) -> LoggerResult<UploadStatistics> {
-        let total_uploaded: i64 = conn.query_row(
-            "SELECT COUNT(*) FROM logs WHERE uploaded = TRUE",
-            [],
-            |row| row.get(0)
-        ).unwrap_or(0);
-        
-        let pending_upload: i64 = conn.query_row(
-            "SELECT COUNT(*) FROM logs WHERE uploaded = FALSE", 
-            [],
-            |row| row.get(0)
-        ).unwrap_or(0);
-        
-        let total_logs = total_uploaded + pending_upload;
-        let upload_success_rate = if total_logs > 0 {
-            total_uploaded as f64 / total_logs as f64 * 100.0
-        } else {
-            0.0
-        };
-        
-        let last_upload_time: Option<i64> = conn.query_row(
-            "SELECT value FROM log_config WHERE key = 'last_upload_time'",
-            [],
-            |row| row.get::<_, String>(0).and_then(|s| s.parse().map_err(|_| rusqlite::Error::InvalidColumnType(0, "last_upload_time".to_string(), rusqlite::types::Type::Text)))
-        ).ok();
-        
-        let last_upload_batch_size: i64 = conn.query_row(
-            "SELECT batch_size FROM upload_history ORDER BY upload_time DESC LIMIT 1",
-            [],
-            |row| row.get(0)
-        ).unwrap_or(0);
-        
-        Ok(UploadStatistics {
-            total_uploaded: total_uploaded as usize,
-            pending_upload: pending_upload as usize,
-            upload_success_rate,
-            last_upload_time,
-            last_upload_batch_size: last_upload_batch_size as usize,
-        })
-    }
-}
 
-// ================================
-// 测试
-// ================================
+    /// 清理旧日志
+    pub async fn cleanup_old_logs_async(&self, days: i64) -> Result<usize, Box<dyn std::error::Error + Send + Sync>> {
+        let client = self.pool.get().await?;
 
-#[cfg(test)]
-mod tests {
-    use super::*;
-    use tempfile::NamedTempFile;
-    
-    #[tokio::test]
-    async fn test_log_database_creation() {
-        let temp_file = NamedTempFile::new().unwrap();
-        let db = LogDatabase::new(temp_file.path()).await;
-        assert!(db.is_ok());
+        let cutoff = Utc::now() - chrono::Duration::days(days);
+
+        let affected = client.execute(
+            "DELETE FROM logs WHERE timestamp < $1",
+            &[&cutoff],
+        ).await?;
+
+        info!("🗑️  清理了 {} 条旧日志（{}天前）", affected, days);
+        Ok(affected as usize)
     }
-    
-    #[tokio::test]
-    async fn test_insert_and_search_logs() {
-        let temp_file = NamedTempFile::new().unwrap();
-        let db = LogDatabase::new(temp_file.path()).await.unwrap();
-        
-        let entry = LogEntry::new(LogLevel::Info, "Test message")
-            .with_module("test_module");
-        
-        let id = db.insert_log(&entry).await.unwrap();
-        assert!(id > 0);
-        
-        let (logs, total) = db.search_logs(None, 1, 10, "timestamp", "desc").await.unwrap();
-        assert_eq!(total, 1);
-        assert_eq!(logs.len(), 1);
-        assert_eq!(logs[0].message, "Test message");
+
+    /// 按级别清理日志
+    pub async fn cleanup_logs_by_level_async(&self, level: &str, days: i64) -> Result<usize, Box<dyn std::error::Error + Send + Sync>> {
+        let client = self.pool.get().await?;
+
+        let cutoff = Utc::now() - chrono::Duration::days(days);
+
+        let affected = client.execute(
+            "DELETE FROM logs WHERE level = $1 AND timestamp < $2",
+            &[&level, &cutoff],
+        ).await?;
+
+        info!("🗑️  清理了 {} 条 {} 级别的旧日志", affected, level);
+        Ok(affected as usize)
     }
-    
-    #[tokio::test]
-    async fn test_log_filtering() {
-        let temp_file = NamedTempFile::new().unwrap();
-        let db = LogDatabase::new(temp_file.path()).await.unwrap();
-        
-        // 插入不同级别的日志
-        let _ = db.insert_log(&LogEntry::new(LogLevel::Info, "Info message")).await;
-        let _ = db.insert_log(&LogEntry::new(LogLevel::Error, "Error message")).await;
-        let _ = db.insert_log(&LogEntry::new(LogLevel::Debug, "Debug message")).await;
-        
-        // 测试级别过滤
-        let filter = LogFilter {
-            levels: Some(vec![LogLevel::Error]),
-            modules: None,
-            time_range: None,
-            keywords: None,
-            tags: None,
-            include_uploaded: None,
-            files: None,
-        };
-        
-        let (logs, total) = db.search_logs(Some(filter), 1, 10, "timestamp", "desc").await.unwrap();
-        assert_eq!(total, 1);
-        assert_eq!(logs[0].level, LogLevel::Error);
+
+    /// 压缩日志（将旧日志导出到归档表）
+    pub async fn archive_old_logs_async(&self, days: i64) -> Result<usize, Box<dyn std::error::Error + Send + Sync>> {
+        let client = self.pool.get().await?;
+
+        // 创建归档表（如果不存在）
+        client.execute(
+            "CREATE TABLE IF NOT EXISTS logs_archive (
+                id BIGINT PRIMARY KEY,
+                level TEXT NOT NULL,
+                message TEXT NOT NULL,
+                module TEXT,
+                file TEXT,
+                line INTEGER,
+                thread TEXT,
+                context TEXT,
+                timestamp TIMESTAMP NOT NULL,
+                archived_at TIMESTAMP NOT NULL DEFAULT NOW()
+            )",
+            &[],
+        ).await?;
+
+        let cutoff = Utc::now() - chrono::Duration::days(days);
+
+        // 复制到归档表
+        let transaction = client.transaction().await?;
+
+        let archived = transaction.execute(
+            "INSERT INTO logs_archive 
+            SELECT id, level, message, module, file, line, thread, context, timestamp, NOW()
+            FROM logs
+            WHERE timestamp < $1",
+            &[&cutoff],
+        ).await?;
+
+        // 删除已归档的日志
+        transaction.execute(
+            "DELETE FROM logs WHERE timestamp < $1",
+            &[&cutoff],
+        ).await?;
+
+        transaction.commit().await?;
+
+        info!("📦 归档了 {} 条旧日志", archived);
+        Ok(archived as usize)
     }
-    
-    #[tokio::test]
-    async fn test_statistics() {
-        let temp_file = NamedTempFile::new().unwrap();
-        let db = LogDatabase::new(temp_file.path()).await.unwrap();
-        
-        // 插入测试数据
-        let _ = db.insert_log(&LogEntry::new(LogLevel::Info, "Info 1")).await;
-        let _ = db.insert_log(&LogEntry::new(LogLevel::Info, "Info 2")).await;
-        let _ = db.insert_log(&LogEntry::new(LogLevel::Error, "Error 1")).await;
-        
-        let stats = db.get_statistics(None).await.unwrap();
-        assert_eq!(stats.total_count, 3);
-        assert_eq!(*stats.count_by_level.get("INFO").unwrap_or(&0), 2);
-        assert_eq!(*stats.count_by_level.get("ERROR").unwrap_or(&0), 1);
+
+    /// 按模块获取日志
+    pub async fn get_logs_by_module_async(&self, module: &str, limit: i32) -> Result<Vec<LogEntryExtended>, Box<dyn std::error::Error + Send + Sync>> {
+        let client = self.pool.get().await?;
+
+        let rows = client.query(
+            "SELECT id, level, message, module, file, line, thread, context, timestamp
+            FROM logs
+            WHERE module = $1
+            ORDER BY timestamp DESC
+            LIMIT $2",
+            &[&module, &limit],
+        ).await?;
+
+        let logs = rows.iter().map(|row| LogEntryExtended {
+            id: row.get("id"),
+            level: row.get("level"),
+            message: row.get("message"),
+            module: row.get("module"),
+            file: row.get("file"),
+            line: row.get("line"),
+            thread: row.get("thread"),
+            context: row.get("context"),
+            timestamp: row.get::<_, chrono::DateTime<Utc>>("timestamp").to_rfc3339(),
+        }).collect();
+
+        Ok(logs)
+    }
+
+    /// 按级别获取日志
+    pub async fn get_logs_by_level_async(&self, level: &str, limit: i32) -> Result<Vec<LogEntryExtended>, Box<dyn std::error::Error + Send + Sync>> {
+        let client = self.pool.get().await?;
+
+        let rows = client.query(
+            "SELECT id, level, message, module, file, line, thread, context, timestamp
+            FROM logs
+            WHERE level = $1
+            ORDER BY timestamp DESC
+            LIMIT $2",
+            &[&level, &limit],
+        ).await?;
+
+        let logs = rows.iter().map(|row| LogEntryExtended {
+            id: row.get("id"),
+            level: row.get("level"),
+            message: row.get("message"),
+            module: row.get("module"),
+            file: row.get("file"),
+            line: row.get("line"),
+            thread: row.get("thread"),
+            context: row.get("context"),
+            timestamp: row.get::<_, chrono::DateTime<Utc>>("timestamp").to_rfc3339(),
+        }).collect();
+
+        Ok(logs)
+    }
+
+    /// 获取最近的错误日志
+    pub async fn get_recent_errors_async(&self, limit: i32) -> Result<Vec<LogEntryExtended>, Box<dyn std::error::Error + Send + Sync>> {
+        self.get_logs_by_level_async("error", limit).await
+    }
+
+    /// 获取最近的警告日志
+    pub async fn get_recent_warnings_async(&self, limit: i32) -> Result<Vec<LogEntryExtended>, Box<dyn std::error::Error + Send + Sync>> {
+        self.get_logs_by_level_async("warn", limit).await
+    }
+
+    /// 搜索日志
+    pub async fn search_logs_async(&self, keyword: &str, limit: i32) -> Result<Vec<LogEntryExtended>, Box<dyn std::error::Error + Send + Sync>> {
+        let client = self.pool.get().await?;
+
+        let pattern = format!("%{}%", keyword);
+
+        let rows = client.query(
+            "SELECT id, level, message, module, file, line, thread, context, timestamp
+            FROM logs
+            WHERE message ILIKE $1 OR module ILIKE $1 OR context ILIKE $1
+            ORDER BY timestamp DESC
+            LIMIT $2",
+            &[&pattern, &limit],
+        ).await?;
+
+        let logs = rows.iter().map(|row| LogEntryExtended {
+            id: row.get("id"),
+            level: row.get("level"),
+            message: row.get("message"),
+            module: row.get("module"),
+            file: row.get("file"),
+            line: row.get("line"),
+            thread: row.get("thread"),
+            context: row.get("context"),
+            timestamp: row.get::<_, chrono::DateTime<Utc>>("timestamp").to_rfc3339(),
+        }).collect();
+
+        debug!("🔍 搜索到 {} 条日志（关键词: {}）", logs.len(), keyword);
+        Ok(logs)
+    }
+
+    /// 获取日志总数
+    pub async fn get_log_count_async(&self) -> Result<i64, Box<dyn std::error::Error + Send + Sync>> {
+        let client = self.pool.get().await?;
+
+        let row = client.query_one(
+            "SELECT COUNT(*) as count FROM logs",
+            &[],
+        ).await?;
+
+        Ok(row.get("count"))
+    }
+
+    /// 清空所有日志（危险操作）
+    pub async fn truncate_logs_async(&self) -> Result<(), Box<dyn std::error::Error + Send + Sync>> {
+        let client = self.pool.get().await?;
+
+        client.execute("TRUNCATE TABLE logs", &[]).await?;
+
+        warn!("⚠️  已清空所有日志");
+        Ok(())
     }
 }

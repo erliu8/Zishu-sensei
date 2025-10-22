@@ -16,6 +16,9 @@ services:
       - CACHE_DIR=${CACHE_DIR:-/app/cache}
       - DATABASE_URL=${DATABASE_URL}
       - REDIS_URL=${REDIS_URL}
+      - QDRANT_URL=${QDRANT_URL:-http://qdrant:6333}
+      - QDRANT_API_KEY=${QDRANT_API_KEY}
+      - OPENAI_API_KEY=${OPENAI_API_KEY}
     volumes:
       - ./models:/app/models:ro
       - ./config:/app/config:ro
@@ -24,6 +27,7 @@ services:
     depends_on:
       - redis
       - postgres
+      - qdrant
     networks:
       - zishu-network
     restart: unless-stopped
@@ -41,13 +45,21 @@ services:
       - "6335:6333"
       - "6336:6334"
     volumes:
-      - ./data/qdrant:/qdrant/storage
+      - ${CLOUD_DATA_PATH:-/data/disk/zishu-sensei}/data/qdrant:/qdrant/storage
+      - ./config/services/qdrant.yml:/qdrant/config/production.yaml:ro
     environment:
       - QDRANT__SERVICE__HTTP_PORT=6333
       - QDRANT__SERVICE__GRPC_PORT=6334
+      - QDRANT__SERVICE__API_KEY=${QDRANT_API_KEY}
+      - QDRANT__LOG_LEVEL=${QDRANT_LOG_LEVEL:-INFO}
     networks:
       - zishu-network
     restart: unless-stopped
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:6333/healthz"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
 
   # Redis缓存
   redis:
@@ -56,7 +68,7 @@ services:
     ports:
       - "6379:6379"
     volumes:
-      - ./data/redis:/data
+      - ${CLOUD_DATA_PATH:-/data/disk/zishu-sensei}/data/redis:/data
     command: redis-server --appendonly yes --requirepass ${REDIS_PASSWORD:-zishu123}
     networks:
       - zishu-network
@@ -79,7 +91,7 @@ services:
       - POSTGRES_PASSWORD=${POSTGRES_PASSWORD:-zishu123}
       - PGDATA=/var/lib/postgresql/data/pgdata
     volumes:
-      - ./data/postgres:/var/lib/postgresql/data
+      - ${CLOUD_DATA_PATH:-/data/disk/zishu-sensei}/data/postgres:/var/lib/postgresql/data
       - ./docker/postgres/01-init-db.sql:/docker-entrypoint-initdb.d/01-init-db.sql:ro
     networks:
       - zishu-network
@@ -121,7 +133,7 @@ services:
       - "9090:9090"
     volumes:
       - ./docker/prometheus/prometheus.yml:/etc/prometheus/prometheus.yml:ro
-      - ./data/prometheus:/prometheus
+      - ${CLOUD_DATA_PATH:-/data/disk/zishu-sensei}/data/prometheus:/prometheus
     command:
       - '--config.file=/etc/prometheus/prometheus.yml'
       - '--storage.tsdb.path=/prometheus'
@@ -142,7 +154,7 @@ services:
       - GF_SECURITY_ADMIN_PASSWORD=${GRAFANA_PASSWORD:-admin123}
       - GF_USERS_ALLOW_SIGN_UP=false
     volumes:
-      - ./data/grafana:/var/lib/grafana
+      - ${CLOUD_DATA_PATH:-/data/disk/zishu-sensei}/data/grafana:/var/lib/grafana
       - ./docker/grafana/dashboards:/etc/grafana/provisioning/dashboards:ro
       - ./docker/grafana/datasources:/etc/grafana/provisioning/datasources:ro
     depends_on:
@@ -159,7 +171,7 @@ services:
       - "3100:3100"
     volumes:
       - ./docker/loki/loki.yml:/etc/loki/local-config.yaml:ro
-      - ./data/loki:/loki
+      - ${CLOUD_DATA_PATH:-/data/disk/zishu-sensei}/data/loki:/loki
     command: -config.file=/etc/loki/local-config.yaml
     networks:
       - zishu-network
@@ -194,13 +206,28 @@ services:
     ports:
       - "8001:8000"
     environment:
-      - DATABASE_URL=postgresql://zishu:${POSTGRES_PASSWORD:-zishu123}@postgres:5432/zishu_community
-      - REDIS_URL=redis://:${REDIS_PASSWORD:-zishu123}@redis:6379/1
+      - ENVIRONMENT=production
+      - DEBUG=false
+      - POSTGRES_HOST=postgres
+      - POSTGRES_PORT=5432
+      - POSTGRES_USER=zishu
+      - POSTGRES_PASSWORD=${POSTGRES_PASSWORD:-zishu123}
+      - POSTGRES_DB=zishu_community
+      - REDIS_HOST=redis
+      - REDIS_PORT=6379
+      - REDIS_PASSWORD=${REDIS_PASSWORD:-zishu123}
+      - REDIS_DB=1
+      - QDRANT_HOST=qdrant
+      - QDRANT_PORT=6333
+      - QDRANT_GRPC_PORT=6334
+      - QDRANT_API_KEY=${QDRANT_API_KEY}
+      - SECRET_KEY=${COMMUNITY_SECRET_KEY:-zishu-community-secret-key-change-in-production}
     volumes:
-      - ./community_platform/backend:/app
+      - ./community_platform/backend/uploads:/app/uploads
     depends_on:
       - postgres
       - redis
+      - qdrant
     networks:
       - zishu-network
     restart: unless-stopped
@@ -221,6 +248,9 @@ volumes:
 
 # 环境变量说明：
 # 创建 .env 文件并设置以下变量：
+# CLOUD_DATA_PATH=/data/disk/zishu-sensei  # 云硬盘路径
 # POSTGRES_PASSWORD=your_postgres_password
 # REDIS_PASSWORD=your_redis_password  
 # GRAFANA_PASSWORD=your_grafana_password
+# QDRANT_API_KEY=your_qdrant_api_key
+# OPENAI_API_KEY=your_openai_api_key

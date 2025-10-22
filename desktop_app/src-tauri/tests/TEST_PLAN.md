@@ -163,3 +163,15 @@ cargo bench
 **更新日期**: 2025-10-21  
 **下次审查**: 编译错误修复完成后
 
+⚠️ 待完成 (约 25%)
+10个单元测试文件仍在使用 SQLite 的 Connection::open_in_memory()：
+tests/unit/database/adapter_test.rs
+tests/unit/database/permission_test.rs
+tests/unit/database/character_registry_test.rs
+tests/unit/database/workflow_test.rs
+tests/unit/database/file_test.rs
+tests/unit/database/conversation_test.rs
+tests/unit/database/config_test.rs
+tests/unit/database/region_test.rs
+tests/unit/database/privacy_test.rs
+tests/unit/database/model_config_test.rs

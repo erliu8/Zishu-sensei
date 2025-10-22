@@ -248,7 +248,7 @@ impl UpdateManager {
             let mut db = self.db.lock().unwrap();
             let mut updated_config = config.clone();
             updated_config.last_check_time = Some(Utc::now());
-            db.save_update_config(&mut updated_config)?;
+            db.save_update_config(&mut updated_config).map_err(|e| anyhow::anyhow!(e.to_string()))?;
         }
 
         // 获取目标平台和架构
@@ -328,7 +328,7 @@ impl UpdateManager {
                                     // 保存到数据库
                                     {
                                         let mut db = self.db.lock().unwrap();
-                                        db.save_update_info(&mut update_info)?;
+                                        db.save_update_info(&mut update_info).map_err(|e| anyhow::anyhow!(e.to_string()))?;
                                     }
 
                                     info!("Update available: {} -> {}", self.current_version, manifest.version);
@@ -414,7 +414,7 @@ impl UpdateManager {
         update_info.download_progress = 0.0;
         {
             let mut db = self.db.lock().unwrap();
-            db.save_update_info(&mut update_info)?;
+            db.save_update_info(&mut update_info).map_err(|e| anyhow::anyhow!(e.to_string()))?;
         }
 
         self.emit_event(UpdateEvent::DownloadStarted {
@@ -436,7 +436,7 @@ impl UpdateManager {
             update_info.error_message = Some(error_msg.clone());
             {
                 let mut db = self.db.lock().unwrap();
-                db.save_update_info(&mut update_info)?;
+                db.save_update_info(&mut update_info).map_err(|e| anyhow::anyhow!(e.to_string()))?;
             }
             self.emit_event(UpdateEvent::DownloadFailed {
                 version: version.to_string(),
@@ -478,7 +478,7 @@ impl UpdateManager {
                     update_info.download_progress = percentage;
                     {
                         let mut db = self.db.lock().unwrap();
-                        db.save_update_info(&mut update_info)?;
+                        db.save_update_info(&mut update_info).map_err(|e| anyhow::anyhow!(e.to_string()))?;
                     }
 
                     // 发送进度事件（每下载1MB发送一次事件）
@@ -498,7 +498,7 @@ impl UpdateManager {
                     update_info.retry_count += 1;
                     {
                         let mut db = self.db.lock().unwrap();
-                        db.save_update_info(&mut update_info)?;
+                        db.save_update_info(&mut update_info).map_err(|e| anyhow::anyhow!(e.to_string()))?;
                     }
                     self.emit_event(UpdateEvent::DownloadFailed {
                         version: version.to_string(),
@@ -523,7 +523,7 @@ impl UpdateManager {
                 update_info.error_message = Some(error_msg.to_string());
                 {
                     let mut db = self.db.lock().unwrap();
-                    db.save_update_info(&mut update_info)?;
+                    db.save_update_info(&mut update_info).map_err(|e| anyhow::anyhow!(e.to_string()))?;
                 }
                 self.emit_event(UpdateEvent::DownloadFailed {
                     version: version.to_string(),
@@ -538,7 +538,7 @@ impl UpdateManager {
         update_info.download_progress = 100.0;
         {
             let mut db = self.db.lock().unwrap();
-            db.save_update_info(&mut update_info)?;
+            db.save_update_info(&mut update_info).map_err(|e| anyhow::anyhow!(e.to_string()))?;
         }
 
         let file_path_str = file_path.to_string_lossy().to_string();
@@ -572,7 +572,7 @@ impl UpdateManager {
         update_info.install_progress = 0.0;
         {
             let mut db = self.db.lock().unwrap();
-            db.save_update_info(&mut update_info)?;
+            db.save_update_info(&mut update_info).map_err(|e| anyhow::anyhow!(e.to_string()))?;
         }
 
         self.emit_event(UpdateEvent::InstallStarted {
@@ -600,7 +600,7 @@ impl UpdateManager {
             update_info.install_progress = 20.0;
             {
                 let mut db = self.db.lock().unwrap();
-                db.save_update_info(&mut update_info)?;
+                db.save_update_info(&mut update_info).map_err(|e| anyhow::anyhow!(e.to_string()))?;
             }
         }
 
@@ -621,17 +621,18 @@ impl UpdateManager {
                 update_info.install_progress = 100.0;
                 {
                     let mut db = self.db.lock().unwrap();
-                    db.save_update_info(&mut update_info)?;
+                    db.save_update_info(&mut update_info).map_err(|e| anyhow::anyhow!(e.to_string()))?;
                 }
 
                 // 记录版本历史
                 let history = VersionHistory {
                     id: None,
                     version: version.to_string(),
-                    installed_at: Utc::now(),
+                    installed_at: Utc::now().timestamp(),
+                    release_notes: String::new(),
                     is_rollback: false,
                     install_source: "auto".to_string(),
-                    notes: Some(format!("Updated from {}", self.current_version)),
+                    notes: format!("Updated from {}", self.current_version),
                 };
 
                 {
@@ -654,7 +655,7 @@ impl UpdateManager {
                 update_info.retry_count += 1;
                 {
                     let mut db = self.db.lock().unwrap();
-                    db.save_update_info(&mut update_info)?;
+                    db.save_update_info(&mut update_info).map_err(|e| anyhow::anyhow!(e.to_string()))?;
                 }
 
                 self.emit_event(UpdateEvent::InstallFailed {
@@ -716,7 +717,7 @@ impl UpdateManager {
         // 检查目标版本是否存在于历史记录中
         let histories = {
             let db = self.db.lock().unwrap();
-            db.get_version_history()?
+            db.get_version_history().map_err(|e| e.to_string())?
         };
 
         let target_history = histories.iter()
@@ -730,10 +731,11 @@ impl UpdateManager {
         let rollback_history = VersionHistory {
             id: None,
             version: target_version.to_string(),
-            installed_at: Utc::now(),
+            installed_at: Utc::now().timestamp(),
+            release_notes: String::new(),
             is_rollback: true,
             install_source: "rollback".to_string(),
-            notes: Some(format!("Rolled back from {}", self.current_version)),
+            notes: format!("Rolled back from {}", self.current_version),
         };
 
         {
@@ -764,7 +766,7 @@ impl UpdateManager {
             update_info.status = UpdateStatus::Cancelled;
             {
                 let mut db = self.db.lock().unwrap();
-                db.save_update_info(&mut update_info)?;
+                db.save_update_info(&mut update_info).map_err(|e| anyhow::anyhow!(e.to_string()))?;
             }
 
             // 删除部分下载的文件
@@ -866,14 +868,14 @@ impl UpdateManager {
     /// 保存更新配置
     pub fn save_config(&self, config: &mut UpdateConfig) -> Result<()> {
         let mut db = self.db.lock().unwrap();
-        db.save_update_config(config)?;
+        db.save_update_config(config).map_err(|e| anyhow::anyhow!(e.to_string()))?;
         Ok(())
     }
 
     /// 获取版本历史
     pub fn get_version_history(&self) -> Result<Vec<VersionHistory>> {
         let db = self.db.lock().unwrap();
-        Ok(db.get_version_history()?)
+        Ok(db.get_version_history().map_err(|e| anyhow::anyhow!(e.to_string()))?)
     }
 
     /// 获取更新统计

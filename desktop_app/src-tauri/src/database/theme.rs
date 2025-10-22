@@ -1,224 +1,367 @@
-/**
- * 主题数据库模型
- * 
- * 提供主题相关的本地数据库操作：
- * - 本地主题存储和查询
- * - 主题安装状态管理
- * - 主题收藏管理
- * - 本地主题统计信息
- * 
- * 注意：评分、评论等社区功能由独立的社区平台处理
- */
+//! # 主题管理数据库模块 (PostgreSQL)
+//! 
+//! 提供应用主题的数据库存储、查询和管理功能
 
-use rusqlite::{params, Connection, Result as SqliteResult, Row};
 use serde::{Deserialize, Serialize};
-use std::path::PathBuf;
 use chrono::{DateTime, Utc};
+use std::collections::HashMap;
+use tracing::{info, error, warn, debug};
+use crate::database::DbPool;
+use tokio::runtime::Handle;
 
-/**
- * 主题基本信息
- */
+// ================================
+// 数据结构定义
+// ================================
+
+/// 主题数据
 #[derive(Debug, Clone, Serialize, Deserialize)]
 pub struct Theme {
     pub id: String,
     pub name: String,
-    pub display_name: String,
-    pub description: String,
-    pub author_id: String,
-    pub author_name: String,
+    pub description: Option<String>,
+    pub author: Option<String>,
     pub version: String,
     pub category: String,
-    pub tags: Vec<String>,
-    pub is_dark: bool,
-    pub thumbnail: String,
-    pub preview_images: Vec<String>,
-    pub variables: serde_json::Value,
+    pub variables: serde_json::Value,  // 主题变量（颜色、字体等）
     pub custom_css: Option<String>,
-    pub downloads: i64,
-    pub rating: f64,
-    pub rating_count: i64,
+    pub preview_image: Option<String>,
+    pub is_dark: bool,
+    pub is_default: bool,
     pub installed: bool,
     pub favorited: bool,
-    pub file_path: Option<PathBuf>,
-    pub file_size: i64,
-    pub min_version: String,
-    pub max_version: Option<String>,
-    pub license: String,
+    pub download_count: i64,
+    pub rating: f64,
+    pub tags: Vec<String>,
     pub created_at: DateTime<Utc>,
     pub updated_at: DateTime<Utc>,
 }
 
-/**
- * 主题收藏记录
- */
-#[derive(Debug, Clone, Serialize, Deserialize)]
-pub struct ThemeFavorite {
-    pub id: i64,
-    pub theme_id: String,
-    pub favorited_at: DateTime<Utc>,
+impl Default for Theme {
+    fn default() -> Self {
+        Self {
+            id: String::new(),
+            name: String::new(),
+            description: None,
+            author: None,
+            version: "1.0.0".to_string(),
+            category: "general".to_string(),
+            variables: serde_json::json!({}),
+            custom_css: None,
+            preview_image: None,
+            is_dark: false,
+            is_default: false,
+            installed: false,
+            favorited: false,
+            download_count: 0,
+            rating: 0.0,
+            tags: Vec::new(),
+            created_at: Utc::now(),
+            updated_at: Utc::now(),
+        }
+    }
 }
 
-/**
- * 本地主题统计信息
- */
+/// 主题数据（仅用于兼容旧的ThemeData结构）
+#[derive(Debug, Clone, Serialize, Deserialize)]
+pub struct ThemeData {
+    pub theme_id: String,
+    pub name: String,
+    pub colors: HashMap<String, String>,
+    pub is_active: bool,
+}
+
+/// 主题统计信息
 #[derive(Debug, Clone, Serialize, Deserialize)]
 pub struct ThemeStatistics {
     pub total_themes: i64,
     pub installed_themes: i64,
     pub favorited_themes: i64,
-    pub custom_themes: i64,
+    pub dark_themes: i64,
+    pub light_themes: i64,
+    pub categories: HashMap<String, i64>,
 }
 
-/**
- * 主题数据库管理器
- */
-pub struct ThemeDatabase {
-    conn: Connection,
+// ================================
+// 主题注册表
+// ================================
+
+pub struct ThemeRegistry {
+    pool: DbPool,
 }
 
-impl ThemeDatabase {
-    /**
-     * 创建新的数据库连接
-     */
-    pub fn new(db_path: PathBuf) -> SqliteResult<Self> {
-        let conn = Connection::open(db_path)?;
-        let db = Self { conn };
-        db.init_tables()?;
-        Ok(db)
+impl ThemeRegistry {
+    pub fn new(pool: DbPool) -> Self {
+        Self { pool }
     }
-    
-    /**
-     * 初始化数据库表
-     */
-    fn init_tables(&self) -> SqliteResult<()> {
-        // 主题表
-        self.conn.execute(
+
+    /// 初始化数据库表
+    pub async fn init_tables(&self) -> Result<(), Box<dyn std::error::Error + Send + Sync>> {
+        let client = self.pool.get().await?;
+
+        // 创建主题表
+        client.execute(
             "CREATE TABLE IF NOT EXISTS themes (
                 id TEXT PRIMARY KEY,
                 name TEXT NOT NULL,
-                display_name TEXT NOT NULL,
                 description TEXT,
-                author_id TEXT NOT NULL,
-                author_name TEXT NOT NULL,
-                version TEXT NOT NULL,
-                category TEXT NOT NULL,
-                tags TEXT,
-                is_dark INTEGER NOT NULL DEFAULT 0,
-                thumbnail TEXT,
-                preview_images TEXT,
-                variables TEXT,
+                author TEXT,
+                version TEXT NOT NULL DEFAULT '1.0.0',
+                category TEXT NOT NULL DEFAULT 'general',
+                variables JSONB NOT NULL DEFAULT '{}'::jsonb,
                 custom_css TEXT,
-                downloads INTEGER DEFAULT 0,
-                rating REAL DEFAULT 0,
-                rating_count INTEGER DEFAULT 0,
-                installed INTEGER DEFAULT 0,
-                file_path TEXT,
-                file_size INTEGER DEFAULT 0,
-                min_version TEXT NOT NULL,
-                max_version TEXT,
-                license TEXT DEFAULT 'MIT',
-                created_at TEXT NOT NULL,
-                updated_at TEXT NOT NULL
+                preview_image TEXT,
+                is_dark BOOLEAN NOT NULL DEFAULT false,
+                is_default BOOLEAN NOT NULL DEFAULT false,
+                installed BOOLEAN NOT NULL DEFAULT false,
+                favorited BOOLEAN NOT NULL DEFAULT false,
+                download_count BIGINT NOT NULL DEFAULT 0,
+                rating DOUBLE PRECISION NOT NULL DEFAULT 0.0,
+                tags JSONB NOT NULL DEFAULT '[]'::jsonb,
+                created_at TIMESTAMPTZ NOT NULL DEFAULT NOW(),
+                updated_at TIMESTAMPTZ NOT NULL DEFAULT NOW()
             )",
-            [],
-        )?;
-        
-        // 收藏表
-        self.conn.execute(
-            "CREATE TABLE IF NOT EXISTS theme_favorites (
-                id INTEGER PRIMARY KEY AUTOINCREMENT,
-                theme_id TEXT NOT NULL,
-                favorited_at TEXT NOT NULL,
-                UNIQUE(theme_id)
+            &[],
+        ).await?;
+
+        // 创建主题设置表（存储当前激活的主题等配置）
+        client.execute(
+            "CREATE TABLE IF NOT EXISTS theme_settings (
+                id INTEGER PRIMARY KEY DEFAULT 1,
+                active_theme_id TEXT,
+                last_updated TIMESTAMPTZ NOT NULL DEFAULT NOW(),
+                FOREIGN KEY (active_theme_id) REFERENCES themes(id) ON DELETE SET NULL
             )",
-            [],
-        )?;
-        
+            &[],
+        ).await?;
+
         // 创建索引
-        self.conn.execute(
+        client.execute(
             "CREATE INDEX IF NOT EXISTS idx_themes_category ON themes(category)",
-            [],
-        )?;
-        self.conn.execute(
+            &[],
+        ).await?;
+
+        client.execute(
             "CREATE INDEX IF NOT EXISTS idx_themes_installed ON themes(installed)",
-            [],
-        )?;
-        
+            &[],
+        ).await?;
+
+        client.execute(
+            "CREATE INDEX IF NOT EXISTS idx_themes_favorited ON themes(favorited)",
+            &[],
+        ).await?;
+
+        client.execute(
+            "CREATE INDEX IF NOT EXISTS idx_themes_is_dark ON themes(is_dark)",
+            &[],
+        ).await?;
+
+        client.execute(
+            "CREATE INDEX IF NOT EXISTS idx_themes_download_count ON themes(download_count DESC)",
+            &[],
+        ).await?;
+
+        client.execute(
+            "CREATE INDEX IF NOT EXISTS idx_themes_rating ON themes(rating DESC)",
+            &[],
+        ).await?;
+
+        // 插入默认设置记录
+        client.execute(
+            "INSERT INTO theme_settings (id) VALUES (1) ON CONFLICT (id) DO NOTHING",
+            &[],
+        ).await?;
+
+        info!("主题数据库表初始化完成");
         Ok(())
     }
-    
-    /**
-     * 插入或更新主题
-     */
-    pub fn upsert_theme(&self, theme: &Theme) -> SqliteResult<()> {
-        let tags_json = serde_json::to_string(&theme.tags).unwrap_or_default();
-        let preview_images_json = serde_json::to_string(&theme.preview_images).unwrap_or_default();
-        let variables_json = serde_json::to_string(&theme.variables).unwrap_or_default();
-        let file_path = theme.file_path.as_ref().map(|p| p.to_string_lossy().to_string());
-        
-        self.conn.execute(
-            "INSERT OR REPLACE INTO themes (
-                id, name, display_name, description, author_id, author_name,
-                version, category, tags, is_dark, thumbnail, preview_images,
-                variables, custom_css, downloads, rating, rating_count,
-                installed, file_path, file_size, min_version, max_version,
-                license, created_at, updated_at
-            ) VALUES (
-                ?1, ?2, ?3, ?4, ?5, ?6, ?7, ?8, ?9, ?10, ?11, ?12,
-                ?13, ?14, ?15, ?16, ?17, ?18, ?19, ?20, ?21, ?22, ?23, ?24, ?25
-            )",
-            params![
-                &theme.id,
-                &theme.name,
-                &theme.display_name,
-                &theme.description,
-                &theme.author_id,
-                &theme.author_name,
-                &theme.version,
-                &theme.category,
-                &tags_json,
-                theme.is_dark as i32,
-                &theme.thumbnail,
-                &preview_images_json,
-                &variables_json,
-                &theme.custom_css,
-                theme.downloads,
-                theme.rating,
-                theme.rating_count,
-                theme.installed as i32,
-                file_path,
-                theme.file_size,
-                &theme.min_version,
-                &theme.max_version,
-                &theme.license,
-                theme.created_at.to_rfc3339(),
-                theme.updated_at.to_rfc3339(),
+
+    // ================================
+    // 主题CRUD操作
+    // ================================
+
+    /// 创建或更新主题
+    pub async fn upsert_theme_async(&self, theme: &Theme) -> Result<(), Box<dyn std::error::Error + Send + Sync>> {
+        let client = self.pool.get().await?;
+        let tags_json = serde_json::to_value(&theme.tags)?;
+
+        client.execute(
+            "INSERT INTO themes (
+                id, name, description, author, version, category, variables,
+                custom_css, preview_image, is_dark, is_default, installed, favorited,
+                download_count, rating, tags, created_at, updated_at
+            ) VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12, $13, $14, $15, $16, $17, $18)
+            ON CONFLICT (id) DO UPDATE SET
+                name = EXCLUDED.name,
+                description = EXCLUDED.description,
+                author = EXCLUDED.author,
+                version = EXCLUDED.version,
+                category = EXCLUDED.category,
+                variables = EXCLUDED.variables,
+                custom_css = EXCLUDED.custom_css,
+                preview_image = EXCLUDED.preview_image,
+                is_dark = EXCLUDED.is_dark,
+                is_default = EXCLUDED.is_default,
+                download_count = EXCLUDED.download_count,
+                rating = EXCLUDED.rating,
+                tags = EXCLUDED.tags,
+                updated_at = EXCLUDED.updated_at",
+            &[
+                &theme.id, &theme.name, &theme.description, &theme.author,
+                &theme.version, &theme.category, &theme.variables,
+                &theme.custom_css, &theme.preview_image, &theme.is_dark,
+                &theme.is_default, &theme.installed, &theme.favorited,
+                &theme.download_count, &theme.rating, &tags_json,
+                &theme.created_at, &theme.updated_at,
             ],
-        )?;
-        
+        ).await?;
+
+        debug!("保存主题: {}", theme.name);
         Ok(())
     }
-    
-    /**
-     * 根据ID获取主题
-     */
-    pub fn get_theme(&self, theme_id: &str) -> SqliteResult<Option<Theme>> {
-        let mut stmt = self.conn.prepare(
-            "SELECT * FROM themes WHERE id = ?1"
-        )?;
-        
-        let mut rows = stmt.query(params![theme_id])?;
-        
-        if let Some(row) = rows.next()? {
-            Ok(Some(self.row_to_theme(row)?))
+
+    pub fn upsert_theme(&self, theme: &Theme) -> Result<(), Box<dyn std::error::Error + Send + Sync>> {
+        Handle::current().block_on(self.upsert_theme_async(theme))
+    }
+
+    /// 获取主题
+    pub async fn get_theme_async(&self, theme_id: &str) -> Result<Option<Theme>, Box<dyn std::error::Error + Send + Sync>> {
+        let client = self.pool.get().await?;
+
+        let row = client.query_opt(
+            "SELECT id, name, description, author, version, category, variables,
+                    custom_css, preview_image, is_dark, is_default, installed, favorited,
+                    download_count, rating, tags, created_at, updated_at
+             FROM themes
+             WHERE id = $1",
+            &[&theme_id],
+        ).await?;
+
+        if let Some(row) = row {
+            let tags_json: serde_json::Value = row.get(15);
+            let tags: Vec<String> = serde_json::from_value(tags_json).unwrap_or_default();
+
+            Ok(Some(Theme {
+                id: row.get(0),
+                name: row.get(1),
+                description: row.get(2),
+                author: row.get(3),
+                version: row.get(4),
+                category: row.get(5),
+                variables: row.get(6),
+                custom_css: row.get(7),
+                preview_image: row.get(8),
+                is_dark: row.get(9),
+                is_default: row.get(10),
+                installed: row.get(11),
+                favorited: row.get(12),
+                download_count: row.get(13),
+                rating: row.get(14),
+                tags,
+                created_at: row.get(16),
+                updated_at: row.get(17),
+            }))
         } else {
             Ok(None)
         }
     }
-    
-    /**
-     * 搜索主题
-     */
+
+    pub fn get_theme(&self, theme_id: &str) -> Result<Option<Theme>, Box<dyn std::error::Error + Send + Sync>> {
+        Handle::current().block_on(self.get_theme_async(theme_id))
+    }
+
+    /// 获取所有主题
+    pub async fn get_all_themes_async(&self) -> Result<Vec<Theme>, Box<dyn std::error::Error + Send + Sync>> {
+        let client = self.pool.get().await?;
+
+        let rows = client.query(
+            "SELECT id, name, description, author, version, category, variables,
+                    custom_css, preview_image, is_dark, is_default, installed, favorited,
+                    download_count, rating, tags, created_at, updated_at
+             FROM themes
+             ORDER BY name ASC",
+            &[],
+        ).await?;
+
+        let themes = self.rows_to_themes(&rows)?;
+        Ok(themes)
+    }
+
+    pub fn get_all_themes(&self) -> Result<Vec<Theme>, Box<dyn std::error::Error + Send + Sync>> {
+        Handle::current().block_on(self.get_all_themes_async())
+    }
+
+    /// 删除主题
+    pub async fn delete_theme_async(&self, theme_id: &str) -> Result<(), Box<dyn std::error::Error + Send + Sync>> {
+        let client = self.pool.get().await?;
+
+        client.execute(
+            "DELETE FROM themes WHERE id = $1",
+            &[&theme_id],
+        ).await?;
+
+        info!("删除主题: {}", theme_id);
+        Ok(())
+    }
+
+    pub fn delete_theme(&self, theme_id: &str) -> Result<(), Box<dyn std::error::Error + Send + Sync>> {
+        Handle::current().block_on(self.delete_theme_async(theme_id))
+    }
+
+    // ================================
+    // 主题查询
+    // ================================
+
+    /// 搜索主题
+    pub async fn search_themes_async(
+        &self,
+        keyword: Option<&str>,
+        category: Option<&str>,
+        installed_only: bool,
+        limit: i64,
+        offset: i64,
+    ) -> Result<Vec<Theme>, Box<dyn std::error::Error + Send + Sync>> {
+        let client = self.pool.get().await?;
+
+        let mut query = String::from(
+            "SELECT id, name, description, author, version, category, variables,
+                    custom_css, preview_image, is_dark, is_default, installed, favorited,
+                    download_count, rating, tags, created_at, updated_at
+             FROM themes
+             WHERE 1=1"
+        );
+
+        let mut params: Vec<&(dyn tokio_postgres::types::ToSql + Sync)> = Vec::new();
+        let mut param_index = 1;
+
+        // 添加关键字搜索
+        if let Some(kw) = keyword {
+            query.push_str(&format!(" AND (name ILIKE ${} OR description ILIKE ${})", param_index, param_index));
+            params.push(&kw);
+            param_index += 1;
+        }
+
+        // 添加分类过滤
+        if let Some(cat) = category {
+            query.push_str(&format!(" AND category = ${}", param_index));
+            params.push(&cat);
+            param_index += 1;
+        }
+
+        // 添加已安装过滤
+        if installed_only {
+            query.push_str(" AND installed = true");
+        }
+
+        query.push_str(&format!(" ORDER BY download_count DESC, rating DESC LIMIT ${} OFFSET ${}", param_index, param_index + 1));
+        params.push(&limit);
+        params.push(&offset);
+
+        let rows = client.query(&query, &params).await?;
+        let themes = self.rows_to_themes(&rows)?;
+
+        Ok(themes)
+    }
+
     pub fn search_themes(
         &self,
         keyword: Option<&str>,
@@ -226,241 +369,389 @@ impl ThemeDatabase {
         installed_only: bool,
         limit: i64,
         offset: i64,
-    ) -> SqliteResult<Vec<Theme>> {
-        let mut sql = String::from("SELECT * FROM themes WHERE 1=1");
-        let mut params: Vec<Box<dyn rusqlite::ToSql>> = Vec::new();
-        
-        if let Some(kw) = keyword {
-            sql.push_str(" AND (name LIKE ?1 OR display_name LIKE ?1 OR description LIKE ?1)");
-            params.push(Box::new(format!("%{}%", kw)));
-        }
-        
-        if let Some(cat) = category {
-            sql.push_str(&format!(" AND category = ?{}", params.len() + 1));
-            params.push(Box::new(cat.to_string()));
-        }
-        
-        if installed_only {
-            sql.push_str(" AND installed = 1");
-        }
-        
-        sql.push_str(&format!(" ORDER BY downloads DESC LIMIT ?{} OFFSET ?{}", params.len() + 1, params.len() + 2));
-        params.push(Box::new(limit));
-        params.push(Box::new(offset));
-        
-        let mut stmt = self.conn.prepare(&sql)?;
-        let param_refs: Vec<&dyn rusqlite::ToSql> = params.iter().map(|p| p.as_ref()).collect();
-        let rows = stmt.query_map(&param_refs[..], |row| {
-            self.row_to_theme(row)
-        })?;
-        
-        let mut themes = Vec::new();
-        for theme in rows {
-            themes.push(theme?);
-        }
-        
+    ) -> Result<Vec<Theme>, Box<dyn std::error::Error + Send + Sync>> {
+        Handle::current().block_on(self.search_themes_async(keyword, category, installed_only, limit, offset))
+    }
+
+    /// 获取已安装的主题
+    pub async fn get_installed_themes_async(&self) -> Result<Vec<Theme>, Box<dyn std::error::Error + Send + Sync>> {
+        let client = self.pool.get().await?;
+
+        let rows = client.query(
+            "SELECT id, name, description, author, version, category, variables,
+                    custom_css, preview_image, is_dark, is_default, installed, favorited,
+                    download_count, rating, tags, created_at, updated_at
+             FROM themes
+             WHERE installed = true
+             ORDER BY name ASC",
+            &[],
+        ).await?;
+
+        let themes = self.rows_to_themes(&rows)?;
         Ok(themes)
     }
-    
-    /**
-     * 获取已安装的主题
-     */
-    pub fn get_installed_themes(&self) -> SqliteResult<Vec<Theme>> {
-        let mut stmt = self.conn.prepare(
-            "SELECT * FROM themes WHERE installed = 1 ORDER BY updated_at DESC"
-        )?;
-        
-        let rows = stmt.query_map([], |row| {
-            self.row_to_theme(row)
-        })?;
-        
-        let mut themes = Vec::new();
-        for theme in rows {
-            themes.push(theme?);
-        }
-        
+
+    pub fn get_installed_themes(&self) -> Result<Vec<Theme>, Box<dyn std::error::Error + Send + Sync>> {
+        Handle::current().block_on(self.get_installed_themes_async())
+    }
+
+    /// 获取收藏的主题
+    pub async fn get_favorited_themes_async(&self) -> Result<Vec<Theme>, Box<dyn std::error::Error + Send + Sync>> {
+        let client = self.pool.get().await?;
+
+        let rows = client.query(
+            "SELECT id, name, description, author, version, category, variables,
+                    custom_css, preview_image, is_dark, is_default, installed, favorited,
+                    download_count, rating, tags, created_at, updated_at
+             FROM themes
+             WHERE favorited = true
+             ORDER BY name ASC",
+            &[],
+        ).await?;
+
+        let themes = self.rows_to_themes(&rows)?;
         Ok(themes)
     }
-    
-    /**
-     * 获取收藏的主题
-     */
-    pub fn get_favorited_themes(&self) -> SqliteResult<Vec<Theme>> {
-        let mut stmt = self.conn.prepare(
-            "SELECT t.* FROM themes t 
-             INNER JOIN theme_favorites f ON t.id = f.theme_id
-             ORDER BY f.favorited_at DESC"
-        )?;
-        
-        let rows = stmt.query_map([], |row| {
-            self.row_to_theme(row)
-        })?;
-        
-        let mut themes = Vec::new();
-        for theme in rows {
-            themes.push(theme?);
-        }
-        
+
+    pub fn get_favorited_themes(&self) -> Result<Vec<Theme>, Box<dyn std::error::Error + Send + Sync>> {
+        Handle::current().block_on(self.get_favorited_themes_async())
+    }
+
+    /// 按分类获取主题
+    pub async fn get_themes_by_category_async(&self, category: &str) -> Result<Vec<Theme>, Box<dyn std::error::Error + Send + Sync>> {
+        let client = self.pool.get().await?;
+
+        let rows = client.query(
+            "SELECT id, name, description, author, version, category, variables,
+                    custom_css, preview_image, is_dark, is_default, installed, favorited,
+                    download_count, rating, tags, created_at, updated_at
+             FROM themes
+             WHERE category = $1
+             ORDER BY download_count DESC, rating DESC",
+            &[&category],
+        ).await?;
+
+        let themes = self.rows_to_themes(&rows)?;
         Ok(themes)
     }
-    
-    /**
-     * 标记主题为已安装
-     */
-    pub fn mark_installed(&self, theme_id: &str, installed: bool) -> SqliteResult<()> {
-        self.conn.execute(
-            "UPDATE themes SET installed = ?1, updated_at = ?2 WHERE id = ?3",
-            params![installed as i32, Utc::now().to_rfc3339(), theme_id],
-        )?;
+
+    pub fn get_themes_by_category(&self, category: &str) -> Result<Vec<Theme>, Box<dyn std::error::Error + Send + Sync>> {
+        Handle::current().block_on(self.get_themes_by_category_async(category))
+    }
+
+    // ================================
+    // 主题状态管理
+    // ================================
+
+    /// 标记主题为已安装/未安装
+    pub async fn mark_installed_async(&self, theme_id: &str, installed: bool) -> Result<(), Box<dyn std::error::Error + Send + Sync>> {
+        let client = self.pool.get().await?;
+
+        client.execute(
+            "UPDATE themes SET installed = $1, updated_at = NOW() WHERE id = $2",
+            &[&installed, &theme_id],
+        ).await?;
+
+        debug!("标记主题 {} 安装状态: {}", theme_id, installed);
         Ok(())
     }
-    
-    /**
-     * 收藏主题
-     */
-    pub fn favorite_theme(&self, theme_id: &str) -> SqliteResult<()> {
-        self.conn.execute(
-            "INSERT OR IGNORE INTO theme_favorites (theme_id, favorited_at) VALUES (?1, ?2)",
-            params![theme_id, Utc::now().to_rfc3339()],
-        )?;
+
+    pub fn mark_installed(&self, theme_id: &str, installed: bool) -> Result<(), Box<dyn std::error::Error + Send + Sync>> {
+        Handle::current().block_on(self.mark_installed_async(theme_id, installed))
+    }
+
+    /// 收藏主题
+    pub async fn favorite_theme_async(&self, theme_id: &str) -> Result<(), Box<dyn std::error::Error + Send + Sync>> {
+        let client = self.pool.get().await?;
+
+        client.execute(
+            "UPDATE themes SET favorited = true, updated_at = NOW() WHERE id = $1",
+            &[&theme_id],
+        ).await?;
+
+        debug!("收藏主题: {}", theme_id);
         Ok(())
     }
-    
-    /**
-     * 取消收藏主题
-     */
-    pub fn unfavorite_theme(&self, theme_id: &str) -> SqliteResult<()> {
-        self.conn.execute(
-            "DELETE FROM theme_favorites WHERE theme_id = ?1",
-            params![theme_id],
-        )?;
+
+    pub fn favorite_theme(&self, theme_id: &str) -> Result<(), Box<dyn std::error::Error + Send + Sync>> {
+        Handle::current().block_on(self.favorite_theme_async(theme_id))
+    }
+
+    /// 取消收藏主题
+    pub async fn unfavorite_theme_async(&self, theme_id: &str) -> Result<(), Box<dyn std::error::Error + Send + Sync>> {
+        let client = self.pool.get().await?;
+
+        client.execute(
+            "UPDATE themes SET favorited = false, updated_at = NOW() WHERE id = $1",
+            &[&theme_id],
+        ).await?;
+
+        debug!("取消收藏主题: {}", theme_id);
         Ok(())
     }
-    
-    /**
-     * 检查主题是否已收藏
-     */
-    pub fn is_favorited(&self, theme_id: &str) -> SqliteResult<bool> {
-        let count: i64 = self.conn.query_row(
-            "SELECT COUNT(*) FROM theme_favorites WHERE theme_id = ?1",
-            params![theme_id],
-            |row| row.get(0),
-        )?;
-        Ok(count > 0)
+
+    pub fn unfavorite_theme(&self, theme_id: &str) -> Result<(), Box<dyn std::error::Error + Send + Sync>> {
+        Handle::current().block_on(self.unfavorite_theme_async(theme_id))
     }
-    
-    /**
-     * 获取本地统计信息
-     */
-    pub fn get_statistics(&self) -> SqliteResult<ThemeStatistics> {
-        let total_themes: i64 = self.conn.query_row(
-            "SELECT COUNT(*) FROM themes",
-            [],
-            |row| row.get(0),
-        )?;
-        
-        let installed_themes: i64 = self.conn.query_row(
-            "SELECT COUNT(*) FROM themes WHERE installed = 1",
-            [],
-            |row| row.get(0),
-        )?;
-        
-        let favorited_themes: i64 = self.conn.query_row(
-            "SELECT COUNT(*) FROM theme_favorites",
-            [],
-            |row| row.get(0),
-        )?;
-        
-        let custom_themes: i64 = self.conn.query_row(
-            "SELECT COUNT(*) FROM themes WHERE category = 'custom'",
-            [],
-            |row| row.get(0),
-        )?;
-        
+
+    /// 增加下载计数
+    pub async fn increment_download_count_async(&self, theme_id: &str) -> Result<(), Box<dyn std::error::Error + Send + Sync>> {
+        let client = self.pool.get().await?;
+
+        client.execute(
+            "UPDATE themes SET download_count = download_count + 1, updated_at = NOW() WHERE id = $1",
+            &[&theme_id],
+        ).await?;
+
+        Ok(())
+    }
+
+    pub fn increment_download_count(&self, theme_id: &str) -> Result<(), Box<dyn std::error::Error + Send + Sync>> {
+        Handle::current().block_on(self.increment_download_count_async(theme_id))
+    }
+
+    // ================================
+    // 激活主题管理
+    // ================================
+
+    /// 获取激活的主题
+    pub async fn get_active_theme_async(&self) -> Result<Option<Theme>, Box<dyn std::error::Error + Send + Sync>> {
+        let client = self.pool.get().await?;
+
+        let row = client.query_opt(
+            "SELECT t.id, t.name, t.description, t.author, t.version, t.category, t.variables,
+                    t.custom_css, t.preview_image, t.is_dark, t.is_default, t.installed, t.favorited,
+                    t.download_count, t.rating, t.tags, t.created_at, t.updated_at
+             FROM theme_settings s
+             JOIN themes t ON s.active_theme_id = t.id
+             WHERE s.id = 1",
+            &[],
+        ).await?;
+
+        if let Some(row) = row {
+            let tags_json: serde_json::Value = row.get(15);
+            let tags: Vec<String> = serde_json::from_value(tags_json).unwrap_or_default();
+
+            Ok(Some(Theme {
+                id: row.get(0),
+                name: row.get(1),
+                description: row.get(2),
+                author: row.get(3),
+                version: row.get(4),
+                category: row.get(5),
+                variables: row.get(6),
+                custom_css: row.get(7),
+                preview_image: row.get(8),
+                is_dark: row.get(9),
+                is_default: row.get(10),
+                installed: row.get(11),
+                favorited: row.get(12),
+                download_count: row.get(13),
+                rating: row.get(14),
+                tags,
+                created_at: row.get(16),
+                updated_at: row.get(17),
+            }))
+        } else {
+            Ok(None)
+        }
+    }
+
+    pub fn get_active_theme(&self) -> Result<Option<Theme>, Box<dyn std::error::Error + Send + Sync>> {
+        Handle::current().block_on(self.get_active_theme_async())
+    }
+
+    /// 设置激活的主题
+    pub async fn set_active_theme_async(&self, theme_id: &str) -> Result<(), Box<dyn std::error::Error + Send + Sync>> {
+        let client = self.pool.get().await?;
+
+        // 检查主题是否存在
+        let theme = self.get_theme_async(theme_id).await?;
+        if theme.is_none() {
+            return Err(format!("主题不存在: {}", theme_id).into());
+        }
+
+        // 更新激活主题
+        client.execute(
+            "UPDATE theme_settings SET active_theme_id = $1, last_updated = NOW() WHERE id = 1",
+            &[&theme_id],
+        ).await?;
+
+        info!("设置激活主题: {}", theme_id);
+        Ok(())
+    }
+
+    pub fn set_active_theme(&self, theme_id: &str) -> Result<(), Box<dyn std::error::Error + Send + Sync>> {
+        Handle::current().block_on(self.set_active_theme_async(theme_id))
+    }
+
+    // ================================
+    // 统计信息
+    // ================================
+
+    /// 获取统计信息
+    pub async fn get_statistics_async(&self) -> Result<ThemeStatistics, Box<dyn std::error::Error + Send + Sync>> {
+        let client = self.pool.get().await?;
+
+        // 总主题数
+        let row = client.query_one("SELECT COUNT(*) FROM themes", &[]).await?;
+        let total_themes: i64 = row.get(0);
+
+        // 已安装主题数
+        let row = client.query_one("SELECT COUNT(*) FROM themes WHERE installed = true", &[]).await?;
+        let installed_themes: i64 = row.get(0);
+
+        // 收藏主题数
+        let row = client.query_one("SELECT COUNT(*) FROM themes WHERE favorited = true", &[]).await?;
+        let favorited_themes: i64 = row.get(0);
+
+        // 深色主题数
+        let row = client.query_one("SELECT COUNT(*) FROM themes WHERE is_dark = true", &[]).await?;
+        let dark_themes: i64 = row.get(0);
+
+        // 浅色主题数
+        let row = client.query_one("SELECT COUNT(*) FROM themes WHERE is_dark = false", &[]).await?;
+        let light_themes: i64 = row.get(0);
+
+        // 分类统计
+        let rows = client.query("SELECT category, COUNT(*) FROM themes GROUP BY category", &[]).await?;
+        let mut categories = HashMap::new();
+        for row in rows {
+            let category: String = row.get(0);
+            let count: i64 = row.get(1);
+            categories.insert(category, count);
+        }
+
         Ok(ThemeStatistics {
             total_themes,
             installed_themes,
             favorited_themes,
-            custom_themes,
+            dark_themes,
+            light_themes,
+            categories,
         })
     }
-    
-    /**
-     * 删除主题
-     */
-    pub fn delete_theme(&self, theme_id: &str) -> SqliteResult<()> {
-        self.conn.execute(
-            "DELETE FROM themes WHERE id = ?1",
-            params![theme_id],
-        )?;
-        
-        // 同时删除相关收藏
-        self.conn.execute(
-            "DELETE FROM theme_favorites WHERE theme_id = ?1",
-            params![theme_id],
-        )?;
-        
-        Ok(())
+
+    pub fn get_statistics(&self) -> Result<ThemeStatistics, Box<dyn std::error::Error + Send + Sync>> {
+        Handle::current().block_on(self.get_statistics_async())
     }
-    
-    /**
-     * 将数据库行转换为 Theme 对象
-     */
-    fn row_to_theme(&self, row: &Row) -> SqliteResult<Theme> {
-        let tags_str: String = row.get(8)?;
-        let tags: Vec<String> = serde_json::from_str(&tags_str).unwrap_or_default();
-        
-        let preview_images_str: String = row.get(11)?;
-        let preview_images: Vec<String> = serde_json::from_str(&preview_images_str).unwrap_or_default();
-        
-        let variables_str: String = row.get(12)?;
-        let variables: serde_json::Value = serde_json::from_str(&variables_str).unwrap_or(serde_json::json!({}));
-        
-        let file_path_str: Option<String> = row.get(18)?;
-        let file_path = file_path_str.map(PathBuf::from);
-        
-        let created_at_str: String = row.get(23)?;
-        let created_at = DateTime::parse_from_rfc3339(&created_at_str)
-            .unwrap_or_else(|_| DateTime::parse_from_rfc3339("2025-01-01T00:00:00Z").unwrap())
-            .with_timezone(&Utc);
-        
-        let updated_at_str: String = row.get(24)?;
-        let updated_at = DateTime::parse_from_rfc3339(&updated_at_str)
-            .unwrap_or_else(|_| DateTime::parse_from_rfc3339("2025-01-01T00:00:00Z").unwrap())
-            .with_timezone(&Utc);
-        
-        let theme_id: String = row.get(0)?;
-        let favorited = self.is_favorited(&theme_id).unwrap_or(false);
-        
-        Ok(Theme {
-            id: theme_id,
-            name: row.get(1)?,
-            display_name: row.get(2)?,
-            description: row.get(3)?,
-            author_id: row.get(4)?,
-            author_name: row.get(5)?,
-            version: row.get(6)?,
-            category: row.get(7)?,
-            tags,
-            is_dark: row.get::<_, i32>(9)? != 0,
-            thumbnail: row.get(10)?,
-            preview_images,
-            variables,
-            custom_css: row.get(13)?,
-            downloads: row.get(14)?,
-            rating: row.get(15)?,
-            rating_count: row.get(16)?,
-            installed: row.get::<_, i32>(17)? != 0,
-            favorited,
-            file_path,
-            file_size: row.get(19)?,
-            min_version: row.get(20)?,
-            max_version: row.get(21)?,
-            license: row.get(22)?,
-            created_at,
-            updated_at,
-        })
+
+    // ================================
+    // 辅助方法
+    // ================================
+
+    /// 将数据库行转换为Theme对象
+    fn rows_to_themes(&self, rows: &[tokio_postgres::Row]) -> Result<Vec<Theme>, Box<dyn std::error::Error + Send + Sync>> {
+        let themes = rows.iter().map(|row| {
+            let tags_json: serde_json::Value = row.get(15);
+            let tags: Vec<String> = serde_json::from_value(tags_json).unwrap_or_default();
+
+            Theme {
+                id: row.get(0),
+                name: row.get(1),
+                description: row.get(2),
+                author: row.get(3),
+                version: row.get(4),
+                category: row.get(5),
+                variables: row.get(6),
+                custom_css: row.get(7),
+                preview_image: row.get(8),
+                is_dark: row.get(9),
+                is_default: row.get(10),
+                installed: row.get(11),
+                favorited: row.get(12),
+                download_count: row.get(13),
+                rating: row.get(14),
+                tags,
+                created_at: row.get(16),
+                updated_at: row.get(17),
+            }
+        }).collect();
+
+        Ok(themes)
     }
-    
+
+    /// 将主题转换为ThemeData（兼容旧接口）
+    pub fn theme_to_theme_data(theme: &Theme) -> ThemeData {
+        let colors = if let Some(obj) = theme.variables.as_object() {
+            obj.iter()
+                .filter_map(|(k, v)| v.as_str().map(|s| (k.clone(), s.to_string())))
+                .collect()
+        } else {
+            HashMap::new()
+        };
+
+        ThemeData {
+            theme_id: theme.id.clone(),
+            name: theme.name.clone(),
+            colors,
+            is_active: false, // 需要单独查询
+        }
+    }
 }
 
+// ================================
+// ThemeDatabase - 兼容性包装器
+// ================================
+
+/// 兼容旧版本的数据库包装器
+pub struct ThemeDatabase {
+    registry: ThemeRegistry,
+}
+
+impl ThemeDatabase {
+    pub fn new(_path: &std::path::Path) -> Result<Self, Box<dyn std::error::Error + Send + Sync>> {
+        // 注意：这里假设全局DbPool已经初始化
+        // 实际使用时，应该从应用状态中获取pool
+        Err("请使用ThemeRegistry，并传入DbPool".into())
+    }
+
+    pub fn from_pool(pool: DbPool) -> Self {
+        Self {
+            registry: ThemeRegistry::new(pool),
+        }
+    }
+
+    pub fn get_theme(&self, theme_id: &str) -> Result<Option<Theme>, Box<dyn std::error::Error + Send + Sync>> {
+        self.registry.get_theme(theme_id)
+    }
+
+    pub fn upsert_theme(&self, theme: &Theme) -> Result<(), Box<dyn std::error::Error + Send + Sync>> {
+        self.registry.upsert_theme(theme)
+    }
+
+    pub fn search_themes(
+        &self,
+        keyword: Option<&str>,
+        category: Option<&str>,
+        installed_only: bool,
+        limit: i64,
+        offset: i64,
+    ) -> Result<Vec<Theme>, Box<dyn std::error::Error + Send + Sync>> {
+        self.registry.search_themes(keyword, category, installed_only, limit, offset)
+    }
+
+    pub fn get_installed_themes(&self) -> Result<Vec<Theme>, Box<dyn std::error::Error + Send + Sync>> {
+        self.registry.get_installed_themes()
+    }
+
+    pub fn get_favorited_themes(&self) -> Result<Vec<Theme>, Box<dyn std::error::Error + Send + Sync>> {
+        self.registry.get_favorited_themes()
+    }
+
+    pub fn mark_installed(&self, theme_id: &str, installed: bool) -> Result<(), Box<dyn std::error::Error + Send + Sync>> {
+        self.registry.mark_installed(theme_id, installed)
+    }
+
+    pub fn favorite_theme(&self, theme_id: &str) -> Result<(), Box<dyn std::error::Error + Send + Sync>> {
+        self.registry.favorite_theme(theme_id)
+    }
+
+    pub fn unfavorite_theme(&self, theme_id: &str) -> Result<(), Box<dyn std::error::Error + Send + Sync>> {
+        self.registry.unfavorite_theme(theme_id)
+    }
+
+    pub fn get_statistics(&self) -> Result<ThemeStatistics, Box<dyn std::error::Error + Send + Sync>> {
+        self.registry.get_statistics()
+    }
+}

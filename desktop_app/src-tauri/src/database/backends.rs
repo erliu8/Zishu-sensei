@@ -62,8 +62,6 @@ pub type DatabaseResult<T> = Result<T, DatabaseError>;
 /// 数据库后端类型
 #[derive(Debug, Clone, Copy, PartialEq, Eq, Serialize, Deserialize)]
 pub enum DatabaseBackendType {
-    /// SQLite
-    SQLite,
     /// PostgreSQL
     PostgreSQL,
     /// Redis
@@ -75,7 +73,6 @@ pub enum DatabaseBackendType {
 impl fmt::Display for DatabaseBackendType {
     fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
         match self {
-            Self::SQLite => write!(f, "SQLite"),
             Self::PostgreSQL => write!(f, "PostgreSQL"),
             Self::Redis => write!(f, "Redis"),
             Self::Qdrant => write!(f, "Qdrant"),
@@ -156,17 +153,6 @@ pub struct DatabaseConfig {
 }
 
 impl DatabaseConfig {
-    /// 创建SQLite配置
-    pub fn sqlite(path: &str) -> Self {
-        Self {
-            backend_type: DatabaseBackendType::SQLite,
-            connection_string: path.to_string(),
-            max_connections: Some(5),
-            timeout: Some(30),
-            extra: HashMap::new(),
-        }
-    }
-
     /// 创建PostgreSQL配置
     pub fn postgresql(connection_string: &str) -> Self {
         Self {

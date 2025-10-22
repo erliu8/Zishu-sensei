@@ -211,7 +211,7 @@ impl FileSystemChecker {
             entity_type,
             entity_id,
             PermissionType::FileDelete,
-            PermissionLevel::Full,
+            PermissionLevel::Admin,
             Some(path.to_string()),
             "delete_file".to_string(),
         )
@@ -223,7 +223,7 @@ impl FileSystemChecker {
             entity_type,
             entity_id,
             PermissionType::FileExecute,
-            PermissionLevel::Full,
+            PermissionLevel::Admin,
             Some(path.to_string()),
             "execute_file".to_string(),
         )
@@ -284,7 +284,7 @@ impl NetworkChecker {
             entity_type,
             entity_id,
             PermissionType::NetworkSocket,
-            PermissionLevel::Full,
+            PermissionLevel::Admin,
             Some(address.to_string()),
             "socket_connect".to_string(),
         )
@@ -321,7 +321,7 @@ impl SystemChecker {
             entity_type,
             entity_id,
             PermissionType::SystemCommand,
-            PermissionLevel::Full,
+            PermissionLevel::Admin,
             Some(command.to_string()),
             "execute_command".to_string(),
         )

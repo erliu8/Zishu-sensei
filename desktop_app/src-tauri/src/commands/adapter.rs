@@ -528,7 +528,7 @@ pub async fn get_installed_adapters(
     
     let db = get_database().ok_or("数据库未初始化")?;
     
-    match db.adapter_registry.get_all_adapters() {
+    match db.adapter_registry.get_all_adapters().await {
         Ok(adapters) => {
             info!("成功获取 {} 个已安装适配器", adapters.len());
             Ok(CommandResponse::success(adapters))
@@ -550,7 +550,7 @@ pub async fn get_enabled_adapters(
     
     let db = get_database().ok_or("数据库未初始化")?;
     
-    match db.adapter_registry.get_enabled_adapters() {
+    match db.adapter_registry.get_enabled_adapters().await {
         Ok(adapters) => {
             info!("成功获取 {} 个已启用适配器", adapters.len());
             Ok(CommandResponse::success(adapters))
@@ -573,7 +573,7 @@ pub async fn get_installed_adapter(
     
     let db = get_database().ok_or("数据库未初始化")?;
     
-    match db.adapter_registry.get_adapter(&adapter_id) {
+    match db.adapter_registry.get_adapter(&adapter_id).await {
         Ok(Some(adapter)) => {
             info!("成功获取适配器详情: {}", adapter.name);
             Ok(CommandResponse::success(adapter))
@@ -601,7 +601,7 @@ pub async fn toggle_adapter(
     
     let db = get_database().ok_or("数据库未初始化")?;
     
-    match db.adapter_registry.set_adapter_enabled(&adapter_id, enabled) {
+    match db.adapter_registry.set_adapter_enabled(&adapter_id, enabled).await {
         Ok(_) => {
             info!("适配器 {} 已{}", adapter_id, if enabled { "启用" } else { "禁用" });
             Ok(CommandResponse::success_with_message(
@@ -628,7 +628,7 @@ pub async fn remove_installed_adapter(
     let db = get_database().ok_or("数据库未初始化")?;
     
     // 获取适配器信息
-    let adapter = match db.adapter_registry.get_adapter(&adapter_id) {
+    let adapter = match db.adapter_registry.get_adapter(&adapter_id).await {
         Ok(Some(adapter)) => adapter,
         Ok(None) => {
             return Ok(CommandResponse::error(format!("适配器不存在: {}", adapter_id)));
@@ -646,7 +646,7 @@ pub async fn remove_installed_adapter(
     }
     
     // 从数据库删除
-    match db.adapter_registry.delete_adapter(&adapter_id) {
+    match db.adapter_registry.delete_adapter(&adapter_id).await {
         Ok(_) => {
             info!("适配器 {} 已删除", adapter_id);
             Ok(CommandResponse::success_with_message(
@@ -676,7 +676,7 @@ pub async fn get_adapter_versions(
     
     let db = get_database().ok_or("数据库未初始化")?;
     
-    match db.adapter_registry.get_versions(&adapter_id) {
+    match db.adapter_registry.get_versions(&adapter_id).await {
         Ok(versions) => {
             info!("成功获取 {} 个版本记录", versions.len());
             Ok(CommandResponse::success(versions))
@@ -699,7 +699,7 @@ pub async fn add_adapter_version(
     
     let db = get_database().ok_or("数据库未初始化")?;
     
-    match db.adapter_registry.add_version(version) {
+    match db.adapter_registry.add_version(version).await {
         Ok(_) => {
             info!("版本记录添加成功");
             Ok(CommandResponse::success_with_message(
@@ -729,7 +729,7 @@ pub async fn get_adapter_dependencies(
     
     let db = get_database().ok_or("数据库未初始化")?;
     
-    match db.adapter_registry.get_dependencies(&adapter_id) {
+    match db.adapter_registry.get_dependencies(&adapter_id).await {
         Ok(dependencies) => {
             info!("成功获取 {} 个依赖", dependencies.len());
             Ok(CommandResponse::success(dependencies))
@@ -752,7 +752,7 @@ pub async fn add_adapter_dependency(
     
     let db = get_database().ok_or("数据库未初始化")?;
     
-    match db.adapter_registry.add_dependency(dependency) {
+    match db.adapter_registry.add_dependency(dependency).await {
         Ok(_) => {
             info!("依赖添加成功");
             Ok(CommandResponse::success_with_message(
@@ -779,7 +779,7 @@ pub async fn remove_adapter_dependency(
     
     let db = get_database().ok_or("数据库未初始化")?;
     
-    match db.adapter_registry.delete_dependency(&adapter_id, &dependency_id) {
+    match db.adapter_registry.delete_dependency(&adapter_id, &dependency_id).await {
         Ok(_) => {
             info!("依赖删除成功");
             Ok(CommandResponse::success_with_message(
@@ -809,7 +809,7 @@ pub async fn get_adapter_permissions(
     
     let db = get_database().ok_or("数据库未初始化")?;
     
-    match db.adapter_registry.get_permissions(&adapter_id) {
+    match db.adapter_registry.get_permissions(&adapter_id).await {
         Ok(permissions) => {
             info!("成功获取 {} 个权限", permissions.len());
             Ok(CommandResponse::success(permissions))
@@ -839,7 +839,7 @@ pub async fn grant_adapter_permission(
     
     let db = get_database().ok_or("数据库未初始化")?;
     
-    match db.adapter_registry.grant_permission(&adapter_id, &permission_type, granted) {
+    match db.adapter_registry.grant_permission(&adapter_id, &permission_type, granted).await {
         Ok(_) => {
             info!("权限操作成功");
             Ok(CommandResponse::success_with_message(
@@ -866,7 +866,7 @@ pub async fn check_adapter_permission(
     
     let db = get_database().ok_or("数据库未初始化")?;
     
-    match db.adapter_registry.check_permission(&adapter_id, &permission_type) {
+    match db.adapter_registry.check_permission(&adapter_id, &permission_type).await {
         Ok(granted) => {
             Ok(CommandResponse::success(granted))
         }
@@ -888,7 +888,7 @@ pub async fn add_adapter_permission(
     
     let db = get_database().ok_or("数据库未初始化")?;
     
-    match db.adapter_registry.add_permission(permission) {
+    match db.adapter_registry.add_permission(permission).await {
         Ok(_) => {
             info!("权限添加成功");
             Ok(CommandResponse::success_with_message(
