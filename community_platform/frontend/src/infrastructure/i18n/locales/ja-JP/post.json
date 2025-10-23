@@ -1,0 +1,128 @@
+{
+  "title": {
+    "posts": "投稿",
+    "createPost": "投稿を作成",
+    "editPost": "投稿を編集",
+    "postDetail": "投稿詳細",
+    "myPosts": "自分の投稿",
+    "popularPosts": "人気の投稿",
+    "latestPosts": "最新の投稿"
+  },
+  "fields": {
+    "title": "タイトル",
+    "content": "内容",
+    "category": "カテゴリ",
+    "tags": "タグ",
+    "coverImage": "カバー画像",
+    "visibility": "公開範囲",
+    "status": "ステータス"
+  },
+  "placeholders": {
+    "title": "投稿タイトルを入力",
+    "content": "投稿内容を入力、Markdown対応",
+    "tags": "タグを入力、Enterで追加",
+    "search": "投稿を検索..."
+  },
+  "actions": {
+    "create": "投稿する",
+    "edit": "編集",
+    "delete": "削除",
+    "save": "保存",
+    "saveDraft": "下書き保存",
+    "publish": "公開",
+    "unpublish": "非公開",
+    "pin": "ピン留め",
+    "unpin": "ピン留め解除",
+    "like": "いいね",
+    "unlike": "いいね解除",
+    "favorite": "お気に入り",
+    "unfavorite": "お気に入り解除",
+    "share": "共有",
+    "report": "報告",
+    "viewMore": "もっと見る"
+  },
+  "status": {
+    "draft": "下書き",
+    "published": "公開済み",
+    "archived": "アーカイブ済み",
+    "deleted": "削除済み"
+  },
+  "visibility": {
+    "public": "公開",
+    "private": "非公開",
+    "followers": "フォロワーのみ"
+  },
+  "categories": {
+    "all": "すべて",
+    "discussion": "ディスカッション",
+    "tutorial": "チュートリアル",
+    "showcase": "ショーケース",
+    "question": "質問",
+    "announcement": "お知らせ",
+    "other": "その他"
+  },
+  "sort": {
+    "latest": "最新",
+    "popular": "人気",
+    "trending": "トレンド",
+    "mostLiked": "いいね数順",
+    "mostViewed": "閲覧数順",
+    "mostCommented": "コメント数順"
+  },
+  "stats": {
+    "views": "{count}回閲覧",
+    "likes": "{count}いいね",
+    "comments": "{count}コメント",
+    "favorites": "{count}お気に入り",
+    "shares": "{count}共有"
+  },
+  "messages": {
+    "createSuccess": "投稿を作成しました",
+    "createFailed": "投稿の作成に失敗しました",
+    "updateSuccess": "投稿を更新しました",
+    "updateFailed": "投稿の更新に失敗しました",
+    "deleteSuccess": "投稿を削除しました",
+    "deleteFailed": "投稿の削除に失敗しました",
+    "likeSuccess": "いいねしました",
+    "unlikeSuccess": "いいねを取り消しました",
+    "favoriteSuccess": "お気に入りに追加しました",
+    "unfavoriteSuccess": "お気に入りから削除しました",
+    "shareSuccess": "共有しました",
+    "reportSuccess": "報告を送信しました",
+    "notFound": "投稿が見つかりません",
+    "deleted": "この投稿は削除されました"
+  },
+  "validation": {
+    "titleRequired": "タイトルを入力してください",
+    "titleLength": "タイトルは5〜100文字で入力してください",
+    "contentRequired": "内容を入力してください",
+    "contentLength": "内容は10文字以上で入力してください",
+    "categoryRequired": "カテゴリを選択してください",
+    "tagsMax": "タグは最大5個まで追加できます"
+  },
+  "confirm": {
+    "delete": "この投稿を削除してもよろしいですか？",
+    "unpublish": "この投稿を非公開にしてもよろしいですか？",
+    "discard": "保存されていない変更を破棄してもよろしいですか？"
+  },
+  "empty": {
+    "noPosts": "まだ投稿がありません",
+    "noResults": "投稿が見つかりませんでした",
+    "createFirst": "最初の投稿を作成しましょう"
+  },
+  "editor": {
+    "preview": "プレビュー",
+    "edit": "編集",
+    "markdown": "Markdown",
+    "richText": "リッチテキスト",
+    "uploadImage": "画像をアップロード",
+    "insertLink": "リンクを挿入",
+    "insertCode": "コードを挿入",
+    "bold": "太字",
+    "italic": "斜体",
+    "heading": "見出し",
+    "list": "リスト",
+    "quote": "引用"
+  }
+}
+

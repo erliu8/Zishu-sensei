@@ -1,0 +1,59 @@
+{
+  "title": {
+    "profile": "个人主页",
+    "editProfile": "编辑资料",
+    "myProfile": "我的主页",
+    "userProfile": "{username} 的主页"
+  },
+  "fields": {
+    "username": "用户名",
+    "displayName": "显示名称",
+    "email": "邮箱",
+    "bio": "个人简介",
+    "avatar": "头像",
+    "coverImage": "封面图",
+    "website": "网站",
+    "location": "位置",
+    "birthday": "生日",
+    "joinDate": "加入时间"
+  },
+  "stats": {
+    "posts": "{count} 帖子",
+    "characters": "{count} 角色",
+    "adapters": "{count} 适配器",
+    "followers": "{count} 粉丝",
+    "following": "{count} 关注",
+    "likes": "{count} 点赞"
+  },
+  "tabs": {
+    "overview": "概览",
+    "posts": "帖子",
+    "characters": "角色",
+    "adapters": "适配器",
+    "favorites": "收藏",
+    "activity": "动态"
+  },
+  "actions": {
+    "follow": "关注",
+    "unfollow": "取消关注",
+    "message": "发消息",
+    "share": "分享",
+    "report": "举报",
+    "block": "拉黑"
+  },
+  "status": {
+    "online": "在线",
+    "offline": "离线",
+    "away": "离开",
+    "busy": "忙碌"
+  },
+  "badges": {
+    "verified": "已验证",
+    "official": "官方",
+    "moderator": "管理员",
+    "contributor": "贡献者",
+    "earlyAdopter": "早期用户",
+    "premium": "高级会员"
+  }
+}
+

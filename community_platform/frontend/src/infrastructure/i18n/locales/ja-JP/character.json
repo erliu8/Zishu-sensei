@@ -1,0 +1,171 @@
+{
+  "title": {
+    "characters": "キャラクター",
+    "createCharacter": "キャラクターを作成",
+    "editCharacter": "キャラクターを編集",
+    "characterDetail": "キャラクター詳細",
+    "myCharacters": "マイキャラクター",
+    "popularCharacters": "人気のキャラクター",
+    "gallery": "ギャラリー",
+    "customization": "カスタマイズ"
+  },
+  "fields": {
+    "name": "名前",
+    "displayName": "表示名",
+    "description": "説明",
+    "personality": "性格",
+    "background": "バックストーリー",
+    "avatar": "アバター",
+    "coverImage": "カバー画像",
+    "voice": "音声",
+    "model": "モデル",
+    "tags": "タグ",
+    "category": "カテゴリ",
+    "visibility": "公開範囲",
+    "status": "ステータス"
+  },
+  "categories": {
+    "all": "すべて",
+    "anime": "アニメ",
+    "game": "ゲーム",
+    "virtual": "バーチャルアイドル",
+    "historical": "歴史上の人物",
+    "fictional": "フィクション",
+    "assistant": "アシスタント",
+    "companion": "コンパニオン",
+    "teacher": "先生",
+    "other": "その他"
+  },
+  "personality": {
+    "friendly": "フレンドリー",
+    "serious": "真面目",
+    "playful": "遊び心がある",
+    "calm": "冷静",
+    "energetic": "エネルギッシュ",
+    "shy": "恥ずかしがり",
+    "confident": "自信がある",
+    "mysterious": "ミステリアス",
+    "caring": "思いやりがある",
+    "professional": "プロフェッショナル"
+  },
+  "attributes": {
+    "age": "年齢",
+    "gender": "性別",
+    "height": "身長",
+    "occupation": "職業",
+    "hobbies": "趣味",
+    "likes": "好きなもの",
+    "dislikes": "嫌いなもの",
+    "specialSkills": "特技"
+  },
+  "actions": {
+    "create": "キャラクターを作成",
+    "edit": "編集",
+    "delete": "削除",
+    "duplicate": "複製",
+    "share": "共有",
+    "favorite": "お気に入り",
+    "unfavorite": "お気に入り解除",
+    "chat": "会話を始める",
+    "customize": "カスタマイズ",
+    "export": "エクスポート",
+    "import": "インポート",
+    "publish": "公開",
+    "unpublish": "非公開"
+  },
+  "customization": {
+    "appearance": "外見",
+    "voice": "音声",
+    "personality": "性格",
+    "behavior": "行動",
+    "knowledge": "知識ベース",
+    "prompts": "プロンプト",
+    "responses": "応答スタイル",
+    "emotions": "感情表現"
+  },
+  "voice": {
+    "select": "音声を選択",
+    "preview": "プレビュー",
+    "upload": "音声をアップロード",
+    "pitch": "ピッチ",
+    "speed": "速度",
+    "volume": "音量",
+    "emotion": "感情"
+  },
+  "stats": {
+    "chats": "{count}会話",
+    "favorites": "{count}お気に入り",
+    "shares": "{count}共有",
+    "rating": "評価{rating}",
+    "downloads": "{count}ダウンロード",
+    "created": "{date}作成",
+    "updated": "{date}更新"
+  },
+  "sort": {
+    "popular": "人気",
+    "latest": "最新",
+    "trending": "トレンド",
+    "mostUsed": "最も使用",
+    "rating": "評価順",
+    "alphabetical": "アルファベット順"
+  },
+  "filter": {
+    "category": "カテゴリ",
+    "personality": "性格",
+    "voice": "音声",
+    "verified": "検証済み",
+    "official": "公式",
+    "community": "コミュニティ"
+  },
+  "messages": {
+    "createSuccess": "キャラクターを作成しました",
+    "createFailed": "キャラクターの作成に失敗しました",
+    "updateSuccess": "キャラクターを更新しました",
+    "updateFailed": "キャラクターの更新に失敗しました",
+    "deleteSuccess": "キャラクターを削除しました",
+    "deleteFailed": "キャラクターの削除に失敗しました",
+    "favoriteSuccess": "お気に入りに追加しました",
+    "unfavoriteSuccess": "お気に入りから削除しました",
+    "shareSuccess": "共有しました",
+    "exportSuccess": "エクスポートしました",
+    "importSuccess": "インポートしました",
+    "notFound": "キャラクターが見つかりません",
+    "deleted": "このキャラクターは削除されました"
+  },
+  "validation": {
+    "nameRequired": "キャラクター名を入力してください",
+    "nameLength": "名前は2〜50文字で入力してください",
+    "displayNameLength": "表示名は2〜50文字で入力してください",
+    "descriptionRequired": "説明を入力してください",
+    "descriptionLength": "説明は20文字以上で入力してください",
+    "personalityRequired": "性格を選択してください",
+    "categoryRequired": "カテゴリを選択してください",
+    "avatarRequired": "アバターをアップロードしてください",
+    "tagsMax": "タグは最大10個まで追加できます"
+  },
+  "confirm": {
+    "delete": "このキャラクターを削除してもよろしいですか？",
+    "unpublish": "このキャラクターを非公開にしてもよろしいですか？",
+    "discard": "保存されていない変更を破棄してもよろしいですか？"
+  },
+  "empty": {
+    "noCharacters": "まだキャラクターがありません",
+    "noResults": "キャラクターが見つかりませんでした",
+    "createFirst": "最初のキャラクターを作成しましょう"
+  },
+  "tabs": {
+    "overview": "概要",
+    "personality": "性格",
+    "appearance": "外見",
+    "voice": "音声",
+    "knowledge": "知識",
+    "settings": "設定"
+  },
+  "tips": {
+    "personality": "性格の特徴を記述して会話スタイルに影響を与える",
+    "background": "詳細なバックストーリーでキャラクターをより生き生きとさせる",
+    "voice": "適切な音声を選択してインタラクション体験を向上",
+    "knowledge": "キャラクターに関連する知識と情報を追加"
+  }
+}
+

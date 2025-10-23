@@ -1,0 +1,62 @@
+{
+  "title": "通知",
+  "tabs": {
+    "all": "全部",
+    "unread": "未读",
+    "mentions": "提及",
+    "replies": "回复",
+    "likes": "点赞",
+    "follows": "关注",
+    "system": "系统"
+  },
+  "types": {
+    "like": "{user} 赞了你的{type}",
+    "comment": "{user} 评论了你的{type}",
+    "reply": "{user} 回复了你的评论",
+    "mention": "{user} 在{type}中提到了你",
+    "follow": "{user} 关注了你",
+    "system": "系统通知",
+    "download": "{user} 下载了你的{type}",
+    "favorite": "{user} 收藏了你的{type}",
+    "share": "{user} 分享了你的{type}"
+  },
+  "content": {
+    "post": "帖子",
+    "adapter": "适配器",
+    "character": "角色",
+    "comment": "评论"
+  },
+  "actions": {
+    "markRead": "标记为已读",
+    "markUnread": "标记为未读",
+    "markAllRead": "全部标记为已读",
+    "delete": "删除",
+    "deleteAll": "清空全部",
+    "viewAll": "查看全部"
+  },
+  "empty": {
+    "all": "暂无通知",
+    "unread": "暂无未读通知",
+    "filter": "该分类下暂无通知"
+  },
+  "settings": {
+    "title": "通知设置",
+    "email": "邮件通知",
+    "push": "推送通知",
+    "preferences": {
+      "title": "通知偏好",
+      "likes": "点赞通知",
+      "comments": "评论通知",
+      "follows": "关注通知",
+      "mentions": "提及通知",
+      "system": "系统通知"
+    }
+  },
+  "messages": {
+    "markedRead": "已标记为已读",
+    "markedUnread": "已标记为未读",
+    "deleted": "通知已删除",
+    "cleared": "已清空所有通知"
+  }
+}
+

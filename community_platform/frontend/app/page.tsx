@@ -1,103 +1,97 @@
-import Image from "next/image";
+/**
+ * 首页 - Zishu 社区平台
+ * 展示精选内容、热门帖子、最新适配器和热门角色
+ */
 
-export default function Home() {
+import { Suspense } from 'react';
+import { FeaturedSection, TrendingPosts, LatestAdapters, TrendingCharacters } from '@/features/home/components';
+import { LoadingSpinner } from '@/shared/components/ui/loading-spinner';
+import { Separator } from '@/shared/components/ui/separator';
+
+// 示例精选内容数据（实际应该从API获取）
+const featuredItems = [
+  {
+    id: '1',
+    title: 'Zishu AI 社区平台正式上线',
+    description: '一个全新的AI角色社区平台，让你轻松创建、分享和探索AI角色',
+    image: '/images/featured/main.jpg',
+    type: 'post' as const,
+    link: '/posts/1',
+    badge: '置顶',
+  },
+  {
+    id: '2',
+    title: '智能对话适配器 v2.0',
+    description: '全新升级的对话适配器，支持多轮对话和上下文理解',
+    image: '/images/featured/adapter.jpg',
+    type: 'adapter' as const,
+    link: '/adapters/2',
+  },
+  {
+    id: '3',
+    title: '小艾 - 智能助手角色',
+    description: '温柔贴心的AI助手，随时为你提供帮助',
+    image: '/images/featured/character.jpg',
+    type: 'character' as const,
+    link: '/characters/3',
+  },
+];
+
+export default function HomePage() {
   return (
-    <div className="font-sans grid grid-rows-[20px_1fr_20px] items-center justify-items-center min-h-screen p-8 pb-20 gap-16 sm:p-20">
-      <main className="flex flex-col gap-[32px] row-start-2 items-center sm:items-start">
-        <Image
-          className="dark:invert"
-          src="/next.svg"
-          alt="Next.js logo"
-          width={180}
-          height={38}
-          priority
-        />
-        <ol className="font-mono list-inside list-decimal text-sm/6 text-center sm:text-left">
-          <li className="mb-2 tracking-[-.01em]">
-            Get started by editing{" "}
-            <code className="bg-black/[.05] dark:bg-white/[.06] font-mono font-semibold px-1 py-0.5 rounded">
-              app/page.tsx
-            </code>
-            .
-          </li>
-          <li className="tracking-[-.01em]">
-            Save and see your changes instantly.
-          </li>
-        </ol>
+    <div className="min-h-screen">
+      {/* 主内容容器 */}
+      <div className="container mx-auto px-4 py-8 max-w-7xl">
+        {/* 精选推荐区 */}
+        <section className="mb-12">
+          <Suspense fallback={
+            <div className="flex items-center justify-center py-12">
+              <LoadingSpinner size="lg" />
+            </div>
+          }>
+            <FeaturedSection items={featuredItems} />
+          </Suspense>
+        </section>
 
-        <div className="flex gap-4 items-center flex-col sm:flex-row">
-          <a
-            className="rounded-full border border-solid border-transparent transition-colors flex items-center justify-center bg-foreground text-background gap-2 hover:bg-[#383838] dark:hover:bg-[#ccc] font-medium text-sm sm:text-base h-10 sm:h-12 px-4 sm:px-5 sm:w-auto"
-            href="https://vercel.com/new?utm_source=create-next-app&utm_medium=appdir-template-tw&utm_campaign=create-next-app"
-            target="_blank"
-            rel="noopener noreferrer"
-          >
-            <Image
-              className="dark:invert"
-              src="/vercel.svg"
-              alt="Vercel logomark"
-              width={20}
-              height={20}
-            />
-            Deploy now
-          </a>
-          <a
-            className="rounded-full border border-solid border-black/[.08] dark:border-white/[.145] transition-colors flex items-center justify-center hover:bg-[#f2f2f2] dark:hover:bg-[#1a1a1a] hover:border-transparent font-medium text-sm sm:text-base h-10 sm:h-12 px-4 sm:px-5 w-full sm:w-auto md:w-[158px]"
-            href="https://nextjs.org/docs?utm_source=create-next-app&utm_medium=appdir-template-tw&utm_campaign=create-next-app"
-            target="_blank"
-            rel="noopener noreferrer"
-          >
-            Read our docs
-          </a>
-        </div>
-      </main>
-      <footer className="row-start-3 flex gap-[24px] flex-wrap items-center justify-center">
-        <a
-          className="flex items-center gap-2 hover:underline hover:underline-offset-4"
-          href="https://nextjs.org/learn?utm_source=create-next-app&utm_medium=appdir-template-tw&utm_campaign=create-next-app"
-          target="_blank"
-          rel="noopener noreferrer"
-        >
-          <Image
-            aria-hidden
-            src="/file.svg"
-            alt="File icon"
-            width={16}
-            height={16}
-          />
-          Learn
-        </a>
-        <a
-          className="flex items-center gap-2 hover:underline hover:underline-offset-4"
-          href="https://vercel.com/templates?framework=next.js&utm_source=create-next-app&utm_medium=appdir-template-tw&utm_campaign=create-next-app"
-          target="_blank"
-          rel="noopener noreferrer"
-        >
-          <Image
-            aria-hidden
-            src="/window.svg"
-            alt="Window icon"
-            width={16}
-            height={16}
-          />
-          Examples
-        </a>
-        <a
-          className="flex items-center gap-2 hover:underline hover:underline-offset-4"
-          href="https://nextjs.org?utm_source=create-next-app&utm_medium=appdir-template-tw&utm_campaign=create-next-app"
-          target="_blank"
-          rel="noopener noreferrer"
-        >
-          <Image
-            aria-hidden
-            src="/globe.svg"
-            alt="Globe icon"
-            width={16}
-            height={16}
-          />
-          Go to nextjs.org →
-        </a>
-      </footer>
+        <Separator className="my-12" />
+
+        {/* 热门帖子区 */}
+        <section className="mb-12">
+          <Suspense fallback={
+            <div className="flex items-center justify-center py-12">
+              <LoadingSpinner size="lg" />
+            </div>
+          }>
+            <TrendingPosts />
+          </Suspense>
+        </section>
+
+        <Separator className="my-12" />
+
+        {/* 最新适配器区 */}
+        <section className="mb-12">
+          <Suspense fallback={
+            <div className="flex items-center justify-center py-12">
+              <LoadingSpinner size="lg" />
+            </div>
+          }>
+            <LatestAdapters />
+          </Suspense>
+        </section>
+
+        <Separator className="my-12" />
+
+        {/* 热门角色区 */}
+        <section className="mb-12">
+          <Suspense fallback={
+            <div className="flex items-center justify-center py-12">
+              <LoadingSpinner size="lg" />
+            </div>
+          }>
+            <TrendingCharacters />
+          </Suspense>
+        </section>
+      </div>
     </div>
   );
 }

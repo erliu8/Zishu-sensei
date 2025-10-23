@@ -1,0 +1,54 @@
+{
+  "required": "{field}不能为空",
+  "invalid": "{field}格式不正确",
+  "email": {
+    "invalid": "请输入有效的邮箱地址",
+    "required": "邮箱地址不能为空"
+  },
+  "password": {
+    "required": "密码不能为空",
+    "tooShort": "密码长度至少为 {min} 个字符",
+    "tooLong": "密码长度不能超过 {max} 个字符",
+    "weak": "密码强度不足，请包含大小写字母、数字和特殊字符",
+    "mismatch": "两次输入的密码不一致"
+  },
+  "username": {
+    "required": "用户名不能为空",
+    "tooShort": "用户名长度至少为 {min} 个字符",
+    "tooLong": "用户名长度不能超过 {max} 个字符",
+    "invalid": "用户名只能包含字母、数字、下划线和连字符",
+    "taken": "该用户名已被使用"
+  },
+  "title": {
+    "required": "标题不能为空",
+    "tooShort": "标题长度至少为 {min} 个字符",
+    "tooLong": "标题长度不能超过 {max} 个字符"
+  },
+  "content": {
+    "required": "内容不能为空",
+    "tooShort": "内容长度至少为 {min} 个字符",
+    "tooLong": "内容长度不能超过 {max} 个字符"
+  },
+  "url": {
+    "invalid": "请输入有效的网址"
+  },
+  "number": {
+    "invalid": "请输入有效的数字",
+    "min": "数值不能小于 {min}",
+    "max": "数值不能大于 {max}"
+  },
+  "file": {
+    "required": "请选择文件",
+    "tooLarge": "文件大小不能超过 {max}",
+    "invalidType": "不支持的文件类型，仅支持：{types}"
+  },
+  "date": {
+    "invalid": "请选择有效的日期",
+    "past": "日期不能早于今天",
+    "future": "日期不能晚于今天"
+  },
+  "terms": {
+    "required": "请同意服务条款和隐私政策"
+  }
+}
+

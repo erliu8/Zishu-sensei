@@ -1,0 +1,383 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+/* 导入其他样式 */
+@import './variables.css';
+@import './animations.css';
+@import './themes/light.css';
+@import './themes/dark.css';
+@import './themes/custom.css';
+
+/* 基础样式重置 */
+@layer base {
+  * {
+    @apply border-border;
+  }
+
+  html {
+    @apply scroll-smooth;
+    -webkit-font-smoothing: antialiased;
+    -moz-osx-font-smoothing: grayscale;
+  }
+
+  body {
+    @apply bg-background text-foreground;
+    font-feature-settings:
+      'rlig' 1,
+      'calt' 1;
+  }
+
+  /* 标题 */
+  h1,
+  h2,
+  h3,
+  h4,
+  h5,
+  h6 {
+    @apply font-semibold tracking-tight;
+  }
+
+  h1 {
+    @apply text-4xl lg:text-5xl;
+  }
+
+  h2 {
+    @apply text-3xl lg:text-4xl;
+  }
+
+  h3 {
+    @apply text-2xl lg:text-3xl;
+  }
+
+  h4 {
+    @apply text-xl lg:text-2xl;
+  }
+
+  h5 {
+    @apply text-lg lg:text-xl;
+  }
+
+  h6 {
+    @apply text-base lg:text-lg;
+  }
+
+  /* 段落 */
+  p {
+    @apply leading-7;
+  }
+
+  /* 链接 */
+  a {
+    @apply text-primary underline-offset-4 hover:underline;
+  }
+
+  /* 列表 */
+  ul,
+  ol {
+    @apply pl-6;
+  }
+
+  ul {
+    @apply list-disc;
+  }
+
+  ol {
+    @apply list-decimal;
+  }
+
+  /* 引用 */
+  blockquote {
+    @apply border-primary border-l-4 pl-4 italic;
+  }
+
+  /* 代码 */
+  code {
+    @apply bg-muted relative rounded px-[0.3rem] py-[0.2rem] font-mono text-sm;
+  }
+
+  pre {
+    @apply bg-muted overflow-x-auto rounded-lg p-4;
+  }
+
+  pre code {
+    @apply bg-transparent p-0;
+  }
+
+  /* 表格 */
+  table {
+    @apply w-full border-collapse;
+  }
+
+  th {
+    @apply border-border bg-muted border-b px-4 py-2 text-left font-semibold;
+  }
+
+  td {
+    @apply border-border border-b px-4 py-2;
+  }
+
+  /* 表单元素 */
+  input[type='text'],
+  input[type='email'],
+  input[type='password'],
+  input[type='number'],
+  input[type='search'],
+  input[type='tel'],
+  input[type='url'],
+  textarea,
+  select {
+    @apply border-input bg-background ring-offset-background rounded-md border px-3 py-2 text-sm;
+    @apply placeholder:text-muted-foreground;
+    @apply focus-visible:ring-ring focus-visible:ring-2 focus-visible:ring-offset-2 focus-visible:outline-none;
+    @apply disabled:cursor-not-allowed disabled:opacity-50;
+  }
+
+  /* 按钮重置 */
+  button {
+    @apply focus-visible:ring-ring focus-visible:ring-2 focus-visible:ring-offset-2 focus-visible:outline-none;
+  }
+
+  /* 图片 */
+  img {
+    @apply h-auto max-w-full;
+  }
+
+  /* HR */
+  hr {
+    @apply border-border;
+  }
+
+  /* 选择文本 */
+  ::selection {
+    @apply bg-primary/20;
+  }
+
+  /* 滚动条样式 */
+  ::-webkit-scrollbar {
+    @apply h-2 w-2;
+  }
+
+  ::-webkit-scrollbar-track {
+    @apply bg-muted;
+  }
+
+  ::-webkit-scrollbar-thumb {
+    @apply bg-muted-foreground/30 rounded-full;
+  }
+
+  ::-webkit-scrollbar-thumb:hover {
+    @apply bg-muted-foreground/50;
+  }
+}
+
+/* 自定义组件样式 */
+@layer components {
+  /* 容器 */
+  .container-custom {
+    @apply container mx-auto px-4 sm:px-6 lg:px-8;
+  }
+
+  /* 卡片 */
+  .card {
+    @apply bg-card text-card-foreground rounded-lg border shadow-sm;
+  }
+
+  .card-header {
+    @apply flex flex-col space-y-1.5 p-6;
+  }
+
+  .card-content {
+    @apply p-6 pt-0;
+  }
+
+  .card-footer {
+    @apply flex items-center p-6 pt-0;
+  }
+
+  /* 按钮 */
+  .btn {
+    @apply inline-flex items-center justify-center rounded-md text-sm font-medium transition-colors;
+    @apply focus-visible:ring-ring focus-visible:ring-2 focus-visible:ring-offset-2 focus-visible:outline-none;
+    @apply disabled:pointer-events-none disabled:opacity-50;
+  }
+
+  .btn-primary {
+    @apply btn bg-primary text-primary-foreground hover:bg-primary/90;
+  }
+
+  .btn-secondary {
+    @apply btn bg-secondary text-secondary-foreground hover:bg-secondary/80;
+  }
+
+  .btn-outline {
+    @apply btn border-input bg-background hover:bg-accent hover:text-accent-foreground border;
+  }
+
+  .btn-ghost {
+    @apply btn hover:bg-accent hover:text-accent-foreground;
+  }
+
+  .btn-link {
+    @apply btn text-primary underline-offset-4 hover:underline;
+  }
+
+  .btn-destructive {
+    @apply btn bg-destructive text-destructive-foreground hover:bg-destructive/90;
+  }
+
+  /* Badge */
+  .badge {
+    @apply inline-flex items-center rounded-full px-2.5 py-0.5 text-xs font-semibold transition-colors;
+  }
+
+  .badge-default {
+    @apply badge bg-primary text-primary-foreground hover:bg-primary/80;
+  }
+
+  .badge-secondary {
+    @apply badge bg-secondary text-secondary-foreground hover:bg-secondary/80;
+  }
+
+  .badge-outline {
+    @apply badge border-input border;
+  }
+
+  /* 输入框 */
+  .input {
+    @apply border-input bg-background flex h-10 w-full rounded-md border px-3 py-2 text-sm;
+    @apply ring-offset-background file:border-0 file:bg-transparent file:text-sm file:font-medium;
+    @apply placeholder:text-muted-foreground;
+    @apply focus-visible:ring-ring focus-visible:ring-2 focus-visible:ring-offset-2 focus-visible:outline-none;
+    @apply disabled:cursor-not-allowed disabled:opacity-50;
+  }
+
+  /* 加载动画 */
+  .spinner {
+    @apply animate-spin rounded-full border-2 border-current border-t-transparent;
+  }
+
+  /* 骨架屏 */
+  .skeleton {
+    @apply bg-muted animate-pulse rounded-md;
+  }
+
+  /* 遮罩层 */
+  .overlay {
+    @apply bg-background/80 fixed inset-0 z-50 backdrop-blur-sm;
+  }
+
+  /* 渐变文字 */
+  .gradient-text {
+    @apply from-primary to-secondary bg-gradient-to-r bg-clip-text text-transparent;
+  }
+
+  /* 玻璃态 */
+  .glass {
+    @apply bg-background/80 backdrop-blur-md;
+  }
+
+  /* 悬浮卡片 */
+  .hover-card {
+    @apply transition-all duration-300 hover:-translate-y-1 hover:shadow-lg;
+  }
+}
+
+/* 工具类 */
+@layer utilities {
+  /* 文本截断 */
+  .text-truncate {
+    @apply overflow-hidden text-ellipsis whitespace-nowrap;
+  }
+
+  .text-truncate-2 {
+    display: -webkit-box;
+    -webkit-line-clamp: 2;
+    -webkit-box-orient: vertical;
+    overflow: hidden;
+  }
+
+  .text-truncate-3 {
+    display: -webkit-box;
+    -webkit-line-clamp: 3;
+    -webkit-box-orient: vertical;
+    overflow: hidden;
+  }
+
+  /* 隐藏滚动条 */
+  .scrollbar-hidden {
+    -ms-overflow-style: none;
+    scrollbar-width: none;
+  }
+
+  .scrollbar-hidden::-webkit-scrollbar {
+    display: none;
+  }
+
+  /* 屏幕阅读器专用 */
+  .sr-only {
+    position: absolute;
+    width: 1px;
+    height: 1px;
+    padding: 0;
+    margin: -1px;
+    overflow: hidden;
+    clip: rect(0, 0, 0, 0);
+    white-space: nowrap;
+    border-width: 0;
+  }
+
+  /* 焦点可见 */
+  .focus-ring {
+    @apply focus-visible:ring-ring focus-visible:ring-2 focus-visible:ring-offset-2 focus-visible:outline-none;
+  }
+
+  /* 平滑渐变 */
+  .smooth-gradient {
+    background: linear-gradient(
+      135deg,
+      hsl(var(--primary)) 0%,
+      hsl(var(--secondary)) 100%
+    );
+  }
+
+  /* 毛玻璃效果 */
+  .frosted-glass {
+    @apply bg-background/70 backdrop-blur-xl backdrop-saturate-150;
+  }
+
+  /* 响应式显示 */
+  .show-on-hover {
+    @apply opacity-0 transition-opacity group-hover:opacity-100;
+  }
+}
+
+/* 打印样式 */
+@media print {
+  body {
+    @apply bg-white text-black;
+  }
+
+  .no-print {
+    display: none !important;
+  }
+
+  a[href]:after {
+    content: ' (' attr(href) ')';
+  }
+
+  abbr[title]:after {
+    content: ' (' attr(title) ')';
+  }
+}
+
+/* 无障碍 */
+@media (prefers-reduced-motion: reduce) {
+  *,
+  *::before,
+  *::after {
+    animation-duration: 0.01ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 0.01ms !important;
+  }
+}

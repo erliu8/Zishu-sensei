@@ -1,0 +1,31 @@
+#!/usr/bin/env sh
+. "$(dirname -- "$0")/_/husky.sh"
+
+echo "🚀 Git pre-push hook 开始运行..."
+echo ""
+
+# 推送前进行类型检查
+echo "🔍 正在运行 TypeScript 类型检查..."
+npm run type-check
+
+if [ $? -ne 0 ]; then
+  echo "❌ TypeScript 类型检查失败，请修复类型错误后重新推送"
+  exit 1
+fi
+
+# 推送前运行 lint
+echo "🔍 正在运行 ESLint 代码检查..."
+npm run lint
+
+if [ $? -ne 0 ]; then
+  echo "❌ ESLint 检查失败，请修复 lint 错误后重新推送"
+  exit 1
+fi
+
+# 可选：运行测试
+# echo "🧪 正在运行单元测试..."
+# npm run test
+
+echo "✅ Pre-push 检查通过！"
+echo ""
+

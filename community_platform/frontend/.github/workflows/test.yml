@@ -1,0 +1,284 @@
+name: E2E Tests
+
+on:
+  push:
+    branches: [main, develop]
+  pull_request:
+    branches: [main, develop]
+  schedule:
+    # 每天凌晨 2 点运行一次
+    - cron: '0 2 * * *'
+  workflow_dispatch:
+
+concurrency:
+  group: ${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  # E2E 测试
+  e2e-test:
+    name: E2E 测试
+    runs-on: ubuntu-latest
+    timeout-minutes: 30
+    strategy:
+      fail-fast: false
+      matrix:
+        browser: [chromium, firefox, webkit]
+        shard: [1, 2, 3, 4]
+    steps:
+      - name: 检出代码
+        uses: actions/checkout@v4
+
+      - name: 设置 Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: '20'
+          cache: 'npm'
+
+      - name: 安装依赖
+        run: npm ci
+
+      - name: 安装 Playwright 浏览器
+        run: npx playwright install --with-deps ${{ matrix.browser }}
+
+      - name: 构建应用
+        run: npm run build
+        env:
+          NODE_ENV: test
+
+      - name: 启动应用
+        run: npm run start &
+        env:
+          PORT: 3000
+
+      - name: 等待应用启动
+        run: |
+          for i in {1..30}; do
+            if curl -f http://localhost:3000; then
+              echo "✅ 应用启动成功"
+              exit 0
+            fi
+            echo "等待应用启动... ($i/30)"
+            sleep 2
+          done
+          echo "❌ 应用启动超时"
+          exit 1
+
+      - name: 运行 E2E 测试
+        run: npx playwright test --project=${{ matrix.browser }} --shard=${{ matrix.shard }}/4
+        env:
+          BASE_URL: http://localhost:3000
+          PWDEBUG: 0
+
+      - name: 上传测试报告
+        uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: playwright-report-${{ matrix.browser }}-${{ matrix.shard }}
+          path: playwright-report/
+          retention-days: 30
+
+      - name: 上传测试结果
+        uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: test-results-${{ matrix.browser }}-${{ matrix.shard }}
+          path: test-results/
+          retention-days: 30
+
+  # 视觉回归测试
+  visual-regression:
+    name: 视觉回归测试
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+    steps:
+      - name: 检出代码
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - name: 设置 Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: '20'
+          cache: 'npm'
+
+      - name: 安装依赖
+        run: npm ci
+
+      - name: 安装 Playwright
+        run: npx playwright install --with-deps chromium
+
+      - name: 构建应用
+        run: npm run build
+
+      - name: 启动应用
+        run: npm run start &
+        env:
+          PORT: 3000
+
+      - name: 等待应用启动
+        run: |
+          for i in {1..30}; do
+            if curl -f http://localhost:3000; then
+              exit 0
+            fi
+            sleep 2
+          done
+          exit 1
+
+      - name: 运行视觉回归测试
+        run: npx playwright test --project=chromium --grep=@visual
+
+      - name: 上传截图对比
+        uses: actions/upload-artifact@v4
+        if: failure()
+        with:
+          name: visual-regression-diff
+          path: test-results/
+          retention-days: 30
+
+  # 可访问性测试
+  accessibility-test:
+    name: 可访问性测试
+    runs-on: ubuntu-latest
+    steps:
+      - name: 检出代码
+        uses: actions/checkout@v4
+
+      - name: 设置 Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: '20'
+          cache: 'npm'
+
+      - name: 安装依赖
+        run: npm ci
+
+      - name: 构建应用
+        run: npm run build
+
+      - name: 启动应用
+        run: npm run start &
+        env:
+          PORT: 3000
+
+      - name: 等待应用启动
+        run: |
+          for i in {1..30}; do
+            if curl -f http://localhost:3000; then
+              exit 0
+            fi
+            sleep 2
+          done
+          exit 1
+
+      - name: 运行可访问性测试
+        run: npx playwright test --grep=@a11y
+
+      - name: 生成可访问性报告
+        if: always()
+        run: |
+          echo "📊 可访问性测试完成"
+
+  # 性能测试
+  performance-test:
+    name: 性能测试
+    runs-on: ubuntu-latest
+    steps:
+      - name: 检出代码
+        uses: actions/checkout@v4
+
+      - name: 设置 Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: '20'
+          cache: 'npm'
+
+      - name: 安装依赖
+        run: npm ci
+
+      - name: 构建应用
+        run: npm run build
+        env:
+          NODE_ENV: production
+
+      - name: 启动应用
+        run: npm run start &
+        env:
+          PORT: 3000
+
+      - name: 等待应用启动
+        run: |
+          for i in {1..30}; do
+            if curl -f http://localhost:3000; then
+              exit 0
+            fi
+            sleep 2
+          done
+          exit 1
+
+      - name: 安装 Lighthouse CI
+        run: npm install -g @lhci/cli@0.13.x
+
+      - name: 运行 Lighthouse
+        run: |
+          lhci autorun --upload.target=temporary-public-storage || echo "Lighthouse 测试完成"
+        env:
+          LHCI_GITHUB_APP_TOKEN: ${{ secrets.LHCI_GITHUB_APP_TOKEN }}
+
+      - name: 检查性能指标
+        run: |
+          echo "📊 性能测试完成"
+          echo "请检查 Lighthouse 报告"
+
+  # 测试报告汇总
+  test-summary:
+    name: 测试报告汇总
+    runs-on: ubuntu-latest
+    needs: [e2e-test, visual-regression, accessibility-test, performance-test]
+    if: always()
+    steps:
+      - name: 下载所有测试报告
+        uses: actions/download-artifact@v4
+        with:
+          path: all-reports
+
+      - name: 生成测试摘要
+        run: |
+          echo "## 🧪 E2E 测试报告" >> $GITHUB_STEP_SUMMARY
+          echo "" >> $GITHUB_STEP_SUMMARY
+          
+          if [[ "${{ needs.e2e-test.result }}" == "success" ]]; then
+            echo "✅ E2E 测试通过" >> $GITHUB_STEP_SUMMARY
+          else
+            echo "❌ E2E 测试失败" >> $GITHUB_STEP_SUMMARY
+          fi
+          
+          if [[ "${{ needs.visual-regression.result }}" == "success" ]]; then
+            echo "✅ 视觉回归测试通过" >> $GITHUB_STEP_SUMMARY
+          else
+            echo "❌ 视觉回归测试失败" >> $GITHUB_STEP_SUMMARY
+          fi
+          
+          if [[ "${{ needs.accessibility-test.result }}" == "success" ]]; then
+            echo "✅ 可访问性测试通过" >> $GITHUB_STEP_SUMMARY
+          else
+            echo "❌ 可访问性测试失败" >> $GITHUB_STEP_SUMMARY
+          fi
+          
+          if [[ "${{ needs.performance-test.result }}" == "success" ]]; then
+            echo "✅ 性能测试通过" >> $GITHUB_STEP_SUMMARY
+          else
+            echo "❌ 性能测试失败" >> $GITHUB_STEP_SUMMARY
+          fi
+
+      - name: 检查测试结果
+        run: |
+          if [[ "${{ contains(needs.*.result, 'failure') }}" == "true" ]]; then
+            echo "❌ 部分测试失败"
+            exit 1
+          else
+            echo "✅ 所有测试通过"
+          fi
+

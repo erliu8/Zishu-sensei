@@ -1,0 +1,255 @@
+name: Release
+
+on:
+  push:
+    tags:
+      - 'v*.*.*'
+  workflow_dispatch:
+    inputs:
+      version:
+        description: '发布版本号 (例如: v1.0.0)'
+        required: true
+        type: string
+
+jobs:
+  # 验证版本号
+  validate:
+    name: 验证版本
+    runs-on: ubuntu-latest
+    outputs:
+      version: ${{ steps.get-version.outputs.version }}
+    steps:
+      - name: 检出代码
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - name: 获取版本号
+        id: get-version
+        run: |
+          if [[ "${{ github.event_name }}" == "workflow_dispatch" ]]; then
+            VERSION="${{ inputs.version }}"
+          else
+            VERSION=${GITHUB_REF#refs/tags/}
+          fi
+          
+          # 验证版本号格式
+          if [[ ! $VERSION =~ ^v[0-9]+\.[0-9]+\.[0-9]+$ ]]; then
+            echo "❌ 无效的版本号格式: $VERSION"
+            echo "版本号必须符合 semantic versioning (例如: v1.0.0)"
+            exit 1
+          fi
+          
+          echo "version=$VERSION" >> $GITHUB_OUTPUT
+          echo "✅ 版本号验证通过: $VERSION"
+
+      - name: 检查 tag 是否存在
+        run: |
+          VERSION="${{ steps.get-version.outputs.version }}"
+          if git rev-parse "$VERSION" >/dev/null 2>&1; then
+            if [[ "${{ github.event_name }}" == "workflow_dispatch" ]]; then
+              echo "❌ Tag $VERSION 已存在"
+              exit 1
+            fi
+          fi
+
+  # 构建 Changelog
+  changelog:
+    name: 生成 Changelog
+    runs-on: ubuntu-latest
+    needs: validate
+    outputs:
+      changelog: ${{ steps.generate.outputs.changelog }}
+    steps:
+      - name: 检出代码
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - name: 生成 Changelog
+        id: generate
+        run: |
+          VERSION="${{ needs.validate.outputs.version }}"
+          PREVIOUS_TAG=$(git describe --abbrev=0 --tags ${VERSION}^ 2>/dev/null || echo "")
+          
+          if [ -z "$PREVIOUS_TAG" ]; then
+            COMMITS=$(git log --pretty=format:"- %s (%h)" --no-merges)
+          else
+            COMMITS=$(git log ${PREVIOUS_TAG}..HEAD --pretty=format:"- %s (%h)" --no-merges)
+          fi
+          
+          # 分类提交
+          FEATURES=$(echo "$COMMITS" | grep -i "^- feat" || true)
+          FIXES=$(echo "$COMMITS" | grep -i "^- fix" || true)
+          DOCS=$(echo "$COMMITS" | grep -i "^- docs" || true)
+          CHORES=$(echo "$COMMITS" | grep -i "^- chore" || true)
+          OTHERS=$(echo "$COMMITS" | grep -v -i "^- feat\|^- fix\|^- docs\|^- chore" || true)
+          
+          # 生成 Changelog
+          CHANGELOG="## 🎉 Release ${VERSION}\n\n"
+          
+          if [ -n "$FEATURES" ]; then
+            CHANGELOG="${CHANGELOG}### ✨ 新功能\n${FEATURES}\n\n"
+          fi
+          
+          if [ -n "$FIXES" ]; then
+            CHANGELOG="${CHANGELOG}### 🐛 Bug 修复\n${FIXES}\n\n"
+          fi
+          
+          if [ -n "$DOCS" ]; then
+            CHANGELOG="${CHANGELOG}### 📝 文档更新\n${DOCS}\n\n"
+          fi
+          
+          if [ -n "$CHORES" ]; then
+            CHANGELOG="${CHANGELOG}### 🔧 其他更改\n${CHORES}\n\n"
+          fi
+          
+          if [ -n "$OTHERS" ]; then
+            CHANGELOG="${CHANGELOG}### 其他\n${OTHERS}\n\n"
+          fi
+          
+          CHANGELOG="${CHANGELOG}### 📦 发布信息\n"
+          CHANGELOG="${CHANGELOG}- 发布时间: $(date -u '+%Y-%m-%d %H:%M:%S UTC')\n"
+          CHANGELOG="${CHANGELOG}- 提交哈希: ${GITHUB_SHA:0:8}\n"
+          
+          if [ -n "$PREVIOUS_TAG" ]; then
+            CHANGELOG="${CHANGELOG}- 对比: [\`${PREVIOUS_TAG}...${VERSION}\`](https://github.com/${{ github.repository }}/compare/${PREVIOUS_TAG}...${VERSION})\n"
+          fi
+          
+          echo "changelog<<EOF" >> $GITHUB_OUTPUT
+          echo -e "$CHANGELOG" >> $GITHUB_OUTPUT
+          echo "EOF" >> $GITHUB_OUTPUT
+
+  # 更新版本号
+  bump-version:
+    name: 更新版本号
+    runs-on: ubuntu-latest
+    needs: [validate, changelog]
+    if: github.event_name == 'workflow_dispatch'
+    steps:
+      - name: 检出代码
+        uses: actions/checkout@v4
+        with:
+          token: ${{ secrets.GITHUB_TOKEN }}
+
+      - name: 设置 Git
+        run: |
+          git config user.name "github-actions[bot]"
+          git config user.email "github-actions[bot]@users.noreply.github.com"
+
+      - name: 更新 package.json
+        run: |
+          VERSION="${{ needs.validate.outputs.version }}"
+          VERSION_NUMBER=${VERSION#v}
+          
+          # 更新 package.json
+          npm version $VERSION_NUMBER --no-git-tag-version
+          
+          git add package.json package-lock.json
+          git commit -m "chore: bump version to $VERSION"
+          git push
+
+      - name: 创建 Tag
+        run: |
+          VERSION="${{ needs.validate.outputs.version }}"
+          git tag -a $VERSION -m "Release $VERSION"
+          git push origin $VERSION
+
+  # 构建发布包
+  build:
+    name: 构建发布包
+    runs-on: ubuntu-latest
+    needs: [validate, changelog]
+    steps:
+      - name: 检出代码
+        uses: actions/checkout@v4
+
+      - name: 设置 Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: '20'
+          cache: 'npm'
+
+      - name: 安装依赖
+        run: npm ci
+
+      - name: 运行测试
+        run: |
+          npm run test:coverage
+          npm run type-check
+          npm run lint
+
+      - name: 构建生产版本
+        run: npm run build
+        env:
+          NODE_ENV: production
+          BUILD_VERSION: ${{ needs.validate.outputs.version }}
+
+      - name: 打包构建产物
+        run: |
+          VERSION="${{ needs.validate.outputs.version }}"
+          tar -czf zishu-frontend-${VERSION}.tar.gz .next public package.json package-lock.json next.config.ts
+
+      - name: 上传发布包
+        uses: actions/upload-artifact@v4
+        with:
+          name: release-package
+          path: zishu-frontend-*.tar.gz
+          retention-days: 90
+
+  # 创建 GitHub Release
+  create-release:
+    name: 创建 GitHub Release
+    runs-on: ubuntu-latest
+    needs: [validate, changelog, build]
+    if: always() && needs.build.result == 'success'
+    permissions:
+      contents: write
+    steps:
+      - name: 检出代码
+        uses: actions/checkout@v4
+
+      - name: 下载发布包
+        uses: actions/download-artifact@v4
+        with:
+          name: release-package
+
+      - name: 创建 Release
+        uses: softprops/action-gh-release@v1
+        with:
+          tag_name: ${{ needs.validate.outputs.version }}
+          name: Release ${{ needs.validate.outputs.version }}
+          body: ${{ needs.changelog.outputs.changelog }}
+          draft: false
+          prerelease: false
+          files: |
+            zishu-frontend-*.tar.gz
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+
+  # 通知
+  notify:
+    name: 发布通知
+    runs-on: ubuntu-latest
+    needs: [validate, create-release]
+    if: always()
+    steps:
+      - name: 发送 Slack 通知
+        uses: 8398a7/action-slack@v3
+        if: secrets.SLACK_WEBHOOK != ''
+        with:
+          status: ${{ needs.create-release.result }}
+          text: |
+            🚀 新版本发布: ${{ needs.validate.outputs.version }}
+            状态: ${{ needs.create-release.result }}
+            查看: https://github.com/${{ github.repository }}/releases/tag/${{ needs.validate.outputs.version }}
+          webhook_url: ${{ secrets.SLACK_WEBHOOK }}
+        env:
+          SLACK_WEBHOOK_URL: ${{ secrets.SLACK_WEBHOOK }}
+
+      - name: 发送邮件通知
+        if: secrets.MAIL_SERVER != ''
+        run: |
+          echo "发送发布通知邮件..."
+          # 这里可以添加邮件发送逻辑
+

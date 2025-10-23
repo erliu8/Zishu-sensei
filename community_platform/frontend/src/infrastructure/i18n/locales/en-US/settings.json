@@ -1,0 +1,134 @@
+{
+  "title": {
+    "settings": "Settings",
+    "account": "Account Settings",
+    "profile": "Profile",
+    "privacy": "Privacy",
+    "notifications": "Notifications",
+    "appearance": "Appearance",
+    "language": "Language",
+    "security": "Security",
+    "preferences": "Preferences"
+  },
+  "account": {
+    "email": "Email",
+    "username": "Username",
+    "password": "Password",
+    "changePassword": "Change Password",
+    "currentPassword": "Current Password",
+    "newPassword": "New Password",
+    "confirmPassword": "Confirm Password",
+    "deleteAccount": "Delete Account",
+    "deactivateAccount": "Deactivate Account"
+  },
+  "profile": {
+    "displayName": "Display Name",
+    "bio": "Bio",
+    "avatar": "Avatar",
+    "coverImage": "Cover Image",
+    "website": "Website",
+    "location": "Location",
+    "birthday": "Birthday",
+    "gender": "Gender",
+    "uploadAvatar": "Upload Avatar",
+    "removeAvatar": "Remove Avatar",
+    "editProfile": "Edit Profile"
+  },
+  "privacy": {
+    "profileVisibility": "Profile Visibility",
+    "showEmail": "Show Email",
+    "showActivity": "Show Activity",
+    "allowMessages": "Allow Messages",
+    "allowComments": "Allow Comments",
+    "allowFollows": "Allow Follows",
+    "blockedUsers": "Blocked Users",
+    "mutedUsers": "Muted Users"
+  },
+  "notifications": {
+    "emailNotifications": "Email Notifications",
+    "pushNotifications": "Push Notifications",
+    "likes": "Likes",
+    "comments": "Comments",
+    "follows": "Follows",
+    "mentions": "Mentions",
+    "messages": "Messages",
+    "updates": "Updates",
+    "newsletter": "Newsletter"
+  },
+  "appearance": {
+    "theme": "Theme",
+    "light": "Light",
+    "dark": "Dark",
+    "auto": "Auto",
+    "colorScheme": "Color Scheme",
+    "fontSize": "Font Size",
+    "small": "Small",
+    "medium": "Medium",
+    "large": "Large",
+    "layout": "Layout",
+    "compact": "Compact",
+    "comfortable": "Comfortable",
+    "spacious": "Spacious"
+  },
+  "language": {
+    "select": "Select Language",
+    "zhCN": "简体中文",
+    "enUS": "English",
+    "jaJP": "日本語",
+    "auto": "Auto Detect"
+  },
+  "security": {
+    "twoFactor": "Two-Factor Authentication",
+    "enable2FA": "Enable 2FA",
+    "disable2FA": "Disable 2FA",
+    "activeSessions": "Active Sessions",
+    "loginHistory": "Login History",
+    "connectedApps": "Connected Apps",
+    "apiKeys": "API Keys"
+  },
+  "preferences": {
+    "autoplay": "Autoplay",
+    "showSpoilers": "Show Spoilers",
+    "nsfwContent": "Show NSFW Content",
+    "dataUsage": "Data Usage",
+    "downloadQuality": "Download Quality",
+    "defaultPrivacy": "Default Privacy",
+    "timezone": "Timezone"
+  },
+  "actions": {
+    "save": "Save",
+    "cancel": "Cancel",
+    "apply": "Apply",
+    "reset": "Reset",
+    "update": "Update",
+    "change": "Change",
+    "remove": "Remove",
+    "delete": "Delete"
+  },
+  "messages": {
+    "saveSuccess": "Settings saved",
+    "saveFailed": "Failed to save settings",
+    "updateSuccess": "Updated successfully",
+    "updateFailed": "Failed to update",
+    "passwordChanged": "Password changed",
+    "passwordMismatch": "Passwords do not match",
+    "invalidPassword": "Invalid password format",
+    "emailUpdated": "Email updated",
+    "profileUpdated": "Profile updated"
+  },
+  "validation": {
+    "required": "This field is required",
+    "invalidEmail": "Invalid email format",
+    "passwordLength": "Password must be at least 8 characters",
+    "passwordMatch": "Passwords do not match",
+    "usernameLength": "Username must be 3-20 characters",
+    "bioLength": "Bio cannot exceed 200 characters"
+  },
+  "confirm": {
+    "deleteAccount": "Are you sure you want to delete your account? This action cannot be undone.",
+    "deactivateAccount": "Are you sure you want to deactivate your account?",
+    "resetSettings": "Are you sure you want to reset all settings?",
+    "removeAvatar": "Are you sure you want to remove your avatar?"
+  }
+}
+

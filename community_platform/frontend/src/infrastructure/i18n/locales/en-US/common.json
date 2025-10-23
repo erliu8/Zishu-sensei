@@ -1,0 +1,146 @@
+{
+  "app": {
+    "name": "Zishu Community",
+    "slogan": "AI Characters, Created by You",
+    "description": "An open AI character community platform"
+  },
+  "navigation": {
+    "home": "Home",
+    "posts": "Posts",
+    "adapters": "Adapter Market",
+    "characters": "Characters",
+    "packaging": "Packaging",
+    "profile": "Profile",
+    "settings": "Settings",
+    "logout": "Logout"
+  },
+  "actions": {
+    "submit": "Submit",
+    "cancel": "Cancel",
+    "confirm": "Confirm",
+    "delete": "Delete",
+    "edit": "Edit",
+    "save": "Save",
+    "create": "Create",
+    "update": "Update",
+    "upload": "Upload",
+    "download": "Download",
+    "search": "Search",
+    "filter": "Filter",
+    "sort": "Sort",
+    "reset": "Reset",
+    "back": "Back",
+    "next": "Next",
+    "previous": "Previous",
+    "close": "Close",
+    "view": "View",
+    "share": "Share",
+    "copy": "Copy",
+    "loading": "Loading...",
+    "loadMore": "Load More",
+    "refresh": "Refresh",
+    "retry": "Retry"
+  },
+  "status": {
+    "success": "Success",
+    "error": "Error",
+    "warning": "Warning",
+    "info": "Info",
+    "pending": "Pending",
+    "processing": "Processing",
+    "completed": "Completed",
+    "failed": "Failed",
+    "cancelled": "Cancelled"
+  },
+  "time": {
+    "justNow": "Just now",
+    "minutesAgo": "{count} minutes ago",
+    "hoursAgo": "{count} hours ago",
+    "daysAgo": "{count} days ago",
+    "weeksAgo": "{count} weeks ago",
+    "monthsAgo": "{count} months ago",
+    "yearsAgo": "{count} years ago",
+    "today": "Today",
+    "yesterday": "Yesterday",
+    "tomorrow": "Tomorrow"
+  },
+  "pagination": {
+    "page": "Page {current}",
+    "of": "of {total}",
+    "itemsPerPage": "{count} per page",
+    "total": "{count} total",
+    "showing": "Showing {start} - {end} of {total}"
+  },
+  "empty": {
+    "noData": "No data",
+    "noResults": "No results found",
+    "noContent": "No content",
+    "emptyList": "Empty list"
+  },
+  "messages": {
+    "welcome": "Welcome to Zishu Community",
+    "greeting": "Hello, {name}",
+    "success": "Operation successful",
+    "error": "Operation failed",
+    "loading": "Loading...",
+    "saving": "Saving...",
+    "deleting": "Deleting...",
+    "uploading": "Uploading...",
+    "downloading": "Downloading..."
+  },
+  "confirm": {
+    "delete": "Are you sure you want to delete? This action cannot be undone.",
+    "cancel": "Are you sure you want to cancel? Unsaved changes will be lost.",
+    "leave": "Are you sure you want to leave? Unsaved changes will be lost."
+  },
+  "labels": {
+    "title": "Title",
+    "description": "Description",
+    "content": "Content",
+    "author": "Author",
+    "createdAt": "Created At",
+    "updatedAt": "Updated At",
+    "category": "Category",
+    "tags": "Tags",
+    "status": "Status",
+    "type": "Type",
+    "name": "Name",
+    "email": "Email",
+    "password": "Password",
+    "username": "Username",
+    "avatar": "Avatar",
+    "bio": "Bio",
+    "website": "Website",
+    "location": "Location",
+    "language": "Language"
+  },
+  "placeholders": {
+    "search": "Search...",
+    "enterTitle": "Enter title",
+    "enterContent": "Enter content",
+    "selectCategory": "Select category",
+    "selectOption": "Select an option",
+    "enterEmail": "Enter email",
+    "enterPassword": "Enter password"
+  },
+  "errors": {
+    "unknown": "Unknown error",
+    "networkError": "Network error, please check your connection",
+    "serverError": "Server error, please try again later",
+    "notFound": "Not found",
+    "unauthorized": "Unauthorized",
+    "forbidden": "Forbidden",
+    "badRequest": "Bad request"
+  },
+  "units": {
+    "views": "Views",
+    "likes": "Likes",
+    "comments": "Comments",
+    "shares": "Shares",
+    "downloads": "Downloads",
+    "followers": "Followers",
+    "following": "Following",
+    "posts": "Posts"
+  }
+}
+

@@ -1,0 +1,148 @@
+{
+  "title": {
+    "market": "アダプターマーケット",
+    "upload": "アダプターをアップロード",
+    "detail": "アダプター詳細",
+    "myAdapters": "マイアダプター",
+    "versions": "バージョン履歴",
+    "dependencies": "依存関係"
+  },
+  "fields": {
+    "name": "名前",
+    "description": "説明",
+    "version": "バージョン",
+    "author": "作成者",
+    "category": "カテゴリ",
+    "tags": "タグ",
+    "compatibility": "互換性",
+    "license": "ライセンス",
+    "repository": "リポジトリ",
+    "homepage": "ホームページ",
+    "documentation": "ドキュメント",
+    "changelog": "変更履歴",
+    "readme": "README"
+  },
+  "categories": {
+    "all": "すべて",
+    "model": "モデル",
+    "voice": "音声",
+    "emotion": "感情",
+    "behavior": "行動",
+    "integration": "統合",
+    "utility": "ユーティリティ",
+    "theme": "テーマ",
+    "other": "その他"
+  },
+  "compatibility": {
+    "title": "互換性",
+    "platform": "プラットフォーム",
+    "version": "バージョン要件",
+    "compatible": "互換性あり",
+    "incompatible": "互換性なし",
+    "untested": "未テスト",
+    "windows": "Windows",
+    "macos": "macOS",
+    "linux": "Linux"
+  },
+  "actions": {
+    "upload": "アップロード",
+    "download": "ダウンロード",
+    "install": "インストール",
+    "uninstall": "アンインストール",
+    "update": "更新",
+    "rate": "評価",
+    "review": "レビュー",
+    "report": "報告",
+    "fork": "Fork",
+    "star": "スター",
+    "unstar": "スター解除"
+  },
+  "stats": {
+    "downloads": "{count}ダウンロード",
+    "stars": "{count}スター",
+    "rating": "評価{rating}",
+    "reviews": "{count}レビュー",
+    "versions": "{count}バージョン",
+    "dependencies": "{count}依存関係",
+    "size": "サイズ{size}",
+    "updated": "{date}更新"
+  },
+  "sort": {
+    "popular": "人気",
+    "latest": "最新",
+    "trending": "トレンド",
+    "downloads": "ダウンロード数",
+    "rating": "評価",
+    "updated": "最近の更新"
+  },
+  "filter": {
+    "category": "カテゴリ",
+    "compatibility": "互換性",
+    "license": "ライセンス",
+    "verified": "検証済み",
+    "official": "公式",
+    "free": "無料"
+  },
+  "upload": {
+    "title": "アダプターをアップロード",
+    "selectFile": "ファイルを選択",
+    "dragDrop": "ファイルをドラッグ&ドロップ",
+    "fileFormat": "サポートされる形式",
+    "maxSize": "最大{size}MB",
+    "metadata": "メタデータ",
+    "fillInfo": "アダプター情報を入力",
+    "uploadFile": "ファイルをアップロード",
+    "publishing": "公開中...",
+    "success": "公開しました",
+    "failed": "公開に失敗しました"
+  },
+  "version": {
+    "current": "現在のバージョン",
+    "latest": "最新バージョン",
+    "history": "バージョン履歴",
+    "changelog": "変更履歴",
+    "release": "リリース",
+    "prerelease": "プレリリース",
+    "deprecated": "非推奨",
+    "yanked": "撤回済み"
+  },
+  "dependencies": {
+    "title": "依存関係",
+    "required": "必須",
+    "optional": "オプション",
+    "peer": "ピア",
+    "dev": "開発",
+    "none": "依存関係なし",
+    "tree": "依存関係ツリー",
+    "conflicts": "競合"
+  },
+  "messages": {
+    "downloadSuccess": "ダウンロードしました",
+    "downloadFailed": "ダウンロードに失敗しました",
+    "installSuccess": "インストールしました",
+    "installFailed": "インストールに失敗しました",
+    "uploadSuccess": "アップロードしました",
+    "uploadFailed": "アップロードに失敗しました",
+    "rateSuccess": "評価しました",
+    "reviewSuccess": "レビューを送信しました",
+    "notFound": "アダプターが見つかりません",
+    "incompatible": "現在のプラットフォームと互換性がありません"
+  },
+  "validation": {
+    "nameRequired": "アダプター名を入力してください",
+    "nameLength": "名前は3〜50文字で入力してください",
+    "versionRequired": "バージョンを入力してください",
+    "versionFormat": "バージョン形式が正しくありません（例：1.0.0）",
+    "descriptionRequired": "説明を入力してください",
+    "categoryRequired": "カテゴリを選択してください",
+    "fileRequired": "ファイルを選択してください",
+    "fileTooLarge": "ファイルサイズが制限を超えています",
+    "fileFormat": "サポートされていないファイル形式です"
+  },
+  "empty": {
+    "noAdapters": "まだアダプターがありません",
+    "noResults": "アダプターが見つかりませんでした",
+    "uploadFirst": "最初のアダプターをアップロード"
+  }
+}
+

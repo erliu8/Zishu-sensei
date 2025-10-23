@@ -1,0 +1,18 @@
+#!/usr/bin/env sh
+. "$(dirname -- "$0")/_/husky.sh"
+
+echo "🚀 Git pre-commit hook 开始运行..."
+echo ""
+
+# 运行 lint-staged
+echo "📝 正在运行代码格式化和 lint 检查..."
+npx lint-staged
+
+if [ $? -ne 0 ]; then
+  echo "❌ Lint-staged 检查失败，请修复错误后重新提交"
+  exit 1
+fi
+
+echo "✅ Pre-commit 检查通过！"
+echo ""
+

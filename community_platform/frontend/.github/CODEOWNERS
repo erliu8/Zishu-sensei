@@ -1,0 +1,52 @@
+# 代码所有者配置
+# 详细说明请参考: .github/BRANCH_PROTECTION_RULES.md
+
+# 全局所有者（默认）
+# * @zishu-team/frontend-leads
+
+# 核心配置文件
+package.json @tech-lead
+package-lock.json @tech-lead
+tsconfig.json @tech-lead
+next.config.ts @tech-lead
+tailwind.config.ts @tech-lead
+
+# CI/CD 配置
+.github/workflows/* @devops @tech-lead
+.github/CODEOWNERS @tech-lead
+Dockerfile @devops
+
+# 基础设施代码
+src/infrastructure/* @senior-engineer
+src/shared/utils/* @senior-engineer
+src/shared/hooks/* @senior-engineer
+
+# 安全相关
+src/features/auth/* @security-team @senior-engineer
+src/middleware/* @security-team
+
+# 核心功能模块
+src/features/post/* @post-module-owner
+src/features/adapter/* @adapter-module-owner
+src/features/character/* @character-module-owner
+src/features/packaging/* @packaging-module-owner
+
+# UI 组件
+src/shared/components/* @ui-engineer
+
+# 文档
+docs/* @tech-lead
+*.md @tech-lead
+README.md @tech-lead
+
+# 测试文件
+__tests__/* @qa-team
+*.test.ts @qa-team
+*.test.tsx @qa-team
+playwright.config.ts @qa-team
+vitest.config.ts @qa-team
+
+# 环境配置
+.env* @tech-lead
+env.example @tech-lead
+

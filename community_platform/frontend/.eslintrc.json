@@ -1,4 +1,113 @@
 {
-  "extends": ["next/core-web-vitals", "next/typescript"]
-}
+  "root": true,
+  "extends": [
+    "next/core-web-vitals",
+    "next/typescript",
+    "plugin:@typescript-eslint/recommended",
+    "prettier"
+  ],
+  "parser": "@typescript-eslint/parser",
+  "parserOptions": {
+    "ecmaVersion": 2021,
+    "sourceType": "module",
+    "ecmaFeatures": {
+      "jsx": true
+    },
+    "project": "./tsconfig.json"
+  },
+  "plugins": ["@typescript-eslint", "react", "react-hooks"],
+  "rules": {
+    // ========== TypeScript 规则 ==========
+    "@typescript-eslint/no-unused-vars": [
+      "warn",
+      {
+        "argsIgnorePattern": "^_",
+        "varsIgnorePattern": "^_",
+        "caughtErrorsIgnorePattern": "^_",
+        "destructuredArrayIgnorePattern": "^_"
+      }
+    ],
+    "@typescript-eslint/no-explicit-any": "warn",
+    "@typescript-eslint/explicit-module-boundary-types": "off",
+    "@typescript-eslint/no-non-null-assertion": "warn",
+    "@typescript-eslint/consistent-type-imports": [
+      "warn",
+      {
+        "prefer": "type-imports",
+        "fixStyle": "inline-type-imports"
+      }
+    ],
+    "@typescript-eslint/consistent-type-definitions": ["error", "interface"],
+    "@typescript-eslint/no-unnecessary-condition": "off",
+    "@typescript-eslint/no-floating-promises": "error",
+    "@typescript-eslint/no-misused-promises": "error",
+    "@typescript-eslint/await-thenable": "error",
+    "@typescript-eslint/no-unnecessary-type-assertion": "warn",
+    "@typescript-eslint/prefer-nullish-coalescing": "warn",
+    "@typescript-eslint/prefer-optional-chain": "warn",
+    "@typescript-eslint/strict-boolean-expressions": "off",
 
+    // ========== React 规则 ==========
+    "react/react-in-jsx-scope": "off",
+    "react/prop-types": "off",
+    "react/jsx-uses-react": "off",
+    "react/no-unescaped-entities": "off",
+    "react/display-name": "off",
+    "react/self-closing-comp": "warn",
+    "react/jsx-curly-brace-presence": [
+      "warn",
+      { "props": "never", "children": "never" }
+    ],
+    "react/jsx-boolean-value": ["warn", "never"],
+    "react/jsx-no-target-blank": "error",
+    "react/jsx-key": ["error", { "checkFragmentShorthand": true }],
+
+    // ========== React Hooks 规则 ==========
+    "react-hooks/rules-of-hooks": "error",
+    "react-hooks/exhaustive-deps": "warn",
+
+    // ========== 通用规则 ==========
+    "no-console": ["warn", { "allow": ["warn", "error", "info"] }],
+    "prefer-const": "error",
+    "no-var": "error",
+    "no-unused-expressions": "warn",
+    "eqeqeq": ["error", "always", { "null": "ignore" }],
+    "curly": ["error", "all"],
+    "no-debugger": "warn",
+    "no-alert": "warn",
+    "no-eval": "error",
+    "no-implied-eval": "error",
+    "no-return-await": "error",
+    "require-await": "off",
+    "no-throw-literal": "error",
+    "prefer-promise-reject-errors": "error",
+    "no-nested-ternary": "warn",
+    "no-unneeded-ternary": "warn",
+    "no-duplicate-imports": "error",
+    "object-shorthand": ["warn", "always"],
+    "prefer-destructuring": ["warn", { "object": true, "array": false }],
+    "prefer-template": "warn",
+    "prefer-arrow-callback": "warn",
+
+    // ========== Next.js 规则 ==========
+    "@next/next/no-html-link-for-pages": "error",
+    "@next/next/no-img-element": "warn",
+    "@next/next/no-page-custom-font": "warn"
+  },
+  "settings": {
+    "react": {
+      "version": "detect"
+    }
+  },
+  "ignorePatterns": [
+    "node_modules/",
+    ".next/",
+    "out/",
+    "dist/",
+    "build/",
+    "*.config.js",
+    "*.config.ts",
+    "coverage/",
+    "public/"
+  ]
+}

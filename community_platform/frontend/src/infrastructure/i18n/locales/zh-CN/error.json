@@ -1,0 +1,47 @@
+{
+  "title": "错误",
+  "http": {
+    "400": "请求错误",
+    "401": "未授权，请先登录",
+    "403": "没有权限访问",
+    "404": "请求的资源不存在",
+    "408": "请求超时",
+    "429": "请求过于频繁，请稍后再试",
+    "500": "服务器内部错误",
+    "502": "网关错误",
+    "503": "服务暂时不可用",
+    "504": "网关超时"
+  },
+  "network": {
+    "offline": "网络连接已断开",
+    "timeout": "网络请求超时",
+    "failed": "网络请求失败"
+  },
+  "validation": {
+    "required": "此字段为必填项",
+    "invalid": "输入格式不正确",
+    "tooShort": "输入内容过短",
+    "tooLong": "输入内容过长",
+    "mismatch": "两次输入不一致"
+  },
+  "auth": {
+    "loginFailed": "登录失败，请检查用户名和密码",
+    "sessionExpired": "登录已过期，请重新登录",
+    "invalidToken": "无效的令牌",
+    "emailNotVerified": "邮箱未验证",
+    "accountLocked": "账户已被锁定",
+    "permissionDenied": "权限不足"
+  },
+  "file": {
+    "uploadFailed": "文件上传失败",
+    "tooLarge": "文件过大",
+    "invalidType": "不支持的文件类型",
+    "readFailed": "文件读取失败"
+  },
+  "common": {
+    "unknown": "未知错误",
+    "tryAgain": "请重试",
+    "contactSupport": "如果问题持续，请联系客服"
+  }
+}
+

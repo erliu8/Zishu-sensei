@@ -1,0 +1,72 @@
+{
+  "title": {
+    "comments": "Comments",
+    "addComment": "Add Comment",
+    "editComment": "Edit Comment",
+    "replies": "Replies",
+    "allComments": "All Comments"
+  },
+  "actions": {
+    "comment": "Comment",
+    "reply": "Reply",
+    "edit": "Edit",
+    "delete": "Delete",
+    "like": "Like",
+    "unlike": "Unlike",
+    "report": "Report",
+    "viewReplies": "View Replies",
+    "hideReplies": "Hide Replies",
+    "loadMore": "Load More",
+    "showMore": "Show More",
+    "showLess": "Show Less"
+  },
+  "placeholders": {
+    "comment": "Write your comment...",
+    "reply": "Reply to @{username}..."
+  },
+  "sort": {
+    "latest": "Latest",
+    "oldest": "Oldest",
+    "popular": "Popular",
+    "replies": "Most Replies"
+  },
+  "stats": {
+    "likes": "{count} likes",
+    "replies": "{count} replies",
+    "comment": "{count} comments"
+  },
+  "messages": {
+    "addSuccess": "Comment added",
+    "addFailed": "Failed to add comment",
+    "editSuccess": "Comment updated",
+    "editFailed": "Failed to update comment",
+    "deleteSuccess": "Comment deleted",
+    "deleteFailed": "Failed to delete comment",
+    "likeSuccess": "Liked",
+    "unlikeSuccess": "Unliked",
+    "reportSuccess": "Report submitted",
+    "deleted": "This comment has been deleted",
+    "restricted": "This comment has been restricted"
+  },
+  "validation": {
+    "required": "Comment cannot be empty",
+    "minLength": "Comment must be at least 2 characters",
+    "maxLength": "Comment cannot exceed 1000 characters"
+  },
+  "confirm": {
+    "delete": "Are you sure you want to delete this comment?",
+    "deleteWithReplies": "Deleting this comment will also delete all replies. Continue?"
+  },
+  "empty": {
+    "noComments": "No comments yet",
+    "beFirst": "Be the first to comment",
+    "noReplies": "No replies yet"
+  },
+  "status": {
+    "pinned": "Pinned",
+    "edited": "Edited",
+    "deleted": "Deleted",
+    "author": "Author"
+  }
+}
+

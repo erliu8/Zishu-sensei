@@ -1,0 +1,134 @@
+{
+  "title": {
+    "settings": "设置",
+    "account": "账户设置",
+    "profile": "个人资料",
+    "privacy": "隐私设置",
+    "notifications": "通知设置",
+    "appearance": "外观设置",
+    "language": "语言设置",
+    "security": "安全设置",
+    "preferences": "偏好设置"
+  },
+  "account": {
+    "email": "邮箱",
+    "username": "用户名",
+    "password": "密码",
+    "changePassword": "修改密码",
+    "currentPassword": "当前密码",
+    "newPassword": "新密码",
+    "confirmPassword": "确认密码",
+    "deleteAccount": "删除账户",
+    "deactivateAccount": "停用账户"
+  },
+  "profile": {
+    "displayName": "显示名称",
+    "bio": "个人简介",
+    "avatar": "头像",
+    "coverImage": "封面图",
+    "website": "网站",
+    "location": "位置",
+    "birthday": "生日",
+    "gender": "性别",
+    "uploadAvatar": "上传头像",
+    "removeAvatar": "移除头像",
+    "editProfile": "编辑资料"
+  },
+  "privacy": {
+    "profileVisibility": "个人资料可见性",
+    "showEmail": "显示邮箱",
+    "showActivity": "显示活动",
+    "allowMessages": "允许私信",
+    "allowComments": "允许评论",
+    "allowFollows": "允许关注",
+    "blockedUsers": "黑名单",
+    "mutedUsers": "静音列表"
+  },
+  "notifications": {
+    "emailNotifications": "邮件通知",
+    "pushNotifications": "推送通知",
+    "likes": "点赞通知",
+    "comments": "评论通知",
+    "follows": "关注通知",
+    "mentions": "提及通知",
+    "messages": "消息通知",
+    "updates": "更新通知",
+    "newsletter": "订阅资讯"
+  },
+  "appearance": {
+    "theme": "主题",
+    "light": "浅色",
+    "dark": "深色",
+    "auto": "跟随系统",
+    "colorScheme": "配色方案",
+    "fontSize": "字体大小",
+    "small": "小",
+    "medium": "中",
+    "large": "大",
+    "layout": "布局",
+    "compact": "紧凑",
+    "comfortable": "舒适",
+    "spacious": "宽松"
+  },
+  "language": {
+    "select": "选择语言",
+    "zhCN": "简体中文",
+    "enUS": "English",
+    "jaJP": "日本語",
+    "auto": "自动检测"
+  },
+  "security": {
+    "twoFactor": "两步验证",
+    "enable2FA": "启用两步验证",
+    "disable2FA": "禁用两步验证",
+    "activeSessions": "活动会话",
+    "loginHistory": "登录历史",
+    "connectedApps": "关联应用",
+    "apiKeys": "API 密钥"
+  },
+  "preferences": {
+    "autoplay": "自动播放",
+    "showSpoilers": "显示剧透",
+    "nsfwContent": "显示敏感内容",
+    "dataUsage": "数据使用",
+    "downloadQuality": "下载质量",
+    "defaultPrivacy": "默认隐私",
+    "timezone": "时区"
+  },
+  "actions": {
+    "save": "保存",
+    "cancel": "取消",
+    "apply": "应用",
+    "reset": "重置",
+    "update": "更新",
+    "change": "更改",
+    "remove": "移除",
+    "delete": "删除"
+  },
+  "messages": {
+    "saveSuccess": "设置已保存",
+    "saveFailed": "保存失败",
+    "updateSuccess": "更新成功",
+    "updateFailed": "更新失败",
+    "passwordChanged": "密码已修改",
+    "passwordMismatch": "密码不匹配",
+    "invalidPassword": "密码格式不正确",
+    "emailUpdated": "邮箱已更新",
+    "profileUpdated": "资料已更新"
+  },
+  "validation": {
+    "required": "此项为必填项",
+    "invalidEmail": "邮箱格式不正确",
+    "passwordLength": "密码长度至少 8 个字符",
+    "passwordMatch": "两次输入的密码不一致",
+    "usernameLength": "用户名长度应为 3-20 个字符",
+    "bioLength": "个人简介不能超过 200 个字符"
+  },
+  "confirm": {
+    "deleteAccount": "确定要删除账户吗？此操作不可撤销。",
+    "deactivateAccount": "确定要停用账户吗？",
+    "resetSettings": "确定要重置所有设置吗？",
+    "removeAvatar": "确定要移除头像吗？"
+  }
+}
+

@@ -1,0 +1,447 @@
+/**
+ * 无障碍性样式
+ * Accessibility Styles
+ */
+
+/* ============================================
+   屏幕阅读器专用内容
+   ============================================ */
+
+.sr-only {
+  position: absolute;
+  width: 1px;
+  height: 1px;
+  padding: 0;
+  margin: -1px;
+  overflow: hidden;
+  clip: rect(0, 0, 0, 0);
+  white-space: nowrap;
+  border-width: 0;
+}
+
+.sr-only-focusable:focus,
+.sr-only-focusable:active {
+  position: static;
+  width: auto;
+  height: auto;
+  overflow: visible;
+  clip: auto;
+  white-space: normal;
+}
+
+/* ============================================
+   焦点可见性
+   ============================================ */
+
+/* 默认移除浏览器默认的 outline */
+*:focus {
+  outline: none;
+}
+
+/* 键盘导航时显示焦点指示器 */
+.keyboard-nav *:focus,
+.focus-visible {
+  outline: 2px solid hsl(var(--ring));
+  outline-offset: 2px;
+}
+
+/* 跳过链接焦点样式 */
+.skip-to-content:focus {
+  transform: translateY(0);
+}
+
+/* ============================================
+   高对比度模式支持
+   ============================================ */
+
+@media (prefers-contrast: high) {
+  * {
+    border-width: 2px !important;
+  }
+
+  button,
+  a,
+  input,
+  select,
+  textarea {
+    border: 2px solid currentColor !important;
+  }
+
+  .focus-visible {
+    outline-width: 3px;
+  }
+}
+
+/* ============================================
+   减少动画
+   ============================================ */
+
+@media (prefers-reduced-motion: reduce) {
+  *,
+  *::before,
+  *::after {
+    animation-duration: 0.01ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 0.01ms !important;
+    scroll-behavior: auto !important;
+  }
+}
+
+/* ============================================
+   打印样式
+   ============================================ */
+
+@media print {
+  /* 隐藏非必要元素 */
+  .no-print,
+  nav,
+  aside,
+  footer,
+  .skip-to-content {
+    display: none !important;
+  }
+
+  /* 确保文本颜色对比度 */
+  * {
+    color: #000 !important;
+    background: #fff !important;
+  }
+
+  /* 显示链接 URL */
+  a[href]:after {
+    content: ' (' attr(href) ')';
+  }
+
+  /* 避免分页时断开 */
+  h1,
+  h2,
+  h3,
+  h4,
+  h5,
+  h6 {
+    page-break-after: avoid;
+  }
+
+  pre,
+  blockquote,
+  img,
+  table {
+    page-break-inside: avoid;
+  }
+}
+
+/* ============================================
+   可触摸目标大小（移动设备）
+   ============================================ */
+
+@media (pointer: coarse) {
+  /* 确保可交互元素至少 44x44px (WCAG 2.1 Level AAA) */
+  button,
+  a,
+  input[type='checkbox'],
+  input[type='radio'],
+  input[type='submit'],
+  input[type='button'],
+  select {
+    min-width: 44px;
+    min-height: 44px;
+  }
+}
+
+/* ============================================
+   键盘导航增强
+   ============================================ */
+
+/* 可聚焦元素的基础样式 */
+[tabindex='0'],
+[tabindex='-1'] {
+  cursor: pointer;
+}
+
+/* 禁用状态 */
+[aria-disabled='true'],
+[disabled] {
+  cursor: not-allowed;
+  opacity: 0.6;
+  pointer-events: none;
+}
+
+/* ============================================
+   实时区域
+   ============================================ */
+
+[role='alert'],
+[role='status'],
+[aria-live='polite'],
+[aria-live='assertive'] {
+  /* 确保实时区域在视觉上也有提示 */
+}
+
+[role='alert'] {
+  /* 警告样式 */
+}
+
+[role='status'] {
+  /* 状态样式 */
+}
+
+/* ============================================
+   对话框和模态框
+   ============================================ */
+
+[role='dialog'],
+[role='alertdialog'] {
+  /* 确保对话框有足够的对比度和可见性 */
+}
+
+/* ============================================
+   工具提示
+   ============================================ */
+
+[role='tooltip'] {
+  /* 工具提示需要足够的对比度 */
+  z-index: 9999;
+}
+
+/* ============================================
+   进度指示器
+   ============================================ */
+
+[role='progressbar'] {
+  /* 确保进度条有视觉反馈 */
+}
+
+/* ============================================
+   加载状态
+   ============================================ */
+
+[aria-busy='true'] {
+  cursor: wait;
+  pointer-events: none;
+}
+
+/* 加载动画（尊重 prefers-reduced-motion） */
+@keyframes loading-pulse {
+  0%,
+  100% {
+    opacity: 1;
+  }
+  50% {
+    opacity: 0.5;
+  }
+}
+
+[aria-busy='true']::after {
+  content: '';
+  animation: loading-pulse 1.5s ease-in-out infinite;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  [aria-busy='true']::after {
+    animation: none;
+  }
+}
+
+/* ============================================
+   展开/折叠状态
+   ============================================ */
+
+[aria-expanded='false'] {
+  /* 折叠状态样式 */
+}
+
+[aria-expanded='true'] {
+  /* 展开状态样式 */
+}
+
+/* ============================================
+   选中状态
+   ============================================ */
+
+[aria-selected='true'] {
+  /* 选中状态应该有明显的视觉反馈 */
+}
+
+[aria-checked='true'],
+[aria-pressed='true'] {
+  /* 选中/按下状态 */
+}
+
+/* ============================================
+   隐藏但保持可访问性
+   ============================================ */
+
+[aria-hidden='true'] {
+  /* aria-hidden 元素对屏幕阅读器不可见，但可能视觉上可见 */
+}
+
+/* ============================================
+   错误状态
+   ============================================ */
+
+[aria-invalid='true'] {
+  /* 无效输入的视觉指示 */
+  border-color: hsl(var(--destructive));
+}
+
+[aria-invalid='true']:focus {
+  outline-color: hsl(var(--destructive));
+}
+
+/* ============================================
+   必填字段
+   ============================================ */
+
+[aria-required='true']::after {
+  content: ' *';
+  color: hsl(var(--destructive));
+  font-weight: bold;
+}
+
+/* ============================================
+   标签和描述关联
+   ============================================ */
+
+/* 确保通过 aria-labelledby 关联的元素可见 */
+[aria-labelledby],
+[aria-describedby] {
+  /* 这些元素应该与它们的标签/描述正确关联 */
+}
+
+/* ============================================
+   列表和菜单
+   ============================================ */
+
+[role='list'],
+[role='menu'],
+[role='menubar'],
+[role='listbox'] {
+  /* 列表容器样式 */
+}
+
+[role='listitem'],
+[role='menuitem'],
+[role='option'] {
+  /* 列表项样式 */
+}
+
+[role='menuitem']:hover,
+[role='option']:hover {
+  /* 悬停状态 */
+}
+
+/* ============================================
+   标签页
+   ============================================ */
+
+[role='tablist'] {
+  /* 标签列表容器 */
+}
+
+[role='tab'] {
+  /* 标签项 */
+}
+
+[role='tab'][aria-selected='true'] {
+  /* 选中的标签 */
+}
+
+[role='tabpanel'] {
+  /* 标签面板 */
+}
+
+[role='tabpanel']:focus {
+  /* 标签面板获得焦点时 */
+  outline: 2px solid hsl(var(--ring));
+  outline-offset: 2px;
+}
+
+/* ============================================
+   表格无障碍性
+   ============================================ */
+
+table caption {
+  /* 表格标题应该清晰可见 */
+  font-weight: bold;
+  text-align: left;
+  padding-bottom: 0.5rem;
+}
+
+th {
+  /* 表头应该有明显区分 */
+  font-weight: bold;
+  text-align: left;
+}
+
+/* ============================================
+   表单无障碍性
+   ============================================ */
+
+label {
+  /* 标签应该与表单控件明确关联 */
+  cursor: pointer;
+}
+
+/* 错误消息 */
+.error-message,
+[role='alert'].error {
+  color: hsl(var(--destructive));
+  font-weight: 500;
+}
+
+/* 帮助文本 */
+.help-text,
+[id$='-description'],
+[id$='-helper-text'] {
+  color: hsl(var(--muted-foreground));
+  font-size: 0.875rem;
+}
+
+/* ============================================
+   自定义工具类
+   ============================================ */
+
+/* 键盘导航可见 */
+.keyboard-only-focus:focus {
+  outline: 2px solid hsl(var(--ring));
+  outline-offset: 2px;
+}
+
+/* 鼠标交互时不显示焦点 */
+.mouse-focus:focus:not(:focus-visible) {
+  outline: none;
+}
+
+/* 高对比度文本 */
+.high-contrast-text {
+  color: hsl(var(--foreground));
+  background: hsl(var(--background));
+}
+
+/* 确保最小字体大小 */
+.a11y-text {
+  font-size: max(16px, 1rem);
+  line-height: 1.5;
+}
+
+/* ============================================
+   响应式无障碍性
+   ============================================ */
+
+/* 移动设备 */
+@media (max-width: 768px) {
+  /* 增加触摸目标大小 */
+  button,
+  a,
+  input[type='checkbox'],
+  input[type='radio'] {
+    min-width: 44px;
+    min-height: 44px;
+  }
+
+  /* 增加文字大小 */
+  body {
+    font-size: max(16px, 1rem);
+  }
+}
+

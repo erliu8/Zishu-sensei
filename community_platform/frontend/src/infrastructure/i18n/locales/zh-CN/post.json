@@ -1,0 +1,128 @@
+{
+  "title": {
+    "posts": "帖子",
+    "createPost": "创建帖子",
+    "editPost": "编辑帖子",
+    "postDetail": "帖子详情",
+    "myPosts": "我的帖子",
+    "popularPosts": "热门帖子",
+    "latestPosts": "最新帖子"
+  },
+  "fields": {
+    "title": "标题",
+    "content": "内容",
+    "category": "分类",
+    "tags": "标签",
+    "coverImage": "封面图",
+    "visibility": "可见性",
+    "status": "状态"
+  },
+  "placeholders": {
+    "title": "请输入帖子标题",
+    "content": "请输入帖子内容，支持 Markdown 格式",
+    "tags": "输入标签，按回车添加",
+    "search": "搜索帖子..."
+  },
+  "actions": {
+    "create": "发布帖子",
+    "edit": "编辑",
+    "delete": "删除",
+    "save": "保存",
+    "saveDraft": "保存草稿",
+    "publish": "发布",
+    "unpublish": "取消发布",
+    "pin": "置顶",
+    "unpin": "取消置顶",
+    "like": "点赞",
+    "unlike": "取消点赞",
+    "favorite": "收藏",
+    "unfavorite": "取消收藏",
+    "share": "分享",
+    "report": "举报",
+    "viewMore": "查看更多"
+  },
+  "status": {
+    "draft": "草稿",
+    "published": "已发布",
+    "archived": "已归档",
+    "deleted": "已删除"
+  },
+  "visibility": {
+    "public": "公开",
+    "private": "私密",
+    "followers": "仅粉丝可见"
+  },
+  "categories": {
+    "all": "全部",
+    "discussion": "讨论",
+    "tutorial": "教程",
+    "showcase": "展示",
+    "question": "提问",
+    "announcement": "公告",
+    "other": "其他"
+  },
+  "sort": {
+    "latest": "最新",
+    "popular": "热门",
+    "trending": "热度",
+    "mostLiked": "最多点赞",
+    "mostViewed": "最多浏览",
+    "mostCommented": "最多评论"
+  },
+  "stats": {
+    "views": "{count} 次浏览",
+    "likes": "{count} 次点赞",
+    "comments": "{count} 条评论",
+    "favorites": "{count} 次收藏",
+    "shares": "{count} 次分享"
+  },
+  "messages": {
+    "createSuccess": "帖子创建成功",
+    "createFailed": "帖子创建失败",
+    "updateSuccess": "帖子更新成功",
+    "updateFailed": "帖子更新失败",
+    "deleteSuccess": "帖子删除成功",
+    "deleteFailed": "帖子删除失败",
+    "likeSuccess": "点赞成功",
+    "unlikeSuccess": "取消点赞",
+    "favoriteSuccess": "收藏成功",
+    "unfavoriteSuccess": "取消收藏",
+    "shareSuccess": "分享成功",
+    "reportSuccess": "举报已提交",
+    "notFound": "帖子不存在",
+    "deleted": "该帖子已被删除"
+  },
+  "validation": {
+    "titleRequired": "请输入标题",
+    "titleLength": "标题长度应为 5-100 个字符",
+    "contentRequired": "请输入内容",
+    "contentLength": "内容长度应至少 10 个字符",
+    "categoryRequired": "请选择分类",
+    "tagsMax": "最多添加 5 个标签"
+  },
+  "confirm": {
+    "delete": "确定要删除这篇帖子吗？",
+    "unpublish": "确定要取消发布这篇帖子吗？",
+    "discard": "确定要放弃未保存的更改吗？"
+  },
+  "empty": {
+    "noPosts": "还没有帖子",
+    "noResults": "没有找到相关帖子",
+    "createFirst": "发布第一篇帖子吧"
+  },
+  "editor": {
+    "preview": "预览",
+    "edit": "编辑",
+    "markdown": "Markdown",
+    "richText": "富文本",
+    "uploadImage": "上传图片",
+    "insertLink": "插入链接",
+    "insertCode": "插入代码",
+    "bold": "粗体",
+    "italic": "斜体",
+    "heading": "标题",
+    "list": "列表",
+    "quote": "引用"
+  }
+}
+

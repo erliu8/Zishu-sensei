@@ -1,0 +1,59 @@
+{
+  "title": {
+    "profile": "プロフィール",
+    "editProfile": "プロフィールを編集",
+    "myProfile": "マイプロフィール",
+    "userProfile": "{username}のプロフィール"
+  },
+  "fields": {
+    "username": "ユーザー名",
+    "displayName": "表示名",
+    "email": "メール",
+    "bio": "自己紹介",
+    "avatar": "アバター",
+    "coverImage": "カバー画像",
+    "website": "ウェブサイト",
+    "location": "場所",
+    "birthday": "誕生日",
+    "joinDate": "参加日"
+  },
+  "stats": {
+    "posts": "{count}件の投稿",
+    "characters": "{count}体のキャラクター",
+    "adapters": "{count}個のアダプター",
+    "followers": "{count}人のフォロワー",
+    "following": "{count}人をフォロー中",
+    "likes": "{count}件のいいね"
+  },
+  "tabs": {
+    "overview": "概要",
+    "posts": "投稿",
+    "characters": "キャラクター",
+    "adapters": "アダプター",
+    "favorites": "お気に入り",
+    "activity": "アクティビティ"
+  },
+  "actions": {
+    "follow": "フォロー",
+    "unfollow": "フォロー解除",
+    "message": "メッセージ",
+    "share": "共有",
+    "report": "報告",
+    "block": "ブロック"
+  },
+  "status": {
+    "online": "オンライン",
+    "offline": "オフライン",
+    "away": "離席中",
+    "busy": "取り込み中"
+  },
+  "badges": {
+    "verified": "認証済み",
+    "official": "公式",
+    "moderator": "モデレーター",
+    "contributor": "コントリビューター",
+    "earlyAdopter": "初期ユーザー",
+    "premium": "プレミアム"
+  }
+}
+

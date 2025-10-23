@@ -1,0 +1,171 @@
+{
+  "title": {
+    "characters": "Characters",
+    "createCharacter": "Create Character",
+    "editCharacter": "Edit Character",
+    "characterDetail": "Character Details",
+    "myCharacters": "My Characters",
+    "popularCharacters": "Popular Characters",
+    "gallery": "Gallery",
+    "customization": "Customization"
+  },
+  "fields": {
+    "name": "Name",
+    "displayName": "Display Name",
+    "description": "Description",
+    "personality": "Personality",
+    "background": "Background Story",
+    "avatar": "Avatar",
+    "coverImage": "Cover Image",
+    "voice": "Voice",
+    "model": "Model",
+    "tags": "Tags",
+    "category": "Category",
+    "visibility": "Visibility",
+    "status": "Status"
+  },
+  "categories": {
+    "all": "All",
+    "anime": "Anime",
+    "game": "Game",
+    "virtual": "Virtual Idol",
+    "historical": "Historical",
+    "fictional": "Fictional",
+    "assistant": "Assistant",
+    "companion": "Companion",
+    "teacher": "Teacher",
+    "other": "Other"
+  },
+  "personality": {
+    "friendly": "Friendly",
+    "serious": "Serious",
+    "playful": "Playful",
+    "calm": "Calm",
+    "energetic": "Energetic",
+    "shy": "Shy",
+    "confident": "Confident",
+    "mysterious": "Mysterious",
+    "caring": "Caring",
+    "professional": "Professional"
+  },
+  "attributes": {
+    "age": "Age",
+    "gender": "Gender",
+    "height": "Height",
+    "occupation": "Occupation",
+    "hobbies": "Hobbies",
+    "likes": "Likes",
+    "dislikes": "Dislikes",
+    "specialSkills": "Special Skills"
+  },
+  "actions": {
+    "create": "Create Character",
+    "edit": "Edit",
+    "delete": "Delete",
+    "duplicate": "Duplicate",
+    "share": "Share",
+    "favorite": "Favorite",
+    "unfavorite": "Unfavorite",
+    "chat": "Start Chat",
+    "customize": "Customize",
+    "export": "Export",
+    "import": "Import",
+    "publish": "Publish",
+    "unpublish": "Unpublish"
+  },
+  "customization": {
+    "appearance": "Appearance",
+    "voice": "Voice",
+    "personality": "Personality",
+    "behavior": "Behavior",
+    "knowledge": "Knowledge Base",
+    "prompts": "Prompts",
+    "responses": "Response Style",
+    "emotions": "Emotional Expression"
+  },
+  "voice": {
+    "select": "Select Voice",
+    "preview": "Preview",
+    "upload": "Upload Voice",
+    "pitch": "Pitch",
+    "speed": "Speed",
+    "volume": "Volume",
+    "emotion": "Emotion"
+  },
+  "stats": {
+    "chats": "{count} chats",
+    "favorites": "{count} favorites",
+    "shares": "{count} shares",
+    "rating": "{rating} rating",
+    "downloads": "{count} downloads",
+    "created": "Created {date}",
+    "updated": "Updated {date}"
+  },
+  "sort": {
+    "popular": "Most Popular",
+    "latest": "Latest",
+    "trending": "Trending",
+    "mostUsed": "Most Used",
+    "rating": "Highest Rated",
+    "alphabetical": "Alphabetical"
+  },
+  "filter": {
+    "category": "Category",
+    "personality": "Personality",
+    "voice": "Voice",
+    "verified": "Verified",
+    "official": "Official",
+    "community": "Community"
+  },
+  "messages": {
+    "createSuccess": "Character created successfully",
+    "createFailed": "Failed to create character",
+    "updateSuccess": "Character updated successfully",
+    "updateFailed": "Failed to update character",
+    "deleteSuccess": "Character deleted successfully",
+    "deleteFailed": "Failed to delete character",
+    "favoriteSuccess": "Favorited",
+    "unfavoriteSuccess": "Unfavorited",
+    "shareSuccess": "Shared successfully",
+    "exportSuccess": "Exported successfully",
+    "importSuccess": "Imported successfully",
+    "notFound": "Character not found",
+    "deleted": "This character has been deleted"
+  },
+  "validation": {
+    "nameRequired": "Character name is required",
+    "nameLength": "Name must be 2-50 characters",
+    "displayNameLength": "Display name must be 2-50 characters",
+    "descriptionRequired": "Description is required",
+    "descriptionLength": "Description must be at least 20 characters",
+    "personalityRequired": "Personality is required",
+    "categoryRequired": "Category is required",
+    "avatarRequired": "Avatar is required",
+    "tagsMax": "Maximum 10 tags allowed"
+  },
+  "confirm": {
+    "delete": "Are you sure you want to delete this character?",
+    "unpublish": "Are you sure you want to unpublish this character?",
+    "discard": "Are you sure you want to discard unsaved changes?"
+  },
+  "empty": {
+    "noCharacters": "No characters yet",
+    "noResults": "No characters found",
+    "createFirst": "Create your first character"
+  },
+  "tabs": {
+    "overview": "Overview",
+    "personality": "Personality",
+    "appearance": "Appearance",
+    "voice": "Voice",
+    "knowledge": "Knowledge",
+    "settings": "Settings"
+  },
+  "tips": {
+    "personality": "Describe personality traits to influence conversation style",
+    "background": "Detailed background stories make characters more vivid",
+    "voice": "Choose appropriate voice for better interaction experience",
+    "knowledge": "Add relevant knowledge and information about the character"
+  }
+}
+

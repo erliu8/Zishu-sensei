@@ -1,0 +1,148 @@
+{
+  "title": {
+    "market": "Adapter Market",
+    "upload": "Upload Adapter",
+    "detail": "Adapter Details",
+    "myAdapters": "My Adapters",
+    "versions": "Version History",
+    "dependencies": "Dependencies"
+  },
+  "fields": {
+    "name": "Name",
+    "description": "Description",
+    "version": "Version",
+    "author": "Author",
+    "category": "Category",
+    "tags": "Tags",
+    "compatibility": "Compatibility",
+    "license": "License",
+    "repository": "Repository",
+    "homepage": "Homepage",
+    "documentation": "Documentation",
+    "changelog": "Changelog",
+    "readme": "README"
+  },
+  "categories": {
+    "all": "All",
+    "model": "Model",
+    "voice": "Voice",
+    "emotion": "Emotion",
+    "behavior": "Behavior",
+    "integration": "Integration",
+    "utility": "Utility",
+    "theme": "Theme",
+    "other": "Other"
+  },
+  "compatibility": {
+    "title": "Compatibility",
+    "platform": "Platform",
+    "version": "Version Requirements",
+    "compatible": "Compatible",
+    "incompatible": "Incompatible",
+    "untested": "Untested",
+    "windows": "Windows",
+    "macos": "macOS",
+    "linux": "Linux"
+  },
+  "actions": {
+    "upload": "Upload",
+    "download": "Download",
+    "install": "Install",
+    "uninstall": "Uninstall",
+    "update": "Update",
+    "rate": "Rate",
+    "review": "Review",
+    "report": "Report",
+    "fork": "Fork",
+    "star": "Star",
+    "unstar": "Unstar"
+  },
+  "stats": {
+    "downloads": "{count} downloads",
+    "stars": "{count} stars",
+    "rating": "{rating} rating",
+    "reviews": "{count} reviews",
+    "versions": "{count} versions",
+    "dependencies": "{count} dependencies",
+    "size": "{size} size",
+    "updated": "Updated {date}"
+  },
+  "sort": {
+    "popular": "Most Popular",
+    "latest": "Latest",
+    "trending": "Trending",
+    "downloads": "Downloads",
+    "rating": "Rating",
+    "updated": "Recently Updated"
+  },
+  "filter": {
+    "category": "Category",
+    "compatibility": "Compatibility",
+    "license": "License",
+    "verified": "Verified",
+    "official": "Official",
+    "free": "Free"
+  },
+  "upload": {
+    "title": "Upload Adapter",
+    "selectFile": "Select File",
+    "dragDrop": "Drag and drop file here",
+    "fileFormat": "Supported formats",
+    "maxSize": "Max {size} MB",
+    "metadata": "Metadata",
+    "fillInfo": "Fill in adapter information",
+    "uploadFile": "Upload File",
+    "publishing": "Publishing...",
+    "success": "Published successfully",
+    "failed": "Publish failed"
+  },
+  "version": {
+    "current": "Current Version",
+    "latest": "Latest Version",
+    "history": "Version History",
+    "changelog": "Changelog",
+    "release": "Release",
+    "prerelease": "Prerelease",
+    "deprecated": "Deprecated",
+    "yanked": "Yanked"
+  },
+  "dependencies": {
+    "title": "Dependencies",
+    "required": "Required",
+    "optional": "Optional",
+    "peer": "Peer",
+    "dev": "Development",
+    "none": "No dependencies",
+    "tree": "Dependency Tree",
+    "conflicts": "Conflicts"
+  },
+  "messages": {
+    "downloadSuccess": "Downloaded successfully",
+    "downloadFailed": "Download failed",
+    "installSuccess": "Installed successfully",
+    "installFailed": "Install failed",
+    "uploadSuccess": "Uploaded successfully",
+    "uploadFailed": "Upload failed",
+    "rateSuccess": "Rated successfully",
+    "reviewSuccess": "Review submitted",
+    "notFound": "Adapter not found",
+    "incompatible": "Incompatible with current platform"
+  },
+  "validation": {
+    "nameRequired": "Adapter name is required",
+    "nameLength": "Name must be 3-50 characters",
+    "versionRequired": "Version is required",
+    "versionFormat": "Invalid version format (e.g., 1.0.0)",
+    "descriptionRequired": "Description is required",
+    "categoryRequired": "Category is required",
+    "fileRequired": "File is required",
+    "fileTooLarge": "File size exceeds limit",
+    "fileFormat": "Unsupported file format"
+  },
+  "empty": {
+    "noAdapters": "No adapters yet",
+    "noResults": "No adapters found",
+    "uploadFirst": "Upload your first adapter"
+  }
+}
+

@@ -1,0 +1,67 @@
+{
+  "title": "Search",
+  "placeholder": "Search posts, users, tags...",
+  "recentSearches": "Recent Searches",
+  "popularSearches": "Popular Searches",
+  "suggestions": "Suggestions",
+  "tabs": {
+    "all": "All",
+    "posts": "Posts",
+    "adapters": "Adapters",
+    "characters": "Characters",
+    "users": "Users",
+    "tags": "Tags"
+  },
+  "filters": {
+    "title": "Filters",
+    "sortBy": "Sort By",
+    "timeRange": "Time Range",
+    "category": "Category",
+    "tags": "Tags",
+    "verified": "Verified",
+    "featured": "Featured"
+  },
+  "sortBy": {
+    "relevance": "Relevance",
+    "latest": "Latest",
+    "popular": "Popular",
+    "mostViewed": "Most Viewed",
+    "mostLiked": "Most Liked",
+    "mostDownloaded": "Most Downloaded"
+  },
+  "timeRange": {
+    "all": "All Time",
+    "today": "Today",
+    "week": "This Week",
+    "month": "This Month",
+    "year": "This Year"
+  },
+  "results": {
+    "found": "Found {count} results",
+    "showing": "Showing {start}-{end} of {total} results",
+    "noResults": "No results found",
+    "tryDifferent": "Try different keywords",
+    "suggestions": "You might want to search for:"
+  },
+  "actions": {
+    "search": "Search",
+    "clear": "Clear",
+    "clearRecent": "Clear Recent Searches",
+    "viewAll": "View All",
+    "refine": "Refine Search"
+  },
+  "advanced": {
+    "title": "Advanced Search",
+    "keywords": "Keywords",
+    "author": "Author",
+    "tags": "Tags",
+    "dateRange": "Date Range",
+    "exactMatch": "Exact Match",
+    "excludeWords": "Exclude Words"
+  },
+  "empty": {
+    "recent": "No recent searches",
+    "results": "No matching results found"
+  }
+}
+

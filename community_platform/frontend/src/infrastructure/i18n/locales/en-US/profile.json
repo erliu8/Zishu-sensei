@@ -1,0 +1,212 @@
+{
+  "title": "Profile",
+  "tabs": {
+    "overview": "Overview",
+    "posts": "Posts",
+    "adapters": "Adapters",
+    "characters": "Characters",
+    "favorites": "Favorites",
+    "followers": "Followers",
+    "following": "Following",
+    "settings": "Settings"
+  },
+  "overview": {
+    "stats": {
+      "posts": "Posts",
+      "adapters": "Adapters",
+      "characters": "Characters",
+      "followers": "Followers",
+      "following": "Following",
+      "likes": "Likes",
+      "views": "Views",
+      "downloads": "Downloads"
+    },
+    "bio": "Bio",
+    "website": "Website",
+    "location": "Location",
+    "joinedDate": "Joined",
+    "lastActive": "Last Active"
+  },
+  "posts": {
+    "title": "My Posts",
+    "tabs": {
+      "published": "Published",
+      "drafts": "Drafts",
+      "archived": "Archived"
+    },
+    "empty": {
+      "published": "No published posts yet",
+      "drafts": "No drafts",
+      "archived": "No archived posts"
+    },
+    "actions": {
+      "create": "Create Post",
+      "edit": "Edit",
+      "delete": "Delete",
+      "archive": "Archive",
+      "publish": "Publish"
+    }
+  },
+  "adapters": {
+    "title": "My Adapters",
+    "tabs": {
+      "published": "Published",
+      "private": "Private",
+      "archived": "Archived"
+    },
+    "empty": {
+      "published": "No published adapters yet",
+      "private": "No private adapters",
+      "archived": "No archived adapters"
+    },
+    "actions": {
+      "create": "Create Adapter",
+      "edit": "Edit",
+      "delete": "Delete",
+      "publish": "Publish",
+      "makePrivate": "Make Private"
+    }
+  },
+  "characters": {
+    "title": "My Characters",
+    "tabs": {
+      "published": "Published",
+      "private": "Private",
+      "archived": "Archived"
+    },
+    "empty": {
+      "published": "No created characters yet",
+      "private": "No private characters",
+      "archived": "No archived characters"
+    },
+    "actions": {
+      "create": "Create Character",
+      "edit": "Edit",
+      "delete": "Delete",
+      "publish": "Publish",
+      "makePrivate": "Make Private"
+    }
+  },
+  "favorites": {
+    "title": "My Favorites",
+    "tabs": {
+      "all": "All",
+      "posts": "Posts",
+      "adapters": "Adapters",
+      "characters": "Characters"
+    },
+    "empty": {
+      "all": "No favorites yet",
+      "posts": "No favorite posts",
+      "adapters": "No favorite adapters",
+      "characters": "No favorite characters"
+    },
+    "actions": {
+      "remove": "Unfavorite",
+      "viewAll": "View All"
+    }
+  },
+  "followers": {
+    "title": "Followers",
+    "empty": "No followers yet",
+    "actions": {
+      "followBack": "Follow Back",
+      "remove": "Remove"
+    }
+  },
+  "following": {
+    "title": "Following",
+    "empty": "Not following anyone yet",
+    "actions": {
+      "unfollow": "Unfollow"
+    }
+  },
+  "edit": {
+    "title": "Edit Profile",
+    "avatar": "Avatar",
+    "banner": "Banner",
+    "displayName": "Display Name",
+    "username": "Username",
+    "bio": "Bio",
+    "website": "Website",
+    "location": "Location",
+    "socialLinks": "Social Links",
+    "actions": {
+      "save": "Save",
+      "cancel": "Cancel",
+      "uploadAvatar": "Upload Avatar",
+      "uploadBanner": "Upload Banner",
+      "removeAvatar": "Remove Avatar",
+      "removeBanner": "Remove Banner"
+    },
+    "messages": {
+      "saved": "Profile saved",
+      "saveFailed": "Save failed, please try again"
+    },
+    "placeholders": {
+      "displayName": "Enter display name",
+      "username": "Enter username",
+      "bio": "Tell us about yourself...",
+      "website": "https://example.com",
+      "location": "Enter location"
+    }
+  },
+  "settings": {
+    "title": "Account Settings",
+    "sections": {
+      "general": "General",
+      "security": "Security",
+      "privacy": "Privacy",
+      "notifications": "Notifications",
+      "appearance": "Appearance",
+      "advanced": "Advanced"
+    },
+    "general": {
+      "language": "Language",
+      "timezone": "Timezone",
+      "dateFormat": "Date Format"
+    },
+    "security": {
+      "changePassword": "Change Password",
+      "twoFactor": "Two-Factor Authentication",
+      "sessions": "Active Sessions",
+      "loginHistory": "Login History"
+    },
+    "privacy": {
+      "profileVisibility": "Profile Visibility",
+      "showEmail": "Show Email",
+      "showLocation": "Show Location",
+      "allowMessages": "Allow Messages",
+      "blockList": "Block List"
+    },
+    "notifications": {
+      "email": "Email Notifications",
+      "push": "Push Notifications",
+      "preferences": "Notification Preferences"
+    },
+    "appearance": {
+      "theme": "Theme",
+      "fontSize": "Font Size",
+      "compactMode": "Compact Mode"
+    },
+    "actions": {
+      "save": "Save Settings",
+      "reset": "Reset to Default"
+    }
+  },
+  "actions": {
+    "follow": "Follow",
+    "unfollow": "Unfollow",
+    "message": "Message",
+    "share": "Share",
+    "report": "Report",
+    "block": "Block"
+  },
+  "messages": {
+    "followed": "Followed",
+    "unfollowed": "Unfollowed",
+    "blocked": "Blocked",
+    "reported": "Reported"
+  }
+}
+

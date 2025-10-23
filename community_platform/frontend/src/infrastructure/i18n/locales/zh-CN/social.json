@@ -1,0 +1,139 @@
+{
+  "follow": {
+    "follow": "关注",
+    "following": "已关注",
+    "unfollow": "取消关注",
+    "followers": "粉丝",
+    "followings": "关注",
+    "followerCount": "{count} 位粉丝",
+    "followingCount": "关注了 {count} 人",
+    "mutualFollow": "互相关注",
+    "followBack": "回关"
+  },
+  "actions": {
+    "followSuccess": "关注成功",
+    "unfollowSuccess": "取消关注",
+    "followFailed": "关注失败",
+    "unfollowFailed": "取消关注失败",
+    "block": "拉黑",
+    "unblock": "取消拉黑",
+    "blockSuccess": "已拉黑",
+    "unblockSuccess": "已取消拉黑",
+    "mute": "静音",
+    "unmute": "取消静音",
+    "muteSuccess": "已静音",
+    "unmuteSuccess": "已取消静音"
+  },
+  "notifications": {
+    "title": "通知",
+    "all": "全部",
+    "unread": "未读",
+    "mentions": "提到我的",
+    "likes": "点赞",
+    "comments": "评论",
+    "follows": "关注",
+    "system": "系统通知",
+    "markAllRead": "全部标记为已读",
+    "markRead": "标记为已读",
+    "delete": "删除",
+    "deleteAll": "清空全部",
+    "settings": "通知设置"
+  },
+  "notificationTypes": {
+    "like": "{username} 赞了你的{type}",
+    "comment": "{username} 评论了你的{type}",
+    "reply": "{username} 回复了你的评论",
+    "mention": "{username} 在{type}中提到了你",
+    "follow": "{username} 关注了你",
+    "favorite": "{username} 收藏了你的{type}",
+    "share": "{username} 分享了你的{type}"
+  },
+  "messages": {
+    "title": "消息",
+    "conversations": "会话",
+    "newMessage": "新消息",
+    "send": "发送",
+    "typing": "{username} 正在输入...",
+    "online": "在线",
+    "offline": "离线",
+    "seen": "已读",
+    "delivered": "已送达",
+    "delete": "删除会话",
+    "block": "拉黑用户",
+    "report": "举报"
+  },
+  "activity": {
+    "title": "动态",
+    "feed": "动态流",
+    "timeline": "时间线",
+    "recent": "最近活动",
+    "trending": "热门动态",
+    "published": "发布了",
+    "liked": "赞了",
+    "commented": "评论了",
+    "shared": "分享了",
+    "followed": "关注了",
+    "favorited": "收藏了"
+  },
+  "privacy": {
+    "public": "公开",
+    "followers": "仅粉丝",
+    "private": "私密",
+    "friends": "仅好友",
+    "settings": "隐私设置",
+    "whoCanSee": "谁可以看到",
+    "whoCanComment": "谁可以评论",
+    "whoCanMessage": "谁可以私信"
+  },
+  "share": {
+    "title": "分享",
+    "copyLink": "复制链接",
+    "shareToFeed": "分享到动态",
+    "shareVia": "分享到",
+    "linkCopied": "链接已复制",
+    "shareSuccess": "分享成功",
+    "shareFailed": "分享失败"
+  },
+  "report": {
+    "title": "举报",
+    "reason": "举报原因",
+    "spam": "垃圾信息",
+    "harassment": "骚扰",
+    "inappropriate": "不当内容",
+    "copyright": "侵权",
+    "other": "其他",
+    "description": "详细说明",
+    "submit": "提交举报",
+    "success": "举报已提交",
+    "failed": "举报失败"
+  },
+  "favorites": {
+    "title": "收藏",
+    "myFavorites": "我的收藏",
+    "characters": "角色",
+    "posts": "帖子",
+    "adapters": "适配器",
+    "collections": "收藏夹",
+    "createCollection": "创建收藏夹",
+    "addToCollection": "添加到收藏夹",
+    "removeFromFavorites": "取消收藏"
+  },
+  "stats": {
+    "views": "浏览",
+    "likes": "点赞",
+    "comments": "评论",
+    "shares": "分享",
+    "favorites": "收藏",
+    "followers": "粉丝",
+    "following": "关注"
+  },
+  "empty": {
+    "noFollowers": "还没有粉丝",
+    "noFollowing": "还没有关注任何人",
+    "noNotifications": "没有新通知",
+    "noMessages": "没有新消息",
+    "noActivity": "暂无动态",
+    "noFavorites": "还没有收藏"
+  }
+}
+

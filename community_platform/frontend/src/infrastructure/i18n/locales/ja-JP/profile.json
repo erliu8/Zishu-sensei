@@ -1,0 +1,212 @@
+{
+  "title": "プロフィール",
+  "tabs": {
+    "overview": "概要",
+    "posts": "投稿",
+    "adapters": "アダプター",
+    "characters": "キャラクター",
+    "favorites": "お気に入り",
+    "followers": "フォロワー",
+    "following": "フォロー中",
+    "settings": "設定"
+  },
+  "overview": {
+    "stats": {
+      "posts": "投稿",
+      "adapters": "アダプター",
+      "characters": "キャラクター",
+      "followers": "フォロワー",
+      "following": "フォロー中",
+      "likes": "いいね",
+      "views": "閲覧数",
+      "downloads": "ダウンロード数"
+    },
+    "bio": "自己紹介",
+    "website": "ウェブサイト",
+    "location": "所在地",
+    "joinedDate": "参加日",
+    "lastActive": "最終アクティブ"
+  },
+  "posts": {
+    "title": "マイ投稿",
+    "tabs": {
+      "published": "公開済み",
+      "drafts": "下書き",
+      "archived": "アーカイブ済み"
+    },
+    "empty": {
+      "published": "まだ投稿がありません",
+      "drafts": "下書きはありません",
+      "archived": "アーカイブ済みの投稿はありません"
+    },
+    "actions": {
+      "create": "投稿を作成",
+      "edit": "編集",
+      "delete": "削除",
+      "archive": "アーカイブ",
+      "publish": "公開"
+    }
+  },
+  "adapters": {
+    "title": "マイアダプター",
+    "tabs": {
+      "published": "公開済み",
+      "private": "非公開",
+      "archived": "アーカイブ済み"
+    },
+    "empty": {
+      "published": "まだアダプターを公開していません",
+      "private": "非公開のアダプターはありません",
+      "archived": "アーカイブ済みのアダプターはありません"
+    },
+    "actions": {
+      "create": "アダプターを作成",
+      "edit": "編集",
+      "delete": "削除",
+      "publish": "公開",
+      "makePrivate": "非公開にする"
+    }
+  },
+  "characters": {
+    "title": "マイキャラクター",
+    "tabs": {
+      "published": "公開済み",
+      "private": "非公開",
+      "archived": "アーカイブ済み"
+    },
+    "empty": {
+      "published": "まだキャラクターを作成していません",
+      "private": "非公開のキャラクターはありません",
+      "archived": "アーカイブ済みのキャラクターはありません"
+    },
+    "actions": {
+      "create": "キャラクターを作成",
+      "edit": "編集",
+      "delete": "削除",
+      "publish": "公開",
+      "makePrivate": "非公開にする"
+    }
+  },
+  "favorites": {
+    "title": "マイお気に入り",
+    "tabs": {
+      "all": "すべて",
+      "posts": "投稿",
+      "adapters": "アダプター",
+      "characters": "キャラクター"
+    },
+    "empty": {
+      "all": "まだお気に入りはありません",
+      "posts": "お気に入りの投稿はありません",
+      "adapters": "お気に入りのアダプターはありません",
+      "characters": "お気に入りのキャラクターはありません"
+    },
+    "actions": {
+      "remove": "お気に入りを解除",
+      "viewAll": "すべて表示"
+    }
+  },
+  "followers": {
+    "title": "フォロワー",
+    "empty": "まだフォロワーはいません",
+    "actions": {
+      "followBack": "フォローバック",
+      "remove": "削除"
+    }
+  },
+  "following": {
+    "title": "フォロー中",
+    "empty": "まだ誰もフォローしていません",
+    "actions": {
+      "unfollow": "フォロー解除"
+    }
+  },
+  "edit": {
+    "title": "プロフィール編集",
+    "avatar": "アバター",
+    "banner": "バナー",
+    "displayName": "表示名",
+    "username": "ユーザー名",
+    "bio": "自己紹介",
+    "website": "ウェブサイト",
+    "location": "所在地",
+    "socialLinks": "ソーシャルリンク",
+    "actions": {
+      "save": "保存",
+      "cancel": "キャンセル",
+      "uploadAvatar": "アバターをアップロード",
+      "uploadBanner": "バナーをアップロード",
+      "removeAvatar": "アバターを削除",
+      "removeBanner": "バナーを削除"
+    },
+    "messages": {
+      "saved": "プロフィールを保存しました",
+      "saveFailed": "保存に失敗しました。再試行してください"
+    },
+    "placeholders": {
+      "displayName": "表示名を入力",
+      "username": "ユーザー名を入力",
+      "bio": "自己紹介を入力...",
+      "website": "https://example.com",
+      "location": "所在地を入力"
+    }
+  },
+  "settings": {
+    "title": "アカウント設定",
+    "sections": {
+      "general": "一般",
+      "security": "セキュリティ",
+      "privacy": "プライバシー",
+      "notifications": "通知",
+      "appearance": "外観",
+      "advanced": "詳細設定"
+    },
+    "general": {
+      "language": "言語",
+      "timezone": "タイムゾーン",
+      "dateFormat": "日付形式"
+    },
+    "security": {
+      "changePassword": "パスワード変更",
+      "twoFactor": "二段階認証",
+      "sessions": "アクティブセッション",
+      "loginHistory": "ログイン履歴"
+    },
+    "privacy": {
+      "profileVisibility": "プロフィールの公開範囲",
+      "showEmail": "メールアドレスを表示",
+      "showLocation": "所在地を表示",
+      "allowMessages": "メッセージを許可",
+      "blockList": "ブロックリスト"
+    },
+    "notifications": {
+      "email": "メール通知",
+      "push": "プッシュ通知",
+      "preferences": "通知設定"
+    },
+    "appearance": {
+      "theme": "テーマ",
+      "fontSize": "フォントサイズ",
+      "compactMode": "コンパクトモード"
+    },
+    "actions": {
+      "save": "設定を保存",
+      "reset": "デフォルトにリセット"
+    }
+  },
+  "actions": {
+    "follow": "フォロー",
+    "unfollow": "フォロー解除",
+    "message": "メッセージ",
+    "share": "シェア",
+    "report": "報告",
+    "block": "ブロック"
+  },
+  "messages": {
+    "followed": "フォローしました",
+    "unfollowed": "フォロー解除しました",
+    "blocked": "ブロックしました",
+    "reported": "報告しました"
+  }
+}
+

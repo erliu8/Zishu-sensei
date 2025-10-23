@@ -1,0 +1,6 @@
+#!/usr/bin/env sh
+. "$(dirname -- "$0")/_/husky.sh"
+
+# 验证 commit message 格式
+npx --no -- commitlint --edit $1
+

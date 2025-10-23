@@ -1,0 +1,54 @@
+{
+  "required": "{field} is required",
+  "invalid": "{field} is invalid",
+  "email": {
+    "invalid": "Please enter a valid email address",
+    "required": "Email is required"
+  },
+  "password": {
+    "required": "Password is required",
+    "tooShort": "Password must be at least {min} characters",
+    "tooLong": "Password must not exceed {max} characters",
+    "weak": "Password is too weak, please include uppercase, lowercase, numbers and special characters",
+    "mismatch": "Passwords do not match"
+  },
+  "username": {
+    "required": "Username is required",
+    "tooShort": "Username must be at least {min} characters",
+    "tooLong": "Username must not exceed {max} characters",
+    "invalid": "Username can only contain letters, numbers, underscores and hyphens",
+    "taken": "This username is already taken"
+  },
+  "title": {
+    "required": "Title is required",
+    "tooShort": "Title must be at least {min} characters",
+    "tooLong": "Title must not exceed {max} characters"
+  },
+  "content": {
+    "required": "Content is required",
+    "tooShort": "Content must be at least {min} characters",
+    "tooLong": "Content must not exceed {max} characters"
+  },
+  "url": {
+    "invalid": "Please enter a valid URL"
+  },
+  "number": {
+    "invalid": "Please enter a valid number",
+    "min": "Value must be at least {min}",
+    "max": "Value must not exceed {max}"
+  },
+  "file": {
+    "required": "Please select a file",
+    "tooLarge": "File size must not exceed {max}",
+    "invalidType": "Unsupported file type, only {types} are allowed"
+  },
+  "date": {
+    "invalid": "Please select a valid date",
+    "past": "Date cannot be earlier than today",
+    "future": "Date cannot be later than today"
+  },
+  "terms": {
+    "required": "Please agree to the terms of service and privacy policy"
+  }
+}
+

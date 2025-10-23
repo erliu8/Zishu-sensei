@@ -1,0 +1,94 @@
+{
+  "title": "打包服务",
+  "subtitle": "将你的角色和适配器打包成独立应用",
+  "tabs": {
+    "create": "创建打包",
+    "history": "打包历史",
+    "settings": "打包设置"
+  },
+  "platforms": {
+    "windows": "Windows",
+    "macos": "macOS",
+    "linux": "Linux",
+    "android": "Android",
+    "ios": "iOS",
+    "web": "Web"
+  },
+  "config": {
+    "title": "打包配置",
+    "appName": "应用名称",
+    "appVersion": "应用版本",
+    "appIcon": "应用图标",
+    "platform": "目标平台",
+    "architecture": "架构",
+    "outputFormat": "输出格式",
+    "compression": "压缩级别",
+    "includeRuntime": "包含运行时",
+    "optimizeSize": "优化体积"
+  },
+  "steps": {
+    "selectCharacter": "选择角色",
+    "selectAdapter": "选择适配器",
+    "configure": "配置选项",
+    "preview": "预览确认",
+    "build": "开始打包"
+  },
+  "status": {
+    "pending": "等待中",
+    "preparing": "准备中",
+    "building": "打包中",
+    "packaging": "封装中",
+    "uploading": "上传中",
+    "completed": "已完成",
+    "failed": "失败",
+    "cancelled": "已取消"
+  },
+  "progress": {
+    "title": "打包进度",
+    "preparing": "正在准备资源...",
+    "downloading": "正在下载依赖...",
+    "compiling": "正在编译代码...",
+    "packaging": "正在封装应用...",
+    "optimizing": "正在优化体积...",
+    "uploading": "正在上传结果..."
+  },
+  "history": {
+    "title": "打包历史",
+    "columns": {
+      "name": "应用名称",
+      "platform": "平台",
+      "status": "状态",
+      "size": "大小",
+      "createdAt": "创建时间",
+      "actions": "操作"
+    },
+    "actions": {
+      "download": "下载",
+      "retry": "重试",
+      "delete": "删除",
+      "viewLog": "查看日志"
+    },
+    "empty": "暂无打包历史"
+  },
+  "actions": {
+    "startPackaging": "开始打包",
+    "cancelPackaging": "取消打包",
+    "retryPackaging": "重试打包",
+    "downloadPackage": "下载应用包",
+    "viewLog": "查看日志"
+  },
+  "messages": {
+    "success": "打包成功",
+    "failed": "打包失败",
+    "cancelled": "打包已取消",
+    "downloading": "正在下载..."
+  },
+  "errors": {
+    "noCharacter": "请选择一个角色",
+    "noAdapter": "请选择一个适配器",
+    "invalidConfig": "配置信息不完整",
+    "buildFailed": "打包失败，请查看日志",
+    "downloadFailed": "下载失败，请重试"
+  }
+}
+

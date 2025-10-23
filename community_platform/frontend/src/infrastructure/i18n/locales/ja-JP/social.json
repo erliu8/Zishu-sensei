@@ -1,0 +1,139 @@
+{
+  "follow": {
+    "follow": "フォロー",
+    "following": "フォロー中",
+    "unfollow": "フォロー解除",
+    "followers": "フォロワー",
+    "followings": "フォロー中",
+    "followerCount": "{count}フォロワー",
+    "followingCount": "{count}フォロー中",
+    "mutualFollow": "相互フォロー",
+    "followBack": "フォローバック"
+  },
+  "actions": {
+    "followSuccess": "フォローしました",
+    "unfollowSuccess": "フォロー解除しました",
+    "followFailed": "フォローに失敗しました",
+    "unfollowFailed": "フォロー解除に失敗しました",
+    "block": "ブロック",
+    "unblock": "ブロック解除",
+    "blockSuccess": "ブロックしました",
+    "unblockSuccess": "ブロック解除しました",
+    "mute": "ミュート",
+    "unmute": "ミュート解除",
+    "muteSuccess": "ミュートしました",
+    "unmuteSuccess": "ミュート解除しました"
+  },
+  "notifications": {
+    "title": "通知",
+    "all": "すべて",
+    "unread": "未読",
+    "mentions": "メンション",
+    "likes": "いいね",
+    "comments": "コメント",
+    "follows": "フォロー",
+    "system": "システム",
+    "markAllRead": "すべて既読にする",
+    "markRead": "既読にする",
+    "delete": "削除",
+    "deleteAll": "すべてクリア",
+    "settings": "通知設定"
+  },
+  "notificationTypes": {
+    "like": "{username}があなたの{type}にいいねしました",
+    "comment": "{username}があなたの{type}にコメントしました",
+    "reply": "{username}があなたのコメントに返信しました",
+    "mention": "{username}が{type}であなたをメンションしました",
+    "follow": "{username}があなたをフォローしました",
+    "favorite": "{username}があなたの{type}をお気に入りに追加しました",
+    "share": "{username}があなたの{type}を共有しました"
+  },
+  "messages": {
+    "title": "メッセージ",
+    "conversations": "会話",
+    "newMessage": "新しいメッセージ",
+    "send": "送信",
+    "typing": "{username}が入力中...",
+    "online": "オンライン",
+    "offline": "オフライン",
+    "seen": "既読",
+    "delivered": "配信済み",
+    "delete": "会話を削除",
+    "block": "ユーザーをブロック",
+    "report": "報告"
+  },
+  "activity": {
+    "title": "アクティビティ",
+    "feed": "フィード",
+    "timeline": "タイムライン",
+    "recent": "最近のアクティビティ",
+    "trending": "トレンド",
+    "published": "公開しました",
+    "liked": "いいねしました",
+    "commented": "コメントしました",
+    "shared": "共有しました",
+    "followed": "フォローしました",
+    "favorited": "お気に入りに追加しました"
+  },
+  "privacy": {
+    "public": "公開",
+    "followers": "フォロワーのみ",
+    "private": "非公開",
+    "friends": "友達のみ",
+    "settings": "プライバシー設定",
+    "whoCanSee": "表示できる人",
+    "whoCanComment": "コメントできる人",
+    "whoCanMessage": "メッセージを送信できる人"
+  },
+  "share": {
+    "title": "共有",
+    "copyLink": "リンクをコピー",
+    "shareToFeed": "フィードに共有",
+    "shareVia": "共有する",
+    "linkCopied": "リンクをコピーしました",
+    "shareSuccess": "共有しました",
+    "shareFailed": "共有に失敗しました"
+  },
+  "report": {
+    "title": "報告",
+    "reason": "理由",
+    "spam": "スパム",
+    "harassment": "ハラスメント",
+    "inappropriate": "不適切なコンテンツ",
+    "copyright": "著作権侵害",
+    "other": "その他",
+    "description": "詳細",
+    "submit": "報告を送信",
+    "success": "報告を送信しました",
+    "failed": "報告の送信に失敗しました"
+  },
+  "favorites": {
+    "title": "お気に入り",
+    "myFavorites": "マイお気に入り",
+    "characters": "キャラクター",
+    "posts": "投稿",
+    "adapters": "アダプター",
+    "collections": "コレクション",
+    "createCollection": "コレクションを作成",
+    "addToCollection": "コレクションに追加",
+    "removeFromFavorites": "お気に入りから削除"
+  },
+  "stats": {
+    "views": "表示",
+    "likes": "いいね",
+    "comments": "コメント",
+    "shares": "共有",
+    "favorites": "お気に入り",
+    "followers": "フォロワー",
+    "following": "フォロー中"
+  },
+  "empty": {
+    "noFollowers": "まだフォロワーがいません",
+    "noFollowing": "まだ誰もフォローしていません",
+    "noNotifications": "通知はありません",
+    "noMessages": "メッセージはありません",
+    "noActivity": "アクティビティはありません",
+    "noFavorites": "まだお気に入りがありません"
+  }
+}
+

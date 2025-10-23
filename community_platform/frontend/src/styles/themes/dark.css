@@ -1,0 +1,189 @@
+/* 暗色主题 */
+
+[data-theme='dark'],
+.theme-dark {
+  /* 背景色 */
+  --background: 222.2 84% 4.9%;
+  --foreground: 210 40% 98%;
+
+  /* 卡片 */
+  --card: 222.2 84% 4.9%;
+  --card-foreground: 210 40% 98%;
+
+  /* 弹出层 */
+  --popover: 222.2 84% 4.9%;
+  --popover-foreground: 210 40% 98%;
+
+  /* 主色调 */
+  --primary: 217.2 91.2% 59.8%;
+  --primary-foreground: 222.2 47.4% 11.2%;
+
+  /* 辅助色 */
+  --secondary: 217.2 32.6% 17.5%;
+  --secondary-foreground: 210 40% 98%;
+
+  /* 柔和色 */
+  --muted: 217.2 32.6% 17.5%;
+  --muted-foreground: 215 20.2% 65.1%;
+
+  /* 强调色 */
+  --accent: 217.2 32.6% 17.5%;
+  --accent-foreground: 210 40% 98%;
+
+  /* 破坏性操作 */
+  --destructive: 0 62.8% 30.6%;
+  --destructive-foreground: 210 40% 98%;
+
+  /* 成功 */
+  --success: 142 70% 35%;
+  --success-foreground: 144 61% 98%;
+
+  /* 警告 */
+  --warning: 38 92% 40%;
+  --warning-foreground: 48 96% 98%;
+
+  /* 错误 */
+  --error: 0 62.8% 30.6%;
+  --error-foreground: 0 0% 98%;
+
+  /* 信息 */
+  --info: 217 91% 50%;
+  --info-foreground: 210 40% 98%;
+
+  /* 边框 */
+  --border: 217.2 32.6% 17.5%;
+  --input: 217.2 32.6% 17.5%;
+
+  /* 聚焦环 */
+  --ring: 224.3 76.3% 48%;
+
+  /* 特殊颜色 */
+  --chart-1: 220 70% 50%;
+  --chart-2: 160 60% 45%;
+  --chart-3: 30 80% 55%;
+  --chart-4: 280 65% 60%;
+  --chart-5: 340 75% 55%;
+
+  /* 语义化颜色 */
+  --text-primary: 210 40% 98%;
+  --text-secondary: 215 20.2% 65.1%;
+  --text-tertiary: 217.9 10.6% 64.9%;
+  --text-disabled: 217.9 10.6% 50%;
+
+  /* 背景层级 */
+  --bg-primary: 222.2 84% 4.9%;
+  --bg-secondary: 217.2 32.6% 12%;
+  --bg-tertiary: 217.2 32.6% 17.5%;
+  --bg-hover: 217.2 32.6% 22%;
+  --bg-active: 217.2 32.6% 27%;
+
+  /* 分割线 */
+  --divider: 217.2 32.6% 17.5%;
+  --divider-strong: 217.2 32.6% 30%;
+
+  /* 阴影颜色 */
+  --shadow-color: 0 0% 0%;
+  --shadow-strength: 0.5;
+
+  /* 滚动条 */
+  --scrollbar-track: 217.2 32.6% 17.5%;
+  --scrollbar-thumb: 215 20.2% 65.1%;
+  --scrollbar-thumb-hover: 215 20.2% 75.1%;
+
+  /* 代码高亮 */
+  --code-bg: 217.2 32.6% 12%;
+  --code-text: 210 40% 98%;
+  --code-comment: 215 20.2% 65.1%;
+  --code-keyword: 217.2 91.2% 59.8%;
+  --code-string: 142 70% 45%;
+  --code-function: 262 83% 68%;
+  --code-number: 0 84.2% 70.2%;
+}
+
+/* 暗色主题特殊样式 */
+[data-theme='dark'] {
+  color-scheme: dark;
+}
+
+/* 暗色主题下的图片亮度调整 */
+[data-theme='dark'] img:not([data-no-invert]) {
+  filter: brightness(0.9) contrast(1.1);
+}
+
+/* 暗色主题下的代码块 */
+[data-theme='dark'] pre {
+  background-color: hsl(var(--code-bg));
+  color: hsl(var(--code-text));
+  border: 1px solid hsl(var(--border));
+}
+
+/* 暗色主题下的选择 */
+[data-theme='dark'] ::selection {
+  background-color: hsl(var(--primary) / 0.3);
+  color: hsl(var(--primary-foreground));
+}
+
+/* 暗色主题下的占位符 */
+[data-theme='dark'] ::placeholder {
+  color: hsl(var(--muted-foreground));
+  opacity: 0.5;
+}
+
+/* 暗色主题下的滚动条 */
+[data-theme='dark'] ::-webkit-scrollbar-track {
+  background-color: hsl(var(--scrollbar-track));
+}
+
+[data-theme='dark'] ::-webkit-scrollbar-thumb {
+  background-color: hsl(var(--scrollbar-thumb) / 0.3);
+}
+
+[data-theme='dark'] ::-webkit-scrollbar-thumb:hover {
+  background-color: hsl(var(--scrollbar-thumb-hover) / 0.5);
+}
+
+/* 暗色主题下的阴影增强 */
+[data-theme='dark'] .card,
+[data-theme='dark'] .shadow-md,
+[data-theme='dark'] .shadow-lg {
+  box-shadow:
+    0 0 0 1px hsl(var(--border)),
+    var(--tw-ring-offset-shadow, 0 0 #0000),
+    var(--tw-ring-shadow, 0 0 #0000),
+    var(--tw-shadow);
+}
+
+/* 暗色主题下的玻璃态效果 */
+[data-theme='dark'] .glass {
+  background-color: hsl(var(--background) / 0.7);
+  backdrop-filter: blur(12px);
+  border: 1px solid hsl(var(--border));
+}
+
+/* 暗色主题下的渐变优化 */
+[data-theme='dark'] .gradient-text {
+  background: linear-gradient(
+    135deg,
+    hsl(var(--primary)) 0%,
+    hsl(var(--secondary)) 50%,
+    hsl(var(--accent)) 100%
+  );
+  background-clip: text;
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
+}
+
+/* 暗色主题下的焦点环 */
+[data-theme='dark'] :focus-visible {
+  outline: 2px solid hsl(var(--ring));
+  outline-offset: 2px;
+}
+
+/* 暗色主题下的链接 */
+[data-theme='dark'] a {
+  color: hsl(var(--primary));
+}
+
+[data-theme='dark'] a:hover {
+  color: hsl(var(--primary) / 0.8);
+}

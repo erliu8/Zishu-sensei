@@ -1,0 +1,62 @@
+{
+  "title": "Notifications",
+  "tabs": {
+    "all": "All",
+    "unread": "Unread",
+    "mentions": "Mentions",
+    "replies": "Replies",
+    "likes": "Likes",
+    "follows": "Follows",
+    "system": "System"
+  },
+  "types": {
+    "like": "{user} liked your {type}",
+    "comment": "{user} commented on your {type}",
+    "reply": "{user} replied to your comment",
+    "mention": "{user} mentioned you in {type}",
+    "follow": "{user} followed you",
+    "system": "System notification",
+    "download": "{user} downloaded your {type}",
+    "favorite": "{user} favorited your {type}",
+    "share": "{user} shared your {type}"
+  },
+  "content": {
+    "post": "post",
+    "adapter": "adapter",
+    "character": "character",
+    "comment": "comment"
+  },
+  "actions": {
+    "markRead": "Mark as read",
+    "markUnread": "Mark as unread",
+    "markAllRead": "Mark all as read",
+    "delete": "Delete",
+    "deleteAll": "Clear all",
+    "viewAll": "View all"
+  },
+  "empty": {
+    "all": "No notifications",
+    "unread": "No unread notifications",
+    "filter": "No notifications in this category"
+  },
+  "settings": {
+    "title": "Notification Settings",
+    "email": "Email Notifications",
+    "push": "Push Notifications",
+    "preferences": {
+      "title": "Notification Preferences",
+      "likes": "Like notifications",
+      "comments": "Comment notifications",
+      "follows": "Follow notifications",
+      "mentions": "Mention notifications",
+      "system": "System notifications"
+    }
+  },
+  "messages": {
+    "markedRead": "Marked as read",
+    "markedUnread": "Marked as unread",
+    "deleted": "Notification deleted",
+    "cleared": "All notifications cleared"
+  }
+}
+

@@ -1,0 +1,134 @@
+{
+  "title": {
+    "settings": "設定",
+    "account": "アカウント設定",
+    "profile": "プロフィール",
+    "privacy": "プライバシー",
+    "notifications": "通知",
+    "appearance": "表示",
+    "language": "言語",
+    "security": "セキュリティ",
+    "preferences": "環境設定"
+  },
+  "account": {
+    "email": "メールアドレス",
+    "username": "ユーザー名",
+    "password": "パスワード",
+    "changePassword": "パスワードを変更",
+    "currentPassword": "現在のパスワード",
+    "newPassword": "新しいパスワード",
+    "confirmPassword": "パスワードを確認",
+    "deleteAccount": "アカウントを削除",
+    "deactivateAccount": "アカウントを無効化"
+  },
+  "profile": {
+    "displayName": "表示名",
+    "bio": "自己紹介",
+    "avatar": "アバター",
+    "coverImage": "カバー画像",
+    "website": "ウェブサイト",
+    "location": "場所",
+    "birthday": "誕生日",
+    "gender": "性別",
+    "uploadAvatar": "アバターをアップロード",
+    "removeAvatar": "アバターを削除",
+    "editProfile": "プロフィールを編集"
+  },
+  "privacy": {
+    "profileVisibility": "プロフィールの公開範囲",
+    "showEmail": "メールアドレスを表示",
+    "showActivity": "アクティビティを表示",
+    "allowMessages": "メッセージを許可",
+    "allowComments": "コメントを許可",
+    "allowFollows": "フォローを許可",
+    "blockedUsers": "ブロック中のユーザー",
+    "mutedUsers": "ミュート中のユーザー"
+  },
+  "notifications": {
+    "emailNotifications": "メール通知",
+    "pushNotifications": "プッシュ通知",
+    "likes": "いいね",
+    "comments": "コメント",
+    "follows": "フォロー",
+    "mentions": "メンション",
+    "messages": "メッセージ",
+    "updates": "更新情報",
+    "newsletter": "ニュースレター"
+  },
+  "appearance": {
+    "theme": "テーマ",
+    "light": "ライト",
+    "dark": "ダーク",
+    "auto": "自動",
+    "colorScheme": "配色",
+    "fontSize": "フォントサイズ",
+    "small": "小",
+    "medium": "中",
+    "large": "大",
+    "layout": "レイアウト",
+    "compact": "コンパクト",
+    "comfortable": "快適",
+    "spacious": "ゆったり"
+  },
+  "language": {
+    "select": "言語を選択",
+    "zhCN": "简体中文",
+    "enUS": "English",
+    "jaJP": "日本語",
+    "auto": "自動検出"
+  },
+  "security": {
+    "twoFactor": "二段階認証",
+    "enable2FA": "二段階認証を有効化",
+    "disable2FA": "二段階認証を無効化",
+    "activeSessions": "アクティブなセッション",
+    "loginHistory": "ログイン履歴",
+    "connectedApps": "連携アプリ",
+    "apiKeys": "APIキー"
+  },
+  "preferences": {
+    "autoplay": "自動再生",
+    "showSpoilers": "ネタバレを表示",
+    "nsfwContent": "NSFWコンテンツを表示",
+    "dataUsage": "データ使用量",
+    "downloadQuality": "ダウンロード品質",
+    "defaultPrivacy": "デフォルトの公開範囲",
+    "timezone": "タイムゾーン"
+  },
+  "actions": {
+    "save": "保存",
+    "cancel": "キャンセル",
+    "apply": "適用",
+    "reset": "リセット",
+    "update": "更新",
+    "change": "変更",
+    "remove": "削除",
+    "delete": "削除"
+  },
+  "messages": {
+    "saveSuccess": "設定を保存しました",
+    "saveFailed": "設定の保存に失敗しました",
+    "updateSuccess": "更新しました",
+    "updateFailed": "更新に失敗しました",
+    "passwordChanged": "パスワードを変更しました",
+    "passwordMismatch": "パスワードが一致しません",
+    "invalidPassword": "パスワードの形式が正しくありません",
+    "emailUpdated": "メールアドレスを更新しました",
+    "profileUpdated": "プロフィールを更新しました"
+  },
+  "validation": {
+    "required": "この項目は必須です",
+    "invalidEmail": "メールアドレスの形式が正しくありません",
+    "passwordLength": "パスワードは8文字以上で入力してください",
+    "passwordMatch": "パスワードが一致しません",
+    "usernameLength": "ユーザー名は3〜20文字で入力してください",
+    "bioLength": "自己紹介は200文字以内で入力してください"
+  },
+  "confirm": {
+    "deleteAccount": "アカウントを削除してもよろしいですか？この操作は元に戻せません。",
+    "deactivateAccount": "アカウントを無効化してもよろしいですか？",
+    "resetSettings": "すべての設定をリセットしてもよろしいですか？",
+    "removeAvatar": "アバターを削除してもよろしいですか？"
+  }
+}
+

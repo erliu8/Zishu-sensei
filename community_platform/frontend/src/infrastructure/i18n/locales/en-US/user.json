@@ -1,0 +1,59 @@
+{
+  "title": {
+    "profile": "Profile",
+    "editProfile": "Edit Profile",
+    "myProfile": "My Profile",
+    "userProfile": "{username}'s Profile"
+  },
+  "fields": {
+    "username": "Username",
+    "displayName": "Display Name",
+    "email": "Email",
+    "bio": "Bio",
+    "avatar": "Avatar",
+    "coverImage": "Cover Image",
+    "website": "Website",
+    "location": "Location",
+    "birthday": "Birthday",
+    "joinDate": "Join Date"
+  },
+  "stats": {
+    "posts": "{count} Posts",
+    "characters": "{count} Characters",
+    "adapters": "{count} Adapters",
+    "followers": "{count} Followers",
+    "following": "{count} Following",
+    "likes": "{count} Likes"
+  },
+  "tabs": {
+    "overview": "Overview",
+    "posts": "Posts",
+    "characters": "Characters",
+    "adapters": "Adapters",
+    "favorites": "Favorites",
+    "activity": "Activity"
+  },
+  "actions": {
+    "follow": "Follow",
+    "unfollow": "Unfollow",
+    "message": "Message",
+    "share": "Share",
+    "report": "Report",
+    "block": "Block"
+  },
+  "status": {
+    "online": "Online",
+    "offline": "Offline",
+    "away": "Away",
+    "busy": "Busy"
+  },
+  "badges": {
+    "verified": "Verified",
+    "official": "Official",
+    "moderator": "Moderator",
+    "contributor": "Contributor",
+    "earlyAdopter": "Early Adopter",
+    "premium": "Premium"
+  }
+}
+

@@ -1,0 +1,62 @@
+{
+  "title": "通知",
+  "tabs": {
+    "all": "すべて",
+    "unread": "未読",
+    "mentions": "メンション",
+    "replies": "返信",
+    "likes": "いいね",
+    "follows": "フォロー",
+    "system": "システム"
+  },
+  "types": {
+    "like": "{user}があなたの{type}にいいねしました",
+    "comment": "{user}があなたの{type}にコメントしました",
+    "reply": "{user}があなたのコメントに返信しました",
+    "mention": "{user}が{type}であなたをメンションしました",
+    "follow": "{user}があなたをフォローしました",
+    "system": "システム通知",
+    "download": "{user}があなたの{type}をダウンロードしました",
+    "favorite": "{user}があなたの{type}をお気に入りに追加しました",
+    "share": "{user}があなたの{type}をシェアしました"
+  },
+  "content": {
+    "post": "投稿",
+    "adapter": "アダプター",
+    "character": "キャラクター",
+    "comment": "コメント"
+  },
+  "actions": {
+    "markRead": "既読にする",
+    "markUnread": "未読にする",
+    "markAllRead": "すべて既読にする",
+    "delete": "削除",
+    "deleteAll": "すべてクリア",
+    "viewAll": "すべて表示"
+  },
+  "empty": {
+    "all": "通知はありません",
+    "unread": "未読の通知はありません",
+    "filter": "このカテゴリに通知はありません"
+  },
+  "settings": {
+    "title": "通知設定",
+    "email": "メール通知",
+    "push": "プッシュ通知",
+    "preferences": {
+      "title": "通知の設定",
+      "likes": "いいね通知",
+      "comments": "コメント通知",
+      "follows": "フォロー通知",
+      "mentions": "メンション通知",
+      "system": "システム通知"
+    }
+  },
+  "messages": {
+    "markedRead": "既読にしました",
+    "markedUnread": "未読にしました",
+    "deleted": "通知を削除しました",
+    "cleared": "すべての通知をクリアしました"
+  }
+}
+

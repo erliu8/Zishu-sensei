@@ -1,0 +1,47 @@
+{
+  "title": "Error",
+  "http": {
+    "400": "Bad Request",
+    "401": "Unauthorized, please login first",
+    "403": "Forbidden",
+    "404": "Resource not found",
+    "408": "Request Timeout",
+    "429": "Too many requests, please try again later",
+    "500": "Internal Server Error",
+    "502": "Bad Gateway",
+    "503": "Service Unavailable",
+    "504": "Gateway Timeout"
+  },
+  "network": {
+    "offline": "Network connection lost",
+    "timeout": "Request timeout",
+    "failed": "Network request failed"
+  },
+  "validation": {
+    "required": "This field is required",
+    "invalid": "Invalid format",
+    "tooShort": "Input is too short",
+    "tooLong": "Input is too long",
+    "mismatch": "Inputs do not match"
+  },
+  "auth": {
+    "loginFailed": "Login failed, please check your credentials",
+    "sessionExpired": "Session expired, please login again",
+    "invalidToken": "Invalid token",
+    "emailNotVerified": "Email not verified",
+    "accountLocked": "Account is locked",
+    "permissionDenied": "Permission denied"
+  },
+  "file": {
+    "uploadFailed": "File upload failed",
+    "tooLarge": "File is too large",
+    "invalidType": "Unsupported file type",
+    "readFailed": "Failed to read file"
+  },
+  "common": {
+    "unknown": "Unknown error",
+    "tryAgain": "Please try again",
+    "contactSupport": "If the problem persists, please contact support"
+  }
+}
+

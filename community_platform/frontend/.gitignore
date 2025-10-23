@@ -1,6 +1,6 @@
 # See https://help.github.com/articles/ignoring-files/ for more about ignoring files.
 
-# dependencies
+# 依赖
 /node_modules
 /.pnp
 .pnp.*
@@ -10,32 +10,78 @@
 !.yarn/releases
 !.yarn/versions
 
-# testing
+# 测试
 /coverage
+/.nyc_output
+/test-results
+/playwright-report
 
-# next.js
+# Next.js
 /.next/
 /out/
+/.turbo
 
-# production
+# 生产构建
 /build
+/dist
 
-# misc
+# 杂项
 .DS_Store
 *.pem
+Thumbs.db
 
-# debug
+# 调试
 npm-debug.log*
 yarn-debug.log*
 yarn-error.log*
 .pnpm-debug.log*
+lerna-debug.log*
 
-# env files (can opt-in for committing if needed)
-.env*
+# 环境变量
+.env
+.env*.local
+.env.development.local
+.env.test.local
+.env.production.local
+!env.example
 
-# vercel
+# 部署
 .vercel
+.netlify
 
-# typescript
+# TypeScript
 *.tsbuildinfo
 next-env.d.ts
+
+# IDE
+.vscode/*
+!.vscode/settings.json
+!.vscode/tasks.json
+!.vscode/launch.json
+!.vscode/extensions.json
+.idea
+*.swp
+*.swo
+*~
+*.sublime-project
+*.sublime-workspace
+
+# 操作系统
+.DS_Store
+.DS_Store?
+._*
+.Spotlight-V100
+.Trashes
+ehthumbs.db
+Desktop.ini
+
+# 临时文件
+*.log
+*.tmp
+*.temp
+.cache
+.temp
+
+# Storybook
+storybook-static
+

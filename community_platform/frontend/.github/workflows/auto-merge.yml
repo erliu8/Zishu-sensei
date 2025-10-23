@@ -1,0 +1,36 @@
+name: Auto Merge
+
+on:
+  pull_request_target:
+    types: [opened, synchronize, reopened]
+
+permissions:
+  pull-requests: write
+  contents: write
+
+jobs:
+  auto-merge:
+    name: 自动合并 Dependabot PR
+    runs-on: ubuntu-latest
+    if: github.actor == 'dependabot[bot]'
+    steps:
+      - name: 获取 Dependabot 元数据
+        id: dependabot-metadata
+        uses: dependabot/fetch-metadata@v2
+
+      - name: 批准补丁和小版本更新
+        if: |
+          steps.dependabot-metadata.outputs.update-type == 'version-update:semver-patch' ||
+          steps.dependabot-metadata.outputs.update-type == 'version-update:semver-minor'
+        run: |
+          gh pr review --approve "${{ github.event.pull_request.html_url }}"
+          gh pr merge --auto --squash "${{ github.event.pull_request.html_url }}"
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+
+      - name: 添加标签
+        run: |
+          gh pr edit "${{ github.event.pull_request.html_url }}" --add-label "dependencies"
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+

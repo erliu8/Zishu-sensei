@@ -1,0 +1,139 @@
+{
+  "follow": {
+    "follow": "Follow",
+    "following": "Following",
+    "unfollow": "Unfollow",
+    "followers": "Followers",
+    "followings": "Following",
+    "followerCount": "{count} followers",
+    "followingCount": "Following {count}",
+    "mutualFollow": "Mutual",
+    "followBack": "Follow Back"
+  },
+  "actions": {
+    "followSuccess": "Followed",
+    "unfollowSuccess": "Unfollowed",
+    "followFailed": "Failed to follow",
+    "unfollowFailed": "Failed to unfollow",
+    "block": "Block",
+    "unblock": "Unblock",
+    "blockSuccess": "Blocked",
+    "unblockSuccess": "Unblocked",
+    "mute": "Mute",
+    "unmute": "Unmute",
+    "muteSuccess": "Muted",
+    "unmuteSuccess": "Unmuted"
+  },
+  "notifications": {
+    "title": "Notifications",
+    "all": "All",
+    "unread": "Unread",
+    "mentions": "Mentions",
+    "likes": "Likes",
+    "comments": "Comments",
+    "follows": "Follows",
+    "system": "System",
+    "markAllRead": "Mark All as Read",
+    "markRead": "Mark as Read",
+    "delete": "Delete",
+    "deleteAll": "Clear All",
+    "settings": "Notification Settings"
+  },
+  "notificationTypes": {
+    "like": "{username} liked your {type}",
+    "comment": "{username} commented on your {type}",
+    "reply": "{username} replied to your comment",
+    "mention": "{username} mentioned you in {type}",
+    "follow": "{username} followed you",
+    "favorite": "{username} favorited your {type}",
+    "share": "{username} shared your {type}"
+  },
+  "messages": {
+    "title": "Messages",
+    "conversations": "Conversations",
+    "newMessage": "New Message",
+    "send": "Send",
+    "typing": "{username} is typing...",
+    "online": "Online",
+    "offline": "Offline",
+    "seen": "Seen",
+    "delivered": "Delivered",
+    "delete": "Delete Conversation",
+    "block": "Block User",
+    "report": "Report"
+  },
+  "activity": {
+    "title": "Activity",
+    "feed": "Feed",
+    "timeline": "Timeline",
+    "recent": "Recent Activity",
+    "trending": "Trending",
+    "published": "published",
+    "liked": "liked",
+    "commented": "commented on",
+    "shared": "shared",
+    "followed": "followed",
+    "favorited": "favorited"
+  },
+  "privacy": {
+    "public": "Public",
+    "followers": "Followers Only",
+    "private": "Private",
+    "friends": "Friends Only",
+    "settings": "Privacy Settings",
+    "whoCanSee": "Who can see",
+    "whoCanComment": "Who can comment",
+    "whoCanMessage": "Who can message"
+  },
+  "share": {
+    "title": "Share",
+    "copyLink": "Copy Link",
+    "shareToFeed": "Share to Feed",
+    "shareVia": "Share via",
+    "linkCopied": "Link copied",
+    "shareSuccess": "Shared successfully",
+    "shareFailed": "Failed to share"
+  },
+  "report": {
+    "title": "Report",
+    "reason": "Reason",
+    "spam": "Spam",
+    "harassment": "Harassment",
+    "inappropriate": "Inappropriate Content",
+    "copyright": "Copyright Violation",
+    "other": "Other",
+    "description": "Description",
+    "submit": "Submit Report",
+    "success": "Report submitted",
+    "failed": "Failed to submit report"
+  },
+  "favorites": {
+    "title": "Favorites",
+    "myFavorites": "My Favorites",
+    "characters": "Characters",
+    "posts": "Posts",
+    "adapters": "Adapters",
+    "collections": "Collections",
+    "createCollection": "Create Collection",
+    "addToCollection": "Add to Collection",
+    "removeFromFavorites": "Remove from Favorites"
+  },
+  "stats": {
+    "views": "Views",
+    "likes": "Likes",
+    "comments": "Comments",
+    "shares": "Shares",
+    "favorites": "Favorites",
+    "followers": "Followers",
+    "following": "Following"
+  },
+  "empty": {
+    "noFollowers": "No followers yet",
+    "noFollowing": "Not following anyone yet",
+    "noNotifications": "No notifications",
+    "noMessages": "No messages",
+    "noActivity": "No activity",
+    "noFavorites": "No favorites yet"
+  }
+}
+

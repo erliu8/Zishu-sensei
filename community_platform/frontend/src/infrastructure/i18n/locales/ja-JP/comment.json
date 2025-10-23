@@ -1,0 +1,72 @@
+{
+  "title": {
+    "comments": "コメント",
+    "addComment": "コメントを追加",
+    "editComment": "コメントを編集",
+    "replies": "返信",
+    "allComments": "すべてのコメント"
+  },
+  "actions": {
+    "comment": "コメント",
+    "reply": "返信",
+    "edit": "編集",
+    "delete": "削除",
+    "like": "いいね",
+    "unlike": "いいね解除",
+    "report": "報告",
+    "viewReplies": "返信を表示",
+    "hideReplies": "返信を非表示",
+    "loadMore": "さらに読み込む",
+    "showMore": "もっと見る",
+    "showLess": "折りたたむ"
+  },
+  "placeholders": {
+    "comment": "コメントを書く...",
+    "reply": "@{username}に返信..."
+  },
+  "sort": {
+    "latest": "最新",
+    "oldest": "古い順",
+    "popular": "人気",
+    "replies": "返信数順"
+  },
+  "stats": {
+    "likes": "{count}いいね",
+    "replies": "{count}返信",
+    "comment": "{count}コメント"
+  },
+  "messages": {
+    "addSuccess": "コメントを追加しました",
+    "addFailed": "コメントの追加に失敗しました",
+    "editSuccess": "コメントを更新しました",
+    "editFailed": "コメントの更新に失敗しました",
+    "deleteSuccess": "コメントを削除しました",
+    "deleteFailed": "コメントの削除に失敗しました",
+    "likeSuccess": "いいねしました",
+    "unlikeSuccess": "いいねを取り消しました",
+    "reportSuccess": "報告を送信しました",
+    "deleted": "このコメントは削除されました",
+    "restricted": "このコメントは制限されています"
+  },
+  "validation": {
+    "required": "コメントを入力してください",
+    "minLength": "コメントは2文字以上で入力してください",
+    "maxLength": "コメントは1000文字以内で入力してください"
+  },
+  "confirm": {
+    "delete": "このコメントを削除してもよろしいですか？",
+    "deleteWithReplies": "コメントを削除すると、すべての返信も削除されます。続行しますか？"
+  },
+  "empty": {
+    "noComments": "まだコメントがありません",
+    "beFirst": "最初のコメントを投稿しましょう",
+    "noReplies": "まだ返信がありません"
+  },
+  "status": {
+    "pinned": "ピン留め",
+    "edited": "編集済み",
+    "deleted": "削除済み",
+    "author": "作成者"
+  }
+}
+

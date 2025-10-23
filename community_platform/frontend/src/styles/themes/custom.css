@@ -1,0 +1,267 @@
+/* 自定义主题 - 可以根据需求创建不同的主题变体 */
+
+/* 示例：动漫风格主题 */
+[data-theme='anime'] {
+  /* 背景色 - 使用更柔和的粉色系 */
+  --background: 330 100% 98%;
+  --foreground: 340 80% 15%;
+
+  /* 卡片 */
+  --card: 0 0% 100%;
+  --card-foreground: 340 80% 15%;
+
+  /* 弹出层 */
+  --popover: 0 0% 100%;
+  --popover-foreground: 340 80% 15%;
+
+  /* 主色调 - 樱花粉 */
+  --primary: 350 100% 75%;
+  --primary-foreground: 0 0% 100%;
+
+  /* 辅助色 - 薰衣草紫 */
+  --secondary: 270 50% 70%;
+  --secondary-foreground: 0 0% 100%;
+
+  /* 柔和色 */
+  --muted: 330 50% 95%;
+  --muted-foreground: 340 20% 50%;
+
+  /* 强调色 - 天空蓝 */
+  --accent: 200 100% 70%;
+  --accent-foreground: 0 0% 100%;
+
+  /* 破坏性操作 */
+  --destructive: 0 70% 60%;
+  --destructive-foreground: 0 0% 100%;
+
+  /* 成功 */
+  --success: 140 60% 55%;
+  --success-foreground: 0 0% 100%;
+
+  /* 警告 */
+  --warning: 40 100% 60%;
+  --warning-foreground: 0 0% 100%;
+
+  /* 错误 */
+  --error: 0 70% 60%;
+  --error-foreground: 0 0% 100%;
+
+  /* 信息 */
+  --info: 210 100% 65%;
+  --info-foreground: 0 0% 100%;
+
+  /* 边框 */
+  --border: 330 30% 90%;
+  --input: 330 30% 90%;
+
+  /* 聚焦环 */
+  --ring: 350 100% 75%;
+
+  /* 背景层级 */
+  --bg-primary: 330 100% 98%;
+  --bg-secondary: 330 100% 96%;
+  --bg-tertiary: 330 50% 95%;
+  --bg-hover: 330 50% 93%;
+  --bg-active: 330 50% 91%;
+}
+
+/* 示例：高对比度主题（无障碍） */
+[data-theme='high-contrast'] {
+  /* 背景色 */
+  --background: 0 0% 100%;
+  --foreground: 0 0% 0%;
+
+  /* 卡片 */
+  --card: 0 0% 100%;
+  --card-foreground: 0 0% 0%;
+
+  /* 弹出层 */
+  --popover: 0 0% 100%;
+  --popover-foreground: 0 0% 0%;
+
+  /* 主色调 */
+  --primary: 240 100% 40%;
+  --primary-foreground: 0 0% 100%;
+
+  /* 辅助色 */
+  --secondary: 0 0% 20%;
+  --secondary-foreground: 0 0% 100%;
+
+  /* 柔和色 */
+  --muted: 0 0% 95%;
+  --muted-foreground: 0 0% 30%;
+
+  /* 强调色 */
+  --accent: 40 100% 40%;
+  --accent-foreground: 0 0% 100%;
+
+  /* 破坏性操作 */
+  --destructive: 0 100% 40%;
+  --destructive-foreground: 0 0% 100%;
+
+  /* 成功 */
+  --success: 120 100% 30%;
+  --success-foreground: 0 0% 100%;
+
+  /* 警告 */
+  --warning: 45 100% 40%;
+  --warning-foreground: 0 0% 0%;
+
+  /* 错误 */
+  --error: 0 100% 40%;
+  --error-foreground: 0 0% 100%;
+
+  /* 信息 */
+  --info: 210 100% 40%;
+  --info-foreground: 0 0% 100%;
+
+  /* 边框 */
+  --border: 0 0% 0%;
+  --input: 0 0% 0%;
+
+  /* 聚焦环 */
+  --ring: 240 100% 40%;
+}
+
+/* 高对比度主题特殊样式 */
+[data-theme='high-contrast'] {
+  color-scheme: light;
+}
+
+[data-theme='high-contrast'] * {
+  border-width: 2px;
+}
+
+[data-theme='high-contrast'] :focus-visible {
+  outline: 3px solid hsl(var(--ring));
+  outline-offset: 3px;
+}
+
+/* 示例：护眼模式主题 */
+[data-theme='eye-care'] {
+  /* 背景色 - 使用温暖的米黄色 */
+  --background: 45 30% 92%;
+  --foreground: 0 0% 20%;
+
+  /* 卡片 */
+  --card: 45 25% 95%;
+  --card-foreground: 0 0% 20%;
+
+  /* 弹出层 */
+  --popover: 45 25% 95%;
+  --popover-foreground: 0 0% 20%;
+
+  /* 主色调 - 柔和的棕色 */
+  --primary: 30 50% 50%;
+  --primary-foreground: 0 0% 100%;
+
+  /* 辅助色 */
+  --secondary: 45 20% 80%;
+  --secondary-foreground: 0 0% 20%;
+
+  /* 柔和色 */
+  --muted: 45 20% 85%;
+  --muted-foreground: 0 0% 40%;
+
+  /* 强调色 */
+  --accent: 160 30% 60%;
+  --accent-foreground: 0 0% 100%;
+
+  /* 破坏性操作 */
+  --destructive: 0 60% 50%;
+  --destructive-foreground: 0 0% 100%;
+
+  /* 成功 */
+  --success: 140 40% 45%;
+  --success-foreground: 0 0% 100%;
+
+  /* 警告 */
+  --warning: 40 80% 50%;
+  --warning-foreground: 0 0% 100%;
+
+  /* 错误 */
+  --error: 0 60% 50%;
+  --error-foreground: 0 0% 100%;
+
+  /* 信息 */
+  --info: 210 50% 50%;
+  --info-foreground: 0 0% 100%;
+
+  /* 边框 */
+  --border: 45 20% 80%;
+  --input: 45 20% 80%;
+
+  /* 聚焦环 */
+  --ring: 30 50% 50%;
+}
+
+/* 护眼模式特殊样式 */
+[data-theme='eye-care'] {
+  color-scheme: light;
+  filter: brightness(0.95);
+}
+
+[data-theme='eye-care'] img,
+[data-theme='eye-care'] video {
+  filter: brightness(0.9) contrast(0.9);
+}
+
+/* 主题切换动画 */
+[data-theme] {
+  transition:
+    background-color var(--transition-slow) var(--ease-in-out),
+    color var(--transition-slow) var(--ease-in-out);
+}
+
+[data-theme] * {
+  transition:
+    background-color var(--transition-slow) var(--ease-in-out),
+    color var(--transition-slow) var(--ease-in-out),
+    border-color var(--transition-slow) var(--ease-in-out),
+    box-shadow var(--transition-slow) var(--ease-in-out);
+}
+
+/* View Transition API 支持（现代浏览器） */
+@supports (view-transition-name: none) {
+  ::view-transition-old(root),
+  ::view-transition-new(root) {
+    animation-duration: 0.5s;
+  }
+  
+  ::view-transition-old(root) {
+    animation-name: theme-fade-out;
+  }
+  
+  ::view-transition-new(root) {
+    animation-name: theme-fade-in;
+  }
+}
+
+@keyframes theme-fade-out {
+  from {
+    opacity: 1;
+  }
+  to {
+    opacity: 0;
+  }
+}
+
+@keyframes theme-fade-in {
+  from {
+    opacity: 0;
+  }
+  to {
+    opacity: 1;
+  }
+}
+
+/* 主题切换时的特殊效果 */
+[data-theme].transitioning {
+  pointer-events: none;
+}
+
+/* 禁用过渡的类 */
+.no-theme-transition,
+.no-theme-transition * {
+  transition: none !important;
+}

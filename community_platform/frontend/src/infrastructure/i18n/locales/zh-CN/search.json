@@ -1,0 +1,67 @@
+{
+  "title": "搜索",
+  "placeholder": "搜索内容、用户、标签...",
+  "recentSearches": "最近搜索",
+  "popularSearches": "热门搜索",
+  "suggestions": "搜索建议",
+  "tabs": {
+    "all": "全部",
+    "posts": "帖子",
+    "adapters": "适配器",
+    "characters": "角色",
+    "users": "用户",
+    "tags": "标签"
+  },
+  "filters": {
+    "title": "筛选",
+    "sortBy": "排序方式",
+    "timeRange": "时间范围",
+    "category": "分类",
+    "tags": "标签",
+    "verified": "已验证",
+    "featured": "精选"
+  },
+  "sortBy": {
+    "relevance": "相关度",
+    "latest": "最新",
+    "popular": "最热",
+    "mostViewed": "最多浏览",
+    "mostLiked": "最多点赞",
+    "mostDownloaded": "最多下载"
+  },
+  "timeRange": {
+    "all": "全部时间",
+    "today": "今天",
+    "week": "本周",
+    "month": "本月",
+    "year": "今年"
+  },
+  "results": {
+    "found": "找到 {count} 个结果",
+    "showing": "显示第 {start}-{end} 个结果，共 {total} 个",
+    "noResults": "未找到相关结果",
+    "tryDifferent": "尝试使用不同的关键词",
+    "suggestions": "你可能想搜索："
+  },
+  "actions": {
+    "search": "搜索",
+    "clear": "清空",
+    "clearRecent": "清空最近搜索",
+    "viewAll": "查看全部",
+    "refine": "精确搜索"
+  },
+  "advanced": {
+    "title": "高级搜索",
+    "keywords": "关键词",
+    "author": "作者",
+    "tags": "标签",
+    "dateRange": "日期范围",
+    "exactMatch": "精确匹配",
+    "excludeWords": "排除词语"
+  },
+  "empty": {
+    "recent": "暂无最近搜索",
+    "results": "未找到匹配的结果"
+  }
+}
+

@@ -1,0 +1,174 @@
+name: CI
+
+on:
+  push:
+    branches: [main, develop]
+  pull_request:
+    branches: [main, develop]
+
+# 取消同一分支上正在运行的旧工作流
+concurrency:
+  group: ${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  # 代码质量检查
+  lint:
+    name: 代码规范检查
+    runs-on: ubuntu-latest
+    steps:
+      - name: 检出代码
+        uses: actions/checkout@v4
+
+      - name: 设置 Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: '20'
+          cache: 'npm'
+
+      - name: 安装依赖
+        run: npm ci
+
+      - name: ESLint 检查
+        run: npm run lint
+
+      - name: Prettier 检查
+        run: npm run format:check
+
+  # TypeScript 类型检查
+  typecheck:
+    name: TypeScript 类型检查
+    runs-on: ubuntu-latest
+    steps:
+      - name: 检出代码
+        uses: actions/checkout@v4
+
+      - name: 设置 Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: '20'
+          cache: 'npm'
+
+      - name: 安装依赖
+        run: npm ci
+
+      - name: 类型检查
+        run: npm run type-check
+
+  # 单元测试
+  test:
+    name: 单元测试
+    runs-on: ubuntu-latest
+    steps:
+      - name: 检出代码
+        uses: actions/checkout@v4
+
+      - name: 设置 Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: '20'
+          cache: 'npm'
+
+      - name: 安装依赖
+        run: npm ci
+
+      - name: 运行测试
+        run: npm run test:coverage
+
+      - name: 上传覆盖率报告
+        uses: codecov/codecov-action@v4
+        if: always()
+        with:
+          token: ${{ secrets.CODECOV_TOKEN }}
+          files: ./coverage/coverage-final.json
+          flags: unittests
+          name: codecov-umbrella
+          fail_ci_if_error: false
+
+      - name: 覆盖率检查
+        if: always()
+        run: |
+          coverage=$(grep -oP '"lines":\{"total":\d+,"covered":\d+,"skipped":\d+,"pct":\K\d+\.\d+' coverage/coverage-summary.json || echo "0")
+          echo "代码覆盖率: ${coverage}%"
+          if (( $(echo "$coverage < 80" | bc -l) )); then
+            echo "⚠️ 警告: 代码覆盖率低于 80%"
+            exit 1
+          fi
+
+  # 构建测试
+  build:
+    name: 构建测试
+    runs-on: ubuntu-latest
+    steps:
+      - name: 检出代码
+        uses: actions/checkout@v4
+
+      - name: 设置 Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: '20'
+          cache: 'npm'
+
+      - name: 安装依赖
+        run: npm ci
+
+      - name: 构建项目
+        run: npm run build
+        env:
+          NODE_ENV: production
+
+      - name: 分析 Bundle 大小
+        run: |
+          if [ -d ".next" ]; then
+            echo "📦 构建产物分析:"
+            du -sh .next
+            du -sh .next/static
+          fi
+
+      - name: 上传构建产物
+        uses: actions/upload-artifact@v4
+        with:
+          name: build-output
+          path: .next
+          retention-days: 7
+
+  # 依赖安全检查
+  security:
+    name: 安全检查
+    runs-on: ubuntu-latest
+    steps:
+      - name: 检出代码
+        uses: actions/checkout@v4
+
+      - name: 设置 Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: '20'
+          cache: 'npm'
+
+      - name: 依赖安全审计
+        run: npm audit --audit-level=moderate
+        continue-on-error: true
+
+      - name: 检查过期依赖
+        run: npm outdated || true
+
+  # 所有检查完成
+  ci-success:
+    name: CI 检查通过
+    runs-on: ubuntu-latest
+    needs: [lint, typecheck, test, build, security]
+    if: always()
+    steps:
+      - name: 检查所有任务状态
+        run: |
+          if [[ "${{ contains(needs.*.result, 'failure') }}" == "true" ]]; then
+            echo "❌ CI 检查失败"
+            exit 1
+          elif [[ "${{ contains(needs.*.result, 'cancelled') }}" == "true" ]]; then
+            echo "⚠️ CI 检查被取消"
+            exit 1
+          else
+            echo "✅ 所有 CI 检查通过"
+          fi
+

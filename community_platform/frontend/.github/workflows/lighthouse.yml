@@ -1,0 +1,64 @@
+name: Lighthouse CI
+
+on:
+  pull_request:
+    branches: [main, develop]
+  schedule:
+    # 每周一凌晨 3 点运行
+    - cron: '0 3 * * 1'
+  workflow_dispatch:
+
+jobs:
+  lighthouse:
+    name: Lighthouse 性能检查
+    runs-on: ubuntu-latest
+    steps:
+      - name: 检出代码
+        uses: actions/checkout@v4
+
+      - name: 设置 Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: '20'
+          cache: 'npm'
+
+      - name: 安装依赖
+        run: npm ci
+
+      - name: 构建应用
+        run: npm run build
+        env:
+          NODE_ENV: production
+
+      - name: 启动应用
+        run: npm run start &
+        env:
+          PORT: 3000
+
+      - name: 等待应用启动
+        run: |
+          for i in {1..30}; do
+            if curl -f http://localhost:3000; then
+              exit 0
+            fi
+            sleep 2
+          done
+          exit 1
+
+      - name: 运行 Lighthouse
+        uses: treosh/lighthouse-ci-action@v11
+        with:
+          urls: |
+            http://localhost:3000
+            http://localhost:3000/posts
+            http://localhost:3000/adapters
+            http://localhost:3000/characters
+          uploadArtifacts: true
+          temporaryPublicStorage: true
+          runs: 3
+
+      - name: 检查性能分数
+        run: |
+          echo "📊 Lighthouse 检查完成"
+          echo "请查看报告以获取详细信息"
+

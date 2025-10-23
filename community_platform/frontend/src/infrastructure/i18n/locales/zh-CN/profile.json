@@ -1,0 +1,212 @@
+{
+  "title": "个人中心",
+  "tabs": {
+    "overview": "概览",
+    "posts": "帖子",
+    "adapters": "适配器",
+    "characters": "角色",
+    "favorites": "收藏",
+    "followers": "粉丝",
+    "following": "关注",
+    "settings": "设置"
+  },
+  "overview": {
+    "stats": {
+      "posts": "帖子",
+      "adapters": "适配器",
+      "characters": "角色",
+      "followers": "粉丝",
+      "following": "关注",
+      "likes": "获赞",
+      "views": "浏览量",
+      "downloads": "下载量"
+    },
+    "bio": "个人简介",
+    "website": "个人网站",
+    "location": "所在地",
+    "joinedDate": "加入于",
+    "lastActive": "最近活跃"
+  },
+  "posts": {
+    "title": "我的帖子",
+    "tabs": {
+      "published": "已发布",
+      "drafts": "草稿",
+      "archived": "已归档"
+    },
+    "empty": {
+      "published": "还没有发布任何帖子",
+      "drafts": "没有草稿",
+      "archived": "没有已归档的帖子"
+    },
+    "actions": {
+      "create": "写帖子",
+      "edit": "编辑",
+      "delete": "删除",
+      "archive": "归档",
+      "publish": "发布"
+    }
+  },
+  "adapters": {
+    "title": "我的适配器",
+    "tabs": {
+      "published": "已发布",
+      "private": "私有",
+      "archived": "已归档"
+    },
+    "empty": {
+      "published": "还没有发布任何适配器",
+      "private": "没有私有适配器",
+      "archived": "没有已归档的适配器"
+    },
+    "actions": {
+      "create": "创建适配器",
+      "edit": "编辑",
+      "delete": "删除",
+      "publish": "发布",
+      "makePrivate": "设为私有"
+    }
+  },
+  "characters": {
+    "title": "我的角色",
+    "tabs": {
+      "published": "已发布",
+      "private": "私有",
+      "archived": "已归档"
+    },
+    "empty": {
+      "published": "还没有创建任何角色",
+      "private": "没有私有角色",
+      "archived": "没有已归档的角色"
+    },
+    "actions": {
+      "create": "创建角色",
+      "edit": "编辑",
+      "delete": "删除",
+      "publish": "发布",
+      "makePrivate": "设为私有"
+    }
+  },
+  "favorites": {
+    "title": "我的收藏",
+    "tabs": {
+      "all": "全部",
+      "posts": "帖子",
+      "adapters": "适配器",
+      "characters": "角色"
+    },
+    "empty": {
+      "all": "还没有收藏任何内容",
+      "posts": "还没有收藏任何帖子",
+      "adapters": "还没有收藏任何适配器",
+      "characters": "还没有收藏任何角色"
+    },
+    "actions": {
+      "remove": "取消收藏",
+      "viewAll": "查看全部"
+    }
+  },
+  "followers": {
+    "title": "粉丝",
+    "empty": "还没有粉丝",
+    "actions": {
+      "followBack": "回关",
+      "remove": "移除"
+    }
+  },
+  "following": {
+    "title": "关注",
+    "empty": "还没有关注任何人",
+    "actions": {
+      "unfollow": "取消关注"
+    }
+  },
+  "edit": {
+    "title": "编辑个人资料",
+    "avatar": "头像",
+    "banner": "背景图",
+    "displayName": "显示名称",
+    "username": "用户名",
+    "bio": "个人简介",
+    "website": "个人网站",
+    "location": "所在地",
+    "socialLinks": "社交链接",
+    "actions": {
+      "save": "保存",
+      "cancel": "取消",
+      "uploadAvatar": "上传头像",
+      "uploadBanner": "上传背景图",
+      "removeAvatar": "删除头像",
+      "removeBanner": "删除背景图"
+    },
+    "messages": {
+      "saved": "个人资料已保存",
+      "saveFailed": "保存失败，请重试"
+    },
+    "placeholders": {
+      "displayName": "请输入显示名称",
+      "username": "请输入用户名",
+      "bio": "介绍一下你自己...",
+      "website": "https://example.com",
+      "location": "请输入所在地"
+    }
+  },
+  "settings": {
+    "title": "账户设置",
+    "sections": {
+      "general": "通用设置",
+      "security": "安全设置",
+      "privacy": "隐私设置",
+      "notifications": "通知设置",
+      "appearance": "外观设置",
+      "advanced": "高级设置"
+    },
+    "general": {
+      "language": "语言",
+      "timezone": "时区",
+      "dateFormat": "日期格式"
+    },
+    "security": {
+      "changePassword": "修改密码",
+      "twoFactor": "两步验证",
+      "sessions": "登录会话",
+      "loginHistory": "登录历史"
+    },
+    "privacy": {
+      "profileVisibility": "个人资料可见性",
+      "showEmail": "显示邮箱",
+      "showLocation": "显示位置",
+      "allowMessages": "允许私信",
+      "blockList": "黑名单"
+    },
+    "notifications": {
+      "email": "邮件通知",
+      "push": "推送通知",
+      "preferences": "通知偏好"
+    },
+    "appearance": {
+      "theme": "主题",
+      "fontSize": "字体大小",
+      "compactMode": "紧凑模式"
+    },
+    "actions": {
+      "save": "保存设置",
+      "reset": "重置为默认"
+    }
+  },
+  "actions": {
+    "follow": "关注",
+    "unfollow": "取消关注",
+    "message": "发私信",
+    "share": "分享",
+    "report": "举报",
+    "block": "拉黑"
+  },
+  "messages": {
+    "followed": "已关注",
+    "unfollowed": "已取消关注",
+    "blocked": "已拉黑",
+    "reported": "已举报"
+  }
+}
+

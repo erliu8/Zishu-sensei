@@ -1,0 +1,94 @@
+{
+  "title": "Packaging Service",
+  "subtitle": "Package your characters and adapters into standalone apps",
+  "tabs": {
+    "create": "Create Package",
+    "history": "Package History",
+    "settings": "Package Settings"
+  },
+  "platforms": {
+    "windows": "Windows",
+    "macos": "macOS",
+    "linux": "Linux",
+    "android": "Android",
+    "ios": "iOS",
+    "web": "Web"
+  },
+  "config": {
+    "title": "Package Configuration",
+    "appName": "App Name",
+    "appVersion": "App Version",
+    "appIcon": "App Icon",
+    "platform": "Target Platform",
+    "architecture": "Architecture",
+    "outputFormat": "Output Format",
+    "compression": "Compression Level",
+    "includeRuntime": "Include Runtime",
+    "optimizeSize": "Optimize Size"
+  },
+  "steps": {
+    "selectCharacter": "Select Character",
+    "selectAdapter": "Select Adapter",
+    "configure": "Configure Options",
+    "preview": "Preview & Confirm",
+    "build": "Start Packaging"
+  },
+  "status": {
+    "pending": "Pending",
+    "preparing": "Preparing",
+    "building": "Building",
+    "packaging": "Packaging",
+    "uploading": "Uploading",
+    "completed": "Completed",
+    "failed": "Failed",
+    "cancelled": "Cancelled"
+  },
+  "progress": {
+    "title": "Packaging Progress",
+    "preparing": "Preparing resources...",
+    "downloading": "Downloading dependencies...",
+    "compiling": "Compiling code...",
+    "packaging": "Packaging application...",
+    "optimizing": "Optimizing size...",
+    "uploading": "Uploading result..."
+  },
+  "history": {
+    "title": "Package History",
+    "columns": {
+      "name": "App Name",
+      "platform": "Platform",
+      "status": "Status",
+      "size": "Size",
+      "createdAt": "Created At",
+      "actions": "Actions"
+    },
+    "actions": {
+      "download": "Download",
+      "retry": "Retry",
+      "delete": "Delete",
+      "viewLog": "View Log"
+    },
+    "empty": "No package history"
+  },
+  "actions": {
+    "startPackaging": "Start Packaging",
+    "cancelPackaging": "Cancel Packaging",
+    "retryPackaging": "Retry Packaging",
+    "downloadPackage": "Download Package",
+    "viewLog": "View Log"
+  },
+  "messages": {
+    "success": "Packaging successful",
+    "failed": "Packaging failed",
+    "cancelled": "Packaging cancelled",
+    "downloading": "Downloading..."
+  },
+  "errors": {
+    "noCharacter": "Please select a character",
+    "noAdapter": "Please select an adapter",
+    "invalidConfig": "Configuration is incomplete",
+    "buildFailed": "Build failed, please check the log",
+    "downloadFailed": "Download failed, please try again"
+  }
+}
+

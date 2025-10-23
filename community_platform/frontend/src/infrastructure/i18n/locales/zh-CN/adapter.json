@@ -1,0 +1,148 @@
+{
+  "title": {
+    "market": "适配器市场",
+    "upload": "上传适配器",
+    "detail": "适配器详情",
+    "myAdapters": "我的适配器",
+    "versions": "版本历史",
+    "dependencies": "依赖关系"
+  },
+  "fields": {
+    "name": "名称",
+    "description": "描述",
+    "version": "版本",
+    "author": "作者",
+    "category": "分类",
+    "tags": "标签",
+    "compatibility": "兼容性",
+    "license": "许可证",
+    "repository": "代码仓库",
+    "homepage": "主页",
+    "documentation": "文档",
+    "changelog": "更新日志",
+    "readme": "README"
+  },
+  "categories": {
+    "all": "全部",
+    "model": "模型",
+    "voice": "语音",
+    "emotion": "情感",
+    "behavior": "行为",
+    "integration": "集成",
+    "utility": "工具",
+    "theme": "主题",
+    "other": "其他"
+  },
+  "compatibility": {
+    "title": "兼容性",
+    "platform": "平台",
+    "version": "版本要求",
+    "compatible": "兼容",
+    "incompatible": "不兼容",
+    "untested": "未测试",
+    "windows": "Windows",
+    "macos": "macOS",
+    "linux": "Linux"
+  },
+  "actions": {
+    "upload": "上传",
+    "download": "下载",
+    "install": "安装",
+    "uninstall": "卸载",
+    "update": "更新",
+    "rate": "评分",
+    "review": "评论",
+    "report": "举报",
+    "fork": "Fork",
+    "star": "收藏",
+    "unstar": "取消收藏"
+  },
+  "stats": {
+    "downloads": "{count} 次下载",
+    "stars": "{count} 次收藏",
+    "rating": "评分 {rating}",
+    "reviews": "{count} 条评论",
+    "versions": "{count} 个版本",
+    "dependencies": "{count} 个依赖",
+    "size": "大小 {size}",
+    "updated": "更新于 {date}"
+  },
+  "sort": {
+    "popular": "最受欢迎",
+    "latest": "最新上传",
+    "trending": "热度",
+    "downloads": "下载量",
+    "rating": "评分",
+    "updated": "最近更新"
+  },
+  "filter": {
+    "category": "分类",
+    "compatibility": "兼容性",
+    "license": "许可证",
+    "verified": "已验证",
+    "official": "官方",
+    "free": "免费"
+  },
+  "upload": {
+    "title": "上传适配器",
+    "selectFile": "选择文件",
+    "dragDrop": "拖拽文件到此处",
+    "fileFormat": "支持的格式",
+    "maxSize": "最大 {size} MB",
+    "metadata": "元数据",
+    "fillInfo": "填写适配器信息",
+    "uploadFile": "上传文件",
+    "publishing": "正在发布...",
+    "success": "发布成功",
+    "failed": "发布失败"
+  },
+  "version": {
+    "current": "当前版本",
+    "latest": "最新版本",
+    "history": "版本历史",
+    "changelog": "更新日志",
+    "release": "发布版本",
+    "prerelease": "预发布",
+    "deprecated": "已弃用",
+    "yanked": "已撤回"
+  },
+  "dependencies": {
+    "title": "依赖项",
+    "required": "必需依赖",
+    "optional": "可选依赖",
+    "peer": "对等依赖",
+    "dev": "开发依赖",
+    "none": "无依赖",
+    "tree": "依赖树",
+    "conflicts": "依赖冲突"
+  },
+  "messages": {
+    "downloadSuccess": "下载成功",
+    "downloadFailed": "下载失败",
+    "installSuccess": "安装成功",
+    "installFailed": "安装失败",
+    "uploadSuccess": "上传成功",
+    "uploadFailed": "上传失败",
+    "rateSuccess": "评分成功",
+    "reviewSuccess": "评论已提交",
+    "notFound": "适配器不存在",
+    "incompatible": "不兼容当前平台"
+  },
+  "validation": {
+    "nameRequired": "请输入适配器名称",
+    "nameLength": "名称长度应为 3-50 个字符",
+    "versionRequired": "请输入版本号",
+    "versionFormat": "版本号格式不正确（如：1.0.0）",
+    "descriptionRequired": "请输入描述",
+    "categoryRequired": "请选择分类",
+    "fileRequired": "请选择文件",
+    "fileTooLarge": "文件大小超过限制",
+    "fileFormat": "文件格式不支持"
+  },
+  "empty": {
+    "noAdapters": "还没有适配器",
+    "noResults": "没有找到相关适配器",
+    "uploadFirst": "上传第一个适配器"
+  }
+}
+

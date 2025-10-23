@@ -1,0 +1,8 @@
+# Screenshots Directory
+
+将应用截图放在这里用于 PWA manifest
+
+建议的截图:
+- desktop-1.png (1280x720) - 桌面端截图
+- mobile-1.png (750x1334) - 移动端截图
+

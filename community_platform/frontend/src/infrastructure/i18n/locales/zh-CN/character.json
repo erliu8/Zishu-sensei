@@ -1,0 +1,171 @@
+{
+  "title": {
+    "characters": "角色",
+    "createCharacter": "创建角色",
+    "editCharacter": "编辑角色",
+    "characterDetail": "角色详情",
+    "myCharacters": "我的角色",
+    "popularCharacters": "热门角色",
+    "gallery": "角色展示",
+    "customization": "角色定制"
+  },
+  "fields": {
+    "name": "名称",
+    "displayName": "显示名称",
+    "description": "描述",
+    "personality": "性格",
+    "background": "背景故事",
+    "avatar": "头像",
+    "coverImage": "封面图",
+    "voice": "语音",
+    "model": "模型",
+    "tags": "标签",
+    "category": "分类",
+    "visibility": "可见性",
+    "status": "状态"
+  },
+  "categories": {
+    "all": "全部",
+    "anime": "动漫",
+    "game": "游戏",
+    "virtual": "虚拟偶像",
+    "historical": "历史人物",
+    "fictional": "虚构角色",
+    "assistant": "助手",
+    "companion": "伴侣",
+    "teacher": "老师",
+    "other": "其他"
+  },
+  "personality": {
+    "friendly": "友好",
+    "serious": "严肃",
+    "playful": "活泼",
+    "calm": "冷静",
+    "energetic": "充满活力",
+    "shy": "害羞",
+    "confident": "自信",
+    "mysterious": "神秘",
+    "caring": "关心他人",
+    "professional": "专业"
+  },
+  "attributes": {
+    "age": "年龄",
+    "gender": "性别",
+    "height": "身高",
+    "occupation": "职业",
+    "hobbies": "爱好",
+    "likes": "喜欢",
+    "dislikes": "不喜欢",
+    "specialSkills": "特殊技能"
+  },
+  "actions": {
+    "create": "创建角色",
+    "edit": "编辑",
+    "delete": "删除",
+    "duplicate": "复制",
+    "share": "分享",
+    "favorite": "收藏",
+    "unfavorite": "取消收藏",
+    "chat": "开始对话",
+    "customize": "定制",
+    "export": "导出",
+    "import": "导入",
+    "publish": "发布",
+    "unpublish": "取消发布"
+  },
+  "customization": {
+    "appearance": "外观",
+    "voice": "语音",
+    "personality": "性格",
+    "behavior": "行为",
+    "knowledge": "知识库",
+    "prompts": "提示词",
+    "responses": "回应方式",
+    "emotions": "情感表达"
+  },
+  "voice": {
+    "select": "选择语音",
+    "preview": "预览",
+    "upload": "上传语音",
+    "pitch": "音调",
+    "speed": "语速",
+    "volume": "音量",
+    "emotion": "情感"
+  },
+  "stats": {
+    "chats": "{count} 次对话",
+    "favorites": "{count} 次收藏",
+    "shares": "{count} 次分享",
+    "rating": "评分 {rating}",
+    "downloads": "{count} 次下载",
+    "created": "创建于 {date}",
+    "updated": "更新于 {date}"
+  },
+  "sort": {
+    "popular": "最受欢迎",
+    "latest": "最新创建",
+    "trending": "热度",
+    "mostUsed": "使用最多",
+    "rating": "评分最高",
+    "alphabetical": "字母顺序"
+  },
+  "filter": {
+    "category": "分类",
+    "personality": "性格",
+    "voice": "语音",
+    "verified": "已验证",
+    "official": "官方",
+    "community": "社区"
+  },
+  "messages": {
+    "createSuccess": "角色创建成功",
+    "createFailed": "角色创建失败",
+    "updateSuccess": "角色更新成功",
+    "updateFailed": "角色更新失败",
+    "deleteSuccess": "角色删除成功",
+    "deleteFailed": "角色删除失败",
+    "favoriteSuccess": "收藏成功",
+    "unfavoriteSuccess": "取消收藏",
+    "shareSuccess": "分享成功",
+    "exportSuccess": "导出成功",
+    "importSuccess": "导入成功",
+    "notFound": "角色不存在",
+    "deleted": "该角色已被删除"
+  },
+  "validation": {
+    "nameRequired": "请输入角色名称",
+    "nameLength": "名称长度应为 2-50 个字符",
+    "displayNameLength": "显示名称长度应为 2-50 个字符",
+    "descriptionRequired": "请输入描述",
+    "descriptionLength": "描述长度应至少 20 个字符",
+    "personalityRequired": "请选择性格特征",
+    "categoryRequired": "请选择分类",
+    "avatarRequired": "请上传头像",
+    "tagsMax": "最多添加 10 个标签"
+  },
+  "confirm": {
+    "delete": "确定要删除这个角色吗？",
+    "unpublish": "确定要取消发布这个角色吗？",
+    "discard": "确定要放弃未保存的更改吗？"
+  },
+  "empty": {
+    "noCharacters": "还没有角色",
+    "noResults": "没有找到相关角色",
+    "createFirst": "创建第一个角色吧"
+  },
+  "tabs": {
+    "overview": "概览",
+    "personality": "性格",
+    "appearance": "外观",
+    "voice": "语音",
+    "knowledge": "知识库",
+    "settings": "设置"
+  },
+  "tips": {
+    "personality": "描述角色的性格特征，这将影响对话风格",
+    "background": "详细的背景故事能让角色更加生动",
+    "voice": "选择合适的语音能提升互动体验",
+    "knowledge": "添加角色相关的知识和信息"
+  }
+}
+

@@ -1,0 +1,266 @@
+name: CD
+
+on:
+  push:
+    branches: [main]
+    tags:
+      - 'v*.*.*'
+  workflow_dispatch:
+    inputs:
+      environment:
+        description: '部署环境'
+        required: true
+        type: choice
+        options:
+          - staging
+          - production
+        default: 'staging'
+
+concurrency:
+  group: ${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: false
+
+jobs:
+  # 准备部署信息
+  prepare:
+    name: 准备部署
+    runs-on: ubuntu-latest
+    outputs:
+      environment: ${{ steps.set-env.outputs.environment }}
+      version: ${{ steps.set-version.outputs.version }}
+    steps:
+      - name: 检出代码
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - name: 确定部署环境
+        id: set-env
+        run: |
+          if [[ "${{ github.event_name }}" == "workflow_dispatch" ]]; then
+            echo "environment=${{ inputs.environment }}" >> $GITHUB_OUTPUT
+          elif [[ "${{ github.ref }}" == refs/tags/* ]]; then
+            echo "environment=production" >> $GITHUB_OUTPUT
+          else
+            echo "environment=staging" >> $GITHUB_OUTPUT
+          fi
+
+      - name: 确定版本号
+        id: set-version
+        run: |
+          if [[ "${{ github.ref }}" == refs/tags/* ]]; then
+            echo "version=${GITHUB_REF#refs/tags/}" >> $GITHUB_OUTPUT
+          else
+            echo "version=$(git rev-parse --short HEAD)" >> $GITHUB_OUTPUT
+          fi
+
+  # 构建 Docker 镜像
+  build-image:
+    name: 构建 Docker 镜像
+    runs-on: ubuntu-latest
+    needs: prepare
+    steps:
+      - name: 检出代码
+        uses: actions/checkout@v4
+
+      - name: 设置 Docker Buildx
+        uses: docker/setup-buildx-action@v3
+
+      - name: 登录 Docker Registry
+        uses: docker/login-action@v3
+        with:
+          registry: ${{ secrets.DOCKER_REGISTRY }}
+          username: ${{ secrets.DOCKER_USERNAME }}
+          password: ${{ secrets.DOCKER_PASSWORD }}
+
+      - name: 提取元数据
+        id: meta
+        uses: docker/metadata-action@v5
+        with:
+          images: ${{ secrets.DOCKER_REGISTRY }}/zishu-frontend
+          tags: |
+            type=ref,event=branch
+            type=ref,event=pr
+            type=semver,pattern={{version}}
+            type=semver,pattern={{major}}.{{minor}}
+            type=sha,prefix={{branch}}-
+            type=raw,value=${{ needs.prepare.outputs.version }}
+            type=raw,value=latest,enable=${{ needs.prepare.outputs.environment == 'production' }}
+
+      - name: 构建并推送镜像
+        uses: docker/build-push-action@v5
+        with:
+          context: .
+          push: true
+          tags: ${{ steps.meta.outputs.tags }}
+          labels: ${{ steps.meta.outputs.labels }}
+          cache-from: type=registry,ref=${{ secrets.DOCKER_REGISTRY }}/zishu-frontend:buildcache
+          cache-to: type=registry,ref=${{ secrets.DOCKER_REGISTRY }}/zishu-frontend:buildcache,mode=max
+          build-args: |
+            NODE_ENV=production
+            BUILD_VERSION=${{ needs.prepare.outputs.version }}
+
+  # 部署到 Staging
+  deploy-staging:
+    name: 部署到 Staging
+    runs-on: ubuntu-latest
+    needs: [prepare, build-image]
+    if: needs.prepare.outputs.environment == 'staging'
+    environment:
+      name: staging
+      url: ${{ secrets.STAGING_URL }}
+    steps:
+      - name: 部署到 Staging 服务器
+        uses: appleboy/ssh-action@v1.0.3
+        with:
+          host: ${{ secrets.STAGING_HOST }}
+          username: ${{ secrets.STAGING_USERNAME }}
+          key: ${{ secrets.STAGING_SSH_KEY }}
+          port: ${{ secrets.STAGING_SSH_PORT || 22 }}
+          script: |
+            cd ${{ secrets.STAGING_DEPLOY_PATH }}
+            docker-compose pull
+            docker-compose up -d --force-recreate
+            docker image prune -f
+
+      - name: 健康检查
+        run: |
+          for i in {1..30}; do
+            if curl -f ${{ secrets.STAGING_URL }}/api/health; then
+              echo "✅ Staging 环境部署成功"
+              exit 0
+            fi
+            echo "等待服务启动... ($i/30)"
+            sleep 10
+          done
+          echo "❌ 健康检查失败"
+          exit 1
+
+      - name: 通知部署结果
+        if: always()
+        uses: 8398a7/action-slack@v3
+        with:
+          status: ${{ job.status }}
+          text: |
+            Staging 部署 ${{ job.status }}
+            版本: ${{ needs.prepare.outputs.version }}
+            环境: ${{ secrets.STAGING_URL }}
+          webhook_url: ${{ secrets.SLACK_WEBHOOK }}
+        env:
+          SLACK_WEBHOOK_URL: ${{ secrets.SLACK_WEBHOOK }}
+
+  # 部署到 Production
+  deploy-production:
+    name: 部署到 Production
+    runs-on: ubuntu-latest
+    needs: [prepare, build-image]
+    if: needs.prepare.outputs.environment == 'production'
+    environment:
+      name: production
+      url: ${{ secrets.PRODUCTION_URL }}
+    steps:
+      - name: 部署前检查
+        run: |
+          echo "准备部署到生产环境"
+          echo "版本: ${{ needs.prepare.outputs.version }}"
+          echo "URL: ${{ secrets.PRODUCTION_URL }}"
+
+      - name: 部署到 Production 服务器
+        uses: appleboy/ssh-action@v1.0.3
+        with:
+          host: ${{ secrets.PRODUCTION_HOST }}
+          username: ${{ secrets.PRODUCTION_USERNAME }}
+          key: ${{ secrets.PRODUCTION_SSH_KEY }}
+          port: ${{ secrets.PRODUCTION_SSH_PORT || 22 }}
+          script: |
+            cd ${{ secrets.PRODUCTION_DEPLOY_PATH }}
+            docker-compose pull
+            docker-compose up -d --force-recreate
+            docker image prune -f
+
+      - name: 健康检查
+        run: |
+          for i in {1..30}; do
+            if curl -f ${{ secrets.PRODUCTION_URL }}/api/health; then
+              echo "✅ Production 环境部署成功"
+              exit 0
+            fi
+            echo "等待服务启动... ($i/30)"
+            sleep 10
+          done
+          echo "❌ 健康检查失败"
+          exit 1
+
+      - name: 清理旧版本
+        uses: appleboy/ssh-action@v1.0.3
+        if: success()
+        with:
+          host: ${{ secrets.PRODUCTION_HOST }}
+          username: ${{ secrets.PRODUCTION_USERNAME }}
+          key: ${{ secrets.PRODUCTION_SSH_KEY }}
+          port: ${{ secrets.PRODUCTION_SSH_PORT || 22 }}
+          script: |
+            docker image prune -af --filter "until=168h"
+
+      - name: 通知部署结果
+        if: always()
+        uses: 8398a7/action-slack@v3
+        with:
+          status: ${{ job.status }}
+          text: |
+            🚀 Production 部署 ${{ job.status }}
+            版本: ${{ needs.prepare.outputs.version }}
+            环境: ${{ secrets.PRODUCTION_URL }}
+          webhook_url: ${{ secrets.SLACK_WEBHOOK }}
+        env:
+          SLACK_WEBHOOK_URL: ${{ secrets.SLACK_WEBHOOK }}
+
+  # 创建 GitHub Release（仅生产环境）
+  create-release:
+    name: 创建 Release
+    runs-on: ubuntu-latest
+    needs: [prepare, deploy-production]
+    if: needs.prepare.outputs.environment == 'production' && startsWith(github.ref, 'refs/tags/')
+    steps:
+      - name: 检出代码
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - name: 生成变更日志
+        id: changelog
+        run: |
+          # 获取最近两个 tag
+          CURRENT_TAG=${{ needs.prepare.outputs.version }}
+          PREVIOUS_TAG=$(git describe --abbrev=0 --tags ${CURRENT_TAG}^ 2>/dev/null || echo "")
+          
+          if [ -z "$PREVIOUS_TAG" ]; then
+            CHANGES=$(git log --pretty=format:"- %s (%h)" --no-merges)
+          else
+            CHANGES=$(git log ${PREVIOUS_TAG}..${CURRENT_TAG} --pretty=format:"- %s (%h)" --no-merges)
+          fi
+          
+          echo "changelog<<EOF" >> $GITHUB_OUTPUT
+          echo "$CHANGES" >> $GITHUB_OUTPUT
+          echo "EOF" >> $GITHUB_OUTPUT
+
+      - name: 创建 Release
+        uses: actions/create-release@v1
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        with:
+          tag_name: ${{ needs.prepare.outputs.version }}
+          release_name: Release ${{ needs.prepare.outputs.version }}
+          body: |
+            ## 🎉 Release ${{ needs.prepare.outputs.version }}
+            
+            ### 变更内容
+            ${{ steps.changelog.outputs.changelog }}
+            
+            ### 部署信息
+            - 环境: Production
+            - 部署时间: ${{ github.event.head_commit.timestamp }}
+            - 提交: ${{ github.sha }}
+          draft: false
+          prerelease: false
+

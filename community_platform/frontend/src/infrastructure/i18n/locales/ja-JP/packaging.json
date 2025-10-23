@@ -1,0 +1,94 @@
+{
+  "title": "パッケージングサービス",
+  "subtitle": "キャラクターとアダプターをスタンドアロンアプリにパッケージ化",
+  "tabs": {
+    "create": "パッケージ作成",
+    "history": "パッケージ履歴",
+    "settings": "パッケージ設定"
+  },
+  "platforms": {
+    "windows": "Windows",
+    "macos": "macOS",
+    "linux": "Linux",
+    "android": "Android",
+    "ios": "iOS",
+    "web": "Web"
+  },
+  "config": {
+    "title": "パッケージ設定",
+    "appName": "アプリ名",
+    "appVersion": "アプリバージョン",
+    "appIcon": "アプリアイコン",
+    "platform": "ターゲットプラットフォーム",
+    "architecture": "アーキテクチャ",
+    "outputFormat": "出力形式",
+    "compression": "圧縮レベル",
+    "includeRuntime": "ランタイムを含める",
+    "optimizeSize": "サイズを最適化"
+  },
+  "steps": {
+    "selectCharacter": "キャラクター選択",
+    "selectAdapter": "アダプター選択",
+    "configure": "オプション設定",
+    "preview": "プレビューと確認",
+    "build": "パッケージング開始"
+  },
+  "status": {
+    "pending": "保留中",
+    "preparing": "準備中",
+    "building": "ビルド中",
+    "packaging": "パッケージング中",
+    "uploading": "アップロード中",
+    "completed": "完了",
+    "failed": "失敗",
+    "cancelled": "キャンセル済み"
+  },
+  "progress": {
+    "title": "パッケージング進行状況",
+    "preparing": "リソースを準備中...",
+    "downloading": "依存関係をダウンロード中...",
+    "compiling": "コードをコンパイル中...",
+    "packaging": "アプリケーションをパッケージング中...",
+    "optimizing": "サイズを最適化中...",
+    "uploading": "結果をアップロード中..."
+  },
+  "history": {
+    "title": "パッケージ履歴",
+    "columns": {
+      "name": "アプリ名",
+      "platform": "プラットフォーム",
+      "status": "ステータス",
+      "size": "サイズ",
+      "createdAt": "作成日時",
+      "actions": "操作"
+    },
+    "actions": {
+      "download": "ダウンロード",
+      "retry": "再試行",
+      "delete": "削除",
+      "viewLog": "ログを表示"
+    },
+    "empty": "パッケージ履歴はありません"
+  },
+  "actions": {
+    "startPackaging": "パッケージング開始",
+    "cancelPackaging": "パッケージングをキャンセル",
+    "retryPackaging": "パッケージング再試行",
+    "downloadPackage": "パッケージをダウンロード",
+    "viewLog": "ログを表示"
+  },
+  "messages": {
+    "success": "パッケージング成功",
+    "failed": "パッケージング失敗",
+    "cancelled": "パッケージングがキャンセルされました",
+    "downloading": "ダウンロード中..."
+  },
+  "errors": {
+    "noCharacter": "キャラクターを選択してください",
+    "noAdapter": "アダプターを選択してください",
+    "invalidConfig": "設定が不完全です",
+    "buildFailed": "ビルドに失敗しました。ログを確認してください",
+    "downloadFailed": "ダウンロードに失敗しました。再試行してください"
+  }
+}
+

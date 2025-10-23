@@ -1,0 +1,129 @@
+/* 亮色主题 */
+
+[data-theme='light'],
+.theme-light,
+:root {
+  /* 背景色 */
+  --background: 0 0% 100%;
+  --foreground: 222.2 84% 4.9%;
+
+  /* 卡片 */
+  --card: 0 0% 100%;
+  --card-foreground: 222.2 84% 4.9%;
+
+  /* 弹出层 */
+  --popover: 0 0% 100%;
+  --popover-foreground: 222.2 84% 4.9%;
+
+  /* 主色调 */
+  --primary: 221.2 83.2% 53.3%;
+  --primary-foreground: 210 40% 98%;
+
+  /* 辅助色 */
+  --secondary: 210 40% 96.1%;
+  --secondary-foreground: 222.2 47.4% 11.2%;
+
+  /* 柔和色 */
+  --muted: 210 40% 96.1%;
+  --muted-foreground: 215.4 16.3% 46.9%;
+
+  /* 强调色 */
+  --accent: 210 40% 96.1%;
+  --accent-foreground: 222.2 47.4% 11.2%;
+
+  /* 破坏性操作 */
+  --destructive: 0 84.2% 60.2%;
+  --destructive-foreground: 210 40% 98%;
+
+  /* 成功 */
+  --success: 142 71% 45%;
+  --success-foreground: 144 61% 98%;
+
+  /* 警告 */
+  --warning: 38 92% 50%;
+  --warning-foreground: 48 96% 98%;
+
+  /* 错误 */
+  --error: 0 84.2% 60.2%;
+  --error-foreground: 0 0% 98%;
+
+  /* 信息 */
+  --info: 217 91% 60%;
+  --info-foreground: 210 40% 98%;
+
+  /* 边框 */
+  --border: 214.3 31.8% 91.4%;
+  --input: 214.3 31.8% 91.4%;
+
+  /* 聚焦环 */
+  --ring: 221.2 83.2% 53.3%;
+
+  /* 特殊颜色 */
+  --chart-1: 12 76% 61%;
+  --chart-2: 173 58% 39%;
+  --chart-3: 197 37% 24%;
+  --chart-4: 43 74% 66%;
+  --chart-5: 27 87% 67%;
+
+  /* 语义化颜色 */
+  --text-primary: 222.2 84% 4.9%;
+  --text-secondary: 215.4 16.3% 46.9%;
+  --text-tertiary: 220 8.9% 46.1%;
+  --text-disabled: 220 8.9% 61%;
+
+  /* 背景层级 */
+  --bg-primary: 0 0% 100%;
+  --bg-secondary: 210 40% 98%;
+  --bg-tertiary: 210 40% 96.1%;
+  --bg-hover: 210 40% 94%;
+  --bg-active: 210 40% 92%;
+
+  /* 分割线 */
+  --divider: 214.3 31.8% 91.4%;
+  --divider-strong: 217.2 32.6% 80%;
+
+  /* 阴影颜色 */
+  --shadow-color: 222.2 84% 4.9%;
+  --shadow-strength: 0.1;
+
+  /* 滚动条 */
+  --scrollbar-track: 210 40% 96.1%;
+  --scrollbar-thumb: 215.4 16.3% 46.9%;
+  --scrollbar-thumb-hover: 215.4 16.3% 36.9%;
+
+  /* 代码高亮 */
+  --code-bg: 210 40% 98%;
+  --code-text: 222.2 84% 4.9%;
+  --code-comment: 215.4 16.3% 46.9%;
+  --code-keyword: 221.2 83.2% 53.3%;
+  --code-string: 142 71% 45%;
+  --code-function: 262 83% 58%;
+  --code-number: 0 84.2% 60.2%;
+}
+
+/* 亮色主题特殊样式 */
+[data-theme='light'] {
+  color-scheme: light;
+}
+
+[data-theme='light'] img {
+  filter: none;
+}
+
+/* 亮色主题下的代码块 */
+[data-theme='light'] pre {
+  background-color: hsl(var(--code-bg));
+  color: hsl(var(--code-text));
+}
+
+/* 亮色主题下的选择 */
+[data-theme='light'] ::selection {
+  background-color: hsl(var(--primary) / 0.2);
+  color: hsl(var(--primary-foreground));
+}
+
+/* 亮色主题下的占位符 */
+[data-theme='light'] ::placeholder {
+  color: hsl(var(--muted-foreground));
+  opacity: 0.6;
+}

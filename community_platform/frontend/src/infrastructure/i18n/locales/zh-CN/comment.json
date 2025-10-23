@@ -1,0 +1,72 @@
+{
+  "title": {
+    "comments": "评论",
+    "addComment": "添加评论",
+    "editComment": "编辑评论",
+    "replies": "回复",
+    "allComments": "全部评论"
+  },
+  "actions": {
+    "comment": "评论",
+    "reply": "回复",
+    "edit": "编辑",
+    "delete": "删除",
+    "like": "点赞",
+    "unlike": "取消点赞",
+    "report": "举报",
+    "viewReplies": "查看回复",
+    "hideReplies": "隐藏回复",
+    "loadMore": "加载更多",
+    "showMore": "显示更多",
+    "showLess": "收起"
+  },
+  "placeholders": {
+    "comment": "写下你的评论...",
+    "reply": "回复 @{username}..."
+  },
+  "sort": {
+    "latest": "最新",
+    "oldest": "最早",
+    "popular": "最热",
+    "replies": "回复数"
+  },
+  "stats": {
+    "likes": "{count} 个赞",
+    "replies": "{count} 条回复",
+    "comment": "{count} 条评论"
+  },
+  "messages": {
+    "addSuccess": "评论成功",
+    "addFailed": "评论失败",
+    "editSuccess": "编辑成功",
+    "editFailed": "编辑失败",
+    "deleteSuccess": "删除成功",
+    "deleteFailed": "删除失败",
+    "likeSuccess": "点赞成功",
+    "unlikeSuccess": "取消点赞",
+    "reportSuccess": "举报已提交",
+    "deleted": "该评论已被删除",
+    "restricted": "评论已被限制"
+  },
+  "validation": {
+    "required": "请输入评论内容",
+    "minLength": "评论至少需要 2 个字符",
+    "maxLength": "评论不能超过 1000 个字符"
+  },
+  "confirm": {
+    "delete": "确定要删除这条评论吗？",
+    "deleteWithReplies": "删除评论将同时删除所有回复，确定要继续吗？"
+  },
+  "empty": {
+    "noComments": "还没有评论",
+    "beFirst": "成为第一个评论的人",
+    "noReplies": "暂无回复"
+  },
+  "status": {
+    "pinned": "置顶",
+    "edited": "已编辑",
+    "deleted": "已删除",
+    "author": "作者"
+  }
+}
+
