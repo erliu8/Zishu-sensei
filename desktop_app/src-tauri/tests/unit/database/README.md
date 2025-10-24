@@ -86,7 +86,7 @@ docker-compose up -d postgres redis qdrant
 ```bash
 export TEST_POSTGRES_URL="postgresql://postgres:password@localhost:5432/test_db"
 export TEST_REDIS_URL="redis://127.0.0.1:6379"
-export TEST_QDRANT_URL="http://localhost:6334"
+export TEST_QDRANT_URL="http://localhost:6336"
 ```
 
 ### 运行测试

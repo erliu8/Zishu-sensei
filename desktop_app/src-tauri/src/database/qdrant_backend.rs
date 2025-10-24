@@ -2,10 +2,12 @@
 
 use async_trait::async_trait;
 use qdrant_client::prelude::*;
+use qdrant_client::Qdrant;
 use qdrant_client::qdrant::{
     CreateCollection, Distance, PointStruct, SearchPoints, VectorParams, VectorsConfig,
-    PointId, PointsSelector, ReadConsistency, WriteOrdering, Filter,
+    PointId, PointsSelector, ReadConsistency, WriteOrdering, Filter, GetPoints, SetPayloadPoints, DeletePoints, ScrollPoints,
 };
+use qdrant_client::qdrant::UpsertPointsBuilder;
 use qdrant_client::Payload;
 use serde_json;
 use std::collections::HashMap;
@@ -19,7 +21,7 @@ use super::backends::*;
 
 /// Qdrant 向量数据库后端
 pub struct QdrantBackend {
-    client: Option<QdrantClient>,
+    client: Option<Qdrant>,
     connected: bool,
     default_vector_size: usize,
 }
@@ -41,7 +43,7 @@ impl QdrantBackend {
     }
 
     /// 获取客户端
-    fn get_client(&self) -> DatabaseResult<&QdrantClient> {
+    fn get_client(&self) -> DatabaseResult<&Qdrant> {
         self.client
             .as_ref()
             .ok_or_else(|| DatabaseError::ConnectionError("未连接到Qdrant".to_string()))
@@ -129,7 +131,7 @@ impl DatabaseBackend for QdrantBackend {
     async fn connect(&mut self, config: &DatabaseConfig) -> DatabaseResult<()> {
         info!("连接到 Qdrant: {}", config.connection_string);
 
-        let client = QdrantClient::from_url(&config.connection_string)
+        let client = Qdrant::from_url(&config.connection_string)
             .build()
             .map_err(|e| DatabaseError::ConnectionError(format!("创建Qdrant客户端失败: {}", e)))?;
 
@@ -174,7 +176,7 @@ impl DatabaseBackend for QdrantBackend {
         };
 
         client
-            .create_collection(&CreateCollection {
+            .create_collection(CreateCollection {
                 collection_name: name.to_string(),
                 vectors_config: Some(VectorsConfig {
                     config: Some(qdrant_client::qdrant::vectors_config::Config::Params(
@@ -252,7 +254,15 @@ impl DatabaseBackend for QdrantBackend {
             .map_err(|_| DatabaseError::InvalidData("无效的ID格式，Qdrant需要数字ID".to_string()))?;
 
         let points: qdrant_client::qdrant::GetResponse = client
-            .get_points(collection, None, &[point_id.into()], None::<bool>, None::<bool>, None)
+            .get_points(GetPoints {
+                collection_name: collection.to_string(),
+                ids: vec![point_id.into()],
+                with_payload: None,
+                with_vectors: None,
+                read_consistency: None,
+                shard_key_selector: None,
+                timeout: None,
+            })
             .await
             .map_err(|e| DatabaseError::QueryError(format!("获取点失败: {}", e)))?;
 
@@ -296,14 +306,15 @@ impl DatabaseBackend for QdrantBackend {
         };
 
         client
-            .set_payload(
-                collection,
-                None,
-                &selector,
-                payload,
-                None,
-                None,
-            )
+            .set_payload(SetPayloadPoints {
+                collection_name: collection.to_string(),
+                points_selector: Some(selector),
+                payload: payload.into(),
+                ordering: None,
+                shard_key_selector: None,
+                key: None,
+                wait: None,
+            })
             .await
             .map_err(|e| DatabaseError::QueryError(format!("更新payload失败: {}", e)))?;
 
@@ -327,7 +338,13 @@ impl DatabaseBackend for QdrantBackend {
         };
 
         client
-            .delete_points(collection, None, &selector, None)
+            .delete_points(DeletePoints {
+                collection_name: collection.to_string(),
+                points: Some(selector),
+                ordering: None,
+                shard_key_selector: None,
+                wait: None,
+            })
             .await
             .map_err(|e| DatabaseError::QueryError(format!("删除点失败: {}", e)))?;
 
@@ -346,7 +363,7 @@ impl DatabaseBackend for QdrantBackend {
 
         // Qdrant不直接支持不带向量的查询，需要使用scroll
         let scroll_result = client
-            .scroll(&qdrant_client::qdrant::ScrollPoints {
+            .scroll(qdrant_client::qdrant::ScrollPoints {
                 collection_name: collection.to_string(),
                 limit: Some(limit as u32),
                 offset: options.offset.map(|o| PointId::from(o as u64)),
@@ -406,12 +423,13 @@ impl DatabaseBackend for QdrantBackend {
         };
 
         client
-            .delete_points(
-                collection,
-                None,
-                &selector,
-                None,
-            )
+            .delete_points(DeletePoints {
+                collection_name: collection.to_string(),
+                points: Some(selector),
+                ordering: None,
+                shard_key_selector: None,
+                wait: None,
+            })
             .await
             .map_err(|e| DatabaseError::QueryError(format!("清空集合失败: {}", e)))?;
 
@@ -453,7 +471,10 @@ impl VectorDatabaseBackend for QdrantBackend {
         let point = PointStruct::new(point_id, vector, qdrant_payload);
 
         client
-            .upsert_points_blocking(collection, None, vec![point], None)
+            .upsert_points(
+                UpsertPointsBuilder::new(collection, vec![point])
+                    .wait(true)
+            )
             .await
             .map_err(|e| DatabaseError::QueryError(format!("插入向量失败: {}", e)))?;
 
@@ -480,7 +501,10 @@ impl VectorDatabaseBackend for QdrantBackend {
         }
 
         client
-            .upsert_points_blocking(collection, None, points, None)
+            .upsert_points(
+                UpsertPointsBuilder::new(collection, points)
+                    .wait(true)
+            )
             .await
             .map_err(|e| DatabaseError::QueryError(format!("批量插入向量失败: {}", e)))?;
 
@@ -497,7 +521,7 @@ impl VectorDatabaseBackend for QdrantBackend {
         let client = self.get_client()?;
 
         let search_result = client
-            .search_points(&SearchPoints {
+            .search_points(SearchPoints {
                 collection_name: collection.to_string(),
                 vector: query_vector,
                 limit: limit as u64,

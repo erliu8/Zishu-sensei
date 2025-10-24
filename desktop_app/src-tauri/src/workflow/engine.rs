@@ -2,6 +2,7 @@ use super::models::*;
 use super::expression::ExpressionEvaluator;
 // use crate::chat::ChatService;  // TODO: Implement ChatService
 use anyhow::{Result, anyhow};
+use serde::{Serialize, Deserialize};
 use serde_json::Value as JsonValue;
 use std::collections::HashMap;
 use std::sync::Arc;
@@ -21,7 +22,7 @@ pub struct WorkflowEngine {
 }
 
 /// Workflow execution state
-#[derive(Debug, Clone)]
+#[derive(Debug, Clone, Serialize, Deserialize)]
 pub struct WorkflowExecution {
     pub workflow_id: String,
     pub execution_id: String,
@@ -34,7 +35,7 @@ pub struct WorkflowExecution {
     pub error: Option<String>,
 }
 
-#[derive(Debug, Clone, PartialEq)]
+#[derive(Debug, Clone, PartialEq, Serialize, Deserialize)]
 pub enum WorkflowExecutionStatus {
     Running,
     Paused,
@@ -44,7 +45,7 @@ pub enum WorkflowExecutionStatus {
 }
 
 /// Step execution result
-#[derive(Debug, Clone)]
+#[derive(Debug, Clone, Serialize, Deserialize)]
 pub struct StepResult {
     pub step_id: String,
     pub status: StepStatus,
@@ -54,7 +55,7 @@ pub struct StepResult {
     pub end_time: Option<i64>,
 }
 
-#[derive(Debug, Clone, PartialEq)]
+#[derive(Debug, Clone, PartialEq, Serialize, Deserialize)]
 pub enum StepStatus {
     Pending,
     Running,

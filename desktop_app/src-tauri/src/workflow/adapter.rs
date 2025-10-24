@@ -9,19 +9,19 @@ use serde_json::Value as JsonValue;
 
 /// 将业务层 Workflow 转换为数据库层 WorkflowDefinition
 pub fn workflow_to_db(workflow: &Workflow) -> Result<DbWorkflowDefinition> {
-    let steps_json = serde_json::to_string(&workflow.steps)?;
-    let config_json = serde_json::to_string(&workflow.config)?;
-    let tags_json = serde_json::to_string(&workflow.tags)?;
+    let steps_json = serde_json::to_value(&workflow.steps)?;
+    let config_json = serde_json::to_value(&workflow.config)?;
+    let tags_json = serde_json::to_value(&workflow.tags)?;
 
     Ok(DbWorkflowDefinition {
         id: workflow.id.clone(),
         name: workflow.name.clone(),
         description: workflow.description.clone(),
         version: workflow.version.clone(),
-        steps: steps_json,
-        config: config_json,
+        steps: Some(steps_json),
+        config: Some(config_json),
         status: workflow_status_to_db(workflow.status),
-        tags: tags_json,
+        tags: Some(tags_json),
         category: workflow.category.clone(),
         is_template: workflow.is_template,
         template_id: workflow.template_id.clone(),
@@ -32,9 +32,20 @@ pub fn workflow_to_db(workflow: &Workflow) -> Result<DbWorkflowDefinition> {
 
 /// 将数据库层 WorkflowDefinition 转换为业务层 Workflow
 pub fn db_to_workflow(db_workflow: &DbWorkflowDefinition) -> Result<Workflow> {
-    let steps: Vec<WorkflowStep> = serde_json::from_str(&db_workflow.steps)?;
-    let config: WorkflowConfig = serde_json::from_str(&db_workflow.config)?;
-    let tags: Vec<String> = serde_json::from_str(&db_workflow.tags)?;
+    let steps: Vec<WorkflowStep> = db_workflow.steps
+        .as_ref()
+        .and_then(|v| serde_json::from_value(v.clone()).ok())
+        .unwrap_or_default();
+    
+    let config: WorkflowConfig = db_workflow.config
+        .as_ref()
+        .and_then(|v| serde_json::from_value(v.clone()).ok())
+        .unwrap_or_default();
+    
+    let tags: Vec<String> = db_workflow.tags
+        .as_ref()
+        .and_then(|v| serde_json::from_value(v.clone()).ok())
+        .unwrap_or_default();
 
     // 解析trigger（如果有的话，可以从config中获取）
     let trigger = None; // TODO: 从配置中提取触发器信息
@@ -68,11 +79,12 @@ fn workflow_status_to_db(status: WorkflowStatus) -> DbWorkflowStatus {
 }
 
 /// 将数据库层 WorkflowStatus 转换为业务层
-fn db_status_to_workflow(status: DbWorkflowStatus) -> WorkflowStatus {
+pub fn db_status_to_workflow(status: DbWorkflowStatus) -> WorkflowStatus {
     match status {
         DbWorkflowStatus::Draft => WorkflowStatus::Draft,
         DbWorkflowStatus::Published => WorkflowStatus::Published,
         DbWorkflowStatus::Archived => WorkflowStatus::Archived,
+        DbWorkflowStatus::Disabled => WorkflowStatus::Disabled,
     }
 }
 

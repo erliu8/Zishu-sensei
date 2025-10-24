@@ -445,14 +445,6 @@ impl RegionDatabase {
         Ok(())
     }
 
-    pub fn get_region_config(&self, _code: &str) -> Result<Option<RegionConfig>, Box<dyn std::error::Error + Send + Sync>> {
-        Ok(None)
-    }
-
-    pub fn cache_region_config(_code: &str, _config: &RegionConfig) -> Result<(), Box<dyn std::error::Error + Send + Sync>> {
-        Ok(())
-    }
-
     /// 保存用户偏好设置（PostgreSQL客户端接口）
     pub fn save_user_preferences(conn: &deadpool_postgres::Client, preferences: &RegionPreferences) -> Result<i64, Box<dyn std::error::Error + Send + Sync>> {
         tokio::runtime::Handle::current().block_on(async {
@@ -515,7 +507,7 @@ impl RegionDatabase {
         })
     }
 
-    pub fn init(&self) -> Result<(), Box<dyn std::error::Error + Send + Sync>> {
+    pub fn init(_conn: &deadpool_postgres::Client) -> Result<(), Box<dyn std::error::Error + Send + Sync>> {
         Ok(())
     }
 

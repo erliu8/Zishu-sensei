@@ -361,7 +361,7 @@ pub async fn search_files_by_keyword(
 
 /// 清理旧文件
 #[tauri::command]
-pub async fn cleanup_old_files(app_handle: AppHandle, days: i64) -> Result<usize, String> {
+pub async fn cleanup_old_file_records(app_handle: AppHandle, days: i64) -> Result<usize, String> {
     let conn = get_db_connection(&app_handle)?;
 
     // 获取需要清理的文件

@@ -31,7 +31,7 @@ async fn test_qdrant_with_vector_size() {
 #[ignore] // 需要实际的Qdrant服务器
 async fn test_qdrant_connect_success() {
     let mut backend = QdrantBackend::new();
-    let config = DatabaseConfig::qdrant("http://localhost:6334");
+    let config = DatabaseConfig::qdrant("http://localhost:6336");
     
     let result = backend.connect(&config).await;
     assert!(result.is_ok(), "连接应该成功: {:?}", result.err());
@@ -69,7 +69,7 @@ async fn test_qdrant_connect_invalid_url() {
 #[ignore] // 需要实际的Qdrant服务器
 async fn test_qdrant_create_and_drop_collection() {
     let mut backend = QdrantBackend::new().with_vector_size(128);
-    let config = DatabaseConfig::qdrant("http://localhost:6334");
+    let config = DatabaseConfig::qdrant("http://localhost:6336");
     
     backend.connect(&config).await.unwrap();
     
@@ -98,7 +98,7 @@ async fn test_qdrant_create_and_drop_collection() {
 #[ignore] // 需要实际的Qdrant服务器
 async fn test_qdrant_create_collection_with_custom_size() {
     let mut backend = QdrantBackend::new();
-    let config = DatabaseConfig::qdrant("http://localhost:6334");
+    let config = DatabaseConfig::qdrant("http://localhost:6336");
     
     backend.connect(&config).await.unwrap();
     
@@ -125,7 +125,7 @@ async fn test_qdrant_create_collection_with_custom_size() {
 #[ignore] // 需要实际的Qdrant服务器
 async fn test_qdrant_insert_and_get_vector() {
     let mut backend = QdrantBackend::new().with_vector_size(128);
-    let config = DatabaseConfig::qdrant("http://localhost:6334");
+    let config = DatabaseConfig::qdrant("http://localhost:6336");
     
     backend.connect(&config).await.unwrap();
     
@@ -160,7 +160,7 @@ async fn test_qdrant_insert_and_get_vector() {
 #[ignore] // 需要实际的Qdrant服务器
 async fn test_qdrant_batch_insert_vectors() {
     let mut backend = QdrantBackend::new().with_vector_size(64);
-    let config = DatabaseConfig::qdrant("http://localhost:6334");
+    let config = DatabaseConfig::qdrant("http://localhost:6336");
     
     backend.connect(&config).await.unwrap();
     
@@ -202,7 +202,7 @@ async fn test_qdrant_batch_insert_vectors() {
 #[ignore] // 需要实际的Qdrant服务器
 async fn test_qdrant_vector_search() {
     let mut backend = QdrantBackend::new().with_vector_size(128);
-    let config = DatabaseConfig::qdrant("http://localhost:6334");
+    let config = DatabaseConfig::qdrant("http://localhost:6336");
     
     backend.connect(&config).await.unwrap();
     
@@ -245,7 +245,7 @@ async fn test_qdrant_vector_search() {
 #[ignore] // 需要实际的Qdrant服务器
 async fn test_qdrant_update_payload() {
     let mut backend = QdrantBackend::new().with_vector_size(64);
-    let config = DatabaseConfig::qdrant("http://localhost:6334");
+    let config = DatabaseConfig::qdrant("http://localhost:6336");
     
     backend.connect(&config).await.unwrap();
     
@@ -277,7 +277,7 @@ async fn test_qdrant_update_payload() {
 #[ignore] // 需要实际的Qdrant服务器
 async fn test_qdrant_delete_vector() {
     let mut backend = QdrantBackend::new().with_vector_size(64);
-    let config = DatabaseConfig::qdrant("http://localhost:6334");
+    let config = DatabaseConfig::qdrant("http://localhost:6336");
     
     backend.connect(&config).await.unwrap();
     
@@ -314,7 +314,7 @@ async fn test_qdrant_delete_vector() {
 #[ignore] // 需要实际的Qdrant服务器
 async fn test_qdrant_query_basic() {
     let mut backend = QdrantBackend::new().with_vector_size(64);
-    let config = DatabaseConfig::qdrant("http://localhost:6334");
+    let config = DatabaseConfig::qdrant("http://localhost:6336");
     
     backend.connect(&config).await.unwrap();
     
@@ -346,7 +346,7 @@ async fn test_qdrant_query_basic() {
 #[ignore] // 需要实际的Qdrant服务器
 async fn test_qdrant_query_with_limit() {
     let mut backend = QdrantBackend::new().with_vector_size(64);
-    let config = DatabaseConfig::qdrant("http://localhost:6334");
+    let config = DatabaseConfig::qdrant("http://localhost:6336");
     
     backend.connect(&config).await.unwrap();
     
@@ -381,7 +381,7 @@ async fn test_qdrant_query_with_limit() {
 #[ignore] // 需要实际的Qdrant服务器
 async fn test_qdrant_count() {
     let mut backend = QdrantBackend::new().with_vector_size(64);
-    let config = DatabaseConfig::qdrant("http://localhost:6334");
+    let config = DatabaseConfig::qdrant("http://localhost:6336");
     
     backend.connect(&config).await.unwrap();
     
@@ -416,7 +416,7 @@ async fn test_qdrant_count() {
 #[ignore] // 需要实际的Qdrant服务器
 async fn test_qdrant_clear_collection() {
     let mut backend = QdrantBackend::new().with_vector_size(64);
-    let config = DatabaseConfig::qdrant("http://localhost:6334");
+    let config = DatabaseConfig::qdrant("http://localhost:6336");
     
     backend.connect(&config).await.unwrap();
     
@@ -455,7 +455,7 @@ async fn test_qdrant_clear_collection() {
 #[ignore] // 需要实际的Qdrant服务器
 async fn test_qdrant_insert_with_invalid_id() {
     let mut backend = QdrantBackend::new().with_vector_size(64);
-    let config = DatabaseConfig::qdrant("http://localhost:6334");
+    let config = DatabaseConfig::qdrant("http://localhost:6336");
     
     backend.connect(&config).await.unwrap();
     
@@ -488,7 +488,7 @@ async fn test_qdrant_insert_with_invalid_id() {
 #[ignore] // 需要实际的Qdrant服务器
 async fn test_qdrant_normal_insert_not_supported() {
     let mut backend = QdrantBackend::new().with_vector_size(64);
-    let config = DatabaseConfig::qdrant("http://localhost:6334");
+    let config = DatabaseConfig::qdrant("http://localhost:6336");
     
     backend.connect(&config).await.unwrap();
     

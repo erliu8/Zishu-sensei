@@ -1042,25 +1042,23 @@ impl PermissionRegistry {
         granted_by: Option<String>,
         expires_at: Option<DateTime<Utc>>,
     ) -> Result<(), Box<dyn std::error::Error + Send + Sync>> {
-        Handle::current().block_on(async {
-            let group = self.get_permission_group(group_name).await?
-                .ok_or_else(|| format!("权限组不存在: {}", group_name))?;
-            
-            for permission_type in group.permissions {
-                self.grant_permission(
-                    entity_type.clone(),
-                    entity_id.clone(),
-                    permission_type,
-                    level.clone(),
-                    None,
-                    granted_by.clone(),
-                    expires_at.clone(),
-                ).await?;
-            }
-            
-            info!("权限组已授予: {}::{} -> {}", entity_type, entity_id, group_name);
-            Ok(())
-        })
+        let group = self.get_permission_group(group_name)?
+            .ok_or_else(|| format!("权限组不存在: {}", group_name))?;
+        
+        for permission_type in group.permissions {
+            self.grant_permission(
+                entity_type.clone(),
+                entity_id.clone(),
+                permission_type,
+                level.clone(),
+                None,
+                granted_by.clone(),
+                expires_at.clone(),
+            )?;
+        }
+        
+        info!("权限组已授予: {}::{} -> {}", entity_type, entity_id, group_name);
+        Ok(())
     }
 
     /// 获取资源权限（兼容旧接口）

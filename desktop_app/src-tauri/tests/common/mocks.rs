@@ -438,7 +438,7 @@ pub trait LogService: Send + Sync {
     fn error(&self, message: &str);
     
     /// 获取日志条目
-    fn get_logs(&self, level: Option<&str>, limit: usize) -> Vec<String>;
+    fn get_logs(&self, level: Option<&'static str>, limit: usize) -> Vec<String>;
     
     /// 清空日志
     fn clear_logs(&self);

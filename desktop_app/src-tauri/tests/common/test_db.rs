@@ -47,11 +47,12 @@ impl TestPostgresDatabase {
     /// 连接到测试数据库
     pub async fn connect(&mut self) -> Result<(), String> {
         let config = DatabaseConfig::postgresql(&format!(
-            "postgresql://postgres:password@localhost:5432/{}",
+            "postgresql://zishu:zishu123@localhost:5432/{}",
             self.database_name
         ));
         
-        self.backend.connect(&config).await?;
+        self.backend.connect(&config).await
+            .map_err(|e| e.to_string())?;
         self.connected = true;
         Ok(())
     }
@@ -59,7 +60,8 @@ impl TestPostgresDatabase {
     /// 断开连接
     pub async fn disconnect(&mut self) -> Result<(), String> {
         if self.connected {
-            self.backend.disconnect().await?;
+            self.backend.disconnect().await
+                .map_err(|e| e.to_string())?;
             self.connected = false;
         }
         Ok(())
@@ -71,14 +73,14 @@ impl TestPostgresDatabase {
     
     /// 初始化完整的数据库表结构
     pub async fn init_full_schema(&mut self) -> Result<(), String> {
-        self.init_adapter_tables().await?;
-        self.init_character_tables().await?;
-        self.init_chat_tables().await?;
-        self.init_settings_tables().await?;
-        self.init_workflow_tables().await?;
-        self.init_permission_tables().await?;
-        self.init_file_tables().await?;
-        self.init_log_tables().await?;
+        self.init_adapter_tables().await.map_err(|e| e.to_string())?;
+        self.init_character_tables().await.map_err(|e| e.to_string())?;
+        self.init_chat_tables().await.map_err(|e| e.to_string())?;
+        self.init_settings_tables().await.map_err(|e| e.to_string())?;
+        self.init_workflow_tables().await.map_err(|e| e.to_string())?;
+        self.init_permission_tables().await.map_err(|e| e.to_string())?;
+        self.init_file_tables().await.map_err(|e| e.to_string())?;
+        self.init_log_tables().await.map_err(|e| e.to_string())?;
         Ok(())
     }
     
@@ -146,7 +148,9 @@ impl TestPostgresDatabase {
             CREATE INDEX IF NOT EXISTS idx_adapter_permissions_adapter ON adapter_permissions(adapter_id);
         "#;
         
-        self.backend.execute(&schema).await
+        self.backend.execute_raw(&schema).await
+            .map_err(|e| e.to_string())
+            .map(|_| ())
     }
     
     /// 初始化角色相关表
@@ -197,7 +201,9 @@ impl TestPostgresDatabase {
             CREATE INDEX IF NOT EXISTS idx_character_expressions_character ON character_expressions(character_id);
         "#;
         
-        self.backend.execute(&schema).await
+        self.backend.execute_raw(&schema).await
+            .map_err(|e| e.to_string())
+            .map(|_| ())
     }
     
     /// 初始化聊天相关表
@@ -226,7 +232,9 @@ impl TestPostgresDatabase {
             CREATE INDEX IF NOT EXISTS idx_chat_messages_timestamp ON chat_messages(timestamp);
         "#;
         
-        self.backend.execute(&schema).await
+        self.backend.execute_raw(&schema).await
+            .map_err(|e| e.to_string())
+            .map(|_| ())
     }
     
     /// 初始化设置相关表
@@ -251,7 +259,9 @@ impl TestPostgresDatabase {
             CREATE INDEX IF NOT EXISTS idx_theme_configs_active ON theme_configs(is_active);
         "#;
         
-        self.backend.execute(&schema).await
+        self.backend.execute_raw(&schema).await
+            .map_err(|e| e.to_string())
+            .map(|_| ())
     }
     
     /// 初始化工作流相关表
@@ -284,7 +294,9 @@ impl TestPostgresDatabase {
             CREATE INDEX IF NOT EXISTS idx_workflow_executions_status ON workflow_executions(status);
         "#;
         
-        self.backend.execute(&schema).await
+        self.backend.execute_raw(&schema).await
+            .map_err(|e| e.to_string())
+            .map(|_| ())
     }
     
     /// 初始化权限相关表
@@ -304,7 +316,9 @@ impl TestPostgresDatabase {
             CREATE INDEX IF NOT EXISTS idx_permissions_granted ON permissions(granted);
         "#;
         
-        self.backend.execute(&schema).await
+        self.backend.execute_raw(&schema).await
+            .map_err(|e| e.to_string())
+            .map(|_| ())
     }
     
     /// 初始化文件相关表
@@ -332,7 +346,9 @@ impl TestPostgresDatabase {
             CREATE INDEX IF NOT EXISTS idx_file_access_log_file ON file_access_log(file_id);
         "#;
         
-        self.backend.execute(&schema).await
+        self.backend.execute_raw(&schema).await
+            .map_err(|e| e.to_string())
+            .map(|_| ())
     }
     
     /// 初始化日志相关表
@@ -364,7 +380,9 @@ impl TestPostgresDatabase {
             CREATE INDEX IF NOT EXISTS idx_error_logs_timestamp ON error_logs(timestamp);
         "#;
         
-        self.backend.execute(&schema).await
+        self.backend.execute_raw(&schema).await
+            .map_err(|e| e.to_string())
+            .map(|_| ())
     }
     
     // ================================
@@ -384,25 +402,33 @@ impl TestPostgresDatabase {
             TRUNCATE TABLE app_logs, error_logs CASCADE;
         "#;
         
-        self.backend.execute(&sql).await
+        self.backend.execute_raw(&sql).await
+            .map_err(|e| e.to_string())
+            .map(|_| ())
     }
     
     /// 清空适配器数据
     pub async fn clear_adapter_data(&mut self) -> Result<(), String> {
         let sql = "TRUNCATE TABLE adapter_permissions, adapter_dependencies, adapter_versions, installed_adapters CASCADE;";
-        self.backend.execute(&sql).await
+        self.backend.execute_raw(&sql).await
+            .map_err(|e| e.to_string())
+            .map(|_| ())
     }
     
     /// 清空角色数据
     pub async fn clear_character_data(&mut self) -> Result<(), String> {
         let sql = "TRUNCATE TABLE character_configs, character_expressions, character_motions, characters CASCADE;";
-        self.backend.execute(&sql).await
+        self.backend.execute_raw(&sql).await
+            .map_err(|e| e.to_string())
+            .map(|_| ())
     }
     
     /// 清空聊天数据
     pub async fn clear_chat_data(&mut self) -> Result<(), String> {
         let sql = "TRUNCATE TABLE chat_messages, chat_sessions CASCADE;";
-        self.backend.execute(&sql).await
+        self.backend.execute_raw(&sql).await
+            .map_err(|e| e.to_string())
+            .map(|_| ())
     }
     
     // ================================
@@ -429,6 +455,7 @@ impl TestPostgresDatabase {
         });
         
         self.backend.insert("installed_adapters", id, &data).await
+            .map_err(|e| e.to_string())
     }
     
     /// 插入测试角色
@@ -449,6 +476,7 @@ impl TestPostgresDatabase {
         });
         
         self.backend.insert("characters", id, &data).await
+            .map_err(|e| e.to_string())
     }
     
     /// 插入测试聊天会话
@@ -463,6 +491,7 @@ impl TestPostgresDatabase {
         });
         
         self.backend.insert("chat_sessions", id, &data).await
+            .map_err(|e| e.to_string())
     }
     
     /// 插入测试聊天消息
@@ -484,6 +513,7 @@ impl TestPostgresDatabase {
         });
         
         self.backend.insert("chat_messages", id, &data).await
+            .map_err(|e| e.to_string())
     }
     
     /// 插入测试工作流
@@ -500,6 +530,7 @@ impl TestPostgresDatabase {
         });
         
         self.backend.insert("workflows", id, &data).await
+            .map_err(|e| e.to_string())
     }
     
     // ================================
@@ -508,13 +539,15 @@ impl TestPostgresDatabase {
     
     /// 计算集合中的记录数
     pub async fn count_records(&mut self, collection: &str) -> Result<i64, String> {
-        let keys = self.backend.list_keys(collection).await?;
-        Ok(keys.len() as i64)
+        let count = self.backend.count(collection, None).await
+            .map_err(|e| e.to_string())?;
+        Ok(count as i64)
     }
     
     /// 检查记录是否存在
     pub async fn record_exists(&mut self, collection: &str, id: &str) -> Result<bool, String> {
-        let result = self.backend.get(collection, id).await?;
+        let result = self.backend.get(collection, id).await
+            .map_err(|e| e.to_string())?;
         Ok(result.is_some())
     }
     
@@ -546,8 +579,9 @@ impl TestRedisDatabase {
     
     /// 连接到Redis
     pub async fn connect(&mut self) -> Result<(), String> {
-        let config = DatabaseConfig::redis("redis://127.0.0.1:6379");
-        self.backend.connect(&config).await?;
+        let config = DatabaseConfig::redis("redis://:zishu123@127.0.0.1:6379");
+        self.backend.connect(&config).await
+            .map_err(|e| e.to_string())?;
         self.connected = true;
         Ok(())
     }
@@ -555,7 +589,8 @@ impl TestRedisDatabase {
     /// 断开连接
     pub async fn disconnect(&mut self) -> Result<(), String> {
         if self.connected {
-            self.backend.disconnect().await?;
+            self.backend.disconnect().await
+                .map_err(|e| e.to_string())?;
             self.connected = false;
         }
         Ok(())
@@ -570,7 +605,8 @@ impl TestRedisDatabase {
         ];
         
         for collection in collections {
-            self.backend.drop_collection(collection).await?;
+            self.backend.drop_collection(collection).await
+                .map_err(|e| e.to_string())?;
         }
         
         Ok(())
@@ -590,7 +626,7 @@ impl TestRedisDatabase {
 /// 
 /// 返回一个已连接并初始化了完整schema的测试数据库
 pub async fn setup_test_postgres() -> TestPostgresDatabase {
-    let mut db = TestPostgresDatabase::new("test_db");
+    let mut db = TestPostgresDatabase::new("zishu");
     db.connect().await.expect("无法连接到PostgreSQL测试数据库");
     db.init_full_schema().await.expect("无法初始化数据库schema");
     db
@@ -598,7 +634,7 @@ pub async fn setup_test_postgres() -> TestPostgresDatabase {
 
 /// 设置PostgreSQL测试数据库（仅指定表）
 pub async fn setup_test_postgres_with_tables(tables: &[&str]) -> TestPostgresDatabase {
-    let mut db = TestPostgresDatabase::new("test_db");
+    let mut db = TestPostgresDatabase::new("zishu");
     db.connect().await.expect("无法连接到PostgreSQL测试数据库");
     
     for table in tables {
@@ -643,7 +679,8 @@ mod tests {
     #[tokio::test]
     #[ignore] // 需要PostgreSQL服务器
     async fn test_postgres_test_database() {
-        let mut db = TestPostgresDatabase::new("test_db");
+        // 使用已存在的zishu数据库
+        let mut db = TestPostgresDatabase::new("zishu");
         assert!(db.connect().await.is_ok());
         assert!(db.init_full_schema().await.is_ok());
         assert!(db.disconnect().await.is_ok());
@@ -661,7 +698,7 @@ mod tests {
     #[ignore] // 需要PostgreSQL服务器
     async fn test_setup_test_postgres() {
         let db = setup_test_postgres().await;
-        assert!(db.connected);
+        assert!(db.connected, "数据库应该已连接");
     }
     
     #[tokio::test]

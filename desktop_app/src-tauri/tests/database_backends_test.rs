@@ -48,6 +48,7 @@
 mod common;
 
 use std::env;
+use qdrant_client::qdrant::UpsertPointsBuilder;
 
 // 辅助函数：获取数据库连接信息
 fn get_postgres_url() -> String {
@@ -64,7 +65,13 @@ fn get_redis_url() -> String {
 
 fn get_qdrant_url() -> String {
     env::var("QDRANT_URL").unwrap_or_else(|_| {
-        "http://localhost:6335".to_string()
+        "http://localhost:6336".to_string()
+    })
+}
+
+fn get_qdrant_api_key() -> Option<String> {
+    env::var("QDRANT_API_KEY").ok().or_else(|| {
+        Some("dev-qdrant-api-key-change-in-production".to_string())
     })
 }
 
@@ -470,7 +477,11 @@ mod qdrant_tests {
         let qdrant_url = get_qdrant_url();
         println!("📌 连接到: {}", qdrant_url);
         
-        let client = Qdrant::from_url(&qdrant_url).build().expect("无法创建 Qdrant 客户端");
+        let mut client_builder = Qdrant::from_url(&qdrant_url);
+        if let Some(api_key) = get_qdrant_api_key() {
+            client_builder = client_builder.api_key(api_key);
+        }
+        let client = client_builder.build().expect("无法创建 Qdrant 客户端");
         
         println!("✅ Qdrant 客户端创建成功");
         
@@ -496,7 +507,11 @@ mod qdrant_tests {
         println!("\n🧪 测试 Qdrant 集合管理");
         
         let qdrant_url = get_qdrant_url();
-        let client = Qdrant::from_url(&qdrant_url).build().expect("无法创建 Qdrant 客户端");
+        let mut client_builder = Qdrant::from_url(&qdrant_url);
+        if let Some(api_key) = get_qdrant_api_key() {
+            client_builder = client_builder.api_key(api_key);
+        }
+        let client = client_builder.build().expect("无法创建 Qdrant 客户端");
         
         let collection_name = "test_collection";
         
@@ -527,7 +542,8 @@ mod qdrant_tests {
         
         // 获取集合信息
         let info = client.collection_info(collection_name).await.expect("获取集合信息失败");
-        println!("✅ 集合信息: vectors_count={}", info.vectors_count.unwrap_or(0));
+        let points_count = info.result.and_then(|r| r.points_count).unwrap_or(0);
+        println!("✅ 集合信息: points_count={}", points_count);
         
         // 删除集合
         client.delete_collection(collection_name).await.expect("删除集合失败");
@@ -542,7 +558,11 @@ mod qdrant_tests {
         println!("\n🧪 测试 Qdrant 向量操作");
         
         let qdrant_url = get_qdrant_url();
-        let client = Qdrant::from_url(&qdrant_url).build().expect("无法创建 Qdrant 客户端");
+        let mut client_builder = Qdrant::from_url(&qdrant_url);
+        if let Some(api_key) = get_qdrant_api_key() {
+            client_builder = client_builder.api_key(api_key);
+        }
+        let client = client_builder.build().expect("无法创建 Qdrant 客户端");
         
         let collection_name = "test_vectors";
         let vector_size = 384;
@@ -564,14 +584,21 @@ mod qdrant_tests {
         // 插入向量
         let test_vector: Vec<f32> = (0..vector_size).map(|i| i as f32 / vector_size as f32).collect();
         
+        use qdrant_client::Payload;
+        let mut payload = Payload::new();
+        payload.insert("name", "test_point_1");
+        
         let points = vec![PointStruct::new(
             1,
             test_vector.clone(),
-            [("name", "test_point_1".into())].into(),
+            payload,
         )];
         
         client
-            .upsert_points(collection_name, points, None)
+            .upsert_points(
+                UpsertPointsBuilder::new(collection_name, points)
+                    .wait(true)
+            )
             .await
             .expect("插入向量失败");
         
@@ -607,7 +634,11 @@ mod qdrant_tests {
         println!("\n🧪 测试 Qdrant 批量操作");
         
         let qdrant_url = get_qdrant_url();
-        let client = Qdrant::from_url(&qdrant_url).build().expect("无法创建 Qdrant 客户端");
+        let mut client_builder = Qdrant::from_url(&qdrant_url);
+        if let Some(api_key) = get_qdrant_api_key() {
+            client_builder = client_builder.api_key(api_key);
+        }
+        let client = client_builder.build().expect("无法创建 Qdrant 客户端");
         
         let collection_name = "test_batch";
         let vector_size = 128;
@@ -628,21 +659,29 @@ mod qdrant_tests {
         println!("✅ 创建批量测试集合");
         
         // 批量插入向量
+        use qdrant_client::Payload;
+        
         let mut points = Vec::new();
         for i in 0..batch_size {
             let vector: Vec<f32> = (0..vector_size)
                 .map(|j| (i * vector_size + j) as f32 / (batch_size * vector_size) as f32)
                 .collect();
             
+            let mut payload = Payload::new();
+            payload.insert("batch_id", i.to_string());
+            
             points.push(PointStruct::new(
                 i as u64,
                 vector,
-                [("batch_id", i.to_string().into())].into(),
+                payload,
             ));
         }
         
         client
-            .upsert_points(collection_name, points, None)
+            .upsert_points(
+                UpsertPointsBuilder::new(collection_name, points)
+                    .wait(true)
+            )
             .await
             .expect("批量插入失败");
         
@@ -653,7 +692,7 @@ mod qdrant_tests {
         
         // 验证数量
         let info = client.collection_info(collection_name).await.expect("获取集合信息失败");
-        let count = info.vectors_count.unwrap_or(0);
+        let count = info.result.and_then(|r| r.points_count).unwrap_or(0);
         assert_eq!(count, batch_size);
         println!("✅ 验证向量数量: {}", count);
         
@@ -750,17 +789,23 @@ mod integration_tests {
             .expect("创建集合失败");
         
         let message_vector: Vec<f32> = (0..384).map(|i| i as f32 / 384.0).collect();
+        
+        use qdrant_client::Payload;
+        let mut payload = Payload::new();
+        payload.insert("session_id", session_id);
+        payload.insert("content", "测试消息内容");
+        
         let points = vec![PointStruct::new(
             1,
             message_vector,
-            [
-                ("session_id", session_id.into()),
-                ("content", "测试消息内容".into()),
-            ].into(),
+            payload,
         )];
         
         qdrant_client
-            .upsert_points(collection_name, points, None)
+            .upsert_points(
+                UpsertPointsBuilder::new(collection_name, points)
+                    .wait(true)
+            )
             .await
             .expect("插入向量失败");
         
@@ -786,7 +831,8 @@ mod integration_tests {
         // 从 Qdrant 读取
         tokio::time::sleep(tokio::time::Duration::from_secs(1)).await;
         let info = qdrant_client.collection_info(collection_name).await.expect("获取集合信息失败");
-        assert_eq!(info.vectors_count.unwrap_or(0), 1);
+        let points_count = info.result.and_then(|r| r.points_count).unwrap_or(0);
+        assert_eq!(points_count, 1);
         println!("   ✅ Qdrant 向量验证通过");
         
         // 清理

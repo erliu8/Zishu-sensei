@@ -473,12 +473,12 @@ pub fn get_bool_field(fixture: &Value, field: &str) -> Option<bool> {
 }
 
 /// Get an array field from a fixture
-pub fn get_array_field(fixture: &Value, field: &str) -> Option<&Vec<Value>> {
+pub fn get_array_field<'a>(fixture: &'a Value, field: &str) -> Option<&'a Vec<Value>> {
     fixture.get(field)?.as_array()
 }
 
 /// Get an object field from a fixture
-pub fn get_object_field(fixture: &Value, field: &str) -> Option<&serde_json::Map<String, Value>> {
+pub fn get_object_field<'a>(fixture: &'a Value, field: &str) -> Option<&'a serde_json::Map<String, Value>> {
     fixture.get(field)?.as_object()
 }
 

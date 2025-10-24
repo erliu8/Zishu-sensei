@@ -307,7 +307,7 @@ impl ModelConfigRegistry {
         Ok(())
     }
 
-    pub fn get_config_history(&self, _config_id: &str) -> Result<Vec<ModelConfigData>, Box<dyn std::error::Error + Send + Sync>> {
+    pub fn get_config_history(&self, _config_id: &str, _limit: Option<u32>) -> Result<Vec<ModelConfigHistory>, Box<dyn std::error::Error + Send + Sync>> {
         Ok(vec![])
     }
 

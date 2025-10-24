@@ -113,10 +113,10 @@ impl Database {
         use tokio_postgres::NoTls;
         
         let mut cfg = Config::new();
-        cfg.dbname = Some("zishu_sensei");
-        cfg.host = Some("localhost");
-        cfg.user = Some("zishu");
-        cfg.password = Some("zishu");
+        cfg.dbname = Some("zishu_sensei".to_string());
+        cfg.host = Some("localhost".to_string());
+        cfg.user = Some("zishu".to_string());
+        cfg.password = Some("zishu".to_string());
         let pool = cfg.create_pool(Some(Runtime::Tokio1), NoTls)?;
         
         // Initialize schema

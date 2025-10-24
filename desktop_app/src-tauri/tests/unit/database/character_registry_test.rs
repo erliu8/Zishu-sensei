@@ -9,7 +9,7 @@
 //! ## 数据库后端
 //! - **PostgreSQL**: 主要存储，支持所有功能
 
-mod common;
+use crate::common;
 
 use zishu_sensei::database::character_registry::{
     CharacterRegistry, CharacterData, CharacterConfig,

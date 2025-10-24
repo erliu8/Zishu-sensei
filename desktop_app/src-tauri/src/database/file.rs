@@ -463,34 +463,40 @@ impl FileRegistryImpl {
         let mut params: Vec<&(dyn tokio_postgres::types::ToSql + Sync)> = vec![];
         let mut param_idx = 1;
 
-        if let Some(conv_id) = conversation_id {
+        // Store owned values to extend lifetime
+        let conv_id_owned = conversation_id.map(|s| s.to_string());
+        let ftype_owned = file_type.map(|s| s.to_string());
+        let lim_owned = limit;
+        let off_owned = offset;
+
+        if let Some(ref conv_id) = conv_id_owned {
             query.push_str(&format!(" AND conversation_id = ${}", param_idx));
-            params.push(&conv_id);
+            params.push(conv_id);
             param_idx += 1;
         }
 
-        if let Some(ftype) = file_type {
+        if let Some(ref ftype) = ftype_owned {
             query.push_str(&format!(" AND file_type = ${}", param_idx));
-            params.push(&ftype);
+            params.push(ftype);
             param_idx += 1;
         }
 
         query.push_str(" ORDER BY created_at DESC");
 
-        if let Some(lim) = limit {
+        if let Some(ref lim) = lim_owned {
             query.push_str(&format!(" LIMIT ${}", param_idx));
-            params.push(&lim);
+            params.push(lim);
             param_idx += 1;
         }
 
-        if let Some(off) = offset {
+        if let Some(ref off) = off_owned {
             query.push_str(&format!(" OFFSET ${}", param_idx));
-            params.push(&off);
+            params.push(off);
         }
 
         let rows = client.query(&query, &params).await?;
 
-        let files = rows.iter().map(|row| FileInfo {
+        let files: Vec<FileInfo> = rows.iter().map(|row| FileInfo {
             id: row.get("id"),
             name: row.get("name"),
             original_name: row.get("original_name"),
@@ -534,18 +540,19 @@ impl FileRegistryImpl {
             AND (name ILIKE $1 OR original_name ILIKE $1 OR description ILIKE $1 OR tags ILIKE $1)"
         );
 
+        let ftype_owned = file_type.map(|s| s.to_string());
         let mut params: Vec<&(dyn tokio_postgres::types::ToSql + Sync)> = vec![&search_pattern];
 
-        if let Some(ftype) = file_type {
+        if let Some(ref ftype) = ftype_owned {
             query.push_str(" AND file_type = $2");
-            params.push(&ftype);
+            params.push(ftype);
         }
 
         query.push_str(" ORDER BY created_at DESC LIMIT 100");
 
         let rows = client.query(&query, &params).await?;
 
-        let files = rows.iter().map(|row| FileInfo {
+        let files: Vec<FileInfo> = rows.iter().map(|row| FileInfo {
             id: row.get("id"),
             name: row.get("name"),
             original_name: row.get("original_name"),

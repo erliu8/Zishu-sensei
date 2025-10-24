@@ -1,0 +1,29 @@
+{
+  "scripts": {
+    "// 组件测试脚本": "",
+    "test": "vitest",
+    "test:ui": "vitest --ui",
+    "test:watch": "vitest watch",
+    "test:coverage": "vitest run --coverage",
+    
+    "// 按类型运行测试": "",
+    "test:unit": "vitest run src/tests/unit",
+    "test:component": "vitest run src/tests/component",
+    "test:component:ui": "vitest run src/tests/component/ui",
+    "test:component:common": "vitest run src/tests/component/common",
+    "test:component:features": "vitest run src/tests/component/features",
+    "test:integration": "vitest run src/tests/integration",
+    "test:e2e": "playwright test",
+    
+    "// 持续集成": "",
+    "test:ci": "vitest run --coverage --reporter=verbose",
+    "test:ci:component": "vitest run src/tests/component --coverage",
+    
+    "// 其他测试工具": "",
+    "test:debug": "vitest --inspect-brk --inspect --single-thread",
+    "test:bail": "vitest run --bail=1",
+    "test:changed": "vitest related",
+    "test:clear-cache": "vitest --clearCache"
+  }
+}
+

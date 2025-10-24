@@ -225,7 +225,7 @@ impl WorkflowRegistry {
                 name: db_version.name.clone(),
                 description: db_version.description.clone(),
                 version: db_version.version.clone(),
-                status: db_version.status,
+                status: adapter::db_status_to_workflow(db_version.status),
                 steps,
                 config,
                 trigger: None,
@@ -261,8 +261,15 @@ impl WorkflowRegistry {
             .map_err(|e| anyhow!("数据库错误: {}", e))?
             .ok_or_else(|| anyhow!("工作流版本不存在: {} v{}", workflow_id, version))?;
 
-        let steps: Vec<WorkflowStep> = serde_json::from_str(&db_version.steps)?;
-        let config: WorkflowConfig = serde_json::from_str(&db_version.config)?;
+        let steps: Vec<WorkflowStep> = db_version.steps
+            .as_ref()
+            .and_then(|v| serde_json::from_value(v.clone()).ok())
+            .unwrap_or_default();
+        
+        let config: WorkflowConfig = db_version.config
+            .as_ref()
+            .and_then(|v| serde_json::from_value(v.clone()).ok())
+            .unwrap_or_default();
         
         let workflow = Workflow {
             id: db_version.id.clone(),

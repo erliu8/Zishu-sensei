@@ -259,9 +259,9 @@ mod language_commands_tests {
             
             // ========== Act (执行) ==========
             let formatted = if locale == "zh-CN" {
-                format!("{:,.2}", number).replace(",", ",")
+                format!("{:.2}", number)
             } else {
-                format!("{:,.2}", number)
+                format!("{:.2}", number)
             };
             
             // ========== Assert (断言) ==========

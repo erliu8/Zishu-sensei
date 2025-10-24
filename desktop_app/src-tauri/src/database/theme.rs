@@ -334,16 +334,16 @@ impl ThemeRegistry {
         let mut param_index = 1;
 
         // 添加关键字搜索
-        if let Some(kw) = keyword {
+        if let Some(ref kw) = keyword {
             query.push_str(&format!(" AND (name ILIKE ${} OR description ILIKE ${})", param_index, param_index));
-            params.push(&kw);
+            params.push(kw);
             param_index += 1;
         }
 
         // 添加分类过滤
-        if let Some(cat) = category {
+        if let Some(ref cat) = category {
             query.push_str(&format!(" AND category = ${}", param_index));
-            params.push(&cat);
+            params.push(cat);
             param_index += 1;
         }
 

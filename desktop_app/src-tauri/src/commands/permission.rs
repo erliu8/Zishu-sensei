@@ -562,7 +562,7 @@ pub async fn log_permission_usage(
         log_request.failure_reason,
         log_request.ip_address,
         log_request.metadata,
-    ).await {
+    ) {
         Ok(id) => {
             Ok(CommandResponse::success(id))
         }
@@ -655,7 +655,7 @@ pub async fn create_permission_group(
         request.display_name,
         request.description,
         request.permissions,
-    ).await {
+    ) {
         Ok(id) => {
             info!("权限组创建成功，ID: {}", id);
             Ok(CommandResponse::success_with_message(

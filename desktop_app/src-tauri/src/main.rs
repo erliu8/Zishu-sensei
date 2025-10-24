@@ -412,8 +412,6 @@ async fn main() {
             commands::settings::import_settings,
             commands::settings::get_window_config,
             commands::settings::update_window_config,
-            commands::settings::get_character_config,
-            commands::settings::update_character_config,
             commands::settings::get_theme_config,
             commands::settings::update_theme_config,
             commands::settings::get_system_config,
@@ -454,7 +452,6 @@ async fn main() {
             // 系统命令
             commands::system::get_system_info,
             commands::system::get_app_version,
-            commands::system::check_for_updates,
             commands::system::restart_app,
             commands::system::quit_app,
             commands::system::show_in_folder,
@@ -594,7 +591,7 @@ async fn main() {
             commands::file::get_file_history_records,
             commands::file::get_file_statistics,
             commands::file::search_files_by_keyword,
-            commands::file::cleanup_old_files,
+            commands::file::cleanup_old_file_records,
             commands::file::export_file,
             commands::file::copy_file,
             commands::file::get_file_url,
@@ -759,15 +756,31 @@ async fn main() {
             commands::performance::PerformanceMonitorState::new(&db_path).expect("初始化性能监控状态失败")
         })
         .manage({
-            let app_data_dir = std::env::var("APPDATA").unwrap_or_else(|_| {
-                dirs::config_dir()
-                    .map(|d| d.to_string_lossy().to_string())
-                    .unwrap_or_else(|| "./data".to_string())
-            });
-            let log_db_path = format!("{}/zishu-sensei/logs.db", app_data_dir);
+            // 初始化 LogDatabase 使用 PostgreSQL
+            use deadpool_postgres::{Config, Runtime};
+            use tokio_postgres::NoTls;
+            
+            let database_url = std::env::var("DATABASE_URL")
+                .unwrap_or_else(|_| "postgresql://zishu:zishu@localhost/zishu_sensei".to_string());
+            
             tauri::async_runtime::block_on(async {
-                database::logging::LogDatabase::new(log_db_path)
-            }).expect("初始化日志数据库失败")
+                let mut cfg = Config::new();
+                cfg.dbname = Some("zishu_sensei".to_string());
+                cfg.host = Some("localhost".to_string());
+                cfg.user = Some("zishu".to_string());
+                cfg.password = Some("zishu".to_string());
+                let pool = cfg.create_pool(Some(Runtime::Tokio1), NoTls)
+                    .expect("创建数据库连接池失败");
+                
+                let log_db = database::logging::LogDatabase::new(pool);
+                
+                // 初始化日志表
+                if let Err(e) = log_db.init_tables().await {
+                    eprintln!("初始化日志表失败: {}", e);
+                }
+                
+                log_db
+            })
         })
         .build(tauri::generate_context!());
     

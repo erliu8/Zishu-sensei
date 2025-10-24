@@ -625,10 +625,10 @@ impl EncryptedStorage {
         field_type: EncryptedFieldType,
         plaintext: &str,
         entity_id: Option<&str>,
-        key_manager: &crate::utils::key_manager::KeyManager,
+        encryption_manager: &crate::utils::encryption::EncryptionManager,
     ) -> Result<(), Box<dyn std::error::Error + Send + Sync>> {
-        // 使用 KeyManager 加密数据
-        let encrypted = key_manager.encrypt_string(plaintext)?;
+        // 使用 EncryptionManager 加密数据
+        let encrypted = encryption_manager.encrypt_string(plaintext)?;
         
         // 存储到数据库（实际实现应该使用 registry）
         debug!("存储加密字段: {} (类型: {})", id, field_type);
@@ -638,12 +638,12 @@ impl EncryptedStorage {
     pub fn retrieve(
         &self,
         id: &str,
-        key_manager: &crate::utils::key_manager::KeyManager,
+        encryption_manager: &crate::utils::encryption::EncryptionManager,
     ) -> Result<String, Box<dyn std::error::Error + Send + Sync>> {
         // 从数据库检索（实际实现应该使用 registry）
         debug!("检索加密字段: {}", id);
         
-        // 使用 KeyManager 解密数据
+        // 使用 EncryptionManager 解密数据
         // 这里返回空字符串，实际应该从数据库读取并解密
         Ok(String::new())
     }

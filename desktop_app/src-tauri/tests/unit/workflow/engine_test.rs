@@ -176,7 +176,7 @@ async fn test_execute_workflow_with_multiple_steps() {
     let execution = engine.get_execution_status(&execution_id).await.unwrap();
     // 应该有两个步骤的结果
     assert!(execution.step_results.len() >= 1);
-// }
+}
 
 /*
  * 以下测试暂时注释，等待 ChatService 的 Rust 实现
@@ -189,9 +189,9 @@ async fn test_execute_workflow_with_multiple_steps() {
 
 // #[tokio::test]
 // async fn test_cancel_execution() {
-    // Arrange
-    let chat_service = create_mock_chat_service();
-    let engine = WorkflowEngine::new(chat_service);
+//     // Arrange
+//     let chat_service = create_mock_chat_service();
+//     let engine = WorkflowEngine::new(chat_service);
     
     let workflow = Workflow {
         id: "long-workflow".to_string(),

@@ -169,7 +169,7 @@ pub async fn search_logs(
 pub async fn get_log_statistics(
     filter: Option<LogFilter>,
     db: State<'_, LogDatabase>,
-) -> Result<LogStatistics, String> {
+) -> Result<crate::utils::logger::LogStatistics, String> {
     db.get_statistics(filter).await
         .map_err(|e| format!("获取日志统计失败: {}", e))
 }

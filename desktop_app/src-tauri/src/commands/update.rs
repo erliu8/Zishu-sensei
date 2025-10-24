@@ -424,6 +424,28 @@ pub async fn get_current_version(
     Ok(app_handle.package_info().version.to_string())
 }
 
+/// 清理旧的更新文件
+#[tauri::command]
+pub async fn cleanup_old_files(
+    state: State<'_, UpdateManagerState>,
+) -> Result<(), String> {
+    info!("Cleaning up old update files");
+    
+    // Clone the manager Arc to avoid holding the lock across await
+    let manager_arc = {
+        let manager_guard = state.manager.lock().unwrap();
+        manager_guard.as_ref().cloned()
+    };
+    
+    if let Some(manager) = manager_arc {
+        manager.cleanup_old_files()
+            .await
+            .map_err(|e| e.to_string())
+    } else {
+        Err("Update manager not initialized".to_string())
+    }
+}
+
 /// 获取命令元数据
 pub fn get_command_metadata() -> std::collections::HashMap<String, CommandMetadata> {
     let mut commands = std::collections::HashMap::new();

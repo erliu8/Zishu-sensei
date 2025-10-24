@@ -106,6 +106,9 @@ pub struct LoggingRegistry {
     pool: DbPool,
 }
 
+// Type alias for backward compatibility
+pub type LogDatabase = LoggingRegistry;
+
 impl LoggingRegistry {
     pub fn new(pool: DbPool) -> Self {
         Self { pool }
@@ -177,7 +180,8 @@ impl LoggingRegistry {
             return Ok(());
         }
 
-        let client = self.pool.get().await?;
+        let entry_count = entries.len();
+        let mut client = self.pool.get().await?;
 
         // 使用事务批量插入
         let transaction = client.transaction().await?;
@@ -195,7 +199,7 @@ impl LoggingRegistry {
 
         transaction.commit().await?;
 
-        debug!("📝 批量记录了 {} 条日志", entries.len());
+        debug!("📝 批量记录了 {} 条日志", entry_count);
         Ok(())
     }
 
@@ -315,7 +319,7 @@ impl LoggingRegistry {
 
         let rows = client.query(&query, &param_refs).await?;
 
-        let logs = rows.iter().map(|row| LogEntryExtended {
+        let logs: Vec<LogEntryExtended> = rows.iter().map(|row| LogEntryExtended {
             id: row.get("id"),
             level: row.get("level"),
             message: row.get("message"),
@@ -428,7 +432,7 @@ impl LoggingRegistry {
 
     /// 压缩日志（将旧日志导出到归档表）
     pub async fn archive_old_logs_async(&self, days: i64) -> Result<usize, Box<dyn std::error::Error + Send + Sync>> {
-        let client = self.pool.get().await?;
+        let mut client = self.pool.get().await?;
 
         // 创建归档表（如果不存在）
         client.execute(
@@ -553,7 +557,7 @@ impl LoggingRegistry {
             &[&pattern, &limit],
         ).await?;
 
-        let logs = rows.iter().map(|row| LogEntryExtended {
+        let logs: Vec<LogEntryExtended> = rows.iter().map(|row| LogEntryExtended {
             id: row.get("id"),
             level: row.get("level"),
             message: row.get("message"),
@@ -588,6 +592,315 @@ impl LoggingRegistry {
         client.execute("TRUNCATE TABLE logs", &[]).await?;
 
         warn!("⚠️  已清空所有日志");
+        Ok(())
+    }
+
+    /// 搜索日志（带分页）
+    pub async fn search_logs(
+        &self,
+        filter: Option<LogFilter>,
+        page: usize,
+        page_size: usize,
+        _sort_by: &str,
+        _sort_order: &str,
+    ) -> Result<(Vec<crate::utils::logger::LogEntry>, usize), Box<dyn std::error::Error + Send + Sync>> {
+        let offset = (page - 1) * page_size;
+        let limit = page_size as i32;
+        
+        let mut query_filter = filter.unwrap_or(LogFilter {
+            level: None,
+            module: None,
+            start_time: None,
+            end_time: None,
+            keyword: None,
+            limit: Some(limit),
+            offset: Some(offset as i32),
+        });
+        
+        query_filter.limit = Some(limit);
+        query_filter.offset = Some(offset as i32);
+        
+        let logs_extended = self.query_logs_async(query_filter).await?;
+        
+        // 转换为简单的 LogEntry
+        let logs: Vec<crate::utils::logger::LogEntry> = logs_extended.into_iter().map(|log| {
+            let level = crate::utils::logger::LogLevel::from_str(&log.level).unwrap_or(crate::utils::logger::LogLevel::Info);
+            let timestamp = chrono::DateTime::parse_from_rfc3339(&log.timestamp)
+                .ok()
+                .map(|dt| dt.with_timezone(&Utc))
+                .unwrap_or_else(|| Utc::now());
+            
+            crate::utils::logger::LogEntry {
+                timestamp,
+                local_time: chrono::Local::now(),
+                level,
+                message: log.message,
+                module: log.module,
+                file: log.file,
+                line: log.line.map(|l| l as u32),
+                thread: log.thread,
+                data: None,
+                stack: None,
+                tags: Vec::new(),
+            }
+        }).collect();
+        
+        // 获取总数
+        let total = self.get_log_count_async().await? as usize;
+        
+        Ok((logs, total))
+    }
+
+    /// 获取日志统计（带过滤器）
+    pub async fn get_statistics(
+        &self,
+        _filter: Option<LogFilter>,
+    ) -> Result<crate::utils::logger::LogStatistics, Box<dyn std::error::Error + Send + Sync>> {
+        let stats = self.get_statistics_async().await?;
+        
+        Ok(crate::utils::logger::LogStatistics {
+            total_count: stats.total_logs as usize,
+            error_count: *stats.level_counts.get("error").unwrap_or(&0) as usize,
+            warning_count: *stats.level_counts.get("warn").unwrap_or(&0) as usize,
+            info_count: *stats.level_counts.get("info").unwrap_or(&0) as usize,
+            debug_count: *stats.level_counts.get("debug").unwrap_or(&0) as usize,
+            trace_count: *stats.level_counts.get("trace").unwrap_or(&0) as usize,
+        })
+    }
+
+    /// 导出日志
+    pub async fn export_logs(
+        &self,
+        filter: Option<LogFilter>,
+        format: &str,
+        file_path: &str,
+    ) -> Result<usize, Box<dyn std::error::Error + Send + Sync>> {
+        use std::fs::File;
+        use std::io::Write;
+        
+        let query_filter = filter.unwrap_or(LogFilter {
+            level: None,
+            module: None,
+            start_time: None,
+            end_time: None,
+            keyword: None,
+            limit: None,
+            offset: None,
+        });
+        
+        let logs = self.query_logs_async(query_filter).await?;
+        let count = logs.len();
+        
+        let mut file = File::create(file_path)?;
+        
+        match format {
+            "json" => {
+                let json = serde_json::to_string_pretty(&logs)?;
+                file.write_all(json.as_bytes())?;
+            }
+            "csv" => {
+                writeln!(file, "ID,Level,Module,Message,Timestamp")?;
+                for log in &logs {
+                    writeln!(
+                        file,
+                        "{},{},{:?},{},{}",
+                        log.id, log.level, log.module, log.message.replace(",", ";"), log.timestamp
+                    )?;
+                }
+            }
+            "txt" => {
+                for log in &logs {
+                    writeln!(
+                        file,
+                        "[{}] [{}] {} - {}",
+                        log.timestamp, log.level, log.module.as_deref().unwrap_or("unknown"), log.message
+                    )?;
+                }
+            }
+            _ => return Err("不支持的格式".into()),
+        }
+        
+        info!("📤 导出了 {} 条日志到 {}", count, file_path);
+        Ok(count)
+    }
+
+    /// 清理旧日志（兼容同步调用）
+    pub async fn cleanup_old_logs(&self, retention_days: u32) -> Result<usize, Box<dyn std::error::Error + Send + Sync>> {
+        self.cleanup_old_logs_async(retention_days as i64).await
+    }
+
+    /// 获取远程日志配置
+    pub async fn get_remote_config(&self) -> Result<crate::commands::logging::RemoteLogConfig, Box<dyn std::error::Error + Send + Sync>> {
+        let client = self.pool.get().await?;
+        
+        let row_opt = client.query_opt(
+            "SELECT config FROM remote_log_config WHERE id = 1",
+            &[],
+        ).await?;
+        
+        if let Some(row) = row_opt {
+            let config_json: serde_json::Value = row.get("config");
+            let config = serde_json::from_value(config_json)?;
+            Ok(config)
+        } else {
+            Ok(crate::commands::logging::RemoteLogConfig::default())
+        }
+    }
+
+    /// 保存远程日志配置
+    pub async fn save_remote_config(&self, config: crate::commands::logging::RemoteLogConfig) -> Result<(), Box<dyn std::error::Error + Send + Sync>> {
+        let client = self.pool.get().await?;
+        
+        // 创建配置表（如果不存在）
+        client.execute(
+            "CREATE TABLE IF NOT EXISTS remote_log_config (
+                id INTEGER PRIMARY KEY DEFAULT 1,
+                config JSONB NOT NULL,
+                updated_at TIMESTAMP NOT NULL DEFAULT NOW()
+            )",
+            &[],
+        ).await?;
+        
+        let config_json = serde_json::to_value(&config)?;
+        
+        client.execute(
+            "INSERT INTO remote_log_config (id, config, updated_at)
+            VALUES (1, $1, NOW())
+            ON CONFLICT (id) DO UPDATE SET config = $1, updated_at = NOW()",
+            &[&config_json],
+        ).await?;
+        
+        Ok(())
+    }
+
+    /// 统计待上传的日志数量
+    pub async fn count_pending_upload_logs(&self) -> Result<usize, Box<dyn std::error::Error + Send + Sync>> {
+        let client = self.pool.get().await?;
+        
+        // 尝试查询 uploaded 列，如果不存在则返回 0
+        let row_result = client.query_one(
+            "SELECT COUNT(*) as count FROM logs WHERE uploaded = FALSE",
+            &[],
+        ).await;
+        
+        let count: i64 = match row_result {
+            Ok(row) => row.get("count"),
+            Err(_) => {
+                // 如果列不存在，返回 0
+                let fallback_row = client.query_one("SELECT 0::BIGINT as count", &[]).await?;
+                fallback_row.get("count")
+            }
+        };
+        
+        Ok(count as usize)
+    }
+
+    /// 获取最后上传时间
+    pub async fn get_last_upload_time(&self) -> Result<i64, Box<dyn std::error::Error + Send + Sync>> {
+        let client = self.pool.get().await?;
+        
+        let row_opt = client.query_opt(
+            "SELECT last_upload_time FROM remote_log_upload_status WHERE id = 1",
+            &[],
+        ).await?;
+        
+        if let Some(row) = row_opt {
+            let timestamp: chrono::DateTime<Utc> = row.get("last_upload_time");
+            Ok(timestamp.timestamp())
+        } else {
+            Ok(0)
+        }
+    }
+
+    /// 获取待上传的日志
+    pub async fn get_pending_upload_logs(&self, limit: usize) -> Result<Vec<crate::commands::logging::LogEntryWithId>, Box<dyn std::error::Error + Send + Sync>> {
+        let client = self.pool.get().await?;
+        
+        let rows = client.query(
+            "SELECT id, level, message, module, timestamp, EXTRACT(EPOCH FROM timestamp)::BIGINT as ts_epoch
+            FROM logs
+            WHERE uploaded = FALSE
+            ORDER BY timestamp ASC
+            LIMIT $1",
+            &[&(limit as i64)],
+        ).await.unwrap_or_else(|_| vec![]);
+        
+        let logs = rows.iter().map(|row| {
+            let id: i64 = row.get("id");
+            let level_str: String = row.get("level");
+            let level = crate::utils::logger::LogLevel::from_str(&level_str)
+                .unwrap_or(crate::utils::logger::LogLevel::Info);
+            let ts_epoch: i64 = row.get("ts_epoch");
+            let timestamp: chrono::DateTime<Utc> = row.get("timestamp");
+            
+            crate::commands::logging::LogEntryWithId {
+                entry: crate::utils::logger::LogEntry {
+                    timestamp,
+                    local_time: chrono::Local::now(),
+                    level,
+                    message: row.get("message"),
+                    module: row.get("module"),
+                    file: None,
+                    line: None,
+                    thread: None,
+                    data: None,
+                    stack: None,
+                    tags: Vec::new(),
+                },
+                id: Some(id),
+                uploaded: false,
+                created_at: Some(ts_epoch),
+            }
+        }).collect();
+        
+        Ok(logs)
+    }
+
+    /// 标记日志为已上传
+    pub async fn mark_logs_as_uploaded(&self, log_ids: Vec<i64>) -> Result<(), Box<dyn std::error::Error + Send + Sync>> {
+        if log_ids.is_empty() {
+            return Ok(());
+        }
+        
+        let client = self.pool.get().await?;
+        
+        // 确保 uploaded 列存在
+        client.execute(
+            "ALTER TABLE logs ADD COLUMN IF NOT EXISTS uploaded BOOLEAN DEFAULT FALSE",
+            &[],
+        ).await?;
+        
+        let ids_str = log_ids.iter()
+            .map(|id| id.to_string())
+            .collect::<Vec<_>>()
+            .join(",");
+        
+        let query = format!("UPDATE logs SET uploaded = TRUE WHERE id IN ({})", ids_str);
+        client.execute(&query, &[]).await?;
+        
+        Ok(())
+    }
+
+    /// 更新最后上传时间
+    pub async fn update_last_upload_time(&self) -> Result<(), Box<dyn std::error::Error + Send + Sync>> {
+        let client = self.pool.get().await?;
+        
+        // 创建上传状态表（如果不存在）
+        client.execute(
+            "CREATE TABLE IF NOT EXISTS remote_log_upload_status (
+                id INTEGER PRIMARY KEY DEFAULT 1,
+                last_upload_time TIMESTAMP NOT NULL DEFAULT NOW()
+            )",
+            &[],
+        ).await?;
+        
+        client.execute(
+            "INSERT INTO remote_log_upload_status (id, last_upload_time)
+            VALUES (1, NOW())
+            ON CONFLICT (id) DO UPDATE SET last_upload_time = NOW()",
+            &[],
+        ).await?;
+        
         Ok(())
     }
 }

@@ -14,7 +14,7 @@
 //! - **Redis**: 键值存储，用于缓存和快速访问
 //! - **Qdrant**: 向量数据库（适配器元数据不使用向量存储）
 
-mod common;
+use crate::common;
 
 use zishu_sensei::database::adapter::{
     AdapterRegistry, InstalledAdapter, AdapterInstallStatus, AdapterVersion,

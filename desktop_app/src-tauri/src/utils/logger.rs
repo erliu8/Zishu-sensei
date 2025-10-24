@@ -207,6 +207,20 @@ impl LogEntry {
 }
 
 // ================================
+// 日志统计
+// ================================
+
+#[derive(Debug, Clone, Serialize, Deserialize, Default)]
+pub struct LogStatistics {
+    pub total_count: usize,
+    pub error_count: usize,
+    pub warning_count: usize,
+    pub info_count: usize,
+    pub debug_count: usize,
+    pub trace_count: usize,
+}
+
+// ================================
 // 日志配置
 // ================================
 

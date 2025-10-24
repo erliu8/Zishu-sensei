@@ -168,8 +168,10 @@ impl UpdateManager {
         update_endpoint: String,
         app_data_dir: PathBuf,
     ) -> Result<Self> {
+        use std::path::Path;
         let db = Arc::new(Mutex::new(
-            UpdateDatabase::new(db_path)
+            UpdateDatabase::new(Path::new(db_path))
+                .map_err(|e| anyhow::anyhow!(e.to_string()))
                 .context("Failed to initialize update database")?
         ));
 
@@ -223,7 +225,7 @@ impl UpdateManager {
         // 检查配置
         let config = {
             let mut db = self.db.lock().unwrap();
-            db.get_or_create_update_config()?
+            db.get_or_create_update_config().map_err(|e| anyhow::anyhow!("Failed to get update config: {}", e))?
         };
 
         // 如果不是强制检查，检查是否需要检查更新
@@ -308,12 +310,12 @@ impl UpdateManager {
                                     // 创建更新信息
                                     let mut update_info = UpdateInfo {
                                         version: manifest.version.clone(),
-                                        update_type: manifest.update_type,
+                                        update_type: Some(manifest.update_type),
                                         status: UpdateStatus::Available,
                                         title: manifest.title,
                                         description: manifest.description,
                                         changelog: manifest.changelog,
-                                        release_date: manifest.release_date,
+                                        release_date: Some(manifest.release_date.to_rfc3339()),
                                         file_size: Some(file_info.size),
                                         download_url: Some(file_info.url.clone()),
                                         file_hash: Some(file_info.hash.clone()),
@@ -399,7 +401,8 @@ impl UpdateManager {
         // 获取更新信息
         let mut update_info = {
             let db = self.db.lock().unwrap();
-            db.get_update_info_by_version(version)?
+            db.get_update_info_by_version(version)
+                .map_err(|e| anyhow::anyhow!("Database operation failed: {}", e))?
                 .context("Update info not found")?
         };
 
@@ -559,7 +562,8 @@ impl UpdateManager {
         // 获取更新信息
         let mut update_info = {
             let db = self.db.lock().unwrap();
-            db.get_update_info_by_version(version)?
+            db.get_update_info_by_version(version)
+                .map_err(|e| anyhow::anyhow!("Database operation failed: {}", e))?
                 .context("Update info not found")?
         };
 
@@ -582,7 +586,8 @@ impl UpdateManager {
         // 检查是否需要备份
         let config = {
             let mut db = self.db.lock().unwrap();
-            db.get_or_create_update_config()?
+            db.get_or_create_update_config()
+                .map_err(|e| anyhow::anyhow!("Database operation failed: {}", e))?
         };
 
         if config.backup_before_update {
@@ -637,7 +642,8 @@ impl UpdateManager {
 
                 {
                     let mut db = self.db.lock().unwrap();
-                    db.save_version_history(&history)?;
+                    db.save_version_history(&history)
+                        .map_err(|e| anyhow::anyhow!("Database operation failed: {}", e))?;
                 }
 
                 info!("Installation completed successfully");
@@ -717,7 +723,8 @@ impl UpdateManager {
         // 检查目标版本是否存在于历史记录中
         let histories = {
             let db = self.db.lock().unwrap();
-            db.get_version_history().map_err(|e| e.to_string())?
+            db.get_version_history()
+                .map_err(|e| anyhow::anyhow!("Database operation failed: {}", e))?
         };
 
         let target_history = histories.iter()
@@ -740,7 +747,8 @@ impl UpdateManager {
 
         {
             let mut db = self.db.lock().unwrap();
-            db.save_version_history(&rollback_history)?;
+            db.save_version_history(&rollback_history)
+                .map_err(|e| anyhow::anyhow!("Database operation failed: {}", e))?;
         }
 
         info!("Rollback completed successfully");
@@ -758,7 +766,8 @@ impl UpdateManager {
         // 更新状态
         let mut update_info = {
             let db = self.db.lock().unwrap();
-            db.get_update_info_by_version(version)?
+            db.get_update_info_by_version(version)
+                .map_err(|e| anyhow::anyhow!("Database operation failed: {}", e))?
                 .context("Update info not found")?
         };
 
@@ -862,7 +871,7 @@ impl UpdateManager {
     /// 获取更新配置
     pub fn get_config(&self) -> Result<UpdateConfig> {
         let mut db = self.db.lock().unwrap();
-        Ok(db.get_or_create_update_config()?)
+        db.get_or_create_update_config().map_err(|e| anyhow::anyhow!(e.to_string()))
     }
 
     /// 保存更新配置
@@ -881,7 +890,7 @@ impl UpdateManager {
     /// 获取更新统计
     pub fn get_update_stats(&self) -> Result<HashMap<String, i64>> {
         let db = self.db.lock().unwrap();
-        Ok(db.get_update_stats()?)
+        db.get_update_stats().map_err(|e| anyhow::anyhow!(e.to_string()))
     }
 
     /// 清理旧文件

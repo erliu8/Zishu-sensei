@@ -60,7 +60,7 @@ impl PermissionChecker {
 
             // 记录安全审计日志
             crate::utils::security_audit::log_audit_failure(
-                crate::utils::security_audit::AuditEventType::AuthorizationCheck,
+                crate::utils::security_audit::AuditEventType::PermissionGrant,
                 &format!(
                     "尝试使用未授予的权限: {} - {} (资源: {})",
                     permission_type,

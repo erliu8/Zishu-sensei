@@ -55,11 +55,11 @@ pub fn disable_privacy_mode(_state: State<PrivacyState>) -> Result<(), String> {
 /// 匿名化用户统计
 #[tauri::command]
 pub fn anonymize_statistics(
-    _stats: UsageStatistics,
+    stats: UsageStatistics,
     state: State<PrivacyState>,
 ) -> Result<AnonymousStatistics, String> {
-    state.anonymizer.anonymize_statistics(&UsageStatistics::default())
-        .map_err(|e| format!("匿名化统计数据失败: {}", e))
+    let options = AnonymizationOptions::default();
+    Ok(state.anonymizer.anonymize_statistics(stats, &options))
 }
 
 /// 获取匿名统计

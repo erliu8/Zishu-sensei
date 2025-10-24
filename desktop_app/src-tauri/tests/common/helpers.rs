@@ -533,8 +533,8 @@ pub fn unwrap_ok<T, E: std::fmt::Debug>(result: Result<T, E>) -> T {
 }
 
 /// 断言 Result 是 Err
-pub fn assert_is_err<T: std::fmt::Debug, E>(result: Result<T, E>) {
-    assert!(result.is_err(), "Expected Err but got Ok: {:?}", result.unwrap());
+pub fn assert_is_err<T: std::fmt::Debug, E: std::fmt::Debug>(result: Result<T, E>) {
+    assert!(result.is_err(), "Expected Err but got Ok: {:?}", result.ok());
 }
 
 /// 断言 Result 是 Err 并包含指定消息
