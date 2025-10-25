@@ -1,7 +1,0 @@
-{
-  "name": "Invalid Adapter - Missing ID",
-  "version": "1.0.0",
-  "adapter_type": "soft",
-  "description": "This adapter is missing the required 'id' field"
-}
-

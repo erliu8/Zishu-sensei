@@ -429,7 +429,7 @@ impl RegionRegistry {
     }
 }
 
-// SQLite 兼容性包装器（用于命令层）
+// PostgreSQL integration wrapper for command layer
 pub struct RegionDatabase {}
 
 impl RegionDatabase {

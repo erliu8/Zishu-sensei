@@ -14,6 +14,7 @@ pub mod memory_manager;
 pub mod update_manager;
 pub mod region_detector;
 pub mod region_formatter;
+pub mod startup_manager;
 
 pub use config::{
     get_app_log_dir,
@@ -96,5 +97,10 @@ pub use permission_checker::{
     HardwareChecker,
     PermissionGuardResult,
     with_permission,
+};
+
+pub use startup_manager::{
+    StartupManager,
+    StartupPhase,
 };
 

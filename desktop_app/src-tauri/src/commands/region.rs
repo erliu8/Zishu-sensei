@@ -49,7 +49,7 @@ impl From<Box<dyn std::error::Error + Send + Sync>> for RegionError {
     }
 }
 
-// Removed rusqlite dependency - using PostgreSQL now
+// Using PostgreSQL for database operations
 impl From<Box<dyn std::error::Error>> for RegionError {
     fn from(error: Box<dyn std::error::Error>) -> Self {
         Self {

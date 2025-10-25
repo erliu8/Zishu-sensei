@@ -51,6 +51,8 @@ pub mod region;
 pub mod performance;
 pub mod update;
 pub mod logging;
+pub mod conversation;
+pub mod config;
 
 // 导出错误类型
 pub mod error;

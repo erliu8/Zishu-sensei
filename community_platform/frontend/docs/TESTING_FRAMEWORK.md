@@ -565,33 +565,326 @@ test.describe('Home Page Performance', () => {
 
 **目录**: `src/tests/accessibility/`
 
-**文件命名**: `ComponentName.a11y.test.ts`
+**文件命名**: 
+- 组件测试: `ComponentName.a11y.test.tsx`
+- 页面测试: `page-name.a11y.test.tsx`
+- E2E 测试: `page-name.a11y.e2e.test.ts`
+
+**测试覆盖范围**:
+- WCAG 2.1 AA 级别合规性
+- 键盘导航
+- 屏幕阅读器支持
+- ARIA 属性
+- 颜色对比度
+- 焦点管理
+- 表单可访问性
 
 **示例结构**:
+
 ```typescript
-// src/tests/accessibility/components/Button.a11y.test.ts
-import { axe, toHaveNoViolations } from 'jest-axe';
+// src/tests/accessibility/components/Button.a11y.test.tsx
+import { describe, it, expect } from 'vitest';
+import { render, screen } from '@testing-library/react';
+import userEvent from '@testing-library/user-event';
+import { checkA11y } from '../helpers/a11y-utils';
+import { componentAxeOptions } from '../setup-a11y';
+import { testEnterKeyActivation, testSpaceKeyActivation } from '../helpers/keyboard-testing';
+
+describe('Button Accessibility', () => {
+  describe('基本可访问性', () => {
+    it('应该没有可访问性违规', async () => {
+      const { container } = render(<Button>Click me</Button>);
+      await checkA11y(container, componentAxeOptions);
+    });
+
+    it('应该有可访问的名称', () => {
+      render(<Button>Click me</Button>);
+      const button = screen.getByRole('button', { name: /click me/i });
+      expect(button).toBeInTheDocument();
+    });
+  });
+
+  describe('键盘交互', () => {
+    it('应该可以通过 Tab 键聚焦', async () => {
+      const user = userEvent.setup();
+      render(<Button>Click me</Button>);
+      
+      const button = screen.getByRole('button');
+      await user.tab();
+      expect(document.activeElement).toBe(button);
+    });
+
+    it('应该响应 Enter 键', async () => {
+      let clicked = false;
+      const handleClick = () => { clicked = true; };
+      
+      render(<Button onClick={handleClick}>Click me</Button>);
+      const button = screen.getByRole('button');
+      
+      await testEnterKeyActivation(button, () => {
+        expect(clicked).toBe(true);
+      });
+    });
+
+    it('应该响应 Space 键', async () => {
+      let clicked = false;
+      const handleClick = () => { clicked = true; };
+      
+      render(<Button onClick={handleClick}>Click me</Button>);
+      const button = screen.getByRole('button');
+      
+      await testSpaceKeyActivation(button, () => {
+        expect(clicked).toBe(true);
+      });
+    });
+  });
+
+  describe('禁用状态', () => {
+    it('禁用的按钮应该有 disabled 属性', () => {
+      render(<Button disabled>Disabled</Button>);
+      const button = screen.getByRole('button');
+      expect(button).toBeDisabled();
+    });
+
+    it('禁用的按钮不应该可聚焦', async () => {
+      const user = userEvent.setup();
+      render(
+        <>
+          <Button>First</Button>
+          <Button disabled>Disabled</Button>
+          <Button>Last</Button>
+        </>
+      );
+      
+      const buttons = screen.getAllByRole('button');
+      await user.tab();
+      expect(document.activeElement).toBe(buttons[0]);
+      
+      await user.tab();
+      expect(document.activeElement).toBe(buttons[2]); // 跳过禁用的
+    });
+  });
+
+  describe('图标按钮', () => {
+    it('只有图标的按钮应该有 aria-label', async () => {
+      render(
+        <Button aria-label="Close dialog">
+          <span aria-hidden="true">×</span>
+        </Button>
+      );
+      
+      const button = screen.getByRole('button', { name: /close dialog/i });
+      expect(button).toBeInTheDocument();
+      
+      const { container } = render(
+        <Button aria-label="Close dialog">
+          <span aria-hidden="true">×</span>
+        </Button>
+      );
+      await checkA11y(container, componentAxeOptions);
+    });
+  });
+});
+```
+
+**E2E 可访问性测试**:
+
+```typescript
+// src/tests/accessibility/e2e/home.a11y.e2e.test.ts
+import { test, expect } from './a11y-config';
+
+test.describe('Home Page E2E Accessibility', () => {
+  test.beforeEach(async ({ page }) => {
+    await page.goto('/');
+    await page.waitForLoadState('networkidle');
+  });
+
+  test('should have no accessibility violations', async ({ page, makeAxeBuilder }) => {
+    const accessibilityScanResults = await makeAxeBuilder().analyze();
+    expect(accessibilityScanResults.violations).toEqual([]);
+  });
+
+  test('should have proper page title', async ({ page }) => {
+    const title = await page.title();
+    expect(title).toBeTruthy();
+  });
+
+  test('should have main landmark', async ({ page }) => {
+    const main = page.getByRole('main');
+    await expect(main).toBeVisible();
+  });
+
+  test('should support keyboard navigation', async ({ page }) => {
+    await page.keyboard.press('Tab');
+    const focusedElement = page.locator(':focus');
+    await expect(focusedElement).toBeVisible();
+  });
+
+  test('should have accessible images', async ({ page }) => {
+    const images = page.locator('img');
+    const imageCount = await images.count();
+    
+    for (let i = 0; i < imageCount; i++) {
+      const image = images.nth(i);
+      const alt = await image.getAttribute('alt');
+      expect(alt).toBeDefined();
+    }
+  });
+
+  test('should have sufficient color contrast', async ({ page, makeAxeBuilder }) => {
+    const accessibilityScanResults = await makeAxeBuilder()
+      .withRules(['color-contrast'])
+      .analyze();
+    
+    expect(accessibilityScanResults.violations).toEqual([]);
+  });
+});
+```
+
+**辅助工具函数**:
+
+```typescript
+// src/tests/accessibility/helpers/a11y-utils.ts
+import { axe, toHaveNoViolations } from 'vitest-axe';
+import type { RunOptions } from 'axe-core';
+import { expect } from 'vitest';
 
 expect.extend(toHaveNoViolations);
 
-describe('Button Accessibility', () => {
-  it('should have no accessibility violations', async () => {
-    const { container } = render(<Button>Click me</Button>);
-    const results = await axe(container);
-    expect(results).toHaveNoViolations();
-  });
+export async function checkA11y(
+  container: HTMLElement,
+  options?: RunOptions
+): Promise<void> {
+  const results = await axe(container, options);
+  expect(results).toHaveNoViolations();
+}
+
+export function getAccessibleName(element: HTMLElement): string {
+  // 按照 ARIA 规范的优先级获取可访问名称
+  const labelledBy = element.getAttribute('aria-labelledby');
+  if (labelledBy) {
+    const labelElement = document.getElementById(labelledBy);
+    if (labelElement) return labelElement.textContent?.trim() || '';
+  }
   
-  it('should be keyboard accessible', async () => {
-    render(<Button onClick={handleClick}>Click me</Button>);
-    const button = screen.getByRole('button');
+  const ariaLabel = element.getAttribute('aria-label');
+  if (ariaLabel) return ariaLabel;
+  
+  if (element.tagName === 'INPUT' || element.tagName === 'TEXTAREA' || element.tagName === 'SELECT') {
+    const id = element.getAttribute('id');
+    if (id) {
+      const label = document.querySelector(`label[for="${id}"]`);
+      if (label) return label.textContent?.trim() || '';
+    }
+  }
+  
+  return element.textContent?.trim() || '';
+}
+
+export function isFocusable(element: HTMLElement): boolean {
+  const tabIndex = element.getAttribute('tabindex');
+  const isFocusableTag = ['A', 'BUTTON', 'INPUT', 'SELECT', 'TEXTAREA', 'DETAILS'].includes(
+    element.tagName
+  );
+  
+  const isDisabled = element.hasAttribute('disabled') || 
+    element.getAttribute('aria-disabled') === 'true';
+  
+  if (isDisabled) return false;
+  
+  return isFocusableTag || (tabIndex !== null && parseInt(tabIndex) >= 0);
+}
+
+export function checkHeadingOrder(container: HTMLElement): {
+  valid: boolean;
+  headings: { level: number; text: string }[];
+  errors: string[];
+} {
+  const headings = Array.from(container.querySelectorAll('h1, h2, h3, h4, h5, h6'));
+  const headingData = headings.map(h => ({
+    level: parseInt(h.tagName[1]),
+    text: h.textContent?.trim() || '',
+  }));
+  
+  const errors: string[] = [];
+  
+  if (headingData.length > 0 && !headingData.some(h => h.level === 1)) {
+    errors.push('Page should have an h1 heading');
+  }
+  
+  for (let i = 1; i < headingData.length; i++) {
+    const prev = headingData[i - 1].level;
+    const current = headingData[i].level;
     
-    button.focus();
-    expect(button).toHaveFocus();
-    
-    await userEvent.keyboard('{Enter}');
-    expect(handleClick).toHaveBeenCalled();
-  });
+    if (current - prev > 1) {
+      errors.push(
+        `Heading level skipped from h${prev} to h${current} (text: "${headingData[i].text}")`
+      );
+    }
+  }
+  
+  return {
+    valid: errors.length === 0,
+    headings: headingData,
+    errors,
+  };
+}
+```
+
+**测试配置**:
+
+```typescript
+// src/tests/accessibility/setup-a11y.ts
+import { expect } from 'vitest';
+import { configureAxe } from 'vitest-axe';
+
+export const axeConfig = configureAxe({
+  rules: {
+    'color-contrast': { enabled: true },
+    'valid-aria-role': { enabled: true },
+    'aria-required-attr': { enabled: true },
+    'button-name': { enabled: true },
+    'image-alt': { enabled: true },
+    'label': { enabled: true },
+    'link-name': { enabled: true },
+  },
+  
+  runOnly: {
+    type: 'tag',
+    values: ['wcag2a', 'wcag2aa', 'wcag21aa', 'best-practice'],
+  },
 });
+
+export const componentAxeOptions = {
+  rules: {
+    'region': { enabled: false },
+    'landmark-one-main': { enabled: false },
+    'page-has-heading-one': { enabled: false },
+  },
+};
+
+export const pageAxeOptions = {
+  rules: {},
+};
+```
+
+**运行可访问性测试**:
+
+```bash
+# 运行所有可访问性测试
+npm run test:a11y
+
+# 监视模式
+npm run test:a11y:watch
+
+# 运行 E2E 可访问性测试
+npm run test:a11y:e2e
+
+# 使用脚本运行
+bash scripts/a11y-test.sh all
+
+# CI 模式（包含报告生成）
+bash scripts/a11y-test.sh ci
 ```
 
 ---

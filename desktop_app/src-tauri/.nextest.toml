@@ -1,0 +1,31 @@
+[profile.default]
+# 显示测试输出
+test-output = "immediate"
+# 失败时显示详细信息
+failure-output = "immediate"
+# 成功时也显示输出
+success-output = "immediate"
+# 并行运行测试数量
+test-threads = 4
+# 超时设置
+slow-timeout = { period = "60s", terminate-after = 2 }
+# 重试失败的测试
+retries = 1
+
+[profile.ci]
+# CI环境配置
+test-output = "immediate"
+failure-output = "immediate"
+success-output = "never"
+test-threads = 2
+slow-timeout = { period = "30s", terminate-after = 1 }
+retries = 0
+
+[profile.debug]
+# 调试模式配置
+test-output = "immediate"
+failure-output = "immediate"
+success-output = "immediate"
+test-threads = 1
+slow-timeout = { period = "300s", terminate-after = 1 }
+retries = 0

@@ -2,6 +2,7 @@ use std::collections::HashMap;
 use std::sync::{Arc, Mutex, RwLock};
 use std::time::{Duration, Instant, SystemTime, UNIX_EPOCH};
 use serde::{Deserialize, Serialize};
+use sysinfo::{System, SystemExt};
 use tokio::sync::broadcast;
 use tracing::{debug, error, info, warn};
 
@@ -125,9 +126,9 @@ impl PhaseResult {
         self.success = true;
         self.metrics = metrics;
         // 获取内存使用情况
-        if let Ok(info) = sysinfo::System::new_all().total_memory() {
-            self.memory_usage = Some(info);
-        }
+        let mut sys = System::new_all();
+        sys.refresh_memory();
+        self.memory_usage = Some(sys.used_memory());
         self
     }
 

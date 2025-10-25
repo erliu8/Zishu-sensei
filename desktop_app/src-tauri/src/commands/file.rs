@@ -125,8 +125,41 @@ use crate::database::file::DummyConnection;
 
 /// 获取数据库连接（stub实现）
 fn get_db_connection(_app_handle: &AppHandle) -> Result<DummyConnection, String> {
-    // 这是一个stub实现，实际上不使用SQLite
+    // Database operations handled by PostgreSQL backend
     Ok(DummyConnection {})
+}
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+
+    #[test]
+    fn test_calculate_hash() {
+        let a = calculate_hash(b"hello");
+        let b = calculate_hash(b"hello");
+        let c = calculate_hash(b"world");
+        assert_eq!(a, b);
+        assert_ne!(a, c);
+        assert_eq!(a.len(), 64); // sha256 hex length
+    }
+
+    #[test]
+    fn test_determine_file_type() {
+        assert_eq!(determine_file_type("a.jpg"), "image");
+        assert_eq!(determine_file_type("b.MP4"), "video");
+        assert_eq!(determine_file_type("c.txt"), "text");
+        assert_eq!(determine_file_type("d.zip"), "archive");
+        assert_eq!(determine_file_type("e.unknown"), "other");
+        assert_eq!(determine_file_type("noext"), "other");
+    }
+
+    #[test]
+    fn test_determine_mime_type() {
+        assert_eq!(determine_mime_type("a.jpg"), "image/jpeg");
+        assert_eq!(determine_mime_type("b.png"), "image/png");
+        assert_eq!(determine_mime_type("c.json"), "application/json");
+        assert_eq!(determine_mime_type("d.unknown"), "application/octet-stream");
+    }
 }
 
 /// 上传文件

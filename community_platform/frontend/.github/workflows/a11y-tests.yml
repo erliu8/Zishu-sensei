@@ -1,0 +1,182 @@
+name: Accessibility Tests
+
+on:
+  push:
+    branches: [main, develop]
+  pull_request:
+    branches: [main, develop]
+  schedule:
+    # 每天运行一次可访问性测试
+    - cron: '0 0 * * *'
+
+jobs:
+  accessibility-tests:
+    name: Run Accessibility Tests
+    runs-on: ubuntu-latest
+    
+    strategy:
+      matrix:
+        node-version: [18.x, 20.x]
+    
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+      
+      - name: Setup Node.js ${{ matrix.node-version }}
+        uses: actions/setup-node@v4
+        with:
+          node-version: ${{ matrix.node-version }}
+          cache: 'npm'
+          cache-dependency-path: community_platform/frontend/package-lock.json
+      
+      - name: Install dependencies
+        working-directory: ./community_platform/frontend
+        run: npm ci
+      
+      - name: Run unit accessibility tests
+        working-directory: ./community_platform/frontend
+        run: npm run test:a11y
+      
+      - name: Install Playwright browsers
+        working-directory: ./community_platform/frontend
+        run: npx playwright install --with-deps
+      
+      - name: Run E2E accessibility tests
+        working-directory: ./community_platform/frontend
+        run: npm run test:a11y:e2e
+      
+      - name: Generate accessibility report
+        if: always()
+        working-directory: ./community_platform/frontend
+        run: bash scripts/a11y-test.sh report
+      
+      - name: Upload test results
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: a11y-test-results-node-${{ matrix.node-version }}
+          path: |
+            community_platform/frontend/test-results/
+            community_platform/frontend/coverage/
+          retention-days: 30
+      
+      - name: Upload accessibility reports
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: a11y-reports-node-${{ matrix.node-version }}
+          path: community_platform/frontend/test-results/a11y-reports/
+          retention-days: 30
+      
+      - name: Comment PR with results
+        if: github.event_name == 'pull_request' && always()
+        uses: actions/github-script@v7
+        with:
+          script: |
+            const fs = require('fs');
+            const path = require('path');
+            
+            const reportsDir = 'community_platform/frontend/test-results/a11y-reports';
+            
+            if (fs.existsSync(reportsDir)) {
+              const files = fs.readdirSync(reportsDir);
+              const summaryFile = files.find(f => f.startsWith('summary-'));
+              
+              if (summaryFile) {
+                const summaryPath = path.join(reportsDir, summaryFile);
+                const summary = fs.readFileSync(summaryPath, 'utf8');
+                
+                github.rest.issues.createComment({
+                  issue_number: context.issue.number,
+                  owner: context.repo.owner,
+                  repo: context.repo.repo,
+                  body: `## Accessibility Test Results\n\n\`\`\`\n${summary}\n\`\`\``
+                });
+              }
+            }
+  
+  axe-scan:
+    name: Axe Accessibility Scan
+    runs-on: ubuntu-latest
+    
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+      
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: '20.x'
+          cache: 'npm'
+          cache-dependency-path: community_platform/frontend/package-lock.json
+      
+      - name: Install dependencies
+        working-directory: ./community_platform/frontend
+        run: npm ci
+      
+      - name: Build application
+        working-directory: ./community_platform/frontend
+        run: npm run build
+      
+      - name: Start application
+        working-directory: ./community_platform/frontend
+        run: |
+          npm run start &
+          sleep 10
+      
+      - name: Run Axe accessibility scan
+        uses: dequelabs/axe-action@v1
+        with:
+          urls: |
+            http://localhost:3000
+            http://localhost:3000/about
+            http://localhost:3000/dashboard
+          fail-on-issue: true
+      
+      - name: Upload Axe results
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: axe-scan-results
+          path: axe-reports/
+          retention-days: 30
+  
+  lighthouse-a11y:
+    name: Lighthouse Accessibility Audit
+    runs-on: ubuntu-latest
+    
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+      
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: '20.x'
+          cache: 'npm'
+          cache-dependency-path: community_platform/frontend/package-lock.json
+      
+      - name: Install dependencies
+        working-directory: ./community_platform/frontend
+        run: npm ci
+      
+      - name: Build application
+        working-directory: ./community_platform/frontend
+        run: npm run build
+      
+      - name: Run Lighthouse CI
+        working-directory: ./community_platform/frontend
+        run: |
+          npm install -g @lhci/cli
+          lhci autorun --config=.lighthouserc.js
+        env:
+          LHCI_GITHUB_APP_TOKEN: ${{ secrets.LHCI_GITHUB_APP_TOKEN }}
+      
+      - name: Upload Lighthouse results
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: lighthouse-results
+          path: .lighthouseci/
+          retention-days: 30
+
