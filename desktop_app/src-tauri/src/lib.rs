@@ -22,6 +22,9 @@ pub use state::{
 // 重新导出命令相关类型
 pub use commands::ZishuResult;
 
+// 重新导出配置类型
+pub use app_config::{AppConfig, WindowConfig, CharacterConfig, ThemeConfig, SystemConfig};
+
 // 导入和重新导出AppConfig等配置类型
 mod app_config {
     use serde::{Deserialize, Serialize};
@@ -104,6 +107,4 @@ mod app_config {
         }
     }
 }
-
-pub use app_config::{AppConfig, WindowConfig, CharacterConfig, ThemeConfig, SystemConfig};
 

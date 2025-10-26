@@ -747,6 +747,177 @@ mod tests {
     use super::*;
     use std::fs;
     use tempfile::tempdir;
+    use tokio;
+    use serde_json;
+
+    // ================================
+    // LogLevel 测试
+    // ================================
+
+    #[test]
+    fn test_log_level_as_str() {
+        assert_eq!(LogLevel::Trace.as_str(), "TRACE");
+        assert_eq!(LogLevel::Debug.as_str(), "DEBUG");
+        assert_eq!(LogLevel::Info.as_str(), "INFO");
+        assert_eq!(LogLevel::Warn.as_str(), "WARN");
+        assert_eq!(LogLevel::Error.as_str(), "ERROR");
+        assert_eq!(LogLevel::Fatal.as_str(), "FATAL");
+    }
+
+    #[test]
+    fn test_log_level_from_str() -> LoggerResult<()> {
+        assert_eq!(LogLevel::from_str("TRACE")?, LogLevel::Trace);
+        assert_eq!(LogLevel::from_str("trace")?, LogLevel::Trace);
+        assert_eq!(LogLevel::from_str("DEBUG")?, LogLevel::Debug);
+        assert_eq!(LogLevel::from_str("debug")?, LogLevel::Debug);
+        assert_eq!(LogLevel::from_str("INFO")?, LogLevel::Info);
+        assert_eq!(LogLevel::from_str("info")?, LogLevel::Info);
+        assert_eq!(LogLevel::from_str("WARN")?, LogLevel::Warn);
+        assert_eq!(LogLevel::from_str("warn")?, LogLevel::Warn);
+        assert_eq!(LogLevel::from_str("ERROR")?, LogLevel::Error);
+        assert_eq!(LogLevel::from_str("error")?, LogLevel::Error);
+        assert_eq!(LogLevel::from_str("FATAL")?, LogLevel::Fatal);
+        assert_eq!(LogLevel::from_str("fatal")?, LogLevel::Fatal);
+
+        // 测试无效级别
+        assert!(LogLevel::from_str("invalid").is_err());
+        assert!(LogLevel::from_str("").is_err());
+
+        Ok(())
+    }
+
+    #[test]
+    fn test_log_level_ordering() {
+        assert!(LogLevel::Trace < LogLevel::Debug);
+        assert!(LogLevel::Debug < LogLevel::Info);
+        assert!(LogLevel::Info < LogLevel::Warn);
+        assert!(LogLevel::Warn < LogLevel::Error);
+        assert!(LogLevel::Error < LogLevel::Fatal);
+    }
+
+    // ================================
+    // LogEntry 测试
+    // ================================
+
+    #[test]
+    fn test_log_entry_creation() {
+        let entry = LogEntry::new(LogLevel::Info, "Test message");
+        
+        assert_eq!(entry.level, LogLevel::Info);
+        assert_eq!(entry.message, "Test message");
+        assert!(entry.module.is_none());
+        assert!(entry.file.is_none());
+        assert!(entry.line.is_none());
+        assert!(entry.thread.is_none());
+        assert!(entry.data.is_none());
+        assert!(entry.stack.is_none());
+        assert!(entry.tags.is_empty());
+    }
+
+    #[test]
+    fn test_log_entry_builder_methods() {
+        let data = serde_json::json!({"key": "value"});
+        let tags = vec!["tag1".to_string(), "tag2".to_string()];
+        
+        let entry = LogEntry::new(LogLevel::Info, "Test message")
+            .with_module("test_module")
+            .with_file("test.rs")
+            .with_line(42)
+            .with_data(data.clone())
+            .with_stack("stack trace")
+            .with_tags(tags.clone());
+
+        assert_eq!(entry.level, LogLevel::Info);
+        assert_eq!(entry.message, "Test message");
+        assert_eq!(entry.module, Some("test_module".to_string()));
+        assert_eq!(entry.file, Some("test.rs".to_string()));
+        assert_eq!(entry.line, Some(42));
+        assert_eq!(entry.data, Some(data));
+        assert_eq!(entry.stack, Some("stack trace".to_string()));
+        assert_eq!(entry.tags, tags);
+    }
+
+    #[test]
+    fn test_log_entry_json_serialization() -> LoggerResult<()> {
+        let entry = LogEntry::new(LogLevel::Info, "Test message")
+            .with_module("test_module");
+
+        // 测试JSON序列化
+        let json_str = entry.to_json_string()?;
+        assert!(json_str.contains("\"message\":\"Test message\""));
+        assert!(json_str.contains("\"level\":\"INFO\""));
+
+        // 测试美化JSON
+        let pretty_json = entry.to_pretty_json()?;
+        assert!(pretty_json.contains("\"message\": \"Test message\""));
+        
+        // 测试可以重新反序列化
+        let _: LogEntry = serde_json::from_str(&json_str)?;
+
+        Ok(())
+    }
+
+    #[test]
+    fn test_log_entry_text_formatting() {
+        let entry = LogEntry::new(LogLevel::Info, "Test message")
+            .with_module("test_module")
+            .with_file("test.rs")
+            .with_line(42);
+
+        let text = entry.to_text();
+        assert!(text.contains("INFO"));
+        assert!(text.contains("test_module"));
+        assert!(text.contains("Test message"));
+        assert!(text.contains("test.rs:42"));
+    }
+
+    // ================================
+    // LoggerConfig 测试
+    // ================================
+
+    #[test]
+    fn test_logger_config_default() {
+        let config = LoggerConfig::default();
+        
+        assert_eq!(config.min_level, LogLevel::Info);
+        assert!(config.enable_console);
+        assert!(config.enable_file);
+        assert_eq!(config.log_dir, PathBuf::from("logs"));
+        assert_eq!(config.file_prefix, "app");
+        assert_eq!(config.max_file_size, 10 * 1024 * 1024);
+        assert_eq!(config.retention_days, 7);
+        assert!(matches!(config.rotation, RotationStrategy::Daily));
+        assert!(!config.pretty_json);
+        assert!(config.include_location);
+        assert!(config.async_write);
+    }
+
+    #[test]
+    fn test_rotation_strategy_serialization() -> LoggerResult<()> {
+        // 测试序列化
+        assert_eq!(
+            serde_json::to_string(&RotationStrategy::Hourly)?,
+            "\"hourly\""
+        );
+        assert_eq!(
+            serde_json::to_string(&RotationStrategy::Daily)?,
+            "\"daily\""
+        );
+        assert_eq!(
+            serde_json::to_string(&RotationStrategy::Never)?,
+            "\"never\""
+        );
+
+        // 测试反序列化
+        let hourly: RotationStrategy = serde_json::from_str("\"hourly\"")?;
+        assert!(matches!(hourly, RotationStrategy::Hourly));
+
+        Ok(())
+    }
+
+    // ================================
+    // Logger 基础测试
+    // ================================
 
     #[test]
     fn test_logger_creation() {
@@ -756,17 +927,104 @@ mod tests {
     }
 
     #[test]
-    fn test_log_entry() {
-        let entry = LogEntry::new(LogLevel::Info, "Test message")
-            .with_module("test_module")
-            .with_file("test.rs")
-            .with_line(42);
+    fn test_logger_initialization() -> LoggerResult<()> {
+        let temp_dir = tempdir().unwrap();
+        let config = LoggerConfig {
+            log_dir: temp_dir.path().to_path_buf(),
+            enable_console: false,
+            enable_file: true,
+            ..Default::default()
+        };
 
-        assert_eq!(entry.level, LogLevel::Info);
-        assert_eq!(entry.message, "Test message");
-        assert_eq!(entry.module, Some("test_module".to_string()));
-        assert_eq!(entry.line, Some(42));
+        let logger = Logger::new(config)?;
+        let result = logger.initialize();
+        
+        assert!(result.is_ok());
+        assert!(temp_dir.path().exists());
+
+        Ok(())
     }
+
+    #[test]
+    fn test_logger_convenience_methods() -> LoggerResult<()> {
+        let temp_dir = tempdir().unwrap();
+        let config = LoggerConfig {
+            log_dir: temp_dir.path().to_path_buf(),
+            enable_console: false,
+            enable_file: true,
+            min_level: LogLevel::Trace,
+            ..Default::default()
+        };
+
+        let logger = Logger::new(config)?;
+        logger.initialize()?;
+
+        // 测试所有便捷方法
+        logger.trace("Trace message")?;
+        logger.debug("Debug message")?;
+        logger.info("Info message")?;
+        logger.warn("Warning message")?;
+        logger.error("Error message")?;
+        logger.fatal("Fatal message")?;
+
+        logger.flush()?;
+
+        Ok(())
+    }
+
+    #[test]
+    fn test_log_level_filtering() -> LoggerResult<()> {
+        let temp_dir = tempdir().unwrap();
+        
+        let config = LoggerConfig {
+            log_dir: temp_dir.path().to_path_buf(),
+            min_level: LogLevel::Warn,
+            enable_console: false,
+            enable_file: true,
+            ..Default::default()
+        };
+
+        let logger = Logger::new(config)?;
+        logger.initialize()?;
+
+        // DEBUG和INFO应该被过滤
+        logger.debug("Debug message")?;
+        logger.info("Info message")?;
+        
+        // WARN和ERROR应该被记录
+        logger.warn("Warning message")?;
+        logger.error("Error message")?;
+
+        logger.flush()?;
+
+        Ok(())
+    }
+
+    #[test]
+    fn test_logger_config_update() -> LoggerResult<()> {
+        let temp_dir = tempdir().unwrap();
+        let mut config = LoggerConfig {
+            log_dir: temp_dir.path().to_path_buf(),
+            min_level: LogLevel::Info,
+            ..Default::default()
+        };
+
+        let logger = Logger::new(config.clone())?;
+        
+        // 更新配置
+        config.min_level = LogLevel::Error;
+        logger.update_config(config.clone());
+        
+        // 验证配置已更新
+        let current_config = logger.get_config();
+        assert_eq!(current_config.min_level, LogLevel::Error);
+
+        Ok(())
+    }
+
+    // ================================
+    // 文件操作测试
+    // ================================
 
     #[test]
     fn test_log_to_file() -> LoggerResult<()> {
@@ -789,20 +1047,43 @@ mod tests {
         // 验证日志文件已创建
         let log_files: Vec<_> = fs::read_dir(&log_dir)?
             .filter_map(|e| e.ok())
+            .filter(|e| e.path().extension().and_then(|s| s.to_str()) == Some("log"))
             .collect();
 
-        assert!(!log_files.is_empty());
+        assert!(!log_files.is_empty(), "应该创建至少一个日志文件");
+
+        // 验证文件内容
+        let log_file_path = log_files[0].path();
+        let content = fs::read_to_string(&log_file_path)?;
+        assert!(content.contains("Test log message"));
 
         Ok(())
     }
 
     #[test]
-    fn test_log_level_filtering() -> LoggerResult<()> {
+    fn test_console_only_logging() -> LoggerResult<()> {
+        let config = LoggerConfig {
+            enable_console: true,
+            enable_file: false,
+            ..Default::default()
+        };
+
+        let logger = Logger::new(config)?;
+        logger.initialize()?;
+
+        // 这些调用应该成功，即使没有文件输出
+        logger.info("Console only message")?;
+        logger.flush()?;
+
+        Ok(())
+    }
+
+    #[test]
+    fn test_file_only_logging() -> LoggerResult<()> {
         let temp_dir = tempdir().unwrap();
         
         let config = LoggerConfig {
             log_dir: temp_dir.path().to_path_buf(),
-            min_level: LogLevel::Warn,
             enable_console: false,
             enable_file: true,
             ..Default::default()
@@ -811,10 +1092,278 @@ mod tests {
         let logger = Logger::new(config)?;
         logger.initialize()?;
 
-        // DEBUG应该被过滤
-        logger.debug("Debug message")?;
-        // WARN应该被记录
-        logger.warn("Warning message")?;
+        logger.info("File only message")?;
+        logger.flush()?;
+
+        Ok(())
+    }
+
+    #[test]
+    fn test_disabled_logging() -> LoggerResult<()> {
+        let config = LoggerConfig {
+            enable_console: false,
+            enable_file: false,
+            ..Default::default()
+        };
+
+        let logger = Logger::new(config)?;
+        logger.initialize()?;
+
+        // 应该可以调用但不产生输出
+        logger.info("Disabled message")?;
+        logger.flush()?;
+
+        Ok(())
+    }
+
+    // ================================
+    // JSON 格式测试
+    // ================================
+
+    #[test]
+    fn test_pretty_json_format() -> LoggerResult<()> {
+        let temp_dir = tempdir().unwrap();
+        
+        let config = LoggerConfig {
+            log_dir: temp_dir.path().to_path_buf(),
+            enable_console: false,
+            enable_file: true,
+            pretty_json: true,
+            ..Default::default()
+        };
+
+        let logger = Logger::new(config)?;
+        logger.initialize()?;
+
+        logger.info("Pretty JSON message")?;
+        logger.flush()?;
+
+        Ok(())
+    }
+
+    #[test]
+    fn test_compact_json_format() -> LoggerResult<()> {
+        let temp_dir = tempdir().unwrap();
+        
+        let config = LoggerConfig {
+            log_dir: temp_dir.path().to_path_buf(),
+            enable_console: false,
+            enable_file: true,
+            pretty_json: false,
+            ..Default::default()
+        };
+
+        let logger = Logger::new(config)?;
+        logger.initialize()?;
+
+        logger.info("Compact JSON message")?;
+        logger.flush()?;
+
+        Ok(())
+    }
+
+    // ================================
+    // 错误处理测试
+    // ================================
+
+    #[test]
+    fn test_logger_error_types() {
+        // 测试错误类型的创建和显示
+        let io_error = std::io::Error::new(std::io::ErrorKind::NotFound, "File not found");
+        let logger_error = LoggerError::Io(io_error);
+        assert!(logger_error.to_string().contains("IO错误"));
+
+        // 创建一个实际的serde_json错误
+        let invalid_json = "{ invalid json }";
+        let parse_result: Result<serde_json::Value, serde_json::Error> = serde_json::from_str(invalid_json);
+        let serialization_error = parse_result.unwrap_err();
+        let logger_error = LoggerError::Serialization(serialization_error);
+        assert!(logger_error.to_string().contains("序列化错误"));
+
+        let logger_error = LoggerError::NotInitialized;
+        assert!(logger_error.to_string().contains("未初始化"));
+
+        let logger_error = LoggerError::FileTooLarge(1024);
+        assert!(logger_error.to_string().contains("文件过大"));
+
+        let logger_error = LoggerError::InvalidLevel("INVALID".to_string());
+        assert!(logger_error.to_string().contains("无效的日志级别"));
+    }
+
+    #[test]
+    fn test_invalid_log_directory() {
+        let config = LoggerConfig {
+            log_dir: PathBuf::from("/invalid/path/that/cannot/be/created"),
+            enable_file: true,
+            ..Default::default()
+        };
+
+        let logger = Logger::new(config);
+        assert!(logger.is_ok());
+
+        // 初始化应该失败
+        let result = logger.unwrap().initialize();
+        assert!(result.is_err());
+    }
+
+    // ================================
+    // 全局Logger测试
+    // ================================
+
+    #[test]
+    fn test_global_logger_not_initialized() {
+        // 在没有初始化全局logger的情况下尝试获取
+        let result = global_logger();
+        assert!(result.is_err());
+    }
+
+    // ================================
+    // 轮转策略测试
+    // ================================
+
+    #[test]
+    fn test_rotation_strategy_filename_generation() -> LoggerResult<()> {
+        let temp_dir = tempdir().unwrap();
+        
+        // 测试每日轮转
+        let config = LoggerConfig {
+            log_dir: temp_dir.path().to_path_buf(),
+            rotation: RotationStrategy::Daily,
+            file_prefix: "test".to_string(),
+            ..Default::default()
+        };
+
+        let logger = Logger::new(config)?;
+        let file_path = logger.generate_log_file_path(&logger.config.lock().unwrap());
+        assert!(file_path.file_name().unwrap().to_str().unwrap().starts_with("test-"));
+        assert!(file_path.extension().unwrap() == "log");
+
+        // 测试从不轮转
+        let mut config = LoggerConfig {
+            log_dir: temp_dir.path().to_path_buf(),
+            rotation: RotationStrategy::Never,
+            file_prefix: "test".to_string(),
+            ..Default::default()
+        };
+
+        let logger = Logger::new(config)?;
+        let file_path = logger.generate_log_file_path(&logger.config.lock().unwrap());
+        assert_eq!(file_path.file_name().unwrap().to_str().unwrap(), "test.log");
+
+        Ok(())
+    }
+
+    // ================================
+    // Tracing集成测试
+    // ================================
+
+    #[test]
+    fn test_tracing_initialization() -> LoggerResult<()> {
+        let temp_dir = tempdir().unwrap();
+        
+        // 测试tracing初始化不会panic
+        let result = init_tracing(temp_dir.path());
+        // 注意：在测试环境中tracing可能已经初始化，所以这里只测试不会panic
+        // 实际的tracing功能在集成测试中验证
+        
+        Ok(())
+    }
+
+    // ================================
+    // 统计信息测试
+    // ================================
+
+    #[test]
+    fn test_log_statistics_default() {
+        let stats = LogStatistics::default();
+        
+        assert_eq!(stats.total_count, 0);
+        assert_eq!(stats.error_count, 0);
+        assert_eq!(stats.warning_count, 0);
+        assert_eq!(stats.info_count, 0);
+        assert_eq!(stats.debug_count, 0);
+        assert_eq!(stats.trace_count, 0);
+    }
+
+    // ================================
+    // 边界条件测试
+    // ================================
+
+    #[test]
+    fn test_empty_message() -> LoggerResult<()> {
+        let entry = LogEntry::new(LogLevel::Info, "");
+        assert_eq!(entry.message, "");
+        
+        let text = entry.to_text();
+        assert!(text.contains("INFO"));
+
+        Ok(())
+    }
+
+    #[test]
+    fn test_very_long_message() -> LoggerResult<()> {
+        let long_message = "x".repeat(10000);
+        let entry = LogEntry::new(LogLevel::Info, &long_message);
+        
+        assert_eq!(entry.message.len(), 10000);
+        
+        let json = entry.to_json_string()?;
+        assert!(json.contains(&long_message));
+
+        Ok(())
+    }
+
+    #[test]
+    fn test_special_characters_in_message() -> LoggerResult<()> {
+        let special_message = "Message with 中文 and émojis 🦀 and \"quotes\" and \n newlines";
+        let entry = LogEntry::new(LogLevel::Info, special_message);
+        
+        let json = entry.to_json_string()?;
+        let _: LogEntry = serde_json::from_str(&json)?;
+        
+        let text = entry.to_text();
+        assert!(text.contains("中文"));
+
+        Ok(())
+    }
+
+    // ================================
+    // 并发安全测试
+    // ================================
+
+    #[test]
+    fn test_logger_thread_safety() -> LoggerResult<()> {
+        let temp_dir = tempdir().unwrap();
+        let config = LoggerConfig {
+            log_dir: temp_dir.path().to_path_buf(),
+            enable_console: false,
+            enable_file: true,
+            ..Default::default()
+        };
+
+        let logger = std::sync::Arc::new(Logger::new(config)?);
+        logger.initialize()?;
+
+        let mut handles = vec![];
+
+        // 创建多个线程同时写日志
+        for i in 0..5 {
+            let logger_clone = logger.clone();
+            let handle = std::thread::spawn(move || -> LoggerResult<()> {
+                for j in 0..10 {
+                    logger_clone.info(&format!("Thread {} message {}", i, j))?;
+                }
+                Ok(())
+            });
+            handles.push(handle);
+        }
+
+        // 等待所有线程完成
+        for handle in handles {
+            handle.join().unwrap()?;
+        }
+
+        logger.flush()?;
 
         Ok(())
     }

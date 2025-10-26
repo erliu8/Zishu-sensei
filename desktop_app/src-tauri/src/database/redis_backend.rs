@@ -20,6 +20,17 @@ pub struct RedisBackend {
     key_prefix: String,
 }
 
+impl std::fmt::Debug for RedisBackend {
+    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
+        f.debug_struct("RedisBackend")
+            .field("connected", &self.connected)
+            .field("key_prefix", &self.key_prefix)
+            .field("client", &self.client.is_some())
+            .field("manager", &self.manager.is_some())
+            .finish()
+    }
+}
+
 impl RedisBackend {
     /// 创建新的 Redis 后端
     pub fn new() -> Self {
@@ -581,22 +592,666 @@ impl CacheDatabaseBackend for RedisBackend {
 #[cfg(test)]
 mod tests {
     use super::*;
+    use serde_json::json;
+    use std::collections::HashMap;
+
+    // ================================
+    // 基础功能测试
+    // ================================
+
+    #[tokio::test]
+    async fn test_redis_backend_new() {
+        // Arrange & Act
+        let backend = RedisBackend::new();
+        
+        // Assert
+        assert!(!backend.is_connected());
+        assert!(backend.client.is_none());
+        assert!(backend.manager.is_none());
+        assert!(!backend.connected);
+        assert_eq!(backend.key_prefix, "zishu:");
+    }
+
+    #[tokio::test]
+    async fn test_redis_backend_default() {
+        // Arrange & Act
+        let backend = RedisBackend::default();
+        
+        // Assert
+        assert!(!backend.is_connected());
+        assert!(backend.client.is_none());
+        assert!(backend.manager.is_none());
+        assert!(!backend.connected);
+        assert_eq!(backend.key_prefix, "zishu:");
+    }
+
+    #[tokio::test]
+    async fn test_redis_backend_with_prefix() {
+        // Arrange
+        let custom_prefix = "test_app:";
+        
+        // Act
+        let backend = RedisBackend::new().with_prefix(custom_prefix);
+        
+        // Assert
+        assert_eq!(backend.key_prefix, custom_prefix);
+        assert!(!backend.is_connected());
+    }
 
     #[tokio::test]
     async fn test_redis_backend_type() {
+        // Arrange
         let backend = RedisBackend::new();
+        
+        // Act & Assert
         assert_eq!(backend.backend_type(), DatabaseBackendType::Redis);
         assert!(!backend.is_connected());
     }
 
     #[test]
-    fn test_redis_key_building() {
+    fn test_redis_backend_debug() {
+        // Arrange
         let backend = RedisBackend::new();
+        
+        // Act
+        let debug_string = format!("{:?}", backend);
+        
+        // Assert
+        assert!(debug_string.contains("RedisBackend"));
+        assert!(debug_string.contains("connected: false"));
+        assert!(debug_string.contains("key_prefix: \"zishu:\""));
+        assert!(debug_string.contains("client: false"));
+        assert!(debug_string.contains("manager: false"));
+    }
+
+    // ================================
+    // 键构建和模式测试
+    // ================================
+
+    #[test]
+    fn test_redis_key_building() {
+        // Arrange
+        let backend = RedisBackend::new();
+        
+        // Act & Assert
         let key = backend.build_key("users", "user123");
         assert_eq!(key, "zishu:users:user123");
 
         let pattern = backend.build_pattern("users");
         assert_eq!(pattern, "zishu:users:*");
+    }
+
+    #[test]
+    fn test_redis_key_building_with_custom_prefix() {
+        // Arrange
+        let backend = RedisBackend::new().with_prefix("custom:");
+        
+        // Act & Assert
+        let key = backend.build_key("sessions", "session456");
+        assert_eq!(key, "custom:sessions:session456");
+
+        let pattern = backend.build_pattern("sessions");
+        assert_eq!(pattern, "custom:sessions:*");
+    }
+
+    #[test]
+    fn test_redis_key_building_empty_values() {
+        // Arrange
+        let backend = RedisBackend::new();
+        
+        // Act & Assert
+        let key = backend.build_key("", "");
+        assert_eq!(key, "zishu::");
+
+        let pattern = backend.build_pattern("");
+        assert_eq!(pattern, "zishu::*");
+    }
+
+    #[test]
+    fn test_redis_key_building_special_characters() {
+        // Arrange
+        let backend = RedisBackend::new();
+        
+        // Act & Assert
+        let key = backend.build_key("user:profile", "user@email.com");
+        assert_eq!(key, "zishu:user:profile:user@email.com");
+
+        let pattern = backend.build_pattern("user:profile");
+        assert_eq!(pattern, "zishu:user:profile:*");
+    }
+
+    // ================================
+    // 连接管理测试
+    // ================================
+
+    #[tokio::test]
+    async fn test_connect_invalid_connection_string() {
+        // Arrange
+        let mut backend = RedisBackend::new();
+        let config = DatabaseConfig {
+            backend_type: DatabaseBackendType::Redis,
+            connection_string: "invalid_redis_url".to_string(),
+            max_connections: Some(10),
+            timeout: Some(30),
+            extra: HashMap::new(),
+        };
+        
+        // Act
+        let result = backend.connect(&config).await;
+        
+        // Assert
+        assert!(result.is_err());
+        assert!(matches!(result.unwrap_err(), DatabaseError::ConnectionError(_)));
+        assert!(!backend.is_connected());
+    }
+
+    #[tokio::test]
+    async fn test_disconnect_without_connection() {
+        // Arrange
+        let mut backend = RedisBackend::new();
+        
+        // Act
+        let result = backend.disconnect().await;
+        
+        // Assert
+        assert!(result.is_ok());
+        assert!(!backend.is_connected());
+        assert!(backend.client.is_none());
+        assert!(backend.manager.is_none());
+    }
+
+    #[tokio::test]
+    async fn test_get_manager_when_disconnected() {
+        // Arrange
+        let backend = RedisBackend::new();
+        
+        // Act
+        let result = backend.get_manager();
+        
+        // Assert
+        assert!(result.is_err());
+        if let Err(DatabaseError::ConnectionError(msg)) = result {
+            assert_eq!(msg, "未连接到Redis");
+        } else {
+            panic!("Expected ConnectionError");
+        }
+    }
+
+    // ================================
+    // 集合管理测试（需要连接）
+    // ================================
+
+    #[tokio::test]
+    async fn test_create_collection_without_connection() {
+        // Arrange
+        let backend = RedisBackend::new();
+        
+        // Act
+        let result = backend.create_collection("test_collection", None).await;
+        
+        // Assert
+        // Redis是无模式的，不需要连接就能"创建"集合
+        assert!(result.is_ok());
+    }
+
+    #[tokio::test]
+    async fn test_drop_collection_without_connection() {
+        // Arrange
+        let backend = RedisBackend::new();
+        
+        // Act
+        let result = backend.drop_collection("test_collection").await;
+        
+        // Assert
+        assert!(result.is_err());
+        assert!(matches!(result.unwrap_err(), DatabaseError::ConnectionError(_)));
+    }
+
+    #[tokio::test]
+    async fn test_collection_exists_without_connection() {
+        // Arrange
+        let backend = RedisBackend::new();
+        
+        // Act
+        let result = backend.collection_exists("test_collection").await;
+        
+        // Assert
+        assert!(result.is_err());
+        assert!(matches!(result.unwrap_err(), DatabaseError::ConnectionError(_)));
+    }
+
+    // ================================
+    // CRUD操作测试（需要连接）
+    // ================================
+
+    #[tokio::test]
+    async fn test_insert_without_connection() {
+        // Arrange
+        let backend = RedisBackend::new();
+        let data = json!({"name": "test", "value": 123});
+        
+        // Act
+        let result = backend.insert("test_collection", "test_key", &data).await;
+        
+        // Assert
+        assert!(result.is_err());
+        assert!(matches!(result.unwrap_err(), DatabaseError::ConnectionError(_)));
+    }
+
+    #[tokio::test]
+    async fn test_batch_insert_without_connection() {
+        // Arrange
+        let backend = RedisBackend::new();
+        let items = vec![
+            ("key1".to_string(), json!({"name": "test1"})),
+            ("key2".to_string(), json!({"name": "test2"})),
+        ];
+        
+        // Act
+        let result = backend.batch_insert("test_collection", items).await;
+        
+        // Assert
+        assert!(result.is_err());
+        assert!(matches!(result.unwrap_err(), DatabaseError::ConnectionError(_)));
+    }
+
+    #[tokio::test]
+    async fn test_get_without_connection() {
+        // Arrange
+        let backend = RedisBackend::new();
+        
+        // Act
+        let result = backend.get("test_collection", "test_key").await;
+        
+        // Assert
+        assert!(result.is_err());
+        assert!(matches!(result.unwrap_err(), DatabaseError::ConnectionError(_)));
+    }
+
+    #[tokio::test]
+    async fn test_update_without_connection() {
+        // Arrange
+        let backend = RedisBackend::new();
+        let data = json!({"name": "updated", "value": 456});
+        
+        // Act
+        let result = backend.update("test_collection", "test_key", &data).await;
+        
+        // Assert
+        assert!(result.is_err());
+        assert!(matches!(result.unwrap_err(), DatabaseError::ConnectionError(_)));
+    }
+
+    #[tokio::test]
+    async fn test_delete_without_connection() {
+        // Arrange
+        let backend = RedisBackend::new();
+        
+        // Act
+        let result = backend.delete("test_collection", "test_key").await;
+        
+        // Assert
+        assert!(result.is_err());
+        assert!(matches!(result.unwrap_err(), DatabaseError::ConnectionError(_)));
+    }
+
+    // ================================
+    // 查询操作测试
+    // ================================
+
+    #[tokio::test]
+    async fn test_query_without_connection() {
+        // Arrange
+        let backend = RedisBackend::new();
+        let options = QueryOptions {
+            conditions: vec![],
+            order_by: None,
+            limit: None,
+            offset: None,
+        };
+        
+        // Act
+        let result = backend.query("test_collection", &options).await;
+        
+        // Assert
+        assert!(result.is_err());
+        assert!(matches!(result.unwrap_err(), DatabaseError::ConnectionError(_)));
+    }
+
+    #[tokio::test]
+    async fn test_count_without_connection_no_options() {
+        // Arrange
+        let backend = RedisBackend::new();
+        
+        // Act
+        let result = backend.count("test_collection", None).await;
+        
+        // Assert
+        assert!(result.is_err());
+        assert!(matches!(result.unwrap_err(), DatabaseError::ConnectionError(_)));
+    }
+
+    #[tokio::test]
+    async fn test_count_with_options_without_connection() {
+        // Arrange
+        let backend = RedisBackend::new();
+        let options = QueryOptions {
+            conditions: vec![
+                QueryCondition {
+                    field: "status".to_string(),
+                    operator: QueryOperator::Eq,
+                    value: json!("active"),
+                },
+            ],
+            order_by: None,
+            limit: None,
+            offset: None,
+        };
+        
+        // Act
+        let result = backend.count("test_collection", Some(&options)).await;
+        
+        // Assert
+        assert!(result.is_err());
+        assert!(matches!(result.unwrap_err(), DatabaseError::ConnectionError(_)));
+    }
+
+    #[tokio::test]
+    async fn test_clear_collection_without_connection() {
+        // Arrange
+        let backend = RedisBackend::new();
+        
+        // Act
+        let result = backend.clear_collection("test_collection").await;
+        
+        // Assert
+        assert!(result.is_err());
+        assert!(matches!(result.unwrap_err(), DatabaseError::ConnectionError(_)));
+    }
+
+    #[tokio::test]
+    async fn test_execute_raw_without_connection() {
+        // Arrange
+        let backend = RedisBackend::new();
+        
+        // Act
+        let result = backend.execute_raw("PING").await;
+        
+        // Assert
+        assert!(result.is_err());
+        assert!(matches!(result.unwrap_err(), DatabaseError::ConnectionError(_)));
+    }
+
+    #[tokio::test]
+    async fn test_execute_raw_empty_query() {
+        // Arrange
+        let backend = RedisBackend::new();
+        
+        // Act
+        let result = backend.execute_raw("").await;
+        
+        // Assert
+        assert!(result.is_err());
+        // 当没有连接时，应该返回ConnectionError而不是QueryError
+        assert!(matches!(result.unwrap_err(), DatabaseError::ConnectionError(_)));
+    }
+
+    // ================================
+    // 缓存功能测试
+    // ================================
+
+    #[tokio::test]
+    async fn test_set_with_expiry_without_connection() {
+        // Arrange
+        let backend = RedisBackend::new();
+        let value = json!({"data": "cached_value"});
+        
+        // Act
+        let result = backend.set_with_expiry("cache_key", &value, 3600).await;
+        
+        // Assert
+        assert!(result.is_err());
+        assert!(matches!(result.unwrap_err(), DatabaseError::ConnectionError(_)));
+    }
+
+    #[tokio::test]
+    async fn test_get_cache_without_connection() {
+        // Arrange
+        let backend = RedisBackend::new();
+        
+        // Act
+        let result = backend.get_cache("cache_key").await;
+        
+        // Assert
+        assert!(result.is_err());
+        assert!(matches!(result.unwrap_err(), DatabaseError::ConnectionError(_)));
+    }
+
+    #[tokio::test]
+    async fn test_delete_cache_without_connection() {
+        // Arrange
+        let backend = RedisBackend::new();
+        
+        // Act
+        let result = backend.delete_cache("cache_key").await;
+        
+        // Assert
+        assert!(result.is_err());
+        assert!(matches!(result.unwrap_err(), DatabaseError::ConnectionError(_)));
+    }
+
+    #[tokio::test]
+    async fn test_exists_without_connection() {
+        // Arrange
+        let backend = RedisBackend::new();
+        
+        // Act
+        let result = backend.exists("cache_key").await;
+        
+        // Assert
+        assert!(result.is_err());
+        assert!(matches!(result.unwrap_err(), DatabaseError::ConnectionError(_)));
+    }
+
+    #[tokio::test]
+    async fn test_expire_without_connection() {
+        // Arrange
+        let backend = RedisBackend::new();
+        
+        // Act
+        let result = backend.expire("cache_key", 3600).await;
+        
+        // Assert
+        assert!(result.is_err());
+        assert!(matches!(result.unwrap_err(), DatabaseError::ConnectionError(_)));
+    }
+
+    #[tokio::test]
+    async fn test_ttl_without_connection() {
+        // Arrange
+        let backend = RedisBackend::new();
+        
+        // Act
+        let result = backend.ttl("cache_key").await;
+        
+        // Assert
+        assert!(result.is_err());
+        assert!(matches!(result.unwrap_err(), DatabaseError::ConnectionError(_)));
+    }
+
+    #[tokio::test]
+    async fn test_increment_without_connection() {
+        // Arrange
+        let backend = RedisBackend::new();
+        
+        // Act
+        let result = backend.increment("counter_key", 1).await;
+        
+        // Assert
+        assert!(result.is_err());
+        assert!(matches!(result.unwrap_err(), DatabaseError::ConnectionError(_)));
+    }
+
+    #[tokio::test]
+    async fn test_decrement_without_connection() {
+        // Arrange
+        let backend = RedisBackend::new();
+        
+        // Act
+        let result = backend.decrement("counter_key", 1).await;
+        
+        // Assert
+        assert!(result.is_err());
+        assert!(matches!(result.unwrap_err(), DatabaseError::ConnectionError(_)));
+    }
+
+    // ================================
+    // 事务管理测试
+    // ================================
+
+    #[tokio::test]
+    async fn test_begin_transaction_not_supported() {
+        // Arrange
+        let backend = RedisBackend::new();
+        
+        // Act
+        let result = backend.begin_transaction().await;
+        
+        // Assert
+        assert!(result.is_err());
+        if let Err(DatabaseError::Other(msg)) = result {
+            assert_eq!(msg, "Redis事务暂不支持");
+        } else {
+            panic!("Expected Other error");
+        }
+    }
+
+    // ================================
+    // 查询选项构建测试
+    // ================================
+
+    #[test]
+    fn test_query_options_with_various_operators() {
+        // Arrange & Act
+        let options = QueryOptions {
+            conditions: vec![
+                QueryCondition {
+                    field: "name".to_string(),
+                    operator: QueryOperator::Eq,
+                    value: json!("test"),
+                },
+                QueryCondition {
+                    field: "status".to_string(),
+                    operator: QueryOperator::Ne,
+                    value: json!("inactive"),
+                },
+                QueryCondition {
+                    field: "email".to_string(),
+                    operator: QueryOperator::Exists,
+                    value: json!(null),
+                },
+            ],
+            order_by: Some(vec![
+                ("created_at".to_string(), false),
+                ("name".to_string(), true),
+            ]),
+            limit: Some(50),
+            offset: Some(10),
+        };
+        
+        // Assert
+        assert_eq!(options.conditions.len(), 3);
+        assert_eq!(options.conditions[0].operator, QueryOperator::Eq);
+        assert_eq!(options.conditions[1].operator, QueryOperator::Ne);
+        assert_eq!(options.conditions[2].operator, QueryOperator::Exists);
+        assert!(options.order_by.is_some());
+        assert_eq!(options.order_by.as_ref().unwrap().len(), 2);
+        assert_eq!(options.limit, Some(50));
+        assert_eq!(options.offset, Some(10));
+    }
+
+    // ================================
+    // JSON序列化/反序列化测试
+    // ================================
+
+    #[test]
+    fn test_json_serialization_deserialization() {
+        // Arrange
+        let original_data = json!({
+            "name": "测试用户",
+            "age": 25,
+            "active": true,
+            "tags": ["rust", "redis"],
+            "profile": {
+                "email": "test@example.com",
+                "city": "北京"
+            }
+        });
+        
+        // Act - 序列化
+        let json_str = serde_json::to_string(&original_data);
+        assert!(json_str.is_ok());
+        
+        // Act - 反序列化
+        let deserialized_data: Result<serde_json::Value, _> = 
+            serde_json::from_str(&json_str.unwrap());
+        
+        // Assert
+        assert!(deserialized_data.is_ok());
+        assert_eq!(deserialized_data.unwrap(), original_data);
+    }
+
+    // ================================
+    // 边界条件测试
+    // ================================
+
+    #[test]
+    fn test_edge_cases_empty_strings() {
+        // Arrange
+        let backend = RedisBackend::new();
+        
+        // Act & Assert
+        let key = backend.build_key("", "");
+        assert_eq!(key, "zishu::");
+        
+        let pattern = backend.build_pattern("");
+        assert_eq!(pattern, "zishu::*");
+    }
+
+    #[test]
+    fn test_edge_cases_large_strings() {
+        // Arrange
+        let backend = RedisBackend::new();
+        let large_collection = "a".repeat(1000);
+        let large_key = "b".repeat(1000);
+        
+        // Act
+        let full_key = backend.build_key(&large_collection, &large_key);
+        let pattern = backend.build_pattern(&large_collection);
+        
+        // Assert
+        assert!(full_key.starts_with("zishu:"));
+        assert!(full_key.contains(&large_collection));
+        assert!(full_key.contains(&large_key));
+        assert!(pattern.starts_with("zishu:"));
+        assert!(pattern.contains(&large_collection));
+        assert!(pattern.ends_with(":*"));
+    }
+
+    #[test]
+    fn test_edge_cases_unicode_strings() {
+        // Arrange
+        let backend = RedisBackend::new();
+        let unicode_collection = "用户集合";
+        let unicode_key = "用户键名";
+        
+        // Act
+        let full_key = backend.build_key(unicode_collection, unicode_key);
+        let pattern = backend.build_pattern(unicode_collection);
+        
+        // Assert
+        assert_eq!(full_key, "zishu:用户集合:用户键名");
+        assert_eq!(pattern, "zishu:用户集合:*");
     }
 }
 

@@ -14,6 +14,7 @@ use super::redis_backend::RedisBackend;
 use super::qdrant_backend::QdrantBackend;
 
 /// 统一数据库管理器
+#[derive(Debug)]
 pub struct DatabaseManager {
     /// PostgreSQL 连接池
     pub postgres_pool: Option<Arc<PostgresPool>>,
@@ -368,29 +369,489 @@ impl HealthCheckResult {
 #[cfg(test)]
 mod tests {
     use super::*;
-    
+    use std::sync::Once;
+    use tokio::runtime::Runtime;
+
+    static INIT: Once = Once::new();
+
+    fn init_test_env() {
+        INIT.call_once(|| {
+            // 初始化测试环境
+            let _ = tracing_subscriber::fmt()
+                .with_test_writer()
+                .try_init();
+        });
+    }
+
+    // ===== DatabaseManagerConfig 测试 =====
+
     #[test]
-    fn test_config_from_env() {
-        std::env::set_var("DATABASE_URL", "postgresql://test:test@localhost/test_db");
-        std::env::set_var("REDIS_URL", "redis://localhost:6380");
-        std::env::set_var("QDRANT_URL", "http://localhost:6334");
-        
-        let config = DatabaseManagerConfig::from_env();
-        
+    fn test_database_manager_config_default() {
+        init_test_env();
+
+        // Arrange & Act
+        let config = DatabaseManagerConfig::default();
+
+        // Assert
         assert!(config.postgres_config.is_some());
         assert!(config.redis_config.is_some());
         assert!(config.qdrant_config.is_some());
+        assert!(config.enable_redis_cache);
+        assert!(config.enable_vector_search);
+
+        // 验证默认连接字符串
+        if let Some(pg_config) = &config.postgres_config {
+            assert!(pg_config.connection_string.contains("zishu:zishu@localhost/zishu_sensei"));
+        }
+        if let Some(redis_config) = &config.redis_config {
+            assert_eq!(redis_config.connection_string, "redis://localhost:6379");
+        }
+        if let Some(qdrant_config) = &config.qdrant_config {
+            assert_eq!(qdrant_config.connection_string, "http://localhost:6333");
+        }
     }
-    
+
     #[test]
-    fn test_postgres_only_config() {
-        let config = DatabaseManagerConfig::postgres_only("postgresql://test@localhost/test");
-        
+    fn test_database_manager_config_from_env_with_all_vars() {
+        init_test_env();
+
+        // Arrange
+        std::env::set_var("DATABASE_URL", "postgresql://test:test@localhost/test_db");
+        std::env::set_var("REDIS_URL", "redis://localhost:6380");
+        std::env::set_var("QDRANT_URL", "http://localhost:6334");
+        std::env::set_var("ENABLE_REDIS_CACHE", "true");
+        std::env::set_var("ENABLE_VECTOR_SEARCH", "false");
+
+        // Act
+        let config = DatabaseManagerConfig::from_env();
+
+        // Assert
+        assert!(config.postgres_config.is_some());
+        assert!(config.redis_config.is_some());
+        assert!(config.qdrant_config.is_some());
+        assert!(config.enable_redis_cache);
+        assert!(!config.enable_vector_search);
+
+        if let Some(pg_config) = &config.postgres_config {
+            assert_eq!(pg_config.connection_string, "postgresql://test:test@localhost/test_db");
+        }
+        if let Some(redis_config) = &config.redis_config {
+            assert_eq!(redis_config.connection_string, "redis://localhost:6380");
+        }
+        if let Some(qdrant_config) = &config.qdrant_config {
+            assert_eq!(qdrant_config.connection_string, "http://localhost:6334");
+        }
+
+        // Cleanup
+        std::env::remove_var("DATABASE_URL");
+        std::env::remove_var("REDIS_URL");
+        std::env::remove_var("QDRANT_URL");
+        std::env::remove_var("ENABLE_REDIS_CACHE");
+        std::env::remove_var("ENABLE_VECTOR_SEARCH");
+    }
+
+    #[test]
+    fn test_database_manager_config_from_env_with_defaults() {
+        init_test_env();
+
+        // Arrange - 清除环境变量以使用默认值
+        std::env::remove_var("DATABASE_URL");
+        std::env::remove_var("REDIS_URL");
+        std::env::remove_var("QDRANT_URL");
+        std::env::remove_var("ENABLE_REDIS_CACHE");
+        std::env::remove_var("ENABLE_VECTOR_SEARCH");
+
+        // Act
+        let config = DatabaseManagerConfig::from_env();
+
+        // Assert - 应该使用默认值
+        assert!(config.postgres_config.is_some());
+        assert!(config.redis_config.is_some());
+        assert!(config.qdrant_config.is_some());
+        assert!(config.enable_redis_cache);
+        assert!(config.enable_vector_search);
+    }
+
+    #[test]
+    fn test_database_manager_config_from_env_invalid_boolean() {
+        init_test_env();
+
+        // Arrange
+        std::env::set_var("ENABLE_REDIS_CACHE", "invalid_value");
+        std::env::set_var("ENABLE_VECTOR_SEARCH", "not_a_boolean");
+
+        // Act
+        let config = DatabaseManagerConfig::from_env();
+
+        // Assert - 无效值应该使用默认值true
+        assert!(config.enable_redis_cache);
+        assert!(config.enable_vector_search);
+
+        // Cleanup
+        std::env::remove_var("ENABLE_REDIS_CACHE");
+        std::env::remove_var("ENABLE_VECTOR_SEARCH");
+    }
+
+    #[test]
+    fn test_database_manager_config_postgres_only() {
+        init_test_env();
+
+        // Arrange
+        let connection_string = "postgresql://test@localhost/test_db";
+
+        // Act
+        let config = DatabaseManagerConfig::postgres_only(connection_string);
+
+        // Assert
         assert!(config.postgres_config.is_some());
         assert!(config.redis_config.is_none());
         assert!(config.qdrant_config.is_none());
         assert!(!config.enable_redis_cache);
         assert!(!config.enable_vector_search);
+
+        if let Some(pg_config) = &config.postgres_config {
+            assert_eq!(pg_config.connection_string, connection_string);
+        }
     }
+
+    // ===== HealthCheckResult 测试 =====
+
+    #[test]
+    fn test_health_check_result_all_healthy() {
+        init_test_env();
+
+        // Arrange
+        let result = HealthCheckResult {
+            postgres_healthy: true,
+            postgres_error: None,
+            redis_healthy: true,
+            redis_error: None,
+            qdrant_healthy: true,
+            qdrant_error: None,
+        };
+
+        // Act & Assert
+        assert!(result.is_all_healthy());
+        assert!(result.is_core_healthy());
+    }
+
+    #[test]
+    fn test_health_check_result_postgres_unhealthy() {
+        init_test_env();
+
+        // Arrange
+        let result = HealthCheckResult {
+            postgres_healthy: false,
+            postgres_error: Some("连接失败".to_string()),
+            redis_healthy: true,
+            redis_error: None,
+            qdrant_healthy: true,
+            qdrant_error: None,
+        };
+
+        // Act & Assert
+        assert!(!result.is_all_healthy());
+        assert!(!result.is_core_healthy());
+    }
+
+    #[test]
+    fn test_health_check_result_redis_unhealthy() {
+        init_test_env();
+
+        // Arrange
+        let result = HealthCheckResult {
+            postgres_healthy: true,
+            postgres_error: None,
+            redis_healthy: false,
+            redis_error: Some("Redis连接断开".to_string()),
+            qdrant_healthy: true,
+            qdrant_error: None,
+        };
+
+        // Act & Assert
+        assert!(!result.is_all_healthy());
+        assert!(result.is_core_healthy()); // 只有PostgreSQL是核心服务
+    }
+
+    #[test]
+    fn test_health_check_result_qdrant_unhealthy() {
+        init_test_env();
+
+        // Arrange
+        let result = HealthCheckResult {
+            postgres_healthy: true,
+            postgres_error: None,
+            redis_healthy: true,
+            redis_error: None,
+            qdrant_healthy: false,
+            qdrant_error: Some("Qdrant服务不可用".to_string()),
+        };
+
+        // Act & Assert
+        assert!(!result.is_all_healthy());
+        assert!(result.is_core_healthy()); // 只有PostgreSQL是核心服务
+    }
+
+    #[test]
+    fn test_health_check_result_all_unhealthy() {
+        init_test_env();
+
+        // Arrange
+        let result = HealthCheckResult {
+            postgres_healthy: false,
+            postgres_error: Some("PostgreSQL失败".to_string()),
+            redis_healthy: false,
+            redis_error: Some("Redis失败".to_string()),
+            qdrant_healthy: false,
+            qdrant_error: Some("Qdrant失败".to_string()),
+        };
+
+        // Act & Assert
+        assert!(!result.is_all_healthy());
+        assert!(!result.is_core_healthy());
+    }
+
+    #[test]
+    fn test_health_check_result_default() {
+        init_test_env();
+
+        // Arrange & Act
+        let result = HealthCheckResult::default();
+
+        // Assert - 默认状态应该是不健康的
+        assert!(!result.is_all_healthy());
+        assert!(!result.is_core_healthy());
+        assert!(!result.postgres_healthy);
+        assert!(!result.redis_healthy);
+        assert!(!result.qdrant_healthy);
+        assert!(result.postgres_error.is_none());
+        assert!(result.redis_error.is_none());
+        assert!(result.qdrant_error.is_none());
+    }
+
+    // ===== DatabaseManager 集成测试（需要模拟数据库）=====
+
+    #[tokio::test]
+    async fn test_database_manager_new_postgres_only_success() {
+        init_test_env();
+
+        // Arrange
+        let config = DatabaseManagerConfig {
+            postgres_config: None, // 使用None来避免实际连接
+            redis_config: None,
+            qdrant_config: None,
+            enable_redis_cache: false,
+            enable_vector_search: false,
+        };
+
+        // Act
+        let result = DatabaseManager::new(config).await;
+
+        // Assert
+        assert!(result.is_ok());
+        let manager = result.unwrap();
+        assert!(manager.postgres_pool.is_none()); // 因为配置是None
+        assert!(manager.redis_backend.is_none());
+        assert!(manager.qdrant_backend.is_none());
+        assert!(!manager.is_redis_available());
+        assert!(!manager.is_qdrant_available());
+    }
+
+    #[tokio::test]
+    async fn test_database_manager_postgres_getter_when_none() {
+        init_test_env();
+
+        // Arrange
+        let config = DatabaseManagerConfig {
+            postgres_config: None,
+            redis_config: None,
+            qdrant_config: None,
+            enable_redis_cache: false,
+            enable_vector_search: false,
+        };
+        let manager = DatabaseManager::new(config).await.unwrap();
+
+        // Act
+        let result = manager.postgres();
+
+        // Assert
+        assert!(result.is_err());
+        if let Err(DatabaseError::ConnectionError(msg)) = result {
+            assert!(msg.contains("PostgreSQL未初始化"));
+        } else {
+            panic!("期望连接错误");
+        }
+    }
+
+    #[tokio::test]
+    async fn test_database_manager_redis_getter_when_none() {
+        init_test_env();
+
+        // Arrange
+        let config = DatabaseManagerConfig {
+            postgres_config: None,
+            redis_config: None,
+            qdrant_config: None,
+            enable_redis_cache: false,
+            enable_vector_search: false,
+        };
+        let manager = DatabaseManager::new(config).await.unwrap();
+
+        // Act
+        let result = manager.redis();
+
+        // Assert
+        assert!(result.is_none());
+    }
+
+    #[tokio::test]
+    async fn test_database_manager_qdrant_getter_when_none() {
+        init_test_env();
+
+        // Arrange
+        let config = DatabaseManagerConfig {
+            postgres_config: None,
+            redis_config: None,
+            qdrant_config: None,
+            enable_redis_cache: false,
+            enable_vector_search: false,
+        };
+        let manager = DatabaseManager::new(config).await.unwrap();
+
+        // Act
+        let result = manager.qdrant();
+
+        // Assert
+        assert!(result.is_none());
+    }
+
+    #[tokio::test]
+    async fn test_database_manager_close() {
+        init_test_env();
+
+        // Arrange
+        let config = DatabaseManagerConfig {
+            postgres_config: None,
+            redis_config: None,
+            qdrant_config: None,
+            enable_redis_cache: false,
+            enable_vector_search: false,
+        };
+        let mut manager = DatabaseManager::new(config).await.unwrap();
+
+        // Act
+        let result = manager.close().await;
+
+        // Assert
+        assert!(result.is_ok());
+        assert!(manager.postgres_pool.is_none());
+        assert!(manager.redis_backend.is_none());
+        assert!(manager.qdrant_backend.is_none());
+    }
+
+    #[tokio::test]
+    async fn test_database_manager_health_check_no_connections() {
+        init_test_env();
+
+        // Arrange
+        let config = DatabaseManagerConfig {
+            postgres_config: None,
+            redis_config: None,
+            qdrant_config: None,
+            enable_redis_cache: false,
+            enable_vector_search: false,
+        };
+        let manager = DatabaseManager::new(config).await.unwrap();
+
+        // Act
+        let result = manager.health_check().await;
+
+        // Assert
+        assert!(!result.postgres_healthy);
+        assert!(!result.redis_healthy);
+        assert!(!result.qdrant_healthy);
+        assert!(result.postgres_error.is_some());
+        assert!(result.redis_error.is_some());
+        assert!(result.qdrant_error.is_some());
+
+        // 验证错误消息
+        if let Some(pg_error) = &result.postgres_error {
+            assert!(pg_error.contains("未初始化"));
+        }
+        if let Some(redis_error) = &result.redis_error {
+            assert!(redis_error.contains("未启用"));
+        }
+        if let Some(qdrant_error) = &result.qdrant_error {
+            assert!(qdrant_error.contains("未启用"));
+        }
+    }
+
+    // ===== 错误场景测试 =====
+
+    #[tokio::test]
+    async fn test_database_manager_new_invalid_postgres_config() {
+        init_test_env();
+
+        // Arrange
+        let invalid_config = DatabaseConfig::postgresql("invalid://connection/string");
+        let config = DatabaseManagerConfig {
+            postgres_config: Some(invalid_config),
+            redis_config: None,
+            qdrant_config: None,
+            enable_redis_cache: false,
+            enable_vector_search: false,
+        };
+
+        // Act
+        let result = DatabaseManager::new(config).await;
+
+        // Assert
+        assert!(result.is_err());
+        if let Err(DatabaseError::ConnectionError(msg)) = result {
+            assert!(msg.contains("解析PostgreSQL连接字符串失败"));
+        } else {
+            panic!("期望连接错误，得到: {:?}", result);
+        }
+    }
+
+    // ===== 边界条件测试 =====
+
+    #[test]
+    fn test_database_manager_config_from_env_empty_strings() {
+        init_test_env();
+
+        // Arrange
+        std::env::set_var("DATABASE_URL", "");
+        std::env::set_var("REDIS_URL", "");
+        std::env::set_var("QDRANT_URL", "");
+
+        // Act
+        let config = DatabaseManagerConfig::from_env();
+
+        // Assert - 空字符串也会被使用
+        assert!(config.postgres_config.is_some());
+        assert!(config.redis_config.is_some());
+        assert!(config.qdrant_config.is_some());
+
+        // Cleanup
+        std::env::remove_var("DATABASE_URL");
+        std::env::remove_var("REDIS_URL");
+        std::env::remove_var("QDRANT_URL");
+    }
+
+    #[test]
+    fn test_database_manager_config_postgres_only_empty_string() {
+        init_test_env();
+
+        // Arrange & Act
+        let config = DatabaseManagerConfig::postgres_only("");
+
+        // Assert
+        assert!(config.postgres_config.is_some());
+        if let Some(pg_config) = &config.postgres_config {
+            assert_eq!(pg_config.connection_string, "");
+        }
+    }
+
 }
 

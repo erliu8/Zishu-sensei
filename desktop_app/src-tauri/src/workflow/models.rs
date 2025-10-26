@@ -647,11 +647,13 @@ impl Workflow {
         let mut order = Vec::new();
         let mut visited = std::collections::HashSet::new();
 
+        // 只对未访问的步骤进行拓扑排序
         for step in &self.steps {
-            self.topological_sort(&step.id, &mut visited, &mut order)?;
+            if !visited.contains(&step.id) {
+                self.topological_sort(&step.id, &mut visited, &mut order)?;
+            }
         }
 
-        order.reverse();
         Ok(order)
     }
 
@@ -675,6 +677,602 @@ impl Workflow {
 
         order.push(step_id.to_string());
         Ok(())
+    }
+}
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+    use serde_json::json;
+    use std::collections::HashMap;
+
+    // ================================
+    // 工作流验证测试
+    // ================================
+
+    #[test]
+    fn test_workflow_validate_empty_name() {
+        // Arrange
+        let mut workflow = create_test_workflow();
+        workflow.name = String::new();
+
+        // Act
+        let result = workflow.validate();
+
+        // Assert
+        assert!(result.is_err());
+        assert_eq!(result.unwrap_err(), "工作流名称不能为空");
+    }
+
+    #[test]
+    fn test_workflow_validate_empty_steps() {
+        // Arrange
+        let mut workflow = create_test_workflow();
+        workflow.steps = Vec::new();
+
+        // Act
+        let result = workflow.validate();
+
+        // Assert
+        assert!(result.is_err());
+        assert_eq!(result.unwrap_err(), "工作流至少需要一个步骤");
+    }
+
+    #[test]
+    fn test_workflow_validate_invalid_dependency() {
+        // Arrange
+        let mut workflow = create_test_workflow();
+        workflow.steps[0].depends_on = vec!["non_existent_step".to_string()];
+
+        // Act
+        let result = workflow.validate();
+
+        // Assert
+        assert!(result.is_err());
+        let error_msg = result.unwrap_err();
+        assert!(error_msg.contains("依赖的步骤"));
+        assert!(error_msg.contains("不存在"));
+    }
+
+    #[test]
+    fn test_workflow_validate_circular_dependency() {
+        // Arrange
+        let mut workflow = Workflow {
+            id: "test-workflow".to_string(),
+            name: "Test Workflow".to_string(),
+            description: Some("Test workflow with circular dependency".to_string()),
+            version: "1.0".to_string(),
+            status: WorkflowStatus::Draft,
+            steps: vec![
+                WorkflowStep {
+                    id: "step1".to_string(),
+                    name: "Step 1".to_string(),
+                    step_type: "test".to_string(),
+                    description: None,
+                    config: None,
+                    inputs: None,
+                    outputs: None,
+                    condition: None,
+                    error_handling: None,
+                    retry_count: None,
+                    timeout: None,
+                    depends_on: vec!["step2".to_string()],
+                    allow_failure: false,
+                },
+                WorkflowStep {
+                    id: "step2".to_string(),
+                    name: "Step 2".to_string(),
+                    step_type: "test".to_string(),
+                    description: None,
+                    config: None,
+                    inputs: None,
+                    outputs: None,
+                    condition: None,
+                    error_handling: None,
+                    retry_count: None,
+                    timeout: None,
+                    depends_on: vec!["step1".to_string()],
+                    allow_failure: false,
+                },
+            ],
+            config: WorkflowConfig::default(),
+            trigger: None,
+            tags: vec![],
+            category: "test".to_string(),
+            is_template: false,
+            template_id: None,
+            created_at: 0,
+            updated_at: 0,
+        };
+
+        // Act
+        let result = workflow.validate();
+
+        // Assert
+        assert!(result.is_err());
+        assert_eq!(result.unwrap_err(), "工作流存在循环依赖");
+    }
+
+    #[test]
+    fn test_workflow_validate_success() {
+        // Arrange
+        let workflow = create_test_workflow();
+
+        // Act
+        let result = workflow.validate();
+
+        // Assert
+        assert!(result.is_ok());
+    }
+
+    // ================================
+    // 执行顺序测试
+    // ================================
+
+    #[test]
+    fn test_workflow_get_execution_order_single_step() {
+        // Arrange
+        let workflow = Workflow {
+            id: "test-workflow".to_string(),
+            name: "Test Workflow".to_string(),
+            description: None,
+            version: "1.0".to_string(),
+            status: WorkflowStatus::Draft,
+            steps: vec![WorkflowStep {
+                id: "step1".to_string(),
+                name: "Step 1".to_string(),
+                step_type: "test".to_string(),
+                description: None,
+                config: None,
+                inputs: None,
+                outputs: None,
+                condition: None,
+                error_handling: None,
+                retry_count: None,
+                timeout: None,
+                depends_on: vec![],
+                allow_failure: false,
+            }],
+            config: WorkflowConfig::default(),
+            trigger: None,
+            tags: vec![],
+            category: "test".to_string(),
+            is_template: false,
+            template_id: None,
+            created_at: 0,
+            updated_at: 0,
+        };
+
+        // Act
+        let result = workflow.get_execution_order();
+
+        // Assert
+        assert!(result.is_ok());
+        let order = result.unwrap();
+        assert_eq!(order, vec!["step1"]);
+    }
+
+    #[test]
+    fn test_workflow_get_execution_order_with_dependencies() {
+        // Arrange
+        let workflow = Workflow {
+            id: "test-workflow".to_string(),
+            name: "Test Workflow".to_string(),
+            description: None,
+            version: "1.0".to_string(),
+            status: WorkflowStatus::Draft,
+            steps: vec![
+                WorkflowStep {
+                    id: "step2".to_string(),
+                    name: "Step 2".to_string(),
+                    step_type: "test".to_string(),
+                    description: None,
+                    config: None,
+                    inputs: None,
+                    outputs: None,
+                    condition: None,
+                    error_handling: None,
+                    retry_count: None,
+                    timeout: None,
+                    depends_on: vec!["step1".to_string()],
+                    allow_failure: false,
+                },
+                WorkflowStep {
+                    id: "step1".to_string(),
+                    name: "Step 1".to_string(),
+                    step_type: "test".to_string(),
+                    description: None,
+                    config: None,
+                    inputs: None,
+                    outputs: None,
+                    condition: None,
+                    error_handling: None,
+                    retry_count: None,
+                    timeout: None,
+                    depends_on: vec![],
+                    allow_failure: false,
+                },
+                WorkflowStep {
+                    id: "step3".to_string(),
+                    name: "Step 3".to_string(),
+                    step_type: "test".to_string(),
+                    description: None,
+                    config: None,
+                    inputs: None,
+                    outputs: None,
+                    condition: None,
+                    error_handling: None,
+                    retry_count: None,
+                    timeout: None,
+                    depends_on: vec!["step1".to_string(), "step2".to_string()],
+                    allow_failure: false,
+                },
+            ],
+            config: WorkflowConfig::default(),
+            trigger: None,
+            tags: vec![],
+            category: "test".to_string(),
+            is_template: false,
+            template_id: None,
+            created_at: 0,
+            updated_at: 0,
+        };
+
+        // Act
+        let result = workflow.get_execution_order();
+
+        // Assert
+        assert!(result.is_ok());
+        let order = result.unwrap();
+        assert_eq!(order[0], "step1"); // 第一个应该是没有依赖的步骤
+        assert_eq!(order[1], "step2"); // 第二个应该是依赖step1的步骤
+        assert_eq!(order[2], "step3"); // 第三个应该是依赖step1和step2的步骤
+    }
+
+    // ================================
+    // 序列化测试
+    // ================================
+
+    #[test]
+    fn test_workflow_serialization() {
+        // Arrange
+        let workflow = create_test_workflow();
+
+        // Act - 序列化
+        let serialized = serde_json::to_string(&workflow);
+        assert!(serialized.is_ok());
+
+        // Act - 反序列化
+        let deserialized: Result<Workflow, _> = serde_json::from_str(&serialized.unwrap());
+
+        // Assert
+        assert!(deserialized.is_ok());
+        let workflow_copy = deserialized.unwrap();
+        assert_eq!(workflow.id, workflow_copy.id);
+        assert_eq!(workflow.name, workflow_copy.name);
+        assert_eq!(workflow.version, workflow_copy.version);
+        assert_eq!(workflow.steps.len(), workflow_copy.steps.len());
+    }
+
+    #[test]
+    fn test_workflow_step_serialization() {
+        // Arrange
+        let step = create_test_step();
+
+        // Act - 序列化
+        let serialized = serde_json::to_string(&step);
+        assert!(serialized.is_ok());
+
+        // Act - 反序列化
+        let deserialized: Result<WorkflowStep, _> = serde_json::from_str(&serialized.unwrap());
+
+        // Assert
+        assert!(deserialized.is_ok());
+        let step_copy = deserialized.unwrap();
+        assert_eq!(step.id, step_copy.id);
+        assert_eq!(step.name, step_copy.name);
+        assert_eq!(step.step_type, step_copy.step_type);
+    }
+
+    // ================================
+    // 工作流配置测试
+    // ================================
+
+    #[test]
+    fn test_workflow_config_default() {
+        // Act
+        let config = WorkflowConfig::default();
+
+        // Assert
+        assert_eq!(config.error_strategy, ErrorStrategy::Stop);
+        assert!(config.timeout.is_none());
+        assert!(config.max_concurrent.is_none());
+        assert!(config.retry_config.is_none());
+    }
+
+    #[test]
+    fn test_error_strategy_serialization() {
+        // Test all variants
+        let strategies = vec![
+            ErrorStrategy::Stop,
+            ErrorStrategy::Continue,
+            ErrorStrategy::Retry,
+            ErrorStrategy::Rollback,
+        ];
+
+        for strategy in strategies {
+            let serialized = serde_json::to_string(&strategy).unwrap();
+            let deserialized: ErrorStrategy = serde_json::from_str(&serialized).unwrap();
+            assert_eq!(strategy, deserialized);
+        }
+    }
+
+    // ================================
+    // 工作流导出测试
+    // ================================
+
+    #[test]
+    fn test_workflow_export_creation() {
+        // Arrange
+        let workflows = vec![create_test_workflow()];
+        let templates = vec![create_test_template()];
+
+        // Act
+        let export = WorkflowExport::new(workflows.clone(), templates.clone());
+
+        // Assert
+        assert_eq!(export.format_version, WorkflowExport::CURRENT_VERSION);
+        assert_eq!(export.workflows.len(), 1);
+        assert_eq!(export.templates.len(), 1);
+        assert!(export.exported_at > 0);
+    }
+
+    #[test]
+    fn test_workflow_export_serialization() {
+        // Arrange
+        let workflows = vec![create_test_workflow()];
+        let templates = vec![create_test_template()];
+        let export = WorkflowExport::new(workflows, templates);
+
+        // Act - 序列化
+        let serialized = serde_json::to_string(&export);
+        assert!(serialized.is_ok());
+
+        // Act - 反序列化
+        let deserialized: Result<WorkflowExport, _> = serde_json::from_str(&serialized.unwrap());
+
+        // Assert
+        assert!(deserialized.is_ok());
+        let export_copy = deserialized.unwrap();
+        assert_eq!(export.format_version, export_copy.format_version);
+        assert_eq!(export.workflows.len(), export_copy.workflows.len());
+        assert_eq!(export.templates.len(), export_copy.templates.len());
+    }
+
+    // ================================
+    // 枚举测试
+    // ================================
+
+    #[test]
+    fn test_workflow_status_serialization() {
+        let statuses = vec![
+            WorkflowStatus::Draft,
+            WorkflowStatus::Published,
+            WorkflowStatus::Archived,
+            WorkflowStatus::Disabled,
+        ];
+
+        for status in statuses {
+            let serialized = serde_json::to_string(&status).unwrap();
+            let deserialized: WorkflowStatus = serde_json::from_str(&serialized).unwrap();
+            assert_eq!(status, deserialized);
+        }
+    }
+
+    #[test]
+    fn test_execution_status_serialization() {
+        let statuses = vec![
+            ExecutionStatus::Pending,
+            ExecutionStatus::Running,
+            ExecutionStatus::Paused,
+            ExecutionStatus::Completed,
+            ExecutionStatus::Failed,
+            ExecutionStatus::Cancelled,
+        ];
+
+        for status in statuses {
+            let serialized = serde_json::to_string(&status).unwrap();
+            let deserialized: ExecutionStatus = serde_json::from_str(&serialized).unwrap();
+            assert_eq!(status, deserialized);
+        }
+    }
+
+    #[test]
+    fn test_step_execution_status_serialization() {
+        let statuses = vec![
+            StepExecutionStatus::Pending,
+            StepExecutionStatus::Running,
+            StepExecutionStatus::Completed,
+            StepExecutionStatus::Failed,
+            StepExecutionStatus::Skipped,
+        ];
+
+        for status in statuses {
+            let serialized = serde_json::to_string(&status).unwrap();
+            let deserialized: StepExecutionStatus = serde_json::from_str(&serialized).unwrap();
+            assert_eq!(status, deserialized);
+        }
+    }
+
+    // ================================
+    // 步骤配置测试
+    // ================================
+
+    #[test]
+    fn test_chat_step_config_serialization() {
+        // Arrange
+        let config = ChatStepConfig {
+            prompt: "Test prompt".to_string(),
+            model: Some("gpt-3.5-turbo".to_string()),
+            temperature: Some(0.7),
+            max_tokens: Some(1000),
+            system_prompt: Some("You are a helpful assistant".to_string()),
+        };
+
+        // Act
+        let serialized = serde_json::to_string(&config).unwrap();
+        let deserialized: ChatStepConfig = serde_json::from_str(&serialized).unwrap();
+
+        // Assert
+        assert_eq!(config.prompt, deserialized.prompt);
+        assert_eq!(config.model, deserialized.model);
+        assert_eq!(config.temperature, deserialized.temperature);
+        assert_eq!(config.max_tokens, deserialized.max_tokens);
+    }
+
+    #[test]
+    fn test_loop_step_config_serialization() {
+        // Arrange
+        let config = LoopStepConfig {
+            loop_type: LoopType::ForEach,
+            items: Some(json!(["item1", "item2", "item3"])),
+            item_name: "item".to_string(),
+            condition: Some("item != null".to_string()),
+            max_iterations: Some(10),
+            body_steps: vec!["step1".to_string(), "step2".to_string()],
+        };
+
+        // Act
+        let serialized = serde_json::to_string(&config).unwrap();
+        let deserialized: LoopStepConfig = serde_json::from_str(&serialized).unwrap();
+
+        // Assert
+        assert_eq!(config.loop_type, deserialized.loop_type);
+        assert_eq!(config.item_name, deserialized.item_name);
+        assert_eq!(config.body_steps, deserialized.body_steps);
+    }
+
+    #[test]
+    fn test_parallel_step_config_serialization() {
+        // Arrange
+        let config = ParallelStepConfig {
+            tasks: vec![ParallelTask {
+                id: "task1".to_string(),
+                name: "Task 1".to_string(),
+                steps: vec![create_test_step()],
+            }],
+            max_concurrent: Some(5),
+            failure_strategy: ParallelFailureStrategy::FailFast,
+        };
+
+        // Act
+        let serialized = serde_json::to_string(&config).unwrap();
+        let deserialized: ParallelStepConfig = serde_json::from_str(&serialized).unwrap();
+
+        // Assert
+        assert_eq!(config.tasks.len(), deserialized.tasks.len());
+        assert_eq!(config.max_concurrent, deserialized.max_concurrent);
+        assert_eq!(config.failure_strategy, deserialized.failure_strategy);
+    }
+
+    // ================================
+    // 辅助函数
+    // ================================
+
+    fn create_test_workflow() -> Workflow {
+        Workflow {
+            id: "test-workflow-1".to_string(),
+            name: "Test Workflow".to_string(),
+            description: Some("A test workflow for unit tests".to_string()),
+            version: "1.0.0".to_string(),
+            status: WorkflowStatus::Draft,
+            steps: vec![create_test_step()],
+            config: WorkflowConfig {
+                timeout: Some(3600),
+                max_concurrent: Some(5),
+                error_strategy: ErrorStrategy::Stop,
+                retry_config: Some(RetryConfig {
+                    max_attempts: 3,
+                    interval: 5,
+                    backoff: BackoffStrategy::Exponential,
+                    retry_on: vec!["timeout".to_string(), "connection_error".to_string()],
+                }),
+                notification: None,
+                variables: Some({
+                    let mut vars = HashMap::new();
+                    vars.insert("test_var".to_string(), VariableDefinition {
+                        var_type: "string".to_string(),
+                        default: Some(JsonValue::String("default_value".to_string())),
+                        required: false,
+                        description: Some("Test variable".to_string()),
+                    });
+                    vars
+                }),
+                environment: None,
+                custom: None,
+            },
+            trigger: Some(WorkflowTrigger {
+                trigger_type: "manual".to_string(),
+                config: None,
+            }),
+            tags: vec!["test".to_string(), "workflow".to_string()],
+            category: "testing".to_string(),
+            is_template: false,
+            template_id: None,
+            created_at: 1640995200, // 2022-01-01 00:00:00 UTC
+            updated_at: 1640995200,
+        }
+    }
+
+    fn create_test_step() -> WorkflowStep {
+        WorkflowStep {
+            id: "test-step-1".to_string(),
+            name: "Test Step".to_string(),
+            step_type: "chat".to_string(),
+            description: Some("A test step for unit tests".to_string()),
+            config: Some(json!({
+                "prompt": "Hello, world!",
+                "model": "gpt-3.5-turbo",
+                "temperature": 0.7
+            })),
+            inputs: Some({
+                let mut inputs = HashMap::new();
+                inputs.insert("input1".to_string(), JsonValue::String("value1".to_string()));
+                inputs
+            }),
+            outputs: Some({
+                let mut outputs = HashMap::new();
+                outputs.insert("output1".to_string(), "result".to_string());
+                outputs
+            }),
+            condition: Some("input1 != null".to_string()),
+            error_handling: Some("retry".to_string()),
+            retry_count: Some(3),
+            timeout: Some(300),
+            depends_on: vec![],
+            allow_failure: false,
+        }
+    }
+
+    fn create_test_template() -> WorkflowTemplate {
+        WorkflowTemplate {
+            id: "test-template-1".to_string(),
+            name: "Test Template".to_string(),
+            description: Some("A test template for unit tests".to_string()),
+            template_type: "general".to_string(),
+            workflow: create_test_workflow(),
+            parameters: vec![TemplateParameter {
+                name: "test_param".to_string(),
+                param_type: "string".to_string(),
+                default: Some(JsonValue::String("default".to_string())),
+                required: false,
+                description: Some("Test parameter".to_string()),
+                validation: None,
+            }],
+            tags: vec!["test".to_string(), "template".to_string()],
+            created_at: 1640995200,
+            updated_at: 1640995200,
+        }
     }
 }
 

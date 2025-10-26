@@ -916,3 +916,492 @@ impl PerformanceDatabase {
         }
     }
 }
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+    use chrono::Utc;
+    use serde_json;
+
+    /// 创建测试用的性能指标
+    fn create_test_metric() -> PerformanceMetric {
+        PerformanceMetric {
+            id: Some(1),
+            metric_name: "cpu_usage".to_string(),
+            value: 75.5,
+            metric_value: 75.5,
+            unit: "percent".to_string(),
+            category: "system".to_string(),
+            component: "cpu".to_string(),
+            metadata: Some(r#"{"core": 1}"#.to_string()),
+            timestamp: Utc::now().timestamp(),
+        }
+    }
+
+    /// 创建测试用的性能快照
+    fn create_test_snapshot() -> PerformanceSnapshot {
+        PerformanceSnapshot {
+            id: Some(1),
+            timestamp: Utc::now().timestamp(),
+            cpu_usage: 75.5,
+            memory_usage: 60.2,
+            memory_used_mb: 4096.0,
+            memory_total_mb: 8192.0,
+            disk_usage: 45.8,
+            network_in: 1024.0,
+            network_out: 512.0,
+            load_average: 1.5,
+            thread_count: 150,
+            open_files: 500,
+            render_time: 16.7,
+            fps: 60.0,
+            heap_size: 256.0,
+            gc_time: 5.2,
+            app_state: "active".to_string(),
+            active_connections: 25,
+        }
+    }
+
+    /// 创建测试用的性能警告
+    fn create_test_alert() -> PerformanceAlert {
+        PerformanceAlert {
+            id: 1,
+            alert_type: "threshold".to_string(),
+            component: "cpu".to_string(),
+            metric_name: "cpu_usage".to_string(),
+            threshold: 80.0,
+            actual_value: 85.2,
+            current_value: 85.2,
+            severity: "warning".to_string(),
+            message: "CPU使用率过高".to_string(),
+            duration: 300,
+            metadata: Some(r#"{"alert_id": "cpu_high"}"#.to_string()),
+            resolved: false,
+            resolved_at: None,
+            timestamp: Utc::now().timestamp(),
+        }
+    }
+
+    /// 创建测试用的网络指标
+    fn create_test_network_metric() -> NetworkMetric {
+        NetworkMetric {
+            id: Some(1),
+            timestamp: Utc::now().timestamp(),
+            bytes_sent: 1024,
+            bytes_received: 2048,
+            packets_sent: 10,
+            packets_received: 15,
+            method: "GET".to_string(),
+            url: "https://api.example.com/test".to_string(),
+            status_code: 200,
+            request_size: 256,
+            response_size: 1024,
+            total_time: 123.45,
+            dns_time: 5.2,
+            connect_time: 15.8,
+            ssl_time: 25.6,
+            send_time: 2.1,
+            wait_time: 70.5,
+            receive_time: 4.25,
+            error_message: None,
+            error_type: None,
+        }
+    }
+
+    /// 创建测试用的用户操作
+    fn create_test_user_operation() -> UserOperation {
+        UserOperation {
+            id: 1,
+            user_id: "test_user".to_string(),
+            operation: "click_button".to_string(),
+            operation_type: "ui_interaction".to_string(),
+            target_element: "submit_button".to_string(),
+            start_time: Utc::now().timestamp(),
+            end_time: Utc::now().timestamp() + 1,
+            duration_ms: 1000,
+            response_time: 1000.0,
+            success: true,
+            error_message: None,
+            metadata: Some(r#"{"page": "home"}"#.to_string()),
+            timestamp: Utc::now().timestamp(),
+        }
+    }
+
+    // ================================
+    // 数据结构测试
+    // ================================
+
+    #[test]
+    fn test_performance_metric_serialization() {
+        let metric = create_test_metric();
+        
+        // 测试序列化
+        let json = serde_json::to_string(&metric).expect("序列化失败");
+        assert!(json.contains("cpu_usage"));
+        assert!(json.contains("75.5"));
+        
+        // 测试反序列化
+        let deserialized: PerformanceMetric = serde_json::from_str(&json).expect("反序列化失败");
+        assert_eq!(deserialized.metric_name, "cpu_usage");
+        assert_eq!(deserialized.value, 75.5);
+    }
+
+    #[test]
+    fn test_performance_alert_serialization() {
+        let alert = create_test_alert();
+        
+        let json = serde_json::to_string(&alert).expect("序列化失败");
+        assert!(json.contains("threshold"));
+        assert!(json.contains("85.2"));
+        assert!(json.contains("CPU使用率过高"));
+        
+        let deserialized: PerformanceAlert = serde_json::from_str(&json).expect("反序列化失败");
+        assert_eq!(deserialized.alert_type, "threshold");
+        assert_eq!(deserialized.actual_value, 85.2);
+    }
+
+    #[test]
+    fn test_performance_snapshot_serialization() {
+        let snapshot = create_test_snapshot();
+        
+        let json = serde_json::to_string(&snapshot).expect("序列化失败");
+        assert!(json.contains("cpu_usage"));
+        assert!(json.contains("memory_usage"));
+        
+        let deserialized: PerformanceSnapshot = serde_json::from_str(&json).expect("反序列化失败");
+        assert_eq!(deserialized.cpu_usage, 75.5);
+        assert_eq!(deserialized.memory_usage, 60.2);
+    }
+
+    #[test]
+    fn test_network_metric_serialization() {
+        let metric = create_test_network_metric();
+        
+        let json = serde_json::to_string(&metric).expect("序列化失败");
+        assert!(json.contains("GET"));
+        assert!(json.contains("api.example.com"));
+        
+        let deserialized: NetworkMetric = serde_json::from_str(&json).expect("反序列化失败");
+        assert_eq!(deserialized.method, "GET");
+        assert_eq!(deserialized.status_code, 200);
+    }
+
+    #[test]
+    fn test_user_operation_serialization() {
+        let operation = create_test_user_operation();
+        
+        let json = serde_json::to_string(&operation).expect("序列化失败");
+        assert!(json.contains("click_button"));
+        assert!(json.contains("test_user"));
+        
+        let deserialized: UserOperation = serde_json::from_str(&json).expect("反序列化失败");
+        assert_eq!(deserialized.operation, "click_button");
+        assert_eq!(deserialized.user_id, "test_user");
+    }
+
+    // ================================
+    // PerformanceDatabase测试（无数据库依赖）
+    // ================================
+
+    #[test]
+    fn test_performance_database_new() {
+        let temp_path = std::path::Path::new("/tmp/test_performance.db");
+        let result = PerformanceDatabase::new(temp_path);
+        assert!(result.is_ok());
+        
+        let db = result.unwrap();
+        // 检查实例是否正确创建（没有连接池时）
+        assert!(db.pool.is_none());
+    }
+
+    #[test]
+    fn test_calculate_stats_empty() {
+        let temp_path = std::path::Path::new("/tmp/test_performance.db");
+        let db = PerformanceDatabase::new(temp_path).unwrap();
+        
+        let empty_metrics = vec![];
+        let stats = db.calculate_stats(&empty_metrics).unwrap();
+        
+        assert_eq!(stats.avg_response_time, 0.0);
+        assert_eq!(stats.max_response_time, 0.0);
+        assert_eq!(stats.min_response_time, 0.0);
+        assert_eq!(stats.total_requests, 0);
+        assert_eq!(stats.error_count, 0);
+    }
+
+    #[test]
+    fn test_calculate_stats_with_data() {
+        let temp_path = std::path::Path::new("/tmp/test_performance.db");
+        let db = PerformanceDatabase::new(temp_path).unwrap();
+        
+        let metrics = vec![
+            PerformanceMetric { value: 10.0, ..create_test_metric() },
+            PerformanceMetric { value: 20.0, ..create_test_metric() },
+            PerformanceMetric { value: 30.0, ..create_test_metric() },
+        ];
+        
+        let stats = db.calculate_stats(&metrics).unwrap();
+        
+        assert_eq!(stats.avg_response_time, 20.0);
+        assert_eq!(stats.max_response_time, 30.0);
+        assert_eq!(stats.min_response_time, 10.0);
+        assert_eq!(stats.total_requests, 3);
+        assert_eq!(stats.error_count, 0);
+    }
+
+    #[test]
+    fn test_calculate_stats_single_value() {
+        let temp_path = std::path::Path::new("/tmp/test_performance.db");
+        let db = PerformanceDatabase::new(temp_path).unwrap();
+        
+        let metrics = vec![
+            PerformanceMetric { value: 42.5, ..create_test_metric() },
+        ];
+        
+        let stats = db.calculate_stats(&metrics).unwrap();
+        
+        assert_eq!(stats.avg_response_time, 42.5);
+        assert_eq!(stats.max_response_time, 42.5);
+        assert_eq!(stats.min_response_time, 42.5);
+        assert_eq!(stats.total_requests, 1);
+    }
+
+    // ================================
+    // 边界条件和错误处理测试
+    // ================================
+
+    #[test]
+    fn test_performance_metric_default_values() {
+        let mut metric = create_test_metric();
+        metric.metadata = None;
+        
+        let json = serde_json::to_string(&metric).expect("序列化失败");
+        let deserialized: PerformanceMetric = serde_json::from_str(&json).expect("反序列化失败");
+        
+        assert!(deserialized.metadata.is_none());
+    }
+
+    #[test]
+    fn test_performance_alert_resolved_state() {
+        let mut alert = create_test_alert();
+        alert.resolved = true;
+        alert.resolved_at = Some(Utc::now().timestamp());
+        
+        let json = serde_json::to_string(&alert).expect("序列化失败");
+        let deserialized: PerformanceAlert = serde_json::from_str(&json).expect("反序列化失败");
+        
+        assert!(deserialized.resolved);
+        assert!(deserialized.resolved_at.is_some());
+    }
+
+    #[test]
+    fn test_network_metric_with_error() {
+        let mut metric = create_test_network_metric();
+        metric.status_code = 500;
+        metric.error_message = Some("Internal Server Error".to_string());
+        metric.error_type = Some("http_error".to_string());
+        
+        let json = serde_json::to_string(&metric).expect("序列化失败");
+        let deserialized: NetworkMetric = serde_json::from_str(&json).expect("反序列化失败");
+        
+        assert_eq!(deserialized.status_code, 500);
+        assert_eq!(deserialized.error_message, Some("Internal Server Error".to_string()));
+        assert_eq!(deserialized.error_type, Some("http_error".to_string()));
+    }
+
+    #[test]
+    fn test_user_operation_failure() {
+        let mut operation = create_test_user_operation();
+        operation.success = false;
+        operation.error_message = Some("操作超时".to_string());
+        
+        let json = serde_json::to_string(&operation).expect("序列化失败");
+        let deserialized: UserOperation = serde_json::from_str(&json).expect("反序列化失败");
+        
+        assert!(!deserialized.success);
+        assert_eq!(deserialized.error_message, Some("操作超时".to_string()));
+    }
+
+    // ================================
+    // 性能基准测试（无数据库依赖）
+    // ================================
+
+    #[test]
+    fn test_metric_creation_performance() {
+        let start = std::time::Instant::now();
+        
+        // 创建1000个性能指标
+        for i in 0..1000 {
+            let mut metric = create_test_metric();
+            metric.value = i as f64;
+            metric.timestamp = Utc::now().timestamp() + i;
+        }
+        
+        let duration = start.elapsed();
+        assert!(duration.as_millis() < 100, "创建1000个指标耗时过长: {:?}", duration);
+    }
+
+    #[test]
+    fn test_serialization_performance() {
+        let metrics: Vec<PerformanceMetric> = (0..100)
+            .map(|i| {
+                let mut metric = create_test_metric();
+                metric.value = i as f64;
+                metric
+            })
+            .collect();
+        
+        let start = std::time::Instant::now();
+        
+        for metric in &metrics {
+            let _json = serde_json::to_string(metric).expect("序列化失败");
+        }
+        
+        let duration = start.elapsed();
+        assert!(duration.as_millis() < 50, "序列化100个指标耗时过长: {:?}", duration);
+    }
+
+    // ================================
+    // 业务逻辑测试
+    // ================================
+
+    #[test]
+    fn test_performance_stats_calculation_edge_cases() {
+        let temp_path = std::path::Path::new("/tmp/test_performance.db");
+        let db = PerformanceDatabase::new(temp_path).unwrap();
+        
+        // 测试包含负值的情况
+        let metrics = vec![
+            PerformanceMetric { value: -10.0, ..create_test_metric() },
+            PerformanceMetric { value: 0.0, ..create_test_metric() },
+            PerformanceMetric { value: 10.0, ..create_test_metric() },
+        ];
+        
+        let stats = db.calculate_stats(&metrics).unwrap();
+        
+        assert_eq!(stats.avg_response_time, 0.0);
+        assert_eq!(stats.max_response_time, 10.0);
+        assert_eq!(stats.min_response_time, -10.0);
+    }
+
+    #[test]
+    fn test_performance_stats_calculation_large_numbers() {
+        let temp_path = std::path::Path::new("/tmp/test_performance.db");
+        let db = PerformanceDatabase::new(temp_path).unwrap();
+        
+        let metrics = vec![
+            PerformanceMetric { value: 1e6, ..create_test_metric() },
+            PerformanceMetric { value: 2e6, ..create_test_metric() },
+            PerformanceMetric { value: 3e6, ..create_test_metric() },
+        ];
+        
+        let stats = db.calculate_stats(&metrics).unwrap();
+        
+        assert_eq!(stats.avg_response_time, 2e6);
+        assert_eq!(stats.max_response_time, 3e6);
+        assert_eq!(stats.min_response_time, 1e6);
+    }
+
+    // ================================
+    // 数据验证测试
+    // ================================
+
+    #[test]
+    fn test_metric_timestamp_validation() {
+        let metric = create_test_metric();
+        
+        // 时间戳应该是合理的（不能是未来时间）
+        let now = Utc::now().timestamp();
+        assert!(metric.timestamp <= now + 1); // 允许1秒的时间差
+        assert!(metric.timestamp > now - 3600); // 不应该太久之前
+    }
+
+    #[test]
+    fn test_performance_snapshot_values_range() {
+        let snapshot = create_test_snapshot();
+        
+        // CPU使用率应该在合理范围内
+        assert!(snapshot.cpu_usage >= 0.0 && snapshot.cpu_usage <= 100.0);
+        
+        // 内存使用率应该在合理范围内
+        assert!(snapshot.memory_usage >= 0.0 && snapshot.memory_usage <= 100.0);
+        
+        // 已使用内存不应该超过总内存
+        assert!(snapshot.memory_used_mb <= snapshot.memory_total_mb);
+        
+        // FPS应该是正数
+        assert!(snapshot.fps > 0.0);
+        
+        // 线程数和打开文件数应该是正数
+        assert!(snapshot.thread_count > 0);
+        assert!(snapshot.open_files > 0);
+    }
+
+    #[test]
+    fn test_network_metric_timing_validation() {
+        let metric = create_test_network_metric();
+        
+        // 总时间应该大于等于各个阶段时间的和
+        let sum_times = metric.dns_time + metric.connect_time + metric.ssl_time + 
+                       metric.send_time + metric.wait_time + metric.receive_time;
+        
+        // 允许一定的误差
+        assert!(metric.total_time >= sum_times - 1.0, 
+               "总时间 {} 应该大于等于各阶段时间和 {}", metric.total_time, sum_times);
+        
+        // 所有时间都应该是非负数
+        assert!(metric.dns_time >= 0.0);
+        assert!(metric.connect_time >= 0.0);
+        assert!(metric.ssl_time >= 0.0);
+        assert!(metric.send_time >= 0.0);
+        assert!(metric.wait_time >= 0.0);
+        assert!(metric.receive_time >= 0.0);
+    }
+
+    #[test]
+    fn test_user_operation_duration_consistency() {
+        let operation = create_test_user_operation();
+        
+        // 结束时间应该大于等于开始时间
+        assert!(operation.end_time >= operation.start_time);
+        
+        // 持续时间应该与时间戳一致
+        let expected_duration = (operation.end_time - operation.start_time) * 1000;
+        assert_eq!(operation.duration_ms, expected_duration);
+        
+        // 响应时间应该与持续时间一致
+        assert_eq!(operation.response_time, operation.duration_ms as f64);
+    }
+
+    // ================================
+    // JSON数据处理测试
+    // ================================
+
+    #[test]
+    fn test_metadata_json_parsing() {
+        let mut metric = create_test_metric();
+        metric.metadata = Some(r#"{"cpu_core": 2, "frequency": 2400, "temperature": 65.5}"#.to_string());
+        
+        // 测试复杂JSON的序列化
+        let json = serde_json::to_string(&metric).expect("序列化失败");
+        let deserialized: PerformanceMetric = serde_json::from_str(&json).expect("反序列化失败");
+        
+        assert!(deserialized.metadata.is_some());
+        let metadata = deserialized.metadata.unwrap();
+        assert!(metadata.contains("cpu_core"));
+        assert!(metadata.contains("2400"));
+        assert!(metadata.contains("65.5"));
+    }
+
+    #[test]
+    fn test_invalid_json_metadata() {
+        let mut metric = create_test_metric();
+        metric.metadata = Some("invalid json".to_string());
+        
+        // 即使metadata不是有效的JSON，也应该能序列化
+        let json = serde_json::to_string(&metric).expect("序列化失败");
+        let deserialized: PerformanceMetric = serde_json::from_str(&json).expect("反序列化失败");
+        
+        assert_eq!(deserialized.metadata, Some("invalid json".to_string()));
+    }
+}

@@ -752,14 +752,438 @@ impl AdapterRegistry {
 #[cfg(test)]
 mod tests {
     use super::*;
+    use std::collections::HashMap;
+    use chrono::{DateTime, Utc};
+    use mockall::predicate::*;
+    use tokio_test;
 
-    // 注意: PostgreSQL 测试需要实际的数据库连接
+    // ================================
+    // 枚举测试
+    // ================================
+
+    #[test]
+    fn test_adapter_install_status_display() {
+        assert_eq!(AdapterInstallStatus::Downloading.to_string(), "downloading");
+        assert_eq!(AdapterInstallStatus::Installing.to_string(), "installing");
+        assert_eq!(AdapterInstallStatus::Installed.to_string(), "installed");
+        assert_eq!(AdapterInstallStatus::InstallFailed.to_string(), "install_failed");
+        assert_eq!(AdapterInstallStatus::Updating.to_string(), "updating");
+        assert_eq!(AdapterInstallStatus::UpdateFailed.to_string(), "update_failed");
+        assert_eq!(AdapterInstallStatus::Uninstalling.to_string(), "uninstalling");
+        assert_eq!(AdapterInstallStatus::UninstallFailed.to_string(), "uninstall_failed");
+    }
+
+    #[test]
+    fn test_adapter_install_status_from_str() {
+        assert_eq!("downloading".parse::<AdapterInstallStatus>().unwrap(), AdapterInstallStatus::Downloading);
+        assert_eq!("installing".parse::<AdapterInstallStatus>().unwrap(), AdapterInstallStatus::Installing);
+        assert_eq!("installed".parse::<AdapterInstallStatus>().unwrap(), AdapterInstallStatus::Installed);
+        assert_eq!("install_failed".parse::<AdapterInstallStatus>().unwrap(), AdapterInstallStatus::InstallFailed);
+        assert_eq!("updating".parse::<AdapterInstallStatus>().unwrap(), AdapterInstallStatus::Updating);
+        assert_eq!("update_failed".parse::<AdapterInstallStatus>().unwrap(), AdapterInstallStatus::UpdateFailed);
+        assert_eq!("uninstalling".parse::<AdapterInstallStatus>().unwrap(), AdapterInstallStatus::Uninstalling);
+        assert_eq!("uninstall_failed".parse::<AdapterInstallStatus>().unwrap(), AdapterInstallStatus::UninstallFailed);
+    }
+
+    #[test]
+    fn test_adapter_install_status_from_str_invalid() {
+        let result = "invalid_status".parse::<AdapterInstallStatus>();
+        assert!(result.is_err());
+        assert_eq!(result.unwrap_err(), "未知的安装状态: invalid_status");
+    }
+
+    #[test]
+    fn test_adapter_install_status_partial_eq() {
+        assert_eq!(AdapterInstallStatus::Downloading, AdapterInstallStatus::Downloading);
+        assert_ne!(AdapterInstallStatus::Downloading, AdapterInstallStatus::Installing);
+        assert_ne!(AdapterInstallStatus::Installed, AdapterInstallStatus::InstallFailed);
+    }
+
+    // ================================
+    // 结构体序列化测试
+    // ================================
+
+    #[test]
+    fn test_installed_adapter_serialization() {
+        let adapter = create_test_adapter();
+        
+        // 测试序列化
+        let serialized = serde_json::to_string(&adapter).unwrap();
+        assert!(serialized.contains("test-adapter"));
+        assert!(serialized.contains("Test Adapter"));
+        
+        // 测试反序列化
+        let deserialized: InstalledAdapter = serde_json::from_str(&serialized).unwrap();
+        assert_eq!(deserialized.id, adapter.id);
+        assert_eq!(deserialized.name, adapter.name);
+        assert_eq!(deserialized.status, adapter.status);
+    }
+
+    #[test]
+    fn test_adapter_version_serialization() {
+        let version = AdapterVersion {
+            id: 1,
+            adapter_id: "test-adapter".to_string(),
+            version: "1.0.0".to_string(),
+            released_at: Utc::now(),
+            changelog: Some("Initial release".to_string()),
+            download_url: Some("https://example.com/adapter.zip".to_string()),
+            file_size: Some(1024),
+            checksum: Some("abc123".to_string()),
+            is_current: true,
+        };
+        
+        let serialized = serde_json::to_string(&version).unwrap();
+        let deserialized: AdapterVersion = serde_json::from_str(&serialized).unwrap();
+        assert_eq!(deserialized.adapter_id, version.adapter_id);
+        assert_eq!(deserialized.version, version.version);
+        assert_eq!(deserialized.is_current, version.is_current);
+    }
+
+    #[test]
+    fn test_adapter_dependency_serialization() {
+        let dependency = AdapterDependency {
+            id: 1,
+            adapter_id: "test-adapter".to_string(),
+            dependency_id: "required-lib".to_string(),
+            version_requirement: ">=1.0.0".to_string(),
+            required: true,
+        };
+        
+        let serialized = serde_json::to_string(&dependency).unwrap();
+        let deserialized: AdapterDependency = serde_json::from_str(&serialized).unwrap();
+        assert_eq!(deserialized.adapter_id, dependency.adapter_id);
+        assert_eq!(deserialized.dependency_id, dependency.dependency_id);
+        assert_eq!(deserialized.required, dependency.required);
+    }
+
+    #[test]
+    fn test_adapter_permission_serialization() {
+        let permission = AdapterPermission {
+            id: 1,
+            adapter_id: "test-adapter".to_string(),
+            permission_type: "file_read".to_string(),
+            granted: true,
+            granted_at: Some(Utc::now()),
+            description: Some("Read files from user directory".to_string()),
+        };
+        
+        let serialized = serde_json::to_string(&permission).unwrap();
+        let deserialized: AdapterPermission = serde_json::from_str(&serialized).unwrap();
+        assert_eq!(deserialized.adapter_id, permission.adapter_id);
+        assert_eq!(deserialized.permission_type, permission.permission_type);
+        assert_eq!(deserialized.granted, permission.granted);
+    }
+
+    // ================================
+    // 数据验证测试
+    // ================================
+
+    #[test]  
+    fn test_installed_adapter_config_handling() {
+        let mut config = HashMap::new();
+        config.insert("theme".to_string(), serde_json::Value::String("dark".to_string()));
+        config.insert("debug".to_string(), serde_json::Value::Bool(true));
+        config.insert("timeout".to_string(), serde_json::Value::Number(serde_json::Number::from(30)));
+        
+        let adapter = InstalledAdapter {
+            id: "test-adapter".to_string(),
+            name: "test_adapter".to_string(),
+            display_name: "Test Adapter".to_string(),
+            version: "1.0.0".to_string(),
+            install_path: "/path/to/adapter".to_string(),
+            status: AdapterInstallStatus::Installed,
+            enabled: true,
+            auto_update: true,
+            source: "market".to_string(),
+            source_id: Some("12345".to_string()),
+            description: Some("A test adapter".to_string()),
+            author: Some("Test Author".to_string()),
+            license: Some("MIT".to_string()),
+            homepage_url: Some("https://example.com".to_string()),
+            installed_at: Utc::now(),
+            updated_at: Utc::now(),
+            last_used_at: None,
+            config: config.clone(),
+            metadata: HashMap::new(),
+        };
+        
+        assert_eq!(adapter.config.get("theme").unwrap().as_str().unwrap(), "dark");
+        assert_eq!(adapter.config.get("debug").unwrap().as_bool().unwrap(), true);
+        assert_eq!(adapter.config.get("timeout").unwrap().as_i64().unwrap(), 30);
+    }
+
+    #[test]
+    fn test_installed_adapter_metadata_handling() {
+        let mut metadata = HashMap::new();
+        metadata.insert("capabilities".to_string(), 
+            serde_json::json!(["chat", "file_read", "network"]));
+        metadata.insert("compatibility".to_string(), 
+            serde_json::json!({"min_version": "0.1.0", "max_version": "1.0.0"}));
+        
+        let adapter = InstalledAdapter {
+            id: "test-adapter".to_string(),
+            name: "test_adapter".to_string(),
+            display_name: "Test Adapter".to_string(),
+            version: "1.0.0".to_string(),
+            install_path: "/path/to/adapter".to_string(),
+            status: AdapterInstallStatus::Installed,
+            enabled: true,
+            auto_update: true,
+            source: "market".to_string(),
+            source_id: Some("12345".to_string()),
+            description: None,
+            author: None,
+            license: None,
+            homepage_url: None,
+            installed_at: Utc::now(),
+            updated_at: Utc::now(),
+            last_used_at: None,
+            config: HashMap::new(),
+            metadata: metadata.clone(),
+        };
+        
+        let capabilities = adapter.metadata.get("capabilities").unwrap().as_array().unwrap();
+        assert_eq!(capabilities.len(), 3);
+        assert!(capabilities.contains(&serde_json::Value::String("chat".to_string())));
+    }
+
+    // ================================
+    // 边界条件测试
+    // ================================
+
+    #[test]
+    fn test_empty_config_and_metadata() {
+        let adapter = InstalledAdapter {
+            id: "minimal-adapter".to_string(),
+            name: "minimal".to_string(),
+            display_name: "Minimal Adapter".to_string(),
+            version: "0.1.0".to_string(),
+            install_path: "/minimal".to_string(),
+            status: AdapterInstallStatus::Installed,
+            enabled: false,
+            auto_update: false,
+            source: "file".to_string(),
+            source_id: None,
+            description: None,
+            author: None,
+            license: None,
+            homepage_url: None,
+            installed_at: Utc::now(),
+            updated_at: Utc::now(),
+            last_used_at: None,
+            config: HashMap::new(),
+            metadata: HashMap::new(),
+        };
+        
+        assert!(adapter.config.is_empty());
+        assert!(adapter.metadata.is_empty());
+        assert!(adapter.source_id.is_none());
+        assert!(adapter.description.is_none());
+    }
+
+    #[test]
+    fn test_adapter_version_without_optional_fields() {
+        let version = AdapterVersion {
+            id: 1,
+            adapter_id: "test-adapter".to_string(),
+            version: "1.0.0".to_string(),
+            released_at: Utc::now(),
+            changelog: None,
+            download_url: None,
+            file_size: None,
+            checksum: None,
+            is_current: false,
+        };
+        
+        assert!(version.changelog.is_none());
+        assert!(version.download_url.is_none());
+        assert!(version.file_size.is_none());
+        assert!(version.checksum.is_none());
+        assert!(!version.is_current);
+    }
+
+    #[test]
+    fn test_adapter_permission_without_optional_fields() {
+        let permission = AdapterPermission {
+            id: 1,
+            adapter_id: "test-adapter".to_string(),
+            permission_type: "network".to_string(),
+            granted: false,
+            granted_at: None,
+            description: None,
+        };
+        
+        assert!(!permission.granted);
+        assert!(permission.granted_at.is_none());
+        assert!(permission.description.is_none());
+    }
+
+    // ================================
+    // 日期时间处理测试
+    // ================================
+
+    #[test]
+    fn test_datetime_handling() {
+        let now = Utc::now();
+        let adapter = InstalledAdapter {
+            id: "datetime-test".to_string(),
+            name: "datetime_test".to_string(),
+            display_name: "DateTime Test".to_string(),
+            version: "1.0.0".to_string(),
+            install_path: "/path/to/adapter".to_string(),
+            status: AdapterInstallStatus::Installed,
+            enabled: true,
+            auto_update: true,
+            source: "market".to_string(),
+            source_id: None,
+            description: None,
+            author: None,
+            license: None,
+            homepage_url: None,
+            installed_at: now,
+            updated_at: now,
+            last_used_at: Some(now),
+            config: HashMap::new(),
+            metadata: HashMap::new(),
+        };
+        
+        assert_eq!(adapter.installed_at, now);
+        assert_eq!(adapter.updated_at, now);
+        assert_eq!(adapter.last_used_at.unwrap(), now);
+    }
+
+    // ================================
+    // 版本需求测试
+    // ================================
+
+    #[test]
+    fn test_version_requirement_formats() {
+        let test_cases = vec![
+            ">=1.0.0",
+            "^1.2.3",
+            "~1.2.0",
+            "1.0.0",
+            ">=1.0.0,<2.0.0",
+            "*",
+        ];
+        
+        for version_req in test_cases {
+            let dependency = AdapterDependency {
+                id: 1,
+                adapter_id: "test-adapter".to_string(),
+                dependency_id: "some-lib".to_string(),
+                version_requirement: version_req.to_string(),
+                required: true,
+            };
+            
+            assert_eq!(dependency.version_requirement, version_req);
+        }
+    }
+
+    #[test]
+    fn test_required_vs_optional_dependencies() {
+        let required_dep = AdapterDependency {
+            id: 1,
+            adapter_id: "test-adapter".to_string(),
+            dependency_id: "required-lib".to_string(),
+            version_requirement: ">=1.0.0".to_string(),
+            required: true,
+        };
+        
+        let optional_dep = AdapterDependency {
+            id: 2,
+            adapter_id: "test-adapter".to_string(),
+            dependency_id: "optional-lib".to_string(),
+            version_requirement: ">=1.0.0".to_string(),
+            required: false,
+        };
+        
+        assert!(required_dep.required);
+        assert!(!optional_dep.required);
+    }
+
+    // ================================
+    // 权限类型测试
+    // ================================
+
+    #[test]
+    fn test_permission_types() {
+        let permission_types = vec![
+            "file_read",
+            "file_write", 
+            "network",
+            "system",
+            "camera",
+            "microphone",
+            "location",
+            "notifications",
+        ];
+        
+        for perm_type in permission_types {
+            let permission = AdapterPermission {
+                id: 1,
+                adapter_id: "test-adapter".to_string(),
+                permission_type: perm_type.to_string(),
+                granted: false,
+                granted_at: None,
+                description: Some(format!("Permission for {}", perm_type)),
+            };
+            
+            assert_eq!(permission.permission_type, perm_type);
+            assert!(permission.description.unwrap().contains(perm_type));
+        }
+    }
+
+    // ================================
+    // 辅助函数
+    // ================================
+
+    fn create_test_adapter() -> InstalledAdapter {
+        let mut config = HashMap::new();
+        config.insert("debug".to_string(), serde_json::Value::Bool(false));
+        
+        let mut metadata = HashMap::new();
+        metadata.insert("version".to_string(), serde_json::Value::String("1.0.0".to_string()));
+        
+        InstalledAdapter {
+            id: "test-adapter".to_string(),
+            name: "test_adapter".to_string(),
+            display_name: "Test Adapter".to_string(),
+            version: "1.0.0".to_string(),
+            install_path: "/path/to/adapter".to_string(),
+            status: AdapterInstallStatus::Installed,
+            enabled: true,
+            auto_update: true,
+            source: "market".to_string(),
+            source_id: Some("12345".to_string()),
+            description: Some("A test adapter for unit testing".to_string()),
+            author: Some("Test Author".to_string()),
+            license: Some("MIT".to_string()),
+            homepage_url: Some("https://example.com/test-adapter".to_string()),
+            installed_at: Utc::now(),
+            updated_at: Utc::now(),
+            last_used_at: Some(Utc::now()),
+            config,
+            metadata,
+        }
+    }
+
+    // 注意: PostgreSQL 集成测试需要实际的数据库连接
     // 这些测试应该在集成测试中进行，而不是单元测试
     
     #[tokio::test]
     #[ignore] // 需要实际的 PostgreSQL 连接
-    async fn test_adapter_operations() {
+    async fn test_adapter_registry_integration() {
         // 这个测试需要实际的 PostgreSQL 数据库
         // 在运行前设置 DATABASE_URL 环境变量
+        // 
+        // 集成测试内容:
+        // - 数据库表初始化
+        // - 适配器 CRUD 操作
+        // - 版本管理
+        // - 依赖管理  
+        // - 权限管理
+        // - 复杂查询和边界情况
     }
 }

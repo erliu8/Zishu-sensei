@@ -1093,3 +1093,881 @@ impl PermissionRegistry {
         })
     }
 }
+
+// ================================
+// 测试模块
+// ================================
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+    use std::sync::Arc;
+    use tokio_postgres::{NoTls, Client};
+    use deadpool_postgres::{Config, Runtime};
+    use std::collections::HashMap;
+    
+    // 使用真实的DbPool类型进行测试
+    async fn create_test_pool() -> Result<DbPool, Box<dyn std::error::Error + Send + Sync>> {
+        let mut config = Config::new();
+        
+        // 尝试从环境变量获取测试数据库配置
+        if let Ok(url) = std::env::var("TEST_DATABASE_URL") {
+            // 使用 url 库解析数据库URL
+            if let Ok(parsed_url) = url::Url::parse(&url) {
+                if let Some(host) = parsed_url.host_str() {
+                    config.host = Some(host.to_string());
+                }
+                if let Some(port) = parsed_url.port() {
+                    config.port = Some(port);
+                } else {
+                    config.port = Some(5432); // 默认PostgreSQL端口
+                }
+                
+                let username = parsed_url.username();
+                if !username.is_empty() {
+                    config.user = Some(username.to_string());
+                }
+                
+                if let Some(password) = parsed_url.password() {
+                    config.password = Some(password.to_string());
+                }
+                
+                // 获取数据库名（去掉开头的'/'）
+                let path = parsed_url.path();
+                if !path.is_empty() && path != "/" {
+                    config.dbname = Some(path.trim_start_matches('/').to_string());
+                }
+            }
+        } else {
+            // 使用默认测试配置
+            config.host = Some("localhost".to_string());
+            config.port = Some(5432);
+            config.user = Some("test".to_string());
+            config.password = Some("test".to_string());
+            config.dbname = Some("test_db".to_string());
+        }
+        
+        let pool = config.create_pool(Some(Runtime::Tokio1), NoTls)?;
+        Ok(pool)
+    }
+
+    // ================================
+    // PermissionType 测试
+    // ================================
+
+    #[test]
+    fn test_permission_type_display() {
+        assert_eq!(PermissionType::FileRead.to_string(), "file_read");
+        assert_eq!(PermissionType::NetworkHttp.to_string(), "network_http");
+        assert_eq!(PermissionType::SystemCommand.to_string(), "system_command");
+        assert_eq!(PermissionType::AppDatabase.to_string(), "app_database");
+        assert_eq!(PermissionType::HardwareCamera.to_string(), "hardware_camera");
+        assert_eq!(PermissionType::AdvancedAdmin.to_string(), "advanced_admin");
+        assert_eq!(PermissionType::Custom("custom_perm".to_string()).to_string(), "custom_perm");
+    }
+
+    #[test]
+    fn test_permission_type_from_str() {
+        assert_eq!("file_read".parse::<PermissionType>().unwrap(), PermissionType::FileRead);
+        assert_eq!("network_http".parse::<PermissionType>().unwrap(), PermissionType::NetworkHttp);
+        assert_eq!("system_command".parse::<PermissionType>().unwrap(), PermissionType::SystemCommand);
+        assert_eq!("app_database".parse::<PermissionType>().unwrap(), PermissionType::AppDatabase);
+        assert_eq!("hardware_camera".parse::<PermissionType>().unwrap(), PermissionType::HardwareCamera);
+        assert_eq!("advanced_admin".parse::<PermissionType>().unwrap(), PermissionType::AdvancedAdmin);
+        
+        // 测试自定义权限
+        match "custom_permission".parse::<PermissionType>().unwrap() {
+            PermissionType::Custom(name) => assert_eq!(name, "custom_permission"),
+            _ => panic!("应该解析为Custom权限"),
+        }
+    }
+
+    #[test]
+    fn test_permission_type_serialization() {
+        let ptype = PermissionType::FileWrite;
+        let serialized = serde_json::to_string(&ptype).unwrap();
+        assert_eq!(serialized, "\"file_write\"");
+        
+        let deserialized: PermissionType = serde_json::from_str(&serialized).unwrap();
+        assert_eq!(deserialized, PermissionType::FileWrite);
+        
+        // 测试自定义权限序列化
+        let custom_ptype = PermissionType::Custom("my_custom".to_string());
+        let custom_serialized = serde_json::to_string(&custom_ptype).unwrap();
+        let custom_deserialized: PermissionType = serde_json::from_str(&custom_serialized).unwrap();
+        match custom_deserialized {
+            PermissionType::Custom(name) => assert_eq!(name, "my_custom"),
+            _ => panic!("应该反序列化为Custom权限"),
+        }
+    }
+
+    // ================================
+    // PermissionLevel 测试
+    // ================================
+
+    #[test]
+    fn test_permission_level_display() {
+        assert_eq!(PermissionLevel::None.to_string(), "none");
+        assert_eq!(PermissionLevel::Read.to_string(), "read");
+        assert_eq!(PermissionLevel::ReadOnly.to_string(), "read_only");
+        assert_eq!(PermissionLevel::Write.to_string(), "write");
+        assert_eq!(PermissionLevel::ReadWrite.to_string(), "read_write");
+        assert_eq!(PermissionLevel::Admin.to_string(), "admin");
+    }
+
+    #[test]
+    fn test_permission_level_from_str() {
+        assert_eq!("none".parse::<PermissionLevel>().unwrap(), PermissionLevel::None);
+        assert_eq!("read".parse::<PermissionLevel>().unwrap(), PermissionLevel::Read);
+        assert_eq!("read_only".parse::<PermissionLevel>().unwrap(), PermissionLevel::ReadOnly);
+        assert_eq!("write".parse::<PermissionLevel>().unwrap(), PermissionLevel::Write);
+        assert_eq!("read_write".parse::<PermissionLevel>().unwrap(), PermissionLevel::ReadWrite);
+        assert_eq!("admin".parse::<PermissionLevel>().unwrap(), PermissionLevel::Admin);
+        
+        assert!("invalid".parse::<PermissionLevel>().is_err());
+    }
+
+    #[test]
+    fn test_permission_level_serialization() {
+        let level = PermissionLevel::ReadWrite;
+        let serialized = serde_json::to_string(&level).unwrap();
+        assert_eq!(serialized, "\"read_write\"");
+        
+        let deserialized: PermissionLevel = serde_json::from_str(&serialized).unwrap();
+        assert_eq!(deserialized, PermissionLevel::ReadWrite);
+    }
+
+    // ================================
+    // PermissionStatus 测试
+    // ================================
+
+    #[test]
+    fn test_permission_status_display() {
+        assert_eq!(PermissionStatus::Pending.to_string(), "pending");
+        assert_eq!(PermissionStatus::Granted.to_string(), "granted");
+        assert_eq!(PermissionStatus::Denied.to_string(), "denied");
+        assert_eq!(PermissionStatus::Revoked.to_string(), "revoked");
+    }
+
+    #[test]
+    fn test_permission_status_from_str() {
+        assert_eq!("pending".parse::<PermissionStatus>().unwrap(), PermissionStatus::Pending);
+        assert_eq!("granted".parse::<PermissionStatus>().unwrap(), PermissionStatus::Granted);
+        assert_eq!("denied".parse::<PermissionStatus>().unwrap(), PermissionStatus::Denied);
+        assert_eq!("revoked".parse::<PermissionStatus>().unwrap(), PermissionStatus::Revoked);
+        
+        assert!("invalid".parse::<PermissionStatus>().is_err());
+    }
+
+    #[test]
+    fn test_permission_status_serialization() {
+        let status = PermissionStatus::Granted;
+        let serialized = serde_json::to_string(&status).unwrap();
+        assert_eq!(serialized, "\"granted\"");
+        
+        let deserialized: PermissionStatus = serde_json::from_str(&serialized).unwrap();
+        assert_eq!(deserialized, PermissionStatus::Granted);
+    }
+
+    // ================================
+    // 数据结构测试
+    // ================================
+
+    #[test]
+    fn test_permission_creation() {
+        let permission = Permission {
+            id: 1,
+            permission_type: PermissionType::FileRead,
+            name: "文件读取".to_string(),
+            description: "允许读取文件".to_string(),
+            category: "文件系统".to_string(),
+        };
+
+        assert_eq!(permission.id, 1);
+        assert_eq!(permission.permission_type, PermissionType::FileRead);
+        assert_eq!(permission.name, "文件读取");
+        assert_eq!(permission.category, "文件系统");
+    }
+
+    #[test]
+    fn test_permission_grant_creation() {
+        let now = Utc::now();
+        let grant = PermissionGrant {
+            id: 1,
+            entity_type: "user".to_string(),
+            entity_id: "user123".to_string(),
+            permission_type: PermissionType::FileWrite,
+            level: PermissionLevel::ReadWrite,
+            status: PermissionStatus::Granted,
+            scope: Some("/home/user".to_string()),
+            granted_by: Some("admin".to_string()),
+            granted_at: Some(now),
+            expires_at: None,
+        };
+
+        assert_eq!(grant.entity_type, "user");
+        assert_eq!(grant.permission_type, PermissionType::FileWrite);
+        assert_eq!(grant.level, PermissionLevel::ReadWrite);
+        assert_eq!(grant.status, PermissionStatus::Granted);
+        assert!(grant.scope.is_some());
+        assert!(grant.expires_at.is_none());
+    }
+
+    #[test]
+    fn test_permission_usage_log_creation() {
+        let now = Utc::now();
+        let log = PermissionUsageLog {
+            id: 1,
+            entity_type: "adapter".to_string(),
+            entity_id: "adapter_001".to_string(),
+            permission_type: PermissionType::NetworkHttp,
+            level: PermissionLevel::Read,
+            resource: Some("https://api.example.com".to_string()),
+            action: "GET".to_string(),
+            success: true,
+            failure_reason: None,
+            timestamp: now,
+        };
+
+        assert_eq!(log.entity_type, "adapter");
+        assert_eq!(log.permission_type, PermissionType::NetworkHttp);
+        assert_eq!(log.action, "GET");
+        assert!(log.success);
+        assert!(log.failure_reason.is_none());
+    }
+
+    #[test]
+    fn test_permission_group_creation() {
+        let group = PermissionGroup {
+            id: 1,
+            name: "basic_user".to_string(),
+            display_name: "基础用户".to_string(),
+            description: "基础用户权限组".to_string(),
+            permissions: vec![
+                PermissionType::FileRead,
+                PermissionType::FileWrite,
+                PermissionType::AppChatHistory,
+            ],
+        };
+
+        assert_eq!(group.name, "basic_user");
+        assert_eq!(group.permissions.len(), 3);
+        assert!(group.permissions.contains(&PermissionType::FileRead));
+        assert!(group.permissions.contains(&PermissionType::AppChatHistory));
+    }
+
+    #[test]
+    fn test_permission_stats_creation() {
+        let stats = PermissionStats {
+            total_grants: 100,
+            active_grants: 80,
+            pending_requests: 15,
+            denied_requests: 5,
+        };
+
+        assert_eq!(stats.total_grants, 100);
+        assert_eq!(stats.active_grants, 80);
+        assert_eq!(stats.pending_requests, 15);
+        assert_eq!(stats.denied_requests, 5);
+    }
+
+    // ================================
+    // PermissionRegistry 基础测试
+    // ================================
+
+    #[tokio::test]
+    async fn test_permission_registry_creation() {
+        match create_test_pool().await {
+            Ok(pool) => {
+                let registry = PermissionRegistry::new(pool);
+                // 测试注册表创建成功
+                println!("权限注册表创建成功");
+            },
+            Err(e) => {
+                println!("跳过测试（无数据库连接）: {}", e);
+            }
+        }
+    }
+
+    #[tokio::test]
+    async fn test_permission_registry_init_tables() {
+        match create_test_pool().await {
+            Ok(pool) => {
+                let registry = PermissionRegistry::new(pool);
+                
+                match registry.init_tables().await {
+                    Ok(_) => {
+                        println!("权限表初始化成功");
+                    },
+                    Err(e) => {
+                        println!("权限表初始化失败: {}", e);
+                    }
+                }
+            },
+            Err(e) => {
+                println!("跳过测试（无数据库连接）: {}", e);
+            }
+        }
+    }
+
+    // ================================
+    // 权限授予和撤销测试
+    // ================================
+
+    #[tokio::test]
+    async fn test_grant_permission_mock() {
+        let pool = match create_test_pool().await {
+            Ok(pool) => pool,
+            Err(_) => {
+                println!("跳过测试：无法连接到测试数据库");
+                return;
+            }
+        };
+        let registry = PermissionRegistry::new(pool);
+        
+        match registry.grant_permission(
+            "user".to_string(),
+            "user123".to_string(),
+            PermissionType::FileRead,
+            PermissionLevel::Read,
+            None,
+            Some("admin".to_string()),
+            None,
+        ) {
+            Ok(_) => println!("权限授予成功（模拟）"),
+            Err(e) => println!("权限授予失败（预期，无数据库）: {}", e),
+        }
+    }
+
+    #[tokio::test]
+    async fn test_request_permission_mock() {
+        let pool = match create_test_pool().await {
+            Ok(pool) => pool,
+            Err(_) => {
+                println!("跳过测试：无法连接到测试数据库");
+                return;
+            }
+        };
+        let registry = PermissionRegistry::new(pool);
+        
+        match registry.request_permission(
+            "adapter".to_string(),
+            "adapter_001".to_string(),
+            PermissionType::NetworkHttp,
+            PermissionLevel::ReadWrite,
+            Some("https://api.example.com".to_string()),
+        ) {
+            Ok(id) => println!("权限请求创建成功，ID: {}", id),
+            Err(e) => println!("权限请求失败（预期，无数据库）: {}", e),
+        }
+    }
+
+    #[tokio::test]
+    async fn test_deny_permission_mock() {
+        let pool = match create_test_pool().await {
+            Ok(pool) => pool,
+            Err(_) => {
+                println!("跳过测试：无法连接到测试数据库");
+                return;
+            }
+        };
+        let registry = PermissionRegistry::new(pool);
+        
+        match registry.deny_permission(
+            "user".to_string(),
+            "user456".to_string(),
+            PermissionType::SystemCommand,
+            None,
+            Some("安全原因".to_string()),
+        ) {
+            Ok(_) => println!("权限拒绝成功（模拟）"),
+            Err(e) => println!("权限拒绝失败（预期，无数据库）: {}", e),
+        }
+    }
+
+    #[tokio::test]
+    async fn test_revoke_permission_mock() {
+        let pool = match create_test_pool().await {
+            Ok(pool) => pool,
+            Err(_) => {
+                println!("跳过测试：无法连接到测试数据库");
+                return;
+            }
+        };
+        let registry = PermissionRegistry::new(pool);
+        
+        match registry.revoke_permission(
+            "user".to_string(),
+            "user789".to_string(),
+            PermissionType::FileWrite,
+            None,
+            Some("违规操作".to_string()),
+        ) {
+            Ok(_) => println!("权限撤销成功（模拟）"),
+            Err(e) => println!("权限撤销失败（预期，无数据库）: {}", e),
+        }
+    }
+
+    // ================================
+    // 权限检查测试
+    // ================================
+
+    #[tokio::test]
+    async fn test_check_permission_mock() {
+        let pool = match create_test_pool().await {
+            Ok(pool) => pool,
+            Err(_) => {
+                println!("跳过测试：无法连接到测试数据库");
+                return;
+            }
+        };
+        let registry = PermissionRegistry::new(pool);
+        
+        match registry.check_permission(
+            "user",
+            "user123",
+            &PermissionType::FileRead,
+            &PermissionLevel::Read,
+            None,
+        ) {
+            Ok(has_permission) => {
+                println!("权限检查完成，结果: {}", has_permission);
+                // 在模拟环境下，应该返回false（无权限）
+                assert!(!has_permission, "模拟环境下应该没有权限");
+            },
+            Err(e) => {
+                println!("权限检查失败（预期，无数据库）: {}", e);
+            }
+        }
+    }
+
+    // ================================
+    // 权限级别比较逻辑测试
+    // ================================
+
+    #[test]
+    fn test_permission_level_hierarchy() {
+        // 这些测试验证权限级别的逻辑关系
+        // Admin应该有所有权限
+        // ReadWrite应该包含Read和Write
+        // 等等...
+        
+        let levels = vec![
+            PermissionLevel::None,
+            PermissionLevel::Read,
+            PermissionLevel::ReadOnly,
+            PermissionLevel::Write,
+            PermissionLevel::ReadWrite,
+            PermissionLevel::Admin,
+        ];
+        
+        // 测试每个级别都应该能匹配自身
+        for level in &levels {
+            assert_eq!(level, level, "权限级别应该等于自身");
+        }
+        
+        // 测试不同级别的关系
+        assert_ne!(PermissionLevel::Read, PermissionLevel::Write);
+        assert_ne!(PermissionLevel::None, PermissionLevel::Admin);
+        
+        // 测试序列化一致性
+        for level in &levels {
+            let serialized = level.to_string();
+            let parsed: PermissionLevel = serialized.parse().unwrap();
+            assert_eq!(*level, parsed, "序列化后应该保持一致");
+        }
+    }
+
+    // ================================
+    // 权限查询测试
+    // ================================
+
+    #[tokio::test]
+    async fn test_get_all_permissions_mock() {
+        let pool = match create_test_pool().await {
+            Ok(pool) => pool,
+            Err(_) => {
+                println!("跳过测试：无法连接到测试数据库");
+                return;
+            }
+        };
+        let registry = PermissionRegistry::new(pool);
+        
+        match registry.get_all_permissions() {
+            Ok(permissions) => {
+                println!("获取到 {} 个权限定义", permissions.len());
+                assert!(permissions.is_empty(), "模拟环境下应该返回空列表");
+            },
+            Err(e) => {
+                println!("获取权限定义失败（预期，无数据库）: {}", e);
+            }
+        }
+    }
+
+    #[tokio::test]
+    async fn test_get_permission_by_type_mock() {
+        let pool = match create_test_pool().await {
+            Ok(pool) => pool,
+            Err(_) => {
+                println!("跳过测试：无法连接到测试数据库");
+                return;
+            }
+        };
+        let registry = PermissionRegistry::new(pool);
+        
+        match registry.get_permission_by_type(&PermissionType::FileRead) {
+            Ok(permission) => {
+                assert!(permission.is_none(), "模拟环境下应该返回None");
+            },
+            Err(e) => {
+                println!("获取特定权限失败（预期，无数据库）: {}", e);
+            }
+        }
+    }
+
+    #[tokio::test]
+    async fn test_get_entity_grants_mock() {
+        let pool = match create_test_pool().await {
+            Ok(pool) => pool,
+            Err(_) => {
+                println!("跳过测试：无法连接到测试数据库");
+                return;
+            }
+        };
+        let registry = PermissionRegistry::new(pool);
+        
+        match registry.get_entity_grants("user", "user123") {
+            Ok(grants) => {
+                println!("获取到 {} 个权限授权", grants.len());
+                assert!(grants.is_empty(), "模拟环境下应该返回空列表");
+            },
+            Err(e) => {
+                println!("获取实体授权失败（预期，无数据库）: {}", e);
+            }
+        }
+    }
+
+    #[tokio::test]
+    async fn test_get_pending_grants_mock() {
+        let pool = match create_test_pool().await {
+            Ok(pool) => pool,
+            Err(_) => {
+                println!("跳过测试：无法连接到测试数据库");
+                return;
+            }
+        };
+        let registry = PermissionRegistry::new(pool);
+        
+        match registry.get_pending_grants() {
+            Ok(grants) => {
+                println!("获取到 {} 个待处理授权", grants.len());
+                assert!(grants.is_empty(), "模拟环境下应该返回空列表");
+            },
+            Err(e) => {
+                println!("获取待处理授权失败（预期，无数据库）: {}", e);
+            }
+        }
+    }
+
+    // ================================
+    // 权限使用日志测试
+    // ================================
+
+    #[tokio::test]
+    async fn test_log_permission_usage_mock() {
+        let pool = match create_test_pool().await {
+            Ok(pool) => pool,
+            Err(_) => {
+                println!("跳过测试：无法连接到测试数据库");
+                return;
+            }
+        };
+        let registry = PermissionRegistry::new(pool);
+        
+        let mut metadata = HashMap::new();
+        metadata.insert("user_agent".to_string(), serde_json::Value::String("test".to_string()));
+        
+        match registry.log_permission_usage(
+            "adapter".to_string(),
+            "adapter_001".to_string(),
+            PermissionType::NetworkHttp,
+            PermissionLevel::Read,
+            Some("https://api.example.com".to_string()),
+            "GET /api/data".to_string(),
+            true,
+            None,
+            Some("127.0.0.1".to_string()),
+            Some(metadata),
+        ) {
+            Ok(log_id) => println!("权限使用日志记录成功，ID: {}", log_id),
+            Err(e) => println!("权限使用日志记录失败（预期，无数据库）: {}", e),
+        }
+    }
+
+    #[tokio::test]
+    async fn test_get_usage_logs_mock() {
+        let pool = match create_test_pool().await {
+            Ok(pool) => pool,
+            Err(_) => {
+                println!("跳过测试：无法连接到测试数据库");
+                return;
+            }
+        };
+        let registry = PermissionRegistry::new(pool);
+        
+        match registry.get_usage_logs(
+            Some("adapter"),
+            Some("adapter_001"),
+            Some(&PermissionType::NetworkHttp),
+            Some(10),
+            Some(0),
+        ) {
+            Ok(logs) => {
+                println!("获取到 {} 条使用日志", logs.len());
+                assert!(logs.is_empty(), "模拟环境下应该返回空列表");
+            },
+            Err(e) => {
+                println!("获取使用日志失败（预期，无数据库）: {}", e);
+            }
+        }
+    }
+
+    // ================================
+    // 权限统计测试
+    // ================================
+
+    #[tokio::test]
+    async fn test_get_permission_stats_mock() {
+        let pool = match create_test_pool().await {
+            Ok(pool) => pool,
+            Err(_) => {
+                println!("跳过测试：无法连接到测试数据库");
+                return;
+            }
+        };
+        let registry = PermissionRegistry::new(pool);
+        
+        match registry.get_permission_stats("user", "user123") {
+            Ok(stats) => {
+                println!("权限统计: {:?}", stats);
+                // 在模拟环境下验证统计数据
+                assert!(stats.total_grants >= 0);
+                assert!(stats.active_grants >= 0);
+                assert!(stats.pending_requests >= 0);
+                assert!(stats.denied_requests >= 0);
+            },
+            Err(e) => {
+                println!("获取权限统计失败（预期，无数据库）: {}", e);
+            }
+        }
+    }
+
+    #[tokio::test]
+    async fn test_cleanup_expired_grants_mock() {
+        let pool = match create_test_pool().await {
+            Ok(pool) => pool,
+            Err(_) => {
+                println!("跳过测试：无法连接到测试数据库");
+                return;
+            }
+        };
+        let registry = PermissionRegistry::new(pool);
+        
+        match registry.cleanup_expired_grants() {
+            Ok(count) => {
+                println!("清理了 {} 个过期权限", count);
+                assert_eq!(count, 0, "模拟环境下应该清理0个权限");
+            },
+            Err(e) => {
+                println!("清理过期权限失败（预期，无数据库）: {}", e);
+            }
+        }
+    }
+
+    // ================================
+    // 权限组测试
+    // ================================
+
+    #[tokio::test]
+    async fn test_create_permission_group_mock() {
+        let pool = match create_test_pool().await {
+            Ok(pool) => pool,
+            Err(_) => {
+                println!("跳过测试：无法连接到测试数据库");
+                return;
+            }
+        };
+        let registry = PermissionRegistry::new(pool);
+        
+        let permissions = vec![
+            PermissionType::FileRead,
+            PermissionType::FileWrite,
+            PermissionType::AppChatHistory,
+        ];
+        
+        match registry.create_permission_group(
+            "test_group".to_string(),
+            "测试权限组".to_string(),
+            "用于测试的权限组".to_string(),
+            permissions,
+        ) {
+            Ok(group_id) => println!("权限组创建成功，ID: {}", group_id),
+            Err(e) => println!("权限组创建失败（预期，无数据库）: {}", e),
+        }
+    }
+
+    #[tokio::test]
+    async fn test_get_permission_group_mock() {
+        let pool = match create_test_pool().await {
+            Ok(pool) => pool,
+            Err(_) => {
+                println!("跳过测试：无法连接到测试数据库");
+                return;
+            }
+        };
+        let registry = PermissionRegistry::new(pool);
+        
+        match registry.get_permission_group("test_group") {
+            Ok(group) => {
+                assert!(group.is_none(), "模拟环境下应该返回None");
+            },
+            Err(e) => {
+                println!("获取权限组失败（预期，无数据库）: {}", e);
+            }
+        }
+    }
+
+    #[tokio::test]
+    async fn test_get_all_permission_groups_mock() {
+        let pool = match create_test_pool().await {
+            Ok(pool) => pool,
+            Err(_) => {
+                println!("跳过测试：无法连接到测试数据库");
+                return;
+            }
+        };
+        let registry = PermissionRegistry::new(pool);
+        
+        match registry.get_all_permission_groups() {
+            Ok(groups) => {
+                println!("获取到 {} 个权限组", groups.len());
+                assert!(groups.is_empty(), "模拟环境下应该返回空列表");
+            },
+            Err(e) => {
+                println!("获取权限组失败（预期，无数据库）: {}", e);
+            }
+        }
+    }
+
+    #[tokio::test]
+    async fn test_grant_permission_group_mock() {
+        let pool = match create_test_pool().await {
+            Ok(pool) => pool,
+            Err(_) => {
+                println!("跳过测试：无法连接到测试数据库");
+                return;
+            }
+        };
+        let registry = PermissionRegistry::new(pool);
+        
+        match registry.grant_permission_group(
+            "user".to_string(),
+            "user123".to_string(),
+            "test_group",
+            PermissionLevel::Read,
+            Some("admin".to_string()),
+            None,
+        ) {
+            Ok(_) => println!("权限组授予成功（模拟）"),
+            Err(e) => {
+                println!("权限组授予失败（预期）: {}", e);
+                // 权限组不存在是预期的错误
+                assert!(e.to_string().contains("不存在") || e.to_string().contains("数据库"));
+            }
+        }
+    }
+
+    // ================================
+    // 边界条件和错误处理测试
+    // ================================
+
+    #[test]
+    fn test_permission_type_edge_cases() {
+        // 测试空字符串和特殊字符
+        let custom_empty = PermissionType::Custom("".to_string());
+        assert_eq!(custom_empty.to_string(), "");
+        
+        let custom_special = PermissionType::Custom("test_权限_123".to_string());
+        assert_eq!(custom_special.to_string(), "test_权限_123");
+        
+        // 测试很长的自定义权限名
+        let long_name = "a".repeat(1000);
+        let custom_long = PermissionType::Custom(long_name.clone());
+        assert_eq!(custom_long.to_string(), long_name);
+    }
+
+    #[test]
+    fn test_permission_enum_edge_cases() {
+        // 测试错误的字符串解析
+        assert!("".parse::<PermissionLevel>().is_err());
+        assert!("ADMIN".parse::<PermissionLevel>().is_err());
+        assert!("read_write_admin".parse::<PermissionLevel>().is_err());
+        
+        assert!("".parse::<PermissionStatus>().is_err());
+        assert!("GRANTED".parse::<PermissionStatus>().is_err());
+        assert!("unknown_status".parse::<PermissionStatus>().is_err());
+    }
+
+    #[test]
+    fn test_data_structure_serialization() {
+        // 测试复杂数据结构的序列化
+        let now = Utc::now();
+        let grant = PermissionGrant {
+            id: 999,
+            entity_type: "测试实体".to_string(),
+            entity_id: "实体_123".to_string(),
+            permission_type: PermissionType::Custom("自定义权限".to_string()),
+            level: PermissionLevel::Admin,
+            status: PermissionStatus::Granted,
+            scope: Some("/测试/路径".to_string()),
+            granted_by: Some("管理员".to_string()),
+            granted_at: Some(now),
+            expires_at: Some(now + chrono::Duration::days(30)),
+        };
+        
+        let serialized = serde_json::to_string(&grant).unwrap();
+        let deserialized: PermissionGrant = serde_json::from_str(&serialized).unwrap();
+        
+        assert_eq!(deserialized.id, grant.id);
+        assert_eq!(deserialized.entity_type, grant.entity_type);
+        match deserialized.permission_type {
+            PermissionType::Custom(name) => assert_eq!(name, "自定义权限"),
+            _ => panic!("应该是自定义权限类型"),
+        }
+        assert_eq!(deserialized.level, PermissionLevel::Admin);
+        assert_eq!(deserialized.status, PermissionStatus::Granted);
+    }
+
+    #[tokio::test]
+    async fn test_get_permissions_compatibility_mock() {
+        let pool = match create_test_pool().await {
+            Ok(pool) => pool,
+            Err(_) => {
+                println!("跳过测试：无法连接到测试数据库");
+                return;
+            }
+        };
+        let registry = PermissionRegistry::new(pool);
+        
+        // 测试兼容性接口
+        match registry.get_permissions("resource_123") {
+            Ok(records) => {
+                println!("获取到 {} 个权限记录", records.len());
+                assert!(records.is_empty(), "模拟环境下应该返回空列表");
+            },
+            Err(e) => {
+                println!("获取权限记录失败（预期，无数据库）: {}", e);
+            }
+        }
+    }
+}

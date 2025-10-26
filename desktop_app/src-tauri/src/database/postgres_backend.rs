@@ -528,12 +528,398 @@ impl DatabaseBackend for PostgresBackend {
 #[cfg(test)]
 mod tests {
     use super::*;
+    use serde_json::json;
+    use std::collections::HashMap;
+
+    // ================================
+    // 基础功能测试
+    // ================================
+
+    #[tokio::test]
+    async fn test_postgres_backend_new() {
+        // Arrange & Act
+        let backend = PostgresBackend::new();
+        
+        // Assert
+        assert!(!backend.is_connected());
+        assert!(backend.pool.is_none());
+        assert!(!backend.connected);
+    }
+
+    #[tokio::test]
+    async fn test_postgres_backend_default() {
+        // Arrange & Act
+        let backend = PostgresBackend::default();
+        
+        // Assert
+        assert!(!backend.is_connected());
+        assert!(backend.pool.is_none());
+        assert!(!backend.connected);
+    }
 
     #[tokio::test]
     async fn test_postgres_backend_type() {
+        // Arrange
         let backend = PostgresBackend::new();
+        
+        // Act & Assert
         assert_eq!(backend.backend_type(), DatabaseBackendType::PostgreSQL);
         assert!(!backend.is_connected());
+    }
+
+    // ================================
+    // 连接管理测试
+    // ================================
+
+    #[tokio::test]
+    async fn test_connect_invalid_connection_string() {
+        // Arrange
+        let mut backend = PostgresBackend::new();
+        let config = DatabaseConfig {
+            backend_type: DatabaseBackendType::PostgreSQL,
+            connection_string: "invalid_connection_string".to_string(),
+            max_connections: Some(10),
+            timeout: Some(30),
+            extra: HashMap::new(),
+        };
+        
+        // Act
+        let result = backend.connect(&config).await;
+        
+        // Assert
+        assert!(result.is_err());
+        assert!(matches!(result.unwrap_err(), DatabaseError::ConnectionError(_)));
+        assert!(!backend.is_connected());
+    }
+
+    #[tokio::test]
+    async fn test_connect_invalid_postgres_url_format() {
+        // Arrange
+        let mut backend = PostgresBackend::new();
+        let config = DatabaseConfig {
+            backend_type: DatabaseBackendType::PostgreSQL,
+            connection_string: "mysql://localhost:5432/test".to_string(),
+            max_connections: Some(10),
+            timeout: Some(30),
+            extra: HashMap::new(),
+        };
+        
+        // Act
+        let result = backend.connect(&config).await;
+        
+        // Assert
+        assert!(result.is_err());
+        if let Err(DatabaseError::ConnectionError(msg)) = result {
+            assert!(msg.contains("无效的PostgreSQL连接字符串"));
+        } else {
+            panic!("Expected ConnectionError");
+        }
+    }
+
+    #[tokio::test]
+    async fn test_disconnect_without_connection() {
+        // Arrange
+        let mut backend = PostgresBackend::new();
+        
+        // Act
+        let result = backend.disconnect().await;
+        
+        // Assert
+        assert!(result.is_ok());
+        assert!(!backend.is_connected());
+    }
+
+    #[tokio::test] 
+    async fn test_get_pool_when_disconnected() {
+        // Arrange
+        let backend = PostgresBackend::new();
+        
+        // Act
+        let result = backend.get_pool();
+        
+        // Assert
+        assert!(result.is_err());
+        if let Err(DatabaseError::ConnectionError(msg)) = result {
+            assert_eq!(msg, "未连接到数据库");
+        } else {
+            panic!("Expected ConnectionError");
+        }
+    }
+
+    // ================================
+    // 数据操作测试（Mock测试）
+    // ================================
+
+    #[tokio::test]
+    async fn test_row_to_json_success() {
+        // 这个测试需要实际的Row对象，暂时跳过
+        // 在实际环境中可以通过集成测试来验证
+    }
+
+    #[tokio::test]
+    async fn test_build_key_functionality() {
+        // Arrange
+        let backend = PostgresBackend::new();
+        
+        // Act & Assert - 测试键构建逻辑
+        // PostgreSQL后端不直接暴露键构建方法，但我们可以测试其它辅助方法
+        assert_eq!(backend.backend_type(), DatabaseBackendType::PostgreSQL);
+    }
+
+    // ================================
+    // 集合管理测试（需要连接）
+    // ================================
+
+    #[tokio::test]
+    async fn test_create_collection_without_connection() {
+        // Arrange
+        let backend = PostgresBackend::new();
+        
+        // Act
+        let result = backend.create_collection("test_collection", None).await;
+        
+        // Assert
+        assert!(result.is_err());
+        assert!(matches!(result.unwrap_err(), DatabaseError::ConnectionError(_)));
+    }
+
+    #[tokio::test]
+    async fn test_drop_collection_without_connection() {
+        // Arrange
+        let backend = PostgresBackend::new();
+        
+        // Act
+        let result = backend.drop_collection("test_collection").await;
+        
+        // Assert
+        assert!(result.is_err());
+        assert!(matches!(result.unwrap_err(), DatabaseError::ConnectionError(_)));
+    }
+
+    #[tokio::test]
+    async fn test_collection_exists_without_connection() {
+        // Arrange
+        let backend = PostgresBackend::new();
+        
+        // Act
+        let result = backend.collection_exists("test_collection").await;
+        
+        // Assert
+        assert!(result.is_err());
+        assert!(matches!(result.unwrap_err(), DatabaseError::ConnectionError(_)));
+    }
+
+    // ================================
+    // CRUD操作测试（需要连接）
+    // ================================
+
+    #[tokio::test]
+    async fn test_insert_without_connection() {
+        // Arrange
+        let backend = PostgresBackend::new();
+        let data = json!({"name": "test", "value": 123});
+        
+        // Act
+        let result = backend.insert("test_collection", "test_key", &data).await;
+        
+        // Assert
+        assert!(result.is_err());
+        assert!(matches!(result.unwrap_err(), DatabaseError::ConnectionError(_)));
+    }
+
+    #[tokio::test]
+    async fn test_batch_insert_without_connection() {
+        // Arrange
+        let backend = PostgresBackend::new();
+        let items = vec![
+            ("key1".to_string(), json!({"name": "test1"})),
+            ("key2".to_string(), json!({"name": "test2"})),
+        ];
+        
+        // Act
+        let result = backend.batch_insert("test_collection", items).await;
+        
+        // Assert
+        assert!(result.is_err());
+        assert!(matches!(result.unwrap_err(), DatabaseError::ConnectionError(_)));
+    }
+
+    #[tokio::test]
+    async fn test_get_without_connection() {
+        // Arrange
+        let backend = PostgresBackend::new();
+        
+        // Act
+        let result = backend.get("test_collection", "test_key").await;
+        
+        // Assert
+        assert!(result.is_err());
+        assert!(matches!(result.unwrap_err(), DatabaseError::ConnectionError(_)));
+    }
+
+    #[tokio::test]
+    async fn test_update_without_connection() {
+        // Arrange
+        let backend = PostgresBackend::new();
+        let data = json!({"name": "updated", "value": 456});
+        
+        // Act
+        let result = backend.update("test_collection", "test_key", &data).await;
+        
+        // Assert
+        assert!(result.is_err());
+        assert!(matches!(result.unwrap_err(), DatabaseError::ConnectionError(_)));
+    }
+
+    #[tokio::test]
+    async fn test_delete_without_connection() {
+        // Arrange
+        let backend = PostgresBackend::new();
+        
+        // Act
+        let result = backend.delete("test_collection", "test_key").await;
+        
+        // Assert
+        assert!(result.is_err());
+        assert!(matches!(result.unwrap_err(), DatabaseError::ConnectionError(_)));
+    }
+
+    // ================================
+    // 查询操作测试
+    // ================================
+
+    #[tokio::test]
+    async fn test_query_without_connection() {
+        // Arrange
+        let backend = PostgresBackend::new();
+        let options = QueryOptions {
+            conditions: vec![],
+            order_by: None,
+            limit: None,
+            offset: None,
+        };
+        
+        // Act
+        let result = backend.query("test_collection", &options).await;
+        
+        // Assert
+        assert!(result.is_err());
+        assert!(matches!(result.unwrap_err(), DatabaseError::ConnectionError(_)));
+    }
+
+    #[tokio::test]
+    async fn test_count_without_connection() {
+        // Arrange
+        let backend = PostgresBackend::new();
+        
+        // Act
+        let result = backend.count("test_collection", None).await;
+        
+        // Assert
+        assert!(result.is_err());
+        assert!(matches!(result.unwrap_err(), DatabaseError::ConnectionError(_)));
+    }
+
+    #[tokio::test]
+    async fn test_clear_collection_without_connection() {
+        // Arrange
+        let backend = PostgresBackend::new();
+        
+        // Act
+        let result = backend.clear_collection("test_collection").await;
+        
+        // Assert
+        assert!(result.is_err());
+        assert!(matches!(result.unwrap_err(), DatabaseError::ConnectionError(_)));
+    }
+
+    #[tokio::test]
+    async fn test_execute_raw_without_connection() {
+        // Arrange
+        let backend = PostgresBackend::new();
+        
+        // Act
+        let result = backend.execute_raw("SELECT 1").await;
+        
+        // Assert
+        assert!(result.is_err());
+        assert!(matches!(result.unwrap_err(), DatabaseError::ConnectionError(_)));
+    }
+
+    // ================================
+    // 事务管理测试
+    // ================================
+
+    #[tokio::test]
+    async fn test_begin_transaction_not_supported() {
+        // Arrange
+        let backend = PostgresBackend::new();
+        
+        // Act
+        let result = backend.begin_transaction().await;
+        
+        // Assert
+        assert!(result.is_err());
+        if let Err(DatabaseError::Other(msg)) = result {
+            assert_eq!(msg, "PostgreSQL事务暂不支持");
+        } else {
+            panic!("Expected Other error");
+        }
+    }
+
+    // ================================
+    // 查询选项构建测试
+    // ================================
+
+    #[test]
+    fn test_query_options_construction() {
+        // Arrange & Act
+        let options = QueryOptions {
+            conditions: vec![
+                QueryCondition {
+                    field: "name".to_string(),
+                    operator: QueryOperator::Eq,
+                    value: json!("test"),
+                },
+                QueryCondition {
+                    field: "age".to_string(),
+                    operator: QueryOperator::Gt,
+                    value: json!(18),
+                },
+            ],
+            order_by: Some(vec![("created_at".to_string(), false)]),
+            limit: Some(10),
+            offset: Some(0),
+        };
+        
+        // Assert
+        assert_eq!(options.conditions.len(), 2);
+        assert_eq!(options.conditions[0].field, "name");
+        assert_eq!(options.conditions[1].field, "age");
+        assert!(options.order_by.is_some());
+        assert_eq!(options.limit, Some(10));
+        assert_eq!(options.offset, Some(0));
+    }
+
+    // ================================
+    // 错误处理测试
+    // ================================
+
+    #[test]
+    fn test_database_error_types() {
+        // 测试各种数据库错误类型
+        let connection_error = DatabaseError::ConnectionError("连接失败".to_string());
+        let query_error = DatabaseError::QueryError("查询失败".to_string());
+        let not_found_error = DatabaseError::NotFound("未找到".to_string());
+        let duplicate_error = DatabaseError::Duplicate("重复键".to_string());
+        let other_error = DatabaseError::Other("其他错误".to_string());
+
+        // 验证错误类型匹配
+        assert!(matches!(connection_error, DatabaseError::ConnectionError(_)));
+        assert!(matches!(query_error, DatabaseError::QueryError(_)));
+        assert!(matches!(not_found_error, DatabaseError::NotFound(_)));
+        assert!(matches!(duplicate_error, DatabaseError::Duplicate(_)));
+        assert!(matches!(other_error, DatabaseError::Other(_)));
     }
 }
 

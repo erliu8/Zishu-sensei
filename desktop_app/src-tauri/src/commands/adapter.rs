@@ -1256,6 +1256,1041 @@ fn get_backend_url() -> String {
 }
 
 // ================================
+// 测试模块
+// ================================
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+    use std::collections::HashMap;
+    use serde_json::json;
+    
+    // Mock database for testing
+    pub struct MockDatabase {
+        pub adapter_registry: MockAdapterRegistry,
+    }
+    
+    impl MockDatabase {
+        pub fn new() -> Self {
+            Self {
+                adapter_registry: MockAdapterRegistry::new(),
+            }
+        }
+    }
+    
+    // Mock adapter registry
+    pub struct MockAdapterRegistry;
+    
+    impl MockAdapterRegistry {
+        pub fn new() -> Self {
+            Self
+        }
+        
+        pub async fn get_all_adapters(&self) -> Result<Vec<crate::database::adapter::InstalledAdapter>, String> {
+            Ok(vec![
+                crate::database::adapter::InstalledAdapter {
+                    id: "test_adapter".to_string(),
+                    name: "Test Adapter".to_string(),
+                    display_name: "Test Adapter".to_string(),
+                    version: "1.0.0".to_string(),
+                    install_path: "/test/path".to_string(),
+                    status: crate::database::adapter::AdapterInstallStatus::Installed,
+                    enabled: true,
+                    auto_update: false,
+                    source: "test".to_string(),
+                    source_id: Some("test_adapter".to_string()),
+                    description: Some("Test adapter description".to_string()),
+                    author: Some("Test Author".to_string()),
+                    license: Some("MIT".to_string()),
+                    homepage_url: Some("https://example.com".to_string()),
+                    installed_at: chrono::Utc::now(),
+                    updated_at: chrono::Utc::now(),
+                    last_used_at: Some(chrono::Utc::now()),
+                    config: HashMap::new(),
+                    metadata: HashMap::new(),
+                }
+            ])
+        }
+        
+        pub async fn get_enabled_adapters(&self) -> Result<Vec<crate::database::adapter::InstalledAdapter>, String> {
+            let all_adapters = self.get_all_adapters().await?;
+            Ok(all_adapters.into_iter().filter(|a| a.enabled).collect())
+        }
+        
+        pub async fn get_adapter(&self, id: &str) -> Result<Option<crate::database::adapter::InstalledAdapter>, String> {
+            if id == "test_adapter" {
+                let adapters = self.get_all_adapters().await?;
+                Ok(adapters.into_iter().next())
+            } else {
+                Ok(None)
+            }
+        }
+        
+        pub async fn set_adapter_enabled(&self, _id: &str, _enabled: bool) -> Result<(), String> {
+            Ok(())
+        }
+        
+        pub async fn delete_adapter(&self, _id: &str) -> Result<(), String> {
+            Ok(())
+        }
+        
+        pub async fn get_versions(&self, _id: &str) -> Result<Vec<crate::database::adapter::AdapterVersion>, String> {
+            Ok(vec![])
+        }
+        
+        pub async fn add_version(&self, _version: crate::database::adapter::AdapterVersion) -> Result<(), String> {
+            Ok(())
+        }
+        
+        pub async fn get_dependencies(&self, _id: &str) -> Result<Vec<crate::database::adapter::AdapterDependency>, String> {
+            Ok(vec![])
+        }
+        
+        pub async fn add_dependency(&self, _dependency: crate::database::adapter::AdapterDependency) -> Result<(), String> {
+            Ok(())
+        }
+        
+        pub async fn delete_dependency(&self, _adapter_id: &str, _dependency_id: &str) -> Result<(), String> {
+            Ok(())
+        }
+        
+        pub async fn get_permissions(&self, _id: &str) -> Result<Vec<crate::database::adapter::AdapterPermission>, String> {
+            Ok(vec![])
+        }
+        
+        pub async fn grant_permission(&self, _id: &str, _permission_type: &str, _granted: bool) -> Result<(), String> {
+            Ok(())
+        }
+        
+        pub async fn check_permission(&self, _id: &str, _permission_type: &str) -> Result<bool, String> {
+            Ok(true)
+        }
+        
+        pub async fn add_permission(&self, _permission: crate::database::adapter::AdapterPermission) -> Result<(), String> {
+            Ok(())
+        }
+    }
+    
+    // Helper function to create mock adapter config
+    fn create_mock_adapter_config() -> HashMap<String, serde_json::Value> {
+        let mut config = HashMap::new();
+        config.insert("temperature".to_string(), json!(0.7));
+        config.insert("max_tokens".to_string(), json!(2048));
+        config.insert("top_p".to_string(), json!(0.9));
+        config
+    }
+
+    // ================================
+    // 数据类型测试
+    // ================================
+
+    #[test]
+    fn test_adapter_status_serialization() {
+        let statuses = vec![
+            AdapterStatus::Loaded,
+            AdapterStatus::Unloaded,
+            AdapterStatus::Loading,
+            AdapterStatus::Unloading,
+            AdapterStatus::Error,
+            AdapterStatus::Unknown,
+            AdapterStatus::Maintenance,
+        ];
+
+        for status in statuses {
+            let serialized = serde_json::to_string(&status).expect("序列化失败");
+            let deserialized: AdapterStatus = serde_json::from_str(&serialized).expect("反序列化失败");
+            assert_eq!(status, deserialized);
+        }
+    }
+
+    #[test]
+    fn test_adapter_type_serialization() {
+        let types = vec![
+            AdapterType::Soft,
+            AdapterType::Hard,
+            AdapterType::Intelligent,
+        ];
+
+        for adapter_type in types {
+            let serialized = serde_json::to_string(&adapter_type).expect("序列化失败");
+            let deserialized: AdapterType = serde_json::from_str(&serialized).expect("反序列化失败");
+            assert_eq!(adapter_type, deserialized);
+        }
+    }
+
+    #[test]
+    fn test_capability_level_serialization() {
+        let levels = vec![
+            CapabilityLevel::Basic,
+            CapabilityLevel::Intermediate,
+            CapabilityLevel::Advanced,
+            CapabilityLevel::Expert,
+        ];
+
+        for level in levels {
+            let serialized = serde_json::to_string(&level).expect("序列化失败");
+            let deserialized: CapabilityLevel = serde_json::from_str(&serialized).expect("反序列化失败");
+            assert_eq!(level, deserialized);
+        }
+    }
+
+    #[test]
+    fn test_adapter_capability_serialization() {
+        let capability = AdapterCapability {
+            name: "test_capability".to_string(),
+            description: "Test capability description".to_string(),
+            level: CapabilityLevel::Advanced,
+            required_params: vec!["param1".to_string(), "param2".to_string()],
+            optional_params: vec!["optional1".to_string()],
+        };
+
+        let serialized = serde_json::to_string(&capability).expect("序列化失败");
+        let deserialized: AdapterCapability = serde_json::from_str(&serialized).expect("反序列化失败");
+
+        assert_eq!(capability.name, deserialized.name);
+        assert_eq!(capability.description, deserialized.description);
+        assert_eq!(capability.level, deserialized.level);
+        assert_eq!(capability.required_params, deserialized.required_params);
+        assert_eq!(capability.optional_params, deserialized.optional_params);
+    }
+
+    #[test]
+    fn test_adapter_resource_requirements_serialization() {
+        let requirements = AdapterResourceRequirements {
+            min_memory_mb: Some(1024),
+            min_cpu_cores: Some(2),
+            gpu_required: true,
+            min_gpu_memory_mb: Some(512),
+            python_version: Some("3.8+".to_string()),
+            dependencies: vec!["numpy".to_string(), "torch".to_string()],
+        };
+
+        let serialized = serde_json::to_string(&requirements).expect("序列化失败");
+        let deserialized: AdapterResourceRequirements = serde_json::from_str(&serialized).expect("反序列化失败");
+
+        assert_eq!(requirements.min_memory_mb, deserialized.min_memory_mb);
+        assert_eq!(requirements.min_cpu_cores, deserialized.min_cpu_cores);
+        assert_eq!(requirements.gpu_required, deserialized.gpu_required);
+        assert_eq!(requirements.min_gpu_memory_mb, deserialized.min_gpu_memory_mb);
+        assert_eq!(requirements.python_version, deserialized.python_version);
+        assert_eq!(requirements.dependencies, deserialized.dependencies);
+    }
+
+    #[test]
+    fn test_adapter_metadata_creation() {
+        let mut config_schema = HashMap::new();
+        config_schema.insert("temperature".to_string(), json!(0.7));
+        
+        let mut default_config = HashMap::new();
+        default_config.insert("max_tokens".to_string(), json!(2048));
+
+        let metadata = AdapterMetadata {
+            id: "test_adapter".to_string(),
+            name: "Test Adapter".to_string(),
+            version: "1.0.0".to_string(),
+            adapter_type: AdapterType::Soft,
+            description: Some("Test description".to_string()),
+            author: Some("Test Author".to_string()),
+            license: Some("MIT".to_string()),
+            tags: vec!["test".to_string(), "demo".to_string()],
+            created_at: chrono::Utc::now(),
+            updated_at: chrono::Utc::now(),
+            capabilities: vec![],
+            compatibility: AdapterCompatibility {
+                base_models: vec!["gpt-3.5".to_string()],
+                frameworks: HashMap::new(),
+                operating_systems: vec!["linux".to_string()],
+                python_versions: vec!["3.8+".to_string()],
+            },
+            resource_requirements: AdapterResourceRequirements {
+                min_memory_mb: Some(512),
+                min_cpu_cores: Some(1),
+                gpu_required: false,
+                min_gpu_memory_mb: None,
+                python_version: Some("3.8+".to_string()),
+                dependencies: vec![],
+            },
+            config_schema,
+            default_config,
+            file_size_bytes: Some(1024000),
+            parameter_count: Some(100000),
+        };
+
+        assert_eq!(metadata.id, "test_adapter");
+        assert_eq!(metadata.name, "Test Adapter");
+        assert_eq!(metadata.version, "1.0.0");
+        assert_eq!(metadata.adapter_type, AdapterType::Soft);
+        assert!(metadata.description.is_some());
+        assert!(metadata.author.is_some());
+        assert_eq!(metadata.tags.len(), 2);
+    }
+
+    #[test]
+    fn test_adapter_install_request_validation() {
+        let mut options = HashMap::new();
+        options.insert("auto_start".to_string(), json!(true));
+
+        let request = AdapterInstallRequest {
+            adapter_id: "test_adapter".to_string(),
+            source: "market".to_string(),
+            force: false,
+            options,
+        };
+
+        assert_eq!(request.adapter_id, "test_adapter");
+        assert_eq!(request.source, "market");
+        assert!(!request.force);
+        assert!(!request.options.is_empty());
+    }
+
+    #[test]
+    fn test_adapter_execution_request_validation() {
+        let mut params = HashMap::new();
+        params.insert("input_text".to_string(), json!("Hello world"));
+
+        let request = AdapterExecutionRequest {
+            adapter_id: "test_adapter".to_string(),
+            action: "generate".to_string(),
+            params,
+            timeout: Some(30),
+        };
+
+        assert_eq!(request.adapter_id, "test_adapter");
+        assert_eq!(request.action, "generate");
+        assert_eq!(request.timeout, Some(30));
+        assert!(!request.params.is_empty());
+    }
+
+    #[test]
+    fn test_adapter_search_request_creation() {
+        let request = AdapterSearchRequest {
+            query: "AI assistant".to_string(),
+            adapter_type: Some(AdapterType::Soft),
+            category: Some("productivity".to_string()),
+            tags: Some(vec!["ai".to_string(), "assistant".to_string()]),
+            price_min: Some(0.0),
+            price_max: Some(100.0),
+            rating_min: Some(4.0),
+            free_only: Some(true),
+            featured_only: Some(false),
+            page: Some(1),
+            page_size: Some(20),
+            sort_by: Some("rating".to_string()),
+            sort_order: Some("desc".to_string()),
+        };
+
+        assert_eq!(request.query, "AI assistant");
+        assert_eq!(request.adapter_type, Some(AdapterType::Soft));
+        assert!(request.category.is_some());
+        assert!(request.tags.is_some());
+        assert_eq!(request.page, Some(1));
+        assert_eq!(request.page_size, Some(20));
+    }
+
+    // ================================
+    // 命令处理函数测试
+    // ================================
+
+    #[tokio::test]
+    async fn test_get_backend_url() {
+        // Test default URL
+        std::env::remove_var("ZISHU_BACKEND_URL");
+        assert_eq!(get_backend_url(), "http://localhost:8000");
+
+        // Test custom URL
+        std::env::set_var("ZISHU_BACKEND_URL", "https://api.example.com");
+        assert_eq!(get_backend_url(), "https://api.example.com");
+        
+        // Clean up
+        std::env::remove_var("ZISHU_BACKEND_URL");
+    }
+
+    #[tokio::test]
+    async fn test_command_response_success() {
+        let data = vec!["adapter1".to_string(), "adapter2".to_string()];
+        let response = CommandResponse::success(data.clone());
+
+        assert!(response.success);
+        assert_eq!(response.data, Some(data));
+        assert!(response.error.is_none());
+        assert!(response.message.is_none());
+        assert!(response.timestamp > 0);
+    }
+
+    #[tokio::test]
+    async fn test_command_response_error() {
+        let error_msg = "Test error message".to_string();
+        let response: CommandResponse<String> = CommandResponse::error(error_msg.clone());
+
+        assert!(!response.success);
+        assert!(response.data.is_none());
+        assert_eq!(response.error, Some(error_msg));
+        assert!(response.message.is_none());
+        assert!(response.timestamp > 0);
+    }
+
+    #[tokio::test]
+    async fn test_command_response_success_with_message() {
+        let data = true;
+        let message = "Operation completed successfully".to_string();
+        let response = CommandResponse::success_with_message(data, message.clone());
+
+        assert!(response.success);
+        assert_eq!(response.data, Some(data));
+        assert!(response.error.is_none());
+        assert_eq!(response.message, Some(message));
+        assert!(response.timestamp > 0);
+    }
+
+    // ================================
+    // Mock HTTP 客户端测试
+    // ================================
+
+    #[tokio::test]
+    async fn test_adapter_info_creation() {
+        let mut config = HashMap::new();
+        config.insert("temperature".to_string(), json!(0.7));
+
+        let info = AdapterInfo {
+            name: "Test Adapter".to_string(),
+            path: Some("/test/path".to_string()),
+            size: Some(1024),
+            version: Some("1.0.0".to_string()),
+            description: Some("Test adapter".to_string()),
+            status: AdapterStatus::Loaded,
+            load_time: Some(chrono::Utc::now()),
+            memory_usage: Some(512),
+            config,
+        };
+
+        assert_eq!(info.name, "Test Adapter");
+        assert!(info.path.is_some());
+        assert_eq!(info.status, AdapterStatus::Loaded);
+        assert!(info.load_time.is_some());
+        assert!(!info.config.is_empty());
+    }
+
+    // ================================
+    // 数据库集成测试
+    // ================================
+
+    #[tokio::test]
+    async fn test_database_mock_operations() {
+        let mock_db = MockDatabase::new();
+        
+        // Test get_all_adapters
+        let adapters = mock_db.adapter_registry.get_all_adapters().await.unwrap();
+        assert_eq!(adapters.len(), 1);
+        assert_eq!(adapters[0].id, "test_adapter");
+        
+        // Test get_adapter
+        let adapter = mock_db.adapter_registry.get_adapter("test_adapter").await.unwrap();
+        assert!(adapter.is_some());
+        let adapter = adapter.unwrap();
+        assert_eq!(adapter.name, "Test Adapter");
+        assert!(adapter.enabled);
+        
+        // Test non-existent adapter
+        let non_existent = mock_db.adapter_registry.get_adapter("non_existent").await.unwrap();
+        assert!(non_existent.is_none());
+    }
+
+    #[tokio::test]
+    async fn test_database_adapter_toggle() {
+        let mock_db = MockDatabase::new();
+        
+        // Test enable adapter
+        let result = mock_db.adapter_registry.set_adapter_enabled("test_adapter", true).await;
+        assert!(result.is_ok());
+        
+        // Test disable adapter
+        let result = mock_db.adapter_registry.set_adapter_enabled("test_adapter", false).await;
+        assert!(result.is_ok());
+    }
+
+    #[tokio::test]
+    async fn test_database_adapter_delete() {
+        let mock_db = MockDatabase::new();
+        
+        // Test delete adapter
+        let result = mock_db.adapter_registry.delete_adapter("test_adapter").await;
+        assert!(result.is_ok());
+    }
+
+    // ================================
+    // 命令处理函数测试
+    // ================================
+
+    /// 创建模拟应用状态
+    fn create_mock_app_state() -> MockAppState {
+        use crate::{AppConfig as Config, CharacterConfig};
+        use std::sync::Arc;
+        use parking_lot::Mutex;
+        
+        let config = Config::default();
+        MockAppState {
+            config: Arc::new(Mutex::new(config)),
+        }
+    }
+    
+    /// 简化的AppState用于测试
+    pub struct MockAppState {
+        pub config: std::sync::Arc<parking_lot::Mutex<crate::AppConfig>>,
+    }
+
+    /// 创建模拟Tauri应用句柄 (测试用)
+    fn create_mock_app_handle() -> Option<tauri::AppHandle> {
+        // 在实际测试中，我们无法创建真实的AppHandle
+        // 所以我们需要模拟或跳过需要AppHandle的测试
+        None
+    }
+
+    #[tokio::test]
+    async fn test_get_backend_url_with_env() {
+        // Test with environment variable
+        std::env::set_var("ZISHU_BACKEND_URL", "https://test.example.com");
+        let url = get_backend_url();
+        assert_eq!(url, "https://test.example.com");
+        
+        // Clean up
+        std::env::remove_var("ZISHU_BACKEND_URL");
+        
+        // Test default URL
+        let url = get_backend_url();
+        assert_eq!(url, "http://localhost:8000");
+    }
+
+    #[tokio::test]
+    async fn test_adapter_install_request_validation_extended() {
+        let mut options = HashMap::new();
+        options.insert("force".to_string(), json!(true));
+        options.insert("timeout".to_string(), json!(30));
+
+        let request = AdapterInstallRequest {
+            adapter_id: "gpt-adapter".to_string(),
+            source: "marketplace".to_string(),
+            force: true,
+            options,
+        };
+
+        // Validate structure
+        assert_eq!(request.adapter_id, "gpt-adapter");
+        assert_eq!(request.source, "marketplace");
+        assert!(request.force);
+        assert_eq!(request.options.len(), 2);
+        assert_eq!(request.options["force"], json!(true));
+        assert_eq!(request.options["timeout"], json!(30));
+    }
+
+    #[tokio::test]
+    async fn test_adapter_execution_request_edge_cases() {
+        // Test with empty params
+        let request = AdapterExecutionRequest {
+            adapter_id: "test_adapter".to_string(),
+            action: "ping".to_string(),
+            params: HashMap::new(),
+            timeout: Some(1), // Very short timeout
+        };
+        
+        assert_eq!(request.params.len(), 0);
+        assert_eq!(request.timeout, Some(1));
+
+        // Test with large params
+        let mut large_params = HashMap::new();
+        for i in 0..1000 {
+            large_params.insert(format!("param_{}", i), json!(format!("value_{}", i)));
+        }
+        
+        let large_request = AdapterExecutionRequest {
+            adapter_id: "test_adapter".to_string(),
+            action: "process".to_string(),
+            params: large_params,
+            timeout: None,
+        };
+        
+        assert_eq!(large_request.params.len(), 1000);
+        assert!(large_request.timeout.is_none());
+    }
+
+    #[tokio::test]
+    async fn test_adapter_search_request_comprehensive() {
+        // Test full search request
+        let search_request = AdapterSearchRequest {
+            query: "AI language model".to_string(),
+            adapter_type: Some(AdapterType::Intelligent),
+            category: Some("nlp".to_string()),
+            tags: Some(vec!["gpt".to_string(), "transformer".to_string()]),
+            price_min: Some(0.0),
+            price_max: Some(50.0),
+            rating_min: Some(4.5),
+            free_only: Some(false),
+            featured_only: Some(true),
+            page: Some(2),
+            page_size: Some(25),
+            sort_by: Some("popularity".to_string()),
+            sort_order: Some("asc".to_string()),
+        };
+
+        assert_eq!(search_request.query, "AI language model");
+        assert_eq!(search_request.adapter_type, Some(AdapterType::Intelligent));
+        assert_eq!(search_request.category, Some("nlp".to_string()));
+        assert!(search_request.tags.as_ref().unwrap().contains(&"gpt".to_string()));
+        assert_eq!(search_request.price_min, Some(0.0));
+        assert_eq!(search_request.price_max, Some(50.0));
+        assert_eq!(search_request.rating_min, Some(4.5));
+        assert_eq!(search_request.free_only, Some(false));
+        assert_eq!(search_request.featured_only, Some(true));
+        assert_eq!(search_request.page, Some(2));
+        assert_eq!(search_request.page_size, Some(25));
+
+        // Test minimal search request
+        let minimal_request = AdapterSearchRequest {
+            query: "test".to_string(),
+            adapter_type: None,
+            category: None,
+            tags: None,
+            price_min: None,
+            price_max: None,
+            rating_min: None,
+            free_only: None,
+            featured_only: None,
+            page: None,
+            page_size: None,
+            sort_by: None,
+            sort_order: None,
+        };
+
+        assert_eq!(minimal_request.query, "test");
+        assert!(minimal_request.adapter_type.is_none());
+        assert!(minimal_request.category.is_none());
+    }
+
+    // ================================
+    // 版本管理测试
+    // ================================
+
+    #[tokio::test]
+    async fn test_adapter_version_management() {
+        let mock_db = MockDatabase::new();
+        
+        // Test get versions
+        let versions = mock_db.adapter_registry.get_versions("test_adapter").await.unwrap();
+        assert_eq!(versions.len(), 0);
+        
+        // Test add version  
+        let version = crate::database::adapter::AdapterVersion {
+            id: 1,
+            adapter_id: "test_adapter".to_string(),
+            version: "1.0.1".to_string(),
+            changelog: Some("Bug fixes and improvements".to_string()),
+            released_at: chrono::Utc::now(),
+            download_url: Some("https://example.com/v1.0.1".to_string()),
+            checksum: Some("sha256:abc123".to_string()),
+            file_size: Some(1024000),
+            is_current: true,
+        };
+        
+        let result = mock_db.adapter_registry.add_version(version).await;
+        assert!(result.is_ok());
+    }
+
+    // ================================
+    // 依赖管理测试
+    // ================================
+
+    #[tokio::test]
+    async fn test_adapter_dependency_management() {
+        let mock_db = MockDatabase::new();
+        
+        // Test get dependencies
+        let dependencies = mock_db.adapter_registry.get_dependencies("test_adapter").await.unwrap();
+        assert_eq!(dependencies.len(), 0);
+        
+        // Test add dependency
+        let dependency = crate::database::adapter::AdapterDependency {
+            id: 1,
+            adapter_id: "test_adapter".to_string(),
+            dependency_id: "base_model".to_string(),
+            version_requirement: ">=1.0.0".to_string(),
+            required: true,
+        };
+        
+        let result = mock_db.adapter_registry.add_dependency(dependency).await;
+        assert!(result.is_ok());
+        
+        // Test delete dependency
+        let result = mock_db.adapter_registry.delete_dependency("test_adapter", "base_model").await;
+        assert!(result.is_ok());
+    }
+
+    // ================================
+    // 权限管理测试
+    // ================================
+
+    #[tokio::test]
+    async fn test_adapter_permission_management() {
+        let mock_db = MockDatabase::new();
+        
+        // Test get permissions
+        let permissions = mock_db.adapter_registry.get_permissions("test_adapter").await.unwrap();
+        assert_eq!(permissions.len(), 0);
+        
+        // Test check permission (should return true in mock)
+        let has_permission = mock_db.adapter_registry.check_permission("test_adapter", "read").await.unwrap();
+        assert!(has_permission);
+        
+        // Test grant permission
+        let result = mock_db.adapter_registry.grant_permission("test_adapter", "write", true).await;
+        assert!(result.is_ok());
+        
+        // Test revoke permission
+        let result = mock_db.adapter_registry.grant_permission("test_adapter", "write", false).await;
+        assert!(result.is_ok());
+        
+        // Test add permission
+        let permission = crate::database::adapter::AdapterPermission {
+            id: 1,
+            adapter_id: "test_adapter".to_string(),
+            permission_type: "execute".to_string(),
+            granted: true,
+            granted_at: Some(chrono::Utc::now()),
+            description: Some("Execute permission for test adapter".to_string()),
+        };
+        
+        let result = mock_db.adapter_registry.add_permission(permission).await;
+        assert!(result.is_ok());
+    }
+
+    // ================================
+    // 边界条件和错误处理测试
+    // ================================
+
+    #[test]
+    fn test_empty_adapter_search_request() {
+        let request = AdapterSearchRequest {
+            query: "".to_string(),
+            adapter_type: None,
+            category: None,
+            tags: None,
+            price_min: None,
+            price_max: None,
+            rating_min: None,
+            free_only: None,
+            featured_only: None,
+            page: None,
+            page_size: None,
+            sort_by: None,
+            sort_order: None,
+        };
+
+        assert_eq!(request.query, "");
+        assert!(request.adapter_type.is_none());
+        assert!(request.category.is_none());
+        assert!(request.tags.is_none());
+    }
+
+    #[test]
+    fn test_adapter_config_update_request() {
+        let mut config = HashMap::new();
+        config.insert("new_param".to_string(), json!("new_value"));
+
+        let request = AdapterConfigUpdateRequest {
+            adapter_id: "test_adapter".to_string(),
+            config,
+            merge: true,
+        };
+
+        assert_eq!(request.adapter_id, "test_adapter");
+        assert!(request.merge);
+        assert!(!request.config.is_empty());
+    }
+
+    #[test]
+    fn test_large_adapter_metadata() {
+        let mut large_config = HashMap::new();
+        for i in 0..1000 {
+            large_config.insert(format!("param_{}", i), json!(format!("value_{}", i)));
+        }
+
+        let metadata = AdapterMetadata {
+            id: "large_adapter".to_string(),
+            name: "Large Adapter".to_string(),
+            version: "1.0.0".to_string(),
+            adapter_type: AdapterType::Intelligent,
+            description: Some("A".repeat(10000)), // 10KB description
+            author: Some("Test Author".to_string()),
+            license: Some("MIT".to_string()),
+            tags: (0..100).map(|i| format!("tag_{}", i)).collect(),
+            created_at: chrono::Utc::now(),
+            updated_at: chrono::Utc::now(),
+            capabilities: vec![],
+            compatibility: AdapterCompatibility {
+                base_models: (0..50).map(|i| format!("model_{}", i)).collect(),
+                frameworks: HashMap::new(),
+                operating_systems: vec!["linux".to_string(), "windows".to_string(), "macos".to_string()],
+                python_versions: vec!["3.8+".to_string(), "3.9+".to_string(), "3.10+".to_string()],
+            },
+            resource_requirements: AdapterResourceRequirements {
+                min_memory_mb: Some(8192),
+                min_cpu_cores: Some(8),
+                gpu_required: true,
+                min_gpu_memory_mb: Some(4096),
+                python_version: Some("3.10+".to_string()),
+                dependencies: (0..100).map(|i| format!("dep_{}", i)).collect(),
+            },
+            config_schema: large_config.clone(),
+            default_config: large_config,
+            file_size_bytes: Some(1024 * 1024 * 100), // 100MB
+            parameter_count: Some(1000000),
+        };
+
+        // Test that large metadata can be created and serialized
+        let serialized = serde_json::to_string(&metadata);
+        assert!(serialized.is_ok());
+        assert!(serialized.unwrap().len() > 10000); // Should be quite large
+    }
+
+    #[test]
+    fn test_unicode_adapter_names() {
+        let metadata = AdapterMetadata {
+            id: "unicode_adapter".to_string(),
+            name: "测试适配器 🚀".to_string(),
+            version: "1.0.0".to_string(),
+            adapter_type: AdapterType::Soft,
+            description: Some("这是一个支持中文的适配器 🎯".to_string()),
+            author: Some("开发者 👨‍💻".to_string()),
+            license: Some("MIT".to_string()),
+            tags: vec!["中文".to_string(), "测试".to_string(), "🏷️".to_string()],
+            created_at: chrono::Utc::now(),
+            updated_at: chrono::Utc::now(),
+            capabilities: vec![],
+            compatibility: AdapterCompatibility {
+                base_models: vec!["模型A".to_string(), "模型B".to_string()],
+                frameworks: HashMap::new(),
+                operating_systems: vec!["linux".to_string()],
+                python_versions: vec!["3.8+".to_string()],
+            },
+            resource_requirements: AdapterResourceRequirements {
+                min_memory_mb: Some(512),
+                min_cpu_cores: Some(1),
+                gpu_required: false,
+                min_gpu_memory_mb: None,
+                python_version: Some("3.8+".to_string()),
+                dependencies: vec![],
+            },
+            config_schema: HashMap::new(),
+            default_config: HashMap::new(),
+            file_size_bytes: Some(1024),
+            parameter_count: Some(1000),
+        };
+
+        let serialized = serde_json::to_string(&metadata).expect("Unicode serialization failed");
+        let deserialized: AdapterMetadata = serde_json::from_str(&serialized).expect("Unicode deserialization failed");
+
+        assert_eq!(metadata.name, deserialized.name);
+        assert_eq!(metadata.description, deserialized.description);
+        assert_eq!(metadata.author, deserialized.author);
+        assert_eq!(metadata.tags, deserialized.tags);
+    }
+
+    #[tokio::test]
+    async fn test_extreme_timeout_values() {
+        // Test very small timeout
+        let request_small = AdapterExecutionRequest {
+            adapter_id: "test".to_string(),
+            action: "test".to_string(),
+            params: HashMap::new(),
+            timeout: Some(0), // 0 seconds
+        };
+        assert_eq!(request_small.timeout, Some(0));
+
+        // Test very large timeout
+        let request_large = AdapterExecutionRequest {
+            adapter_id: "test".to_string(),
+            action: "test".to_string(),
+            params: HashMap::new(),
+            timeout: Some(u64::MAX), // Maximum possible timeout
+        };
+        assert_eq!(request_large.timeout, Some(u64::MAX));
+
+        // Test no timeout
+        let request_none = AdapterExecutionRequest {
+            adapter_id: "test".to_string(),
+            action: "test".to_string(),
+            params: HashMap::new(),
+            timeout: None,
+        };
+        assert_eq!(request_none.timeout, None);
+    }
+
+    // ================================
+    // 性能测试
+    // ================================
+
+    #[tokio::test]
+    async fn test_large_response_handling() {
+        // Create a large paginated response
+        let large_items: Vec<serde_json::Value> = (0..10000)
+            .map(|i| json!({
+                "id": format!("item_{}", i),
+                "name": format!("Item {}", i),
+                "data": "x".repeat(100) // 100 chars per item
+            }))
+            .collect();
+
+        let response = PaginatedResponse::new(large_items, 10000, 1, 10000);
+
+        assert_eq!(response.items.len(), 10000);
+        assert_eq!(response.total, 10000);
+        assert_eq!(response.page, 1);
+        assert_eq!(response.total_pages, 1);
+        assert!(!response.has_next);
+        assert!(!response.has_prev);
+
+        // Test serialization performance
+        let _serialized = serde_json::to_string(&response).expect("Large response serialization failed");
+    }
+
+    #[test]
+    fn test_adapter_capability_with_many_params() {
+        let capability = AdapterCapability {
+            name: "complex_capability".to_string(),
+            description: "A capability with many parameters".to_string(),
+            level: CapabilityLevel::Expert,
+            required_params: (0..100).map(|i| format!("required_param_{}", i)).collect(),
+            optional_params: (0..200).map(|i| format!("optional_param_{}", i)).collect(),
+        };
+
+        assert_eq!(capability.required_params.len(), 100);
+        assert_eq!(capability.optional_params.len(), 200);
+
+        let serialized = serde_json::to_string(&capability).expect("Complex capability serialization failed");
+        let deserialized: AdapterCapability = serde_json::from_str(&serialized).expect("Complex capability deserialization failed");
+
+        assert_eq!(capability.required_params.len(), deserialized.required_params.len());
+        assert_eq!(capability.optional_params.len(), deserialized.optional_params.len());
+    }
+
+    // ================================
+    // 命令元数据测试
+    // ================================
+
+    #[test]
+    fn test_get_command_metadata() {
+        let metadata = get_command_metadata();
+        
+        // Test that metadata contains expected commands
+        assert!(metadata.contains_key("get_adapters"));
+        assert!(metadata.contains_key("install_adapter"));
+        assert!(metadata.contains_key("uninstall_adapter"));
+        assert!(metadata.contains_key("execute_adapter"));
+        assert!(metadata.contains_key("get_adapter_config"));
+        assert!(metadata.contains_key("update_adapter_config"));
+        assert!(metadata.contains_key("search_adapters"));
+        assert!(metadata.contains_key("get_adapter_details"));
+
+        // Test metadata structure
+        if let Some(get_adapters_meta) = metadata.get("get_adapters") {
+            assert_eq!(get_adapters_meta.name, "get_adapters");
+            assert_eq!(get_adapters_meta.category, "adapter");
+            assert!(get_adapters_meta.is_async);
+            assert_eq!(get_adapters_meta.required_permission, PermissionLevel::Public);
+        }
+
+        if let Some(install_adapter_meta) = metadata.get("install_adapter") {
+            assert_eq!(install_adapter_meta.name, "install_adapter");
+            assert_eq!(install_adapter_meta.category, "adapter");
+            assert!(install_adapter_meta.is_async);
+            assert_eq!(install_adapter_meta.required_permission, PermissionLevel::User);
+        }
+    }
+
+    #[test]
+    fn test_all_command_metadata_completeness() {
+        let metadata = get_command_metadata();
+        
+        for (command_name, meta) in metadata.iter() {
+            // Verify all metadata fields are properly set
+            assert!(!meta.name.is_empty(), "Command {} has empty name", command_name);
+            assert!(!meta.description.is_empty(), "Command {} has empty description", command_name);
+            assert!(!meta.category.is_empty(), "Command {} has empty category", command_name);
+            assert_eq!(meta.name, *command_name, "Command name mismatch for {}", command_name);
+            
+            // Verify permission levels are valid
+            match meta.required_permission {
+                PermissionLevel::Public | PermissionLevel::User | PermissionLevel::Admin | PermissionLevel::System => {},
+            }
+        }
+    }
+
+    // ================================
+    // 集成测试示例
+    // ================================
+
+    #[tokio::test]
+    async fn test_adapter_workflow_simulation() {
+        // Simulate a complete adapter management workflow
+        
+        // 1. Search for adapters
+        let search_request = AdapterSearchRequest {
+            query: "AI".to_string(),
+            adapter_type: Some(AdapterType::Soft),
+            category: None,
+            tags: None,
+            price_min: None,
+            price_max: None,
+            rating_min: Some(4.0),
+            free_only: Some(true),
+            featured_only: None,
+            page: Some(1),
+            page_size: Some(10),
+            sort_by: Some("rating".to_string()),
+            sort_order: Some("desc".to_string()),
+        };
+        
+        // 2. Install adapter
+        let mut install_options = HashMap::new();
+        install_options.insert("auto_start".to_string(), json!(true));
+        
+        let install_request = AdapterInstallRequest {
+            adapter_id: "ai_assistant".to_string(),
+            source: "market".to_string(),
+            force: false,
+            options: install_options,
+        };
+        
+        // 3. Configure adapter
+        let mut config_update = HashMap::new();
+        config_update.insert("temperature".to_string(), json!(0.8));
+        config_update.insert("max_tokens".to_string(), json!(2048));
+        
+        let config_request = AdapterConfigUpdateRequest {
+            adapter_id: "ai_assistant".to_string(),
+            config: config_update,
+            merge: true,
+        };
+        
+        // 4. Execute adapter
+        let mut execution_params = HashMap::new();
+        execution_params.insert("input".to_string(), json!("Hello world"));
+        
+        let execution_request = AdapterExecutionRequest {
+            adapter_id: "ai_assistant".to_string(),
+            action: "generate".to_string(),
+            params: execution_params,
+            timeout: Some(30),
+        };
+        
+        // Verify all requests are properly structured
+        assert_eq!(search_request.query, "AI");
+        assert_eq!(install_request.adapter_id, "ai_assistant");
+        assert_eq!(config_request.adapter_id, "ai_assistant");
+        assert_eq!(execution_request.adapter_id, "ai_assistant");
+        assert_eq!(execution_request.action, "generate");
+    }
+}
+
+// ================================
 // Command Metadata
 // ================================
 

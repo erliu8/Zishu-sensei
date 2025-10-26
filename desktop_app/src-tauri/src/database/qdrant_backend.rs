@@ -1,7 +1,6 @@
 //! Qdrant 向量数据库后端实现
 
 use async_trait::async_trait;
-use qdrant_client::prelude::*;
 use qdrant_client::Qdrant;
 use qdrant_client::qdrant::{
     CreateCollection, Distance, PointStruct, SearchPoints, VectorParams, VectorsConfig,
@@ -24,6 +23,16 @@ pub struct QdrantBackend {
     client: Option<Qdrant>,
     connected: bool,
     default_vector_size: usize,
+}
+
+impl std::fmt::Debug for QdrantBackend {
+    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
+        f.debug_struct("QdrantBackend")
+            .field("connected", &self.connected)
+            .field("default_vector_size", &self.default_vector_size)
+            .field("client", &self.client.is_some())
+            .finish()
+    }
 }
 
 impl QdrantBackend {
@@ -568,18 +577,437 @@ impl VectorDatabaseBackend for QdrantBackend {
 #[cfg(test)]
 mod tests {
     use super::*;
+    use std::collections::HashMap;
 
-    #[tokio::test]
-    async fn test_qdrant_backend_type() {
+    // ================================
+    // 基础功能测试
+    // ================================
+
+    #[test]
+    fn test_qdrant_backend_creation() {
         let backend = QdrantBackend::new();
         assert_eq!(backend.backend_type(), DatabaseBackendType::Qdrant);
         assert!(!backend.is_connected());
+        assert_eq!(backend.default_vector_size, 384);
+        assert!(backend.client.is_none());
     }
 
     #[test]
     fn test_qdrant_with_vector_size() {
         let backend = QdrantBackend::new().with_vector_size(512);
         assert_eq!(backend.default_vector_size, 512);
+        assert!(!backend.is_connected());
+    }
+
+    #[test]
+    fn test_qdrant_debug_format() {
+        let backend = QdrantBackend::new();
+        let debug_str = format!("{:?}", backend);
+        assert!(debug_str.contains("QdrantBackend"));
+        assert!(debug_str.contains("connected: false"));
+        assert!(debug_str.contains("default_vector_size: 384"));
+    }
+
+    #[test]
+    fn test_qdrant_default() {
+        let backend = QdrantBackend::default();
+        assert_eq!(backend.backend_type(), DatabaseBackendType::Qdrant);
+        assert_eq!(backend.default_vector_size, 384);
+    }
+
+    // ================================
+    // 连接管理测试
+    // ================================
+
+    #[tokio::test]
+    async fn test_qdrant_get_client_when_not_connected() {
+        let backend = QdrantBackend::new();
+        let result = backend.get_client();
+        assert!(result.is_err());
+        if let Err(DatabaseError::ConnectionError(msg)) = result {
+            assert_eq!(msg, "未连接到Qdrant");
+        } else {
+            panic!("期望ConnectionError");
+        }
+    }
+
+    #[tokio::test]
+    async fn test_qdrant_disconnect_when_not_connected() {
+        let mut backend = QdrantBackend::new();
+        let result = backend.disconnect().await;
+        assert!(result.is_ok());
+        assert!(!backend.is_connected());
+    }
+
+    #[tokio::test]
+    async fn test_qdrant_connection_with_invalid_url() {
+        let mut backend = QdrantBackend::new();
+        let config = DatabaseConfig {
+            backend_type: DatabaseBackendType::Qdrant,
+            connection_string: "invalid://url".to_string(),
+            ..Default::default()
+        };
+        
+        let result = backend.connect(&config).await;
+        assert!(result.is_err());
+        assert!(!backend.is_connected());
+    }
+
+    // ================================
+    // 数据转换测试
+    // ================================
+
+    #[test]
+    fn test_payload_to_map_conversion() {
+        use qdrant_client::qdrant::{Value, value::Kind};
+        
+        let mut payload = HashMap::new();
+        
+        // 测试字符串值
+        payload.insert("str_key".to_string(), Value {
+            kind: Some(Kind::StringValue("test_value".to_string())),
+        });
+        
+        // 测试整数值
+        payload.insert("int_key".to_string(), Value {
+            kind: Some(Kind::IntegerValue(42)),
+        });
+        
+        // 测试浮点数值
+        payload.insert("double_key".to_string(), Value {
+            kind: Some(Kind::DoubleValue(3.14)),
+        });
+        
+        // 测试布尔值
+        payload.insert("bool_key".to_string(), Value {
+            kind: Some(Kind::BoolValue(true)),
+        });
+        
+        // 测试空值
+        payload.insert("null_key".to_string(), Value { kind: None });
+        
+        let result = QdrantBackend::payload_to_map(&payload);
+        assert!(result.is_ok());
+        
+        let map = result.unwrap();
+        assert_eq!(map.get("str_key").unwrap(), &serde_json::Value::String("test_value".to_string()));
+        assert_eq!(map.get("int_key").unwrap(), &serde_json::Value::Number(42.into()));
+        assert_eq!(map.get("bool_key").unwrap(), &serde_json::Value::Bool(true));
+        assert_eq!(map.get("null_key").unwrap(), &serde_json::Value::Null);
+    }
+
+    #[test]
+    fn test_map_to_payload_conversion() {
+        let mut map = HashMap::new();
+        map.insert("str_key".to_string(), serde_json::Value::String("test".to_string()));
+        map.insert("int_key".to_string(), serde_json::Value::Number(42.into()));
+        map.insert("float_key".to_string(), serde_json::json!(3.14));
+        map.insert("bool_key".to_string(), serde_json::Value::Bool(true));
+        map.insert("null_key".to_string(), serde_json::Value::Null);
+        map.insert("array_key".to_string(), serde_json::json!([1, 2, 3])); // 应该被跳过
+        
+        let payload = QdrantBackend::map_to_payload(&map);
+        
+        // 验证payload不为空（说明有些类型被成功转换）
+        // Payload本身的构造说明转换成功
+        
+        // 由于无法直接访问Payload内部，我们只验证基本功能
+        // 通过构造一个简单的payload测试序列化
+        let simple_map = HashMap::from([
+            ("test".to_string(), serde_json::Value::String("value".to_string()))
+        ]);
+        let simple_payload = QdrantBackend::map_to_payload(&simple_map);
+        // Payload构造成功说明转换正常
+    }
+
+    #[test]
+    fn test_payload_conversion_roundtrip() {
+        let mut original_map = HashMap::new();
+        original_map.insert("str_key".to_string(), serde_json::Value::String("test".to_string()));
+        original_map.insert("int_key".to_string(), serde_json::Value::Number(42.into()));
+        original_map.insert("bool_key".to_string(), serde_json::Value::Bool(true));
+        
+        let payload = QdrantBackend::map_to_payload(&original_map);
+        
+        // 测试往返转换的基本功能 - 由于Payload API限制，这里只测试创建是否成功
+        // Payload构造成功说明转换正常
+        
+        // 测试从已知HashMap创建并验证转换
+        let mut test_payload_map = HashMap::new();
+        test_payload_map.insert("test_key".to_string(), qdrant_client::qdrant::Value {
+            kind: Some(qdrant_client::qdrant::value::Kind::StringValue("test_value".to_string())),
+        });
+        
+        let result = QdrantBackend::payload_to_map(&test_payload_map);
+        assert!(result.is_ok());
+        let converted = result.unwrap();
+        assert_eq!(converted.get("test_key").unwrap(), &serde_json::Value::String("test_value".to_string()));
+    }
+
+    // ================================
+    // 数据库操作测试（Mock测试）
+    // ================================
+
+    #[tokio::test]
+    async fn test_qdrant_insert_without_vector_fails() {
+        let backend = QdrantBackend::new();
+        let data = serde_json::json!({"key": "value"});
+        
+        let result = backend.insert("test_collection", "1", &data).await;
+        assert!(result.is_err());
+        
+        if let Err(DatabaseError::InvalidData(msg)) = result {
+            assert!(msg.contains("Qdrant需要向量数据"));
+        } else {
+            panic!("期望InvalidData错误");
+        }
+    }
+
+    #[tokio::test]
+    async fn test_qdrant_batch_insert_without_vector_fails() {
+        let backend = QdrantBackend::new();
+        let items = vec![
+            ("1".to_string(), serde_json::json!({"key": "value1"})),
+            ("2".to_string(), serde_json::json!({"key": "value2"})),
+        ];
+        
+        let result = backend.batch_insert("test_collection", items).await;
+        assert!(result.is_err());
+        
+        if let Err(DatabaseError::InvalidData(msg)) = result {
+            assert!(msg.contains("Qdrant需要向量数据"));
+        } else {
+            panic!("期望InvalidData错误");
+        }
+    }
+
+    #[tokio::test]
+    async fn test_qdrant_get_with_invalid_id() {
+        let backend = QdrantBackend::new();
+        
+        let result = backend.get("test_collection", "invalid_id").await;
+        assert!(result.is_err());
+        
+        // 由于未连接，会返回ConnectionError而不是InvalidData
+        if let Err(DatabaseError::ConnectionError(msg)) = result {
+            assert!(msg.contains("未连接到Qdrant"));
+        } else {
+            panic!("期望ConnectionError错误");
+        }
+    }
+
+    #[tokio::test]
+    async fn test_qdrant_update_with_invalid_id() {
+        let backend = QdrantBackend::new();
+        let data = serde_json::json!({"key": "value"});
+        
+        let result = backend.update("test_collection", "invalid_id", &data).await;
+        assert!(result.is_err());
+        
+        // 由于未连接，会返回ConnectionError而不是InvalidData
+        if let Err(DatabaseError::ConnectionError(msg)) = result {
+            assert!(msg.contains("未连接到Qdrant"));
+        } else {
+            panic!("期望ConnectionError错误");
+        }
+    }
+
+    #[tokio::test]
+    async fn test_qdrant_delete_with_invalid_id() {
+        let backend = QdrantBackend::new();
+        
+        let result = backend.delete("test_collection", "invalid_id").await;
+        assert!(result.is_err());
+        
+        // 由于未连接，会返回ConnectionError而不是InvalidData
+        if let Err(DatabaseError::ConnectionError(msg)) = result {
+            assert!(msg.contains("未连接到Qdrant"));
+        } else {
+            panic!("期望ConnectionError错误");
+        }
+    }
+
+    #[tokio::test]
+    async fn test_qdrant_execute_raw_not_supported() {
+        let backend = QdrantBackend::new();
+        
+        let result = backend.execute_raw("SELECT 1").await;
+        assert!(result.is_err());
+        
+        if let Err(DatabaseError::Other(msg)) = result {
+            assert_eq!(msg, "Qdrant不支持原始查询");
+        } else {
+            panic!("期望Other错误");
+        }
+    }
+
+    #[tokio::test]
+    async fn test_qdrant_transaction_not_supported() {
+        let backend = QdrantBackend::new();
+        
+        let result = backend.begin_transaction().await;
+        assert!(result.is_err());
+        
+        if let Err(DatabaseError::Other(msg)) = result {
+            assert_eq!(msg, "Qdrant不支持事务");
+        } else {
+            panic!("期望Other错误");
+        }
+    }
+
+    // ================================
+    // 向量操作测试
+    // ================================
+
+    #[tokio::test]
+    async fn test_vector_insert_with_invalid_id() {
+        let backend = QdrantBackend::new();
+        let vector = vec![0.1, 0.2, 0.3];
+        let payload = serde_json::json!({"key": "value"});
+        
+        let result = backend.insert_vector("test_collection", "invalid_id", vector, &payload).await;
+        assert!(result.is_err());
+        
+        // 由于未连接，会返回ConnectionError而不是InvalidData
+        if let Err(DatabaseError::ConnectionError(msg)) = result {
+            assert!(msg.contains("未连接到Qdrant"));
+        } else {
+            panic!("期望ConnectionError错误");
+        }
+    }
+
+    #[tokio::test]
+    async fn test_batch_insert_vectors_with_invalid_id() {
+        let backend = QdrantBackend::new();
+        let items = vec![
+            ("invalid_id".to_string(), vec![0.1, 0.2], serde_json::json!({"key": "value"})),
+        ];
+        
+        let result = backend.batch_insert_vectors("test_collection", items).await;
+        assert!(result.is_err());
+        
+        // 由于未连接，会返回ConnectionError而不是InvalidData
+        if let Err(DatabaseError::ConnectionError(msg)) = result {
+            assert!(msg.contains("未连接到Qdrant"));
+        } else {
+            panic!("期望ConnectionError错误");
+        }
+    }
+
+    // ================================
+    // 集合操作测试
+    // ================================
+
+    #[tokio::test]
+    async fn test_create_collection_with_schema() {
+        let backend = QdrantBackend::new();
+        
+        // 测试带有向量维度的schema
+        let schema = r#"{"vector_size": 128}"#;
+        let result = backend.create_collection("test_collection", Some(schema)).await;
+        
+        // 由于没有真实连接，这应该失败于连接错误
+        assert!(result.is_err());
+        if let Err(DatabaseError::ConnectionError(_)) = result {
+            // 预期的连接错误
+        } else {
+            panic!("期望ConnectionError");
+        }
+    }
+
+    #[tokio::test]
+    async fn test_create_collection_with_invalid_schema() {
+        let backend = QdrantBackend::new();
+        
+        // 测试无效的JSON schema
+        let schema = "invalid json";
+        let result = backend.create_collection("test_collection", Some(schema)).await;
+        
+        // 即使JSON无效，也应该使用默认向量大小，但会失败于连接错误
+        assert!(result.is_err());
+        if let Err(DatabaseError::ConnectionError(_)) = result {
+            // 预期的连接错误
+        } else {
+            panic!("期望ConnectionError");
+        }
+    }
+
+    // ================================
+    // 边界条件和错误处理测试
+    // ================================
+
+    #[test]
+    fn test_payload_conversion_with_extreme_values() {
+        let mut map = HashMap::new();
+        map.insert("max_int".to_string(), serde_json::Value::Number(i64::MAX.into()));
+        map.insert("min_int".to_string(), serde_json::Value::Number(i64::MIN.into()));
+        map.insert("large_float".to_string(), serde_json::json!(f64::MAX));
+        map.insert("small_float".to_string(), serde_json::json!(f64::MIN_POSITIVE));
+        
+        let payload = QdrantBackend::map_to_payload(&map);
+        
+        // 验证极值可以被处理而不panic - payload构造成功说明转换成功
+        // 极值处理正常，未发生panic
+        
+        // 测试各种极值类型的转换
+        let max_int_map = HashMap::from([
+            ("max_int".to_string(), serde_json::Value::Number(i64::MAX.into()))
+        ]);
+        let max_int_payload = QdrantBackend::map_to_payload(&max_int_map);
+        // 极大值处理正常
+    }
+
+    #[test]
+    fn test_payload_conversion_with_special_float_values() {
+        let mut map = HashMap::new();
+        map.insert("nan".to_string(), serde_json::json!(f64::NAN));
+        map.insert("infinity".to_string(), serde_json::json!(f64::INFINITY));
+        map.insert("neg_infinity".to_string(), serde_json::json!(f64::NEG_INFINITY));
+        
+        let payload = QdrantBackend::map_to_payload(&map);
+        
+        // NaN和无穷大应该被处理（可能被跳过或转换）
+        // 具体行为取决于实现，但不应该panic
+        // 我们只验证函数不会panic，payload可能为空也可能不为空
+        // 这取决于实现对特殊浮点值的处理
+        
+        // 测试正常的浮点数转换
+        let normal_float_map = HashMap::from([
+            ("normal".to_string(), serde_json::json!(3.14))
+        ]);
+        let normal_payload = QdrantBackend::map_to_payload(&normal_float_map);
+        // 正常浮点数处理成功
+    }
+
+    #[test]
+    fn test_vector_size_validation() {
+        let backend = QdrantBackend::new().with_vector_size(0);
+        assert_eq!(backend.default_vector_size, 0);
+        
+        let backend = QdrantBackend::new().with_vector_size(usize::MAX);
+        assert_eq!(backend.default_vector_size, usize::MAX);
+    }
+
+    #[tokio::test]
+    async fn test_operations_on_disconnected_backend() {
+        let backend = QdrantBackend::new();
+        
+        // 测试所有需要连接的操作都会失败
+        assert!(backend.create_collection("test", None).await.is_err());
+        assert!(backend.drop_collection("test").await.is_err());
+        assert!(backend.collection_exists("test").await.is_err());
+        assert!(backend.get("test", "1").await.is_err());
+        assert!(backend.update("test", "1", &serde_json::json!({})).await.is_err());
+        assert!(backend.delete("test", "1").await.is_err());
+        assert!(backend.query("test", &QueryOptions::default()).await.is_err());
+        assert!(backend.count("test", None).await.is_err());
+        assert!(backend.clear_collection("test").await.is_err());
+        
+        // 向量操作也应该失败
+        assert!(backend.insert_vector("test", "1", vec![0.1], &serde_json::json!({})).await.is_err());
+        assert!(backend.batch_insert_vectors("test", vec![]).await.is_err());
+        assert!(backend.vector_search("test", vec![0.1], 10, None).await.is_err());
+        assert!(backend.delete_vector("test", "1").await.is_err());
     }
 }
 

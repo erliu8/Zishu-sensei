@@ -570,3 +570,394 @@ impl RegionDetector {
         recommendations.into_iter().map(|s| s.to_string()).collect()
     }
 }
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+
+    /// 测试系统区域信息结构体的基本功能
+    #[test]
+    fn test_system_region_info_creation() {
+        let region = SystemRegionInfo {
+            locale: "zh-CN".to_string(),
+            language: "zh".to_string(),
+            country: "CN".to_string(),
+            timezone: "Asia/Shanghai".to_string(),
+            currency: "CNY".to_string(),
+            confidence: 0.9,
+        };
+
+        assert_eq!(region.locale, "zh-CN");
+        assert_eq!(region.language, "zh");
+        assert_eq!(region.country, "CN");
+        assert_eq!(region.timezone, "Asia/Shanghai");
+        assert_eq!(region.currency, "CNY");
+        assert_eq!(region.confidence, 0.9);
+    }
+
+    /// 测试系统区域检测的默认行为
+    #[test]
+    fn test_detect_system_region_default() {
+        let region = RegionDetector::detect_system_region();
+        
+        // 验证返回的区域信息不为空
+        assert!(!region.locale.is_empty());
+        assert!(!region.language.is_empty());
+        assert!(!region.country.is_empty());
+        assert!(!region.timezone.is_empty());
+        assert!(!region.currency.is_empty());
+        
+        // 验证置信度在合理范围内
+        assert!(region.confidence >= 0.0);
+        assert!(region.confidence <= 1.0);
+    }
+
+    /// 测试locale字符串解析功能
+    #[test]
+    fn test_parse_locale_with_underscore() {
+        // 测试标准格式
+        let result = RegionDetector::parse_locale("zh_CN.UTF-8");
+        assert_eq!(result, Some(("zh".to_string(), "CN".to_string())));
+        
+        let result = RegionDetector::parse_locale("en_US");
+        assert_eq!(result, Some(("en".to_string(), "US".to_string())));
+        
+        let result = RegionDetector::parse_locale("ja_JP.eucJP");
+        assert_eq!(result, Some(("ja".to_string(), "JP".to_string())));
+    }
+
+    /// 测试locale字符串解析功能（连字符格式）
+    #[test]
+    fn test_parse_locale_with_dash() {
+        let result = RegionDetector::parse_locale("zh-CN");
+        assert_eq!(result, Some(("zh".to_string(), "CN".to_string())));
+        
+        let result = RegionDetector::parse_locale("en-US");
+        assert_eq!(result, Some(("en".to_string(), "US".to_string())));
+        
+        let result = RegionDetector::parse_locale("de-DE");
+        assert_eq!(result, Some(("de".to_string(), "DE".to_string())));
+    }
+
+    /// 测试从语言代码猜测国家
+    #[test]
+    fn test_guess_country_from_language() {
+        assert_eq!(
+            RegionDetector::guess_country_from_language("zh"),
+            Some(("zh".to_string(), "CN".to_string()))
+        );
+        
+        assert_eq!(
+            RegionDetector::guess_country_from_language("en"),
+            Some(("en".to_string(), "US".to_string()))
+        );
+        
+        assert_eq!(
+            RegionDetector::guess_country_from_language("ja"),
+            Some(("ja".to_string(), "JP".to_string()))
+        );
+        
+        assert_eq!(
+            RegionDetector::guess_country_from_language("ko"),
+            Some(("ko".to_string(), "KR".to_string()))
+        );
+
+        // 测试不支持的语言
+        assert_eq!(
+            RegionDetector::guess_country_from_language("unknown"),
+            None
+        );
+    }
+
+    /// 测试Windows时区映射
+    #[test]
+    fn test_convert_windows_timezone_to_iana() {
+        let mapping = RegionDetector::get_windows_timezone_mapping();
+        
+        // 测试一些常见的映射
+        assert_eq!(mapping.get("China Standard Time"), Some(&"Asia/Shanghai".to_string()));
+        assert_eq!(mapping.get("Tokyo Standard Time"), Some(&"Asia/Tokyo".to_string()));
+        assert_eq!(mapping.get("Eastern Standard Time"), Some(&"America/New_York".to_string()));
+        assert_eq!(mapping.get("GMT Standard Time"), Some(&"Europe/London".to_string()));
+        
+        // 测试映射的完整性
+        assert!(mapping.len() > 10); // 确保有足够的映射项
+    }
+
+    /// 测试国家到货币的映射
+    #[test]
+    fn test_detect_currency() {
+        // 测试主要国家的货币映射
+        assert_eq!(RegionDetector::detect_currency("CN"), Some("CNY".to_string()));
+        assert_eq!(RegionDetector::detect_currency("US"), Some("USD".to_string()));
+        assert_eq!(RegionDetector::detect_currency("JP"), Some("JPY".to_string()));
+        assert_eq!(RegionDetector::detect_currency("KR"), Some("KRW".to_string()));
+        assert_eq!(RegionDetector::detect_currency("GB"), Some("GBP".to_string()));
+        
+        // 测试欧元区国家
+        assert_eq!(RegionDetector::detect_currency("DE"), Some("EUR".to_string()));
+        assert_eq!(RegionDetector::detect_currency("FR"), Some("EUR".to_string()));
+        assert_eq!(RegionDetector::detect_currency("IT"), Some("EUR".to_string()));
+        
+        // 测试不存在的国家代码
+        assert_eq!(RegionDetector::detect_currency("XX"), None);
+    }
+
+    /// 测试简化时区名称转换
+    #[test]
+    fn test_convert_simple_timezone() {
+        // 测试中国标准时间
+        assert_eq!(
+            RegionDetector::convert_simple_timezone("CST"),
+            Some("Asia/Shanghai".to_string())
+        );
+        
+        // 测试日本标准时间
+        assert_eq!(
+            RegionDetector::convert_simple_timezone("JST"),
+            Some("Asia/Tokyo".to_string())
+        );
+        
+        // 测试美国时区
+        assert_eq!(
+            RegionDetector::convert_simple_timezone("EST"),
+            Some("America/New_York".to_string())
+        );
+        
+        assert_eq!(
+            RegionDetector::convert_simple_timezone("PST"),
+            Some("America/Los_Angeles".to_string())
+        );
+        
+        // 测试UTC/GMT
+        assert_eq!(
+            RegionDetector::convert_simple_timezone("GMT"),
+            Some("Europe/London".to_string())
+        );
+        
+        assert_eq!(
+            RegionDetector::convert_simple_timezone("UTC"),
+            Some("Europe/London".to_string())
+        );
+        
+        // 测试不支持的时区
+        assert_eq!(
+            RegionDetector::convert_simple_timezone("UNKNOWN"),
+            None
+        );
+    }
+
+    /// 测试默认区域设置
+    #[test]
+    fn test_get_default_region() {
+        let default_region = RegionDetector::get_default_region();
+        
+        assert_eq!(default_region.locale, "zh-CN");
+        assert_eq!(default_region.language, "zh");
+        assert_eq!(default_region.country, "CN");
+        assert_eq!(default_region.timezone, "Asia/Shanghai");
+        assert_eq!(default_region.currency, "CNY");
+        assert_eq!(default_region.confidence, 1.0);
+    }
+
+    /// 测试验证和修正功能
+    #[test]
+    fn test_validate_and_correct() {
+        // 测试locale格式修正
+        let mut info = SystemRegionInfo {
+            locale: String::new(),
+            language: "zh".to_string(),
+            country: "CN".to_string(),
+            timezone: "Asia/Shanghai".to_string(),
+            currency: "CNY".to_string(),
+            confidence: 0.5,
+        };
+        
+        RegionDetector::validate_and_correct(&mut info);
+        
+        assert_eq!(info.locale, "zh-CN");
+        assert_eq!(info.confidence, 0.5); // 置信度不变，因为locale已经在早期步骤中设置
+        
+        // 测试时区格式修正
+        let mut info2 = SystemRegionInfo {
+            locale: "en-US".to_string(),
+            language: "en".to_string(),
+            country: "US".to_string(),
+            timezone: "EST".to_string(),
+            currency: "USD".to_string(),
+            confidence: 0.7,
+        };
+        
+        RegionDetector::validate_and_correct(&mut info2);
+        
+        // EST应该被转换为America/New_York
+        assert_eq!(info2.timezone, "America/New_York");
+        
+        // 测试货币代码修正
+        let mut info3 = SystemRegionInfo {
+            locale: "ja-JP".to_string(),
+            language: "ja".to_string(),
+            country: "JP".to_string(),
+            timezone: "Asia/Tokyo".to_string(),
+            currency: "invalid".to_string(), // 无效的货币代码
+            confidence: 0.8,
+        };
+        
+        RegionDetector::validate_and_correct(&mut info3);
+        
+        // 应该修正为正确的货币代码
+        assert_eq!(info3.currency, "JPY");
+    }
+
+    /// 测试推荐区域功能
+    #[test]
+    fn test_get_recommended_regions() {
+        // 测试中文推荐
+        let current_zh = SystemRegionInfo {
+            locale: "zh-CN".to_string(),
+            language: "zh".to_string(),
+            country: "CN".to_string(),
+            timezone: "Asia/Shanghai".to_string(),
+            currency: "CNY".to_string(),
+            confidence: 0.9,
+        };
+        
+        let recommendations = RegionDetector::get_recommended_regions(&current_zh);
+        assert!(recommendations.contains(&"zh-CN".to_string()));
+        assert!(recommendations.contains(&"zh-TW".to_string()));
+        assert!(recommendations.contains(&"zh-HK".to_string()));
+        
+        // 测试英文推荐
+        let current_en = SystemRegionInfo {
+            locale: "en-US".to_string(),
+            language: "en".to_string(),
+            country: "US".to_string(),
+            timezone: "America/New_York".to_string(),
+            currency: "USD".to_string(),
+            confidence: 0.9,
+        };
+        
+        let recommendations = RegionDetector::get_recommended_regions(&current_en);
+        assert!(recommendations.contains(&"en-US".to_string()));
+        assert!(recommendations.contains(&"en-GB".to_string()));
+        assert!(recommendations.contains(&"en-AU".to_string()));
+        assert!(recommendations.contains(&"en-CA".to_string()));
+        
+        // 测试德语推荐
+        let current_de = SystemRegionInfo {
+            locale: "de-DE".to_string(),
+            language: "de".to_string(),
+            country: "DE".to_string(),
+            timezone: "Europe/Berlin".to_string(),
+            currency: "EUR".to_string(),
+            confidence: 0.9,
+        };
+        
+        let recommendations = RegionDetector::get_recommended_regions(&current_de);
+        assert!(recommendations.contains(&"de-DE".to_string()));
+        assert!(recommendations.contains(&"de-AT".to_string()));
+        assert!(recommendations.contains(&"de-CH".to_string()));
+        
+        // 测试未知语言的默认推荐
+        let current_unknown = SystemRegionInfo {
+            locale: "xx-XX".to_string(),
+            language: "xx".to_string(),
+            country: "XX".to_string(),
+            timezone: "UTC".to_string(),
+            currency: "XXX".to_string(),
+            confidence: 0.5,
+        };
+        
+        let recommendations = RegionDetector::get_recommended_regions(&current_unknown);
+        // 应该包含当前locale和默认推荐
+        assert!(recommendations.contains(&"xx-XX".to_string()));
+        assert!(recommendations.contains(&"en-US".to_string()));
+        assert!(recommendations.contains(&"zh-CN".to_string()));
+        
+        // 确保推荐列表不为空
+        assert!(!recommendations.is_empty());
+    }
+
+    /// 测试边界条件和错误处理
+    #[test]
+    fn test_edge_cases() {
+        // 测试空字符串locale解析
+        assert_eq!(RegionDetector::parse_locale(""), None);
+        assert_eq!(RegionDetector::parse_locale("invalid"), None);
+        
+        // 测试格式不正确的locale
+        assert_eq!(RegionDetector::parse_locale("zh"), Some(("zh".to_string(), "CN".to_string())));
+        assert_eq!(RegionDetector::parse_locale("a_b_c"), Some(("a".to_string(), "B".to_string())));
+        
+        // 测试大小写处理
+        assert_eq!(RegionDetector::parse_locale("ZH_cn"), Some(("zh".to_string(), "CN".to_string())));
+        assert_eq!(RegionDetector::parse_locale("EN_us.utf8"), Some(("en".to_string(), "US".to_string())));
+    }
+
+    /// 测试序列化和反序列化
+    #[test]
+    fn test_serialization() {
+        let region = SystemRegionInfo {
+            locale: "zh-CN".to_string(),
+            language: "zh".to_string(),
+            country: "CN".to_string(),
+            timezone: "Asia/Shanghai".to_string(),
+            currency: "CNY".to_string(),
+            confidence: 0.95,
+        };
+
+        // 测试序列化
+        let serialized = serde_json::to_string(&region);
+        assert!(serialized.is_ok());
+
+        // 测试反序列化
+        let json_str = serialized.unwrap();
+        let deserialized: Result<SystemRegionInfo, _> = serde_json::from_str(&json_str);
+        assert!(deserialized.is_ok());
+
+        let restored = deserialized.unwrap();
+        assert_eq!(restored.locale, region.locale);
+        assert_eq!(restored.language, region.language);
+        assert_eq!(restored.country, region.country);
+        assert_eq!(restored.timezone, region.timezone);
+        assert_eq!(restored.currency, region.currency);
+        assert_eq!(restored.confidence, region.confidence);
+    }
+
+    /// 性能测试：检测系统区域的执行时间
+    #[test]
+    fn test_performance_detect_system_region() {
+        use std::time::Instant;
+        
+        let start = Instant::now();
+        let _region = RegionDetector::detect_system_region();
+        let duration = start.elapsed();
+        
+        // 确保检测在合理时间内完成（少于1秒）
+        assert!(duration.as_secs() < 1, "区域检测耗时过长: {:?}", duration);
+    }
+
+    /// 并发测试：确保多线程访问的安全性
+    #[test]
+    fn test_concurrent_access() {
+        use std::sync::Arc;
+        use std::thread;
+        
+        let handles: Vec<_> = (0..10)
+            .map(|_| {
+                thread::spawn(|| {
+                    let region = RegionDetector::detect_system_region();
+                    assert!(!region.locale.is_empty());
+                    
+                    let recommendations = RegionDetector::get_recommended_regions(&region);
+                    assert!(!recommendations.is_empty());
+                })
+            })
+            .collect();
+        
+        // 等待所有线程完成
+        for handle in handles {
+            handle.join().expect("线程执行失败");
+        }
+    }
+}

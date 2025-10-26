@@ -517,23 +517,63 @@ pub fn validate_session_id(session_id: &str) -> bool {
 #[cfg(test)]
 mod tests {
     use super::*;
+    use std::collections::HashMap;
+    use serde_json::json;
+
+    // ================================
+    // 工具函数测试
+    // ================================
 
     #[test]
     fn test_generate_session_id() {
+        // Arrange - 准备测试数据
+        
+        // Act - 执行被测试的操作
         let session_id = generate_session_id();
+        
+        // Assert - 验证结果
         assert!(session_id.starts_with("session_"));
         assert!(session_id.len() > 10);
     }
 
     #[test]
-    fn test_validate_session_id() {
-        assert!(validate_session_id("session_abc123"));
-        assert!(!validate_session_id(""));
-        assert!(!validate_session_id("   "));
+    fn test_generate_session_id_uniqueness() {
+        // Arrange & Act
+        let id1 = generate_session_id();
+        let id2 = generate_session_id();
+        
+        // Assert
+        assert_ne!(id1, id2, "生成的会话ID应该是唯一的");
     }
 
     #[test]
+    fn test_validate_session_id_valid_cases() {
+        // Arrange & Act & Assert
+        assert!(validate_session_id("session_abc123"));
+        assert!(validate_session_id("valid_session_id"));
+        assert!(validate_session_id("123"));
+        assert!(validate_session_id("a"));
+    }
+
+    #[test]
+    fn test_validate_session_id_invalid_cases() {
+        // Arrange & Act & Assert
+        assert!(!validate_session_id(""));
+        assert!(!validate_session_id("   "));
+        assert!(!validate_session_id("\t\n"));
+        
+        // 测试超长ID
+        let long_id = "a".repeat(65);
+        assert!(!validate_session_id(&long_id));
+    }
+
+    // ================================
+    // 数据结构序列化测试
+    // ================================
+
+    #[test]
     fn test_send_message_input_serialization() {
+        // Arrange
         let input = SendMessageInput {
             message: "Hello".to_string(),
             session_id: Some("test_session".to_string()),
@@ -547,8 +587,416 @@ mod tests {
             context_messages: None,
         };
         
+        // Act
         let json = serde_json::to_string(&input).unwrap();
+        
+        // Assert
         assert!(json.contains("Hello"));
         assert!(json.contains("test_session"));
+    }
+
+    #[test]
+    fn test_send_message_input_full_serialization() {
+        // Arrange
+        let context_messages = vec![
+            ContextMessage {
+                role: "system".to_string(),
+                content: "You are a helpful assistant".to_string(),
+            },
+        ];
+        
+        let input = SendMessageInput {
+            message: "Test message".to_string(),
+            session_id: Some("session_123".to_string()),
+            model: Some("gpt-4".to_string()),
+            adapter: Some("openai".to_string()),
+            character_id: Some("char_1".to_string()),
+            max_tokens: Some(1000),
+            temperature: Some(0.7),
+            top_p: Some(0.9),
+            stream: Some(false),
+            context_messages: Some(context_messages),
+        };
+        
+        // Act
+        let json = serde_json::to_string(&input).unwrap();
+        let deserialized: SendMessageInput = serde_json::from_str(&json).unwrap();
+        
+        // Assert
+        assert_eq!(deserialized.message, "Test message");
+        assert_eq!(deserialized.session_id, Some("session_123".to_string()));
+        assert_eq!(deserialized.model, Some("gpt-4".to_string()));
+        assert_eq!(deserialized.max_tokens, Some(1000));
+        assert_eq!(deserialized.temperature, Some(0.7));
+        assert!(deserialized.context_messages.is_some());
+    }
+
+    #[test]
+    fn test_chat_response_serialization() {
+        // Arrange
+        let usage = TokenUsage {
+            prompt_tokens: 10,
+            completion_tokens: 20,
+            total_tokens: 30,
+        };
+        
+        let response = ChatResponse {
+            message: "Hello back!".to_string(),
+            session_id: "session_123".to_string(),
+            message_id: "msg_456".to_string(),
+            model: "gpt-4".to_string(),
+            processing_time: Some(1.5),
+            usage: Some(usage),
+            finish_reason: Some("stop".to_string()),
+        };
+        
+        // Act
+        let json = serde_json::to_string(&response).unwrap();
+        let deserialized: ChatResponse = serde_json::from_str(&json).unwrap();
+        
+        // Assert
+        assert_eq!(deserialized.message, "Hello back!");
+        assert_eq!(deserialized.session_id, "session_123");
+        assert_eq!(deserialized.usage.unwrap().total_tokens, 30);
+    }
+
+    #[test]
+    fn test_history_message_serialization() {
+        // Arrange
+        let message = HistoryMessage {
+            role: "user".to_string(),
+            content: "Test content".to_string(),
+            timestamp: Some(1234567890),
+            emotion: Some("happy".to_string()),
+        };
+        
+        // Act
+        let json = serde_json::to_string(&message).unwrap();
+        let deserialized: HistoryMessage = serde_json::from_str(&json).unwrap();
+        
+        // Assert
+        assert_eq!(deserialized.role, "user");
+        assert_eq!(deserialized.content, "Test content");
+        assert_eq!(deserialized.timestamp, Some(1234567890));
+    }
+
+    #[test]
+    fn test_set_model_input_with_config() {
+        // Arrange
+        let mut config = HashMap::new();
+        config.insert("temperature".to_string(), json!(0.8));
+        config.insert("max_tokens".to_string(), json!(2000));
+        
+        let input = SetModelInput {
+            model_id: "gpt-4".to_string(),
+            adapter_id: Some("openai".to_string()),
+            config: Some(config),
+        };
+        
+        // Act
+        let json = serde_json::to_string(&input).unwrap();
+        let deserialized: SetModelInput = serde_json::from_str(&json).unwrap();
+        
+        // Assert
+        assert_eq!(deserialized.model_id, "gpt-4");
+        assert!(deserialized.config.is_some());
+        
+        let config = deserialized.config.unwrap();
+        assert_eq!(config.get("temperature").unwrap().as_f64().unwrap(), 0.8);
+    }
+
+    // ================================
+    // 命令元数据测试
+    // ================================
+
+    #[test]
+    fn test_get_command_metadata() {
+        // Act
+        let metadata = get_command_metadata();
+        
+        // Assert
+        assert!(!metadata.is_empty());
+        assert!(metadata.contains_key("send_message"));
+        assert!(metadata.contains_key("get_chat_history"));
+        assert!(metadata.contains_key("clear_chat_history"));
+        assert!(metadata.contains_key("set_chat_model"));
+        
+        // 验证send_message元数据
+        let send_msg_meta = &metadata["send_message"];
+        assert_eq!(send_msg_meta.name, "send_message");
+        assert_eq!(send_msg_meta.category, "chat");
+        assert_eq!(send_msg_meta.required_permission, PermissionLevel::User);
+        assert!(send_msg_meta.is_async);
+    }
+
+    // ================================
+    // 输入验证测试
+    // ================================
+
+    #[test]
+    fn test_message_validation_empty() {
+        // Arrange
+        let input = SendMessageInput {
+            message: "".to_string(),
+            session_id: None,
+            model: None,
+            adapter: None,
+            character_id: None,
+            max_tokens: None,
+            temperature: None,
+            top_p: None,
+            stream: None,
+            context_messages: None,
+        };
+        
+        // Act & Assert - 空消息应该在handler中被拒绝
+        // 这里只测试结构体本身的序列化是否正常
+        let json = serde_json::to_string(&input).unwrap();
+        assert!(json.contains("\"message\":\"\""));
+    }
+
+    #[test]
+    fn test_message_validation_whitespace() {
+        // Arrange
+        let input = SendMessageInput {
+            message: "   \t\n   ".to_string(),
+            session_id: None,
+            model: None,
+            adapter: None,
+            character_id: None,
+            max_tokens: None,
+            temperature: None,
+            top_p: None,
+            stream: None,
+            context_messages: None,
+        };
+        
+        // Act & Assert
+        let json = serde_json::to_string(&input).unwrap();
+        assert!(json.contains("message"));
+    }
+
+    #[test]
+    fn test_very_long_message_handling() {
+        // Arrange - 创建超长消息
+        let long_message = "a".repeat(15000);
+        let input = SendMessageInput {
+            message: long_message.clone(),
+            session_id: None,
+            model: None,
+            adapter: None,
+            character_id: None,
+            max_tokens: None,
+            temperature: None,
+            top_p: None,
+            stream: None,
+            context_messages: None,
+        };
+        
+        // Act
+        let json = serde_json::to_string(&input).unwrap();
+        let deserialized: SendMessageInput = serde_json::from_str(&json).unwrap();
+        
+        // Assert
+        assert_eq!(deserialized.message.len(), 15000);
+        assert_eq!(deserialized.message, long_message);
+    }
+
+    // ================================
+    // 上下文消息测试
+    // ================================
+
+    #[test]
+    fn test_context_messages_handling() {
+        // Arrange
+        let context_messages = vec![
+            ContextMessage {
+                role: "system".to_string(),
+                content: "System prompt".to_string(),
+            },
+            ContextMessage {
+                role: "user".to_string(),
+                content: "Previous user message".to_string(),
+            },
+            ContextMessage {
+                role: "assistant".to_string(),
+                content: "Previous assistant response".to_string(),
+            },
+        ];
+        
+        let input = SendMessageInput {
+            message: "Current message".to_string(),
+            session_id: Some("test_session".to_string()),
+            model: None,
+            adapter: None,
+            character_id: None,
+            max_tokens: None,
+            temperature: None,
+            top_p: None,
+            stream: None,
+            context_messages: Some(context_messages.clone()),
+        };
+        
+        // Act
+        let json = serde_json::to_string(&input).unwrap();
+        let deserialized: SendMessageInput = serde_json::from_str(&json).unwrap();
+        
+        // Assert
+        let ctx_msgs = deserialized.context_messages.unwrap();
+        assert_eq!(ctx_msgs.len(), 3);
+        assert_eq!(ctx_msgs[0].role, "system");
+        assert_eq!(ctx_msgs[1].role, "user");
+        assert_eq!(ctx_msgs[2].role, "assistant");
+    }
+
+    // ================================
+    // 边界条件测试
+    // ================================
+
+    #[test]
+    fn test_parameter_boundary_values() {
+        // Arrange - 测试参数边界值
+        let input = SendMessageInput {
+            message: "Test".to_string(),
+            session_id: Some("test".to_string()),
+            model: Some("".to_string()), // 空模型名
+            adapter: Some("".to_string()), // 空适配器名
+            character_id: Some("".to_string()), // 空角色ID
+            max_tokens: Some(0), // 最小token数
+            temperature: Some(0.0), // 最小温度
+            top_p: Some(0.0), // 最小top_p
+            stream: Some(false),
+            context_messages: Some(vec![]), // 空上下文列表
+        };
+        
+        // Act
+        let json = serde_json::to_string(&input).unwrap();
+        let deserialized: SendMessageInput = serde_json::from_str(&json).unwrap();
+        
+        // Assert
+        assert_eq!(deserialized.max_tokens, Some(0));
+        assert_eq!(deserialized.temperature, Some(0.0));
+        assert_eq!(deserialized.top_p, Some(0.0));
+        assert_eq!(deserialized.context_messages.unwrap().len(), 0);
+    }
+
+    #[test]
+    fn test_parameter_maximum_values() {
+        // Arrange - 测试参数最大值
+        let input = SendMessageInput {
+            message: "Test".to_string(),
+            session_id: Some("test".to_string()),
+            model: None,
+            adapter: None,
+            character_id: None,
+            max_tokens: Some(u32::MAX), // 最大token数
+            temperature: Some(2.0), // 高温度值
+            top_p: Some(1.0), // 最大top_p
+            stream: Some(true),
+            context_messages: None,
+        };
+        
+        // Act
+        let json = serde_json::to_string(&input).unwrap();
+        let deserialized: SendMessageInput = serde_json::from_str(&json).unwrap();
+        
+        // Assert
+        assert_eq!(deserialized.max_tokens, Some(u32::MAX));
+        assert_eq!(deserialized.temperature, Some(2.0));
+        assert_eq!(deserialized.top_p, Some(1.0));
+    }
+
+    // ================================
+    // 错误场景测试
+    // ================================
+
+    #[test]
+    fn test_invalid_json_deserialization() {
+        // Arrange
+        let invalid_json = r#"{"message": 123, "invalid_field": true}"#;
+        
+        // Act & Assert
+        let result: Result<SendMessageInput, _> = serde_json::from_str(invalid_json);
+        assert!(result.is_err(), "应该拒绝无效的JSON格式");
+    }
+
+    #[test]
+    fn test_missing_required_fields() {
+        // Arrange - 缺少必需字段的JSON
+        let incomplete_json = r#"{"session_id": "test"}"#;
+        
+        // Act & Assert
+        let result: Result<SendMessageInput, _> = serde_json::from_str(incomplete_json);
+        assert!(result.is_err(), "应该拒绝缺少必需字段的JSON");
+    }
+
+    #[test]
+    fn test_unicode_message_handling() {
+        // Arrange - 测试Unicode字符
+        let unicode_message = "你好世界🌍🚀测试消息";
+        let input = SendMessageInput {
+            message: unicode_message.to_string(),
+            session_id: Some("unicode_test".to_string()),
+            model: None,
+            adapter: None,
+            character_id: None,
+            max_tokens: None,
+            temperature: None,
+            top_p: None,
+            stream: None,
+            context_messages: None,
+        };
+        
+        // Act
+        let json = serde_json::to_string(&input).unwrap();
+        let deserialized: SendMessageInput = serde_json::from_str(&json).unwrap();
+        
+        // Assert
+        assert_eq!(deserialized.message, unicode_message);
+    }
+
+    // ================================
+    // 性能相关测试
+    // ================================
+
+    #[test]
+    fn test_large_context_messages_serialization() {
+        // Arrange - 大量上下文消息
+        let mut context_messages = Vec::new();
+        for i in 0..100 {
+            context_messages.push(ContextMessage {
+                role: if i % 2 == 0 { "user" } else { "assistant" }.to_string(),
+                content: format!("Message content {}", i),
+            });
+        }
+        
+        let input = SendMessageInput {
+            message: "Final message".to_string(),
+            session_id: Some("large_context_test".to_string()),
+            model: None,
+            adapter: None,
+            character_id: None,
+            max_tokens: None,
+            temperature: None,
+            top_p: None,
+            stream: None,
+            context_messages: Some(context_messages),
+        };
+        
+        // Act
+        let start = std::time::Instant::now();
+        let json = serde_json::to_string(&input).unwrap();
+        let serialization_time = start.elapsed();
+        
+        let start = std::time::Instant::now();
+        let deserialized: SendMessageInput = serde_json::from_str(&json).unwrap();
+        let deserialization_time = start.elapsed();
+        
+        // Assert
+        assert_eq!(deserialized.context_messages.unwrap().len(), 100);
+        
+        // 性能断言 - 序列化和反序列化应该在合理时间内完成
+        assert!(serialization_time.as_millis() < 100, "序列化时间过长");
+        assert!(deserialization_time.as_millis() < 100, "反序列化时间过长");
     }
 }

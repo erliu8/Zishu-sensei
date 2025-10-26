@@ -327,3 +327,507 @@ impl ModelConfigRegistry {
         Ok(String::new())
     }
 }
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+    use tokio_test;
+    use std::sync::Arc;
+    use deadpool_postgres::{Config, Pool, Runtime};
+    use tokio_postgres::NoTls;
+    
+    // Helper function to create test database pool (mock)
+    fn create_test_pool() -> DbPool {
+        let mut cfg = Config::new();
+        cfg.host = Some("localhost".to_string());
+        cfg.dbname = Some("test_db".to_string());
+        cfg.user = Some("test_user".to_string());
+        cfg.password = Some("test_pass".to_string());
+        
+        cfg.create_pool(Some(Runtime::Tokio1), NoTls).unwrap()
+    }
+
+    fn create_test_model_config() -> ModelConfigData {
+        ModelConfigData {
+            id: "test_config_001".to_string(),
+            name: "测试配置".to_string(),
+            model_id: "test_model".to_string(),
+            adapter_id: Some("test_adapter".to_string()),
+            temperature: 0.7,
+            top_p: 0.9,
+            top_k: Some(50),
+            max_tokens: 2048,
+            frequency_penalty: 0.1,
+            presence_penalty: 0.1,
+            stop_sequences: vec!["<|end|>".to_string(), "停止".to_string()],
+            is_default: false,
+            is_enabled: true,
+            description: Some("测试用模型配置".to_string()),
+            extra_config: Some(r#"{"custom_param": "value"}"#.to_string()),
+            created_at: Utc::now().timestamp(),
+            updated_at: Utc::now().timestamp(),
+        }
+    }
+
+    fn create_test_model_config_history() -> ModelConfigHistory {
+        ModelConfigHistory {
+            id: 1,
+            config_id: "test_config_001".to_string(),
+            action: "create".to_string(),
+            old_data: None,
+            new_data: Some("{}".to_string()),
+            reason: Some("创建测试配置".to_string()),
+            created_at: Utc::now().timestamp(),
+        }
+    }
+
+    #[test]
+    fn test_model_config_registry_new() {
+        // Arrange
+        let pool = create_test_pool();
+        
+        // Act
+        let registry = ModelConfigRegistry::new(pool);
+        
+        // Assert
+        assert!(!registry.pool.is_closed());
+    }
+
+    #[test]
+    fn test_model_config_data_structure() {
+        // Arrange & Act
+        let config = create_test_model_config();
+        
+        // Assert
+        assert_eq!(config.id, "test_config_001");
+        assert_eq!(config.name, "测试配置");
+        assert_eq!(config.model_id, "test_model");
+        assert_eq!(config.adapter_id, Some("test_adapter".to_string()));
+        assert_eq!(config.temperature, 0.7);
+        assert_eq!(config.top_p, 0.9);
+        assert_eq!(config.top_k, Some(50));
+        assert_eq!(config.max_tokens, 2048);
+        assert_eq!(config.frequency_penalty, 0.1);
+        assert_eq!(config.presence_penalty, 0.1);
+        assert_eq!(config.stop_sequences.len(), 2);
+        assert!(!config.is_default);
+        assert!(config.is_enabled);
+        assert!(config.description.is_some());
+        assert!(config.extra_config.is_some());
+    }
+
+    #[test]
+    fn test_model_config_default_config() {
+        // Arrange & Act
+        let config = ModelConfigData::default_config();
+        
+        // Assert
+        assert_eq!(config.id, "default");
+        assert_eq!(config.name, "默认配置");
+        assert_eq!(config.model_id, "default");
+        assert_eq!(config.adapter_id, None);
+        assert_eq!(config.temperature, 0.7);
+        assert_eq!(config.top_p, 0.9);
+        assert_eq!(config.top_k, None);
+        assert_eq!(config.max_tokens, 2048);
+        assert_eq!(config.frequency_penalty, 0.0);
+        assert_eq!(config.presence_penalty, 0.0);
+        assert!(config.stop_sequences.is_empty());
+        assert!(config.is_default);
+        assert!(config.is_enabled);
+        assert!(config.description.is_some());
+        assert_eq!(config.description.unwrap(), "默认模型配置");
+        assert_eq!(config.extra_config, None);
+    }
+
+    #[test]
+    fn test_model_config_creative_config() {
+        // Arrange & Act
+        let config = ModelConfigData::creative_config();
+        
+        // Assert
+        assert_eq!(config.id, "creative");
+        assert_eq!(config.name, "创意配置");
+        assert_eq!(config.temperature, 0.9);
+        assert_eq!(config.top_p, 0.95);
+        assert_eq!(config.frequency_penalty, 0.5);
+        assert_eq!(config.presence_penalty, 0.5);
+        assert!(!config.is_default);
+        assert!(config.is_enabled);
+        assert_eq!(config.description.unwrap(), "高创意性配置");
+    }
+
+    #[test]
+    fn test_model_config_precise_config() {
+        // Arrange & Act
+        let config = ModelConfigData::precise_config();
+        
+        // Assert
+        assert_eq!(config.id, "precise");
+        assert_eq!(config.name, "精确配置");
+        assert_eq!(config.temperature, 0.3);
+        assert_eq!(config.top_p, 0.85);
+        assert_eq!(config.frequency_penalty, 0.0);
+        assert_eq!(config.presence_penalty, 0.0);
+        assert!(!config.is_default);
+        assert!(config.is_enabled);
+        assert_eq!(config.description.unwrap(), "高精确性配置");
+    }
+
+    #[test]
+    fn test_model_config_history_structure() {
+        // Arrange & Act
+        let history = create_test_model_config_history();
+        
+        // Assert
+        assert_eq!(history.id, 1);
+        assert_eq!(history.config_id, "test_config_001");
+        assert_eq!(history.action, "create");
+        assert_eq!(history.old_data, None);
+        assert!(history.new_data.is_some());
+        assert!(history.reason.is_some());
+    }
+
+    #[test]
+    fn test_validation_result_structure() {
+        // Arrange & Act
+        let validation = ValidationResult {
+            is_valid: true,
+            errors: vec![],
+            warnings: vec!["警告信息".to_string()],
+        };
+        
+        // Assert
+        assert!(validation.is_valid);
+        assert!(validation.errors.is_empty());
+        assert_eq!(validation.warnings.len(), 1);
+        assert_eq!(validation.warnings[0], "警告信息");
+    }
+
+    #[test]
+    fn test_model_config_serialization() {
+        // Arrange
+        let config = create_test_model_config();
+        
+        // Act
+        let json = serde_json::to_string(&config);
+        
+        // Assert
+        assert!(json.is_ok());
+        let json_str = json.unwrap();
+        assert!(json_str.contains("test_config_001"));
+        assert!(json_str.contains("测试配置"));
+        assert!(json_str.contains("0.7"));
+    }
+
+    #[test]
+    fn test_model_config_deserialization() {
+        // Arrange
+        let config = create_test_model_config();
+        let json_str = serde_json::to_string(&config).unwrap();
+        
+        // Act
+        let deserialized: Result<ModelConfigData, _> = serde_json::from_str(&json_str);
+        
+        // Assert
+        assert!(deserialized.is_ok());
+        let deserialized_config = deserialized.unwrap();
+        assert_eq!(deserialized_config.id, config.id);
+        assert_eq!(deserialized_config.name, config.name);
+        assert_eq!(deserialized_config.temperature, config.temperature);
+        assert_eq!(deserialized_config.stop_sequences, config.stop_sequences);
+    }
+
+    #[test]
+    fn test_model_config_temperature_validation() {
+        // Arrange
+        let mut config = create_test_model_config();
+        
+        // Act & Assert - Test valid ranges
+        config.temperature = 0.0;
+        assert_eq!(config.temperature, 0.0);
+        
+        config.temperature = 1.0;
+        assert_eq!(config.temperature, 1.0);
+        
+        config.temperature = 2.0;
+        assert_eq!(config.temperature, 2.0);
+        
+        // Test typical creative values
+        config.temperature = 0.9;
+        assert_eq!(config.temperature, 0.9);
+        
+        // Test typical precise values
+        config.temperature = 0.3;
+        assert_eq!(config.temperature, 0.3);
+    }
+
+    #[test]
+    fn test_model_config_top_p_validation() {
+        // Arrange
+        let mut config = create_test_model_config();
+        
+        // Act & Assert
+        config.top_p = 0.1;
+        assert_eq!(config.top_p, 0.1);
+        
+        config.top_p = 0.9;
+        assert_eq!(config.top_p, 0.9);
+        
+        config.top_p = 1.0;
+        assert_eq!(config.top_p, 1.0);
+    }
+
+    #[test]
+    fn test_model_config_top_k_validation() {
+        // Arrange
+        let mut config = create_test_model_config();
+        
+        // Act & Assert
+        config.top_k = None;
+        assert_eq!(config.top_k, None);
+        
+        config.top_k = Some(1);
+        assert_eq!(config.top_k, Some(1));
+        
+        config.top_k = Some(100);
+        assert_eq!(config.top_k, Some(100));
+    }
+
+    #[test]
+    fn test_model_config_max_tokens_validation() {
+        // Arrange
+        let mut config = create_test_model_config();
+        
+        // Act & Assert
+        config.max_tokens = 1;
+        assert_eq!(config.max_tokens, 1);
+        
+        config.max_tokens = 2048;
+        assert_eq!(config.max_tokens, 2048);
+        
+        config.max_tokens = 8192;
+        assert_eq!(config.max_tokens, 8192);
+    }
+
+    #[test]
+    fn test_model_config_penalty_validation() {
+        // Arrange
+        let mut config = create_test_model_config();
+        
+        // Act & Assert - Test frequency penalty
+        config.frequency_penalty = 0.0;
+        assert_eq!(config.frequency_penalty, 0.0);
+        
+        config.frequency_penalty = 1.0;
+        assert_eq!(config.frequency_penalty, 1.0);
+        
+        config.frequency_penalty = -1.0;
+        assert_eq!(config.frequency_penalty, -1.0);
+        
+        // Test presence penalty
+        config.presence_penalty = 0.0;
+        assert_eq!(config.presence_penalty, 0.0);
+        
+        config.presence_penalty = 1.0;
+        assert_eq!(config.presence_penalty, 1.0);
+        
+        config.presence_penalty = -1.0;
+        assert_eq!(config.presence_penalty, -1.0);
+    }
+
+    #[test]
+    fn test_model_config_stop_sequences_validation() {
+        // Arrange
+        let mut config = create_test_model_config();
+        
+        // Act & Assert - Test empty stop sequences
+        config.stop_sequences = vec![];
+        assert!(config.stop_sequences.is_empty());
+        
+        // Test single stop sequence
+        config.stop_sequences = vec!["<|end|>".to_string()];
+        assert_eq!(config.stop_sequences.len(), 1);
+        
+        // Test multiple stop sequences
+        config.stop_sequences = vec![
+            "<|end|>".to_string(),
+            "停止".to_string(),
+            "\n\n".to_string(),
+        ];
+        assert_eq!(config.stop_sequences.len(), 3);
+        assert!(config.stop_sequences.contains(&"<|end|>".to_string()));
+    }
+
+    #[test]
+    fn test_model_config_flags_validation() {
+        // Arrange
+        let mut config = create_test_model_config();
+        
+        // Act & Assert - Test is_default flag
+        config.is_default = true;
+        assert!(config.is_default);
+        
+        config.is_default = false;
+        assert!(!config.is_default);
+        
+        // Test is_enabled flag
+        config.is_enabled = true;
+        assert!(config.is_enabled);
+        
+        config.is_enabled = false;
+        assert!(!config.is_enabled);
+    }
+
+    #[test]
+    fn test_model_config_optional_fields() {
+        // Arrange
+        let mut config = create_test_model_config();
+        
+        // Act & Assert - Test adapter_id
+        config.adapter_id = None;
+        assert_eq!(config.adapter_id, None);
+        
+        config.adapter_id = Some("new_adapter".to_string());
+        assert_eq!(config.adapter_id, Some("new_adapter".to_string()));
+        
+        // Test description
+        config.description = None;
+        assert_eq!(config.description, None);
+        
+        config.description = Some("新描述".to_string());
+        assert_eq!(config.description, Some("新描述".to_string()));
+        
+        // Test extra_config
+        config.extra_config = None;
+        assert_eq!(config.extra_config, None);
+        
+        config.extra_config = Some(r#"{"param": "value"}"#.to_string());
+        assert!(config.extra_config.is_some());
+    }
+
+    #[test]
+    fn test_validation_result_with_errors() {
+        // Arrange & Act
+        let validation = ValidationResult {
+            is_valid: false,
+            errors: vec![
+                "温度参数超出范围".to_string(),
+                "最大令牌数无效".to_string(),
+            ],
+            warnings: vec!["建议降低创意性".to_string()],
+        };
+        
+        // Assert
+        assert!(!validation.is_valid);
+        assert_eq!(validation.errors.len(), 2);
+        assert_eq!(validation.warnings.len(), 1);
+        assert!(validation.errors.contains(&"温度参数超出范围".to_string()));
+    }
+
+    #[test]
+    fn test_model_config_history_actions() {
+        // Arrange & Act
+        let mut history = create_test_model_config_history();
+        
+        // Assert - Test different actions
+        history.action = "create".to_string();
+        assert_eq!(history.action, "create");
+        
+        history.action = "update".to_string();
+        assert_eq!(history.action, "update");
+        
+        history.action = "delete".to_string();
+        assert_eq!(history.action, "delete");
+    }
+
+    #[test]
+    fn test_model_config_timestamps() {
+        // Arrange
+        let config = create_test_model_config();
+        let now = Utc::now().timestamp();
+        
+        // Assert
+        // Timestamps should be within a few seconds of now
+        assert!((config.created_at - now).abs() <= 5);
+        assert!((config.updated_at - now).abs() <= 5);
+    }
+
+    #[test]
+    fn test_model_config_validate_config_method() {
+        // Arrange
+        let pool = create_test_pool();
+        let registry = ModelConfigRegistry::new(pool);
+        let config = create_test_model_config();
+        
+        // Act
+        let result = registry.validate_config(&config);
+        
+        // Assert
+        assert!(result.is_valid);
+        assert!(result.errors.is_empty());
+        assert!(result.warnings.is_empty());
+    }
+
+    #[test]
+    fn test_model_config_get_default_config() {
+        // Arrange
+        let pool = create_test_pool();
+        let registry = ModelConfigRegistry::new(pool);
+        
+        // Act
+        let result = registry.get_default_config();
+        
+        // Assert
+        assert!(result.is_ok());
+        assert!(result.unwrap().is_none());
+    }
+
+    #[test]
+    fn test_model_config_export_methods() {
+        // Arrange
+        let pool = create_test_pool();
+        let registry = ModelConfigRegistry::new(pool);
+        
+        // Act & Assert - Test export_config
+        let result = registry.export_config("test_id");
+        assert!(result.is_ok());
+        assert_eq!(result.unwrap(), "{}");
+        
+        // Test export_all_configs
+        let result = registry.export_all_configs();
+        assert!(result.is_ok());
+        assert_eq!(result.unwrap(), "[]");
+    }
+
+    #[test]
+    fn test_model_config_import_methods() {
+        // Arrange
+        let pool = create_test_pool();
+        let registry = ModelConfigRegistry::new(pool);
+        
+        // Act & Assert - Test import_configs
+        let result = registry.import_configs("[]");
+        assert!(result.is_ok());
+        assert!(result.unwrap().is_empty());
+        
+        // Test import_config
+        let result = registry.import_config("{}");
+        assert!(result.is_ok());
+        assert!(result.unwrap().is_empty());
+    }
+
+    #[test]
+    fn test_model_config_get_history() {
+        // Arrange
+        let pool = create_test_pool();
+        let registry = ModelConfigRegistry::new(pool);
+        
+        // Act
+        let result = registry.get_config_history("test_id", Some(10));
+        
+        // Assert
+        assert!(result.is_ok());
+        assert!(result.unwrap().is_empty());
+    }
+}

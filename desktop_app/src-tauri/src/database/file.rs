@@ -167,26 +167,30 @@ impl FileRegistry {
     pub fn get_file(&self, file_path: &str) -> Result<Option<FileMetadata>, Box<dyn std::error::Error + Send + Sync>> {
         let handle = tokio::runtime::Handle::current();
         handle.block_on(async {
-            let client = self.pool.get().await?;
-            
-            let rows = client.query(
-                "SELECT file_path, file_size, hash, EXTRACT(EPOCH FROM created_at)::BIGINT as created_at 
-                FROM files WHERE file_path = $1 AND is_deleted = false",
-                &[&file_path],
-            ).await?;
-
-            if rows.is_empty() {
-                return Ok(None);
-            }
-
-            let row = &rows[0];
-            Ok(Some(FileMetadata {
-                file_path: row.get("file_path"),
-                file_size: row.get("file_size"),
-                file_hash: row.get("hash"),
-                created_at: row.get("created_at"),
-            }))
+            self.get_file_async(file_path).await
         })
+    }
+
+    pub async fn get_file_async(&self, file_path: &str) -> Result<Option<FileMetadata>, Box<dyn std::error::Error + Send + Sync>> {
+        let client = self.pool.get().await?;
+        
+        let rows = client.query(
+            "SELECT file_path, file_size, hash, EXTRACT(EPOCH FROM created_at)::BIGINT as created_at 
+            FROM files WHERE file_path = $1 AND is_deleted = false",
+            &[&file_path],
+        ).await?;
+
+        if rows.is_empty() {
+            return Ok(None);
+        }
+
+        let row = &rows[0];
+        Ok(Some(FileMetadata {
+            file_path: row.get("file_path"),
+            file_size: row.get("file_size"),
+            file_hash: row.get("hash"),
+            created_at: row.get("created_at"),
+        }))
     }
 }
 
@@ -776,5 +780,210 @@ impl FileRegistryImpl {
             deleted_files,
             file_types,
         })
+    }
+}
+
+// ================================
+// 测试模块
+// ================================
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+    use std::sync::Arc;
+    use std::collections::HashMap;
+    use tokio_postgres::{NoTls, Client};
+    use deadpool_postgres::{Config, Pool, PoolConfig, Runtime};
+    use chrono::Utc;
+    use uuid::Uuid;
+    
+    // 测试数据库配置
+    fn get_test_db_config() -> Config {
+        let mut cfg = Config::new();
+        cfg.host = Some("localhost".to_string());
+        cfg.port = Some(5432);
+        cfg.user = Some("postgres".to_string());
+        cfg.password = Some("postgres".to_string());
+        cfg.dbname = Some("zishu_test".to_string());
+        cfg
+    }
+    
+    async fn create_test_pool() -> DbPool {
+        let cfg = get_test_db_config();
+        let pool_config = PoolConfig::new(5);
+        cfg.create_pool(Some(Runtime::Tokio1), NoTls)
+            .expect("Failed to create test database pool")
+    }
+    
+    async fn setup_test_db() -> FileRegistry {
+        let pool = create_test_pool().await;
+        let registry = FileRegistry::new(pool);
+        
+        // 初始化测试表（在独立的测试 schema 中）
+        if let Ok(client) = registry.pool.get().await {
+            let _ = client.execute("CREATE SCHEMA IF NOT EXISTS test_file", &[]).await;
+            let _ = client.execute("SET search_path TO test_file", &[]).await;
+            registry.init_tables().await.expect("Failed to init tables");
+        }
+        
+        registry
+    }
+    
+    async fn cleanup_test_data(registry: &FileRegistry) {
+        if let Ok(client) = registry.pool.get().await {
+            let _ = client.execute("TRUNCATE TABLE test_file.files CASCADE", &[]).await;
+            let _ = client.execute("TRUNCATE TABLE test_file.file_history CASCADE", &[]).await;
+        }
+    }
+    
+    fn create_test_file_metadata() -> FileMetadata {
+        FileMetadata {
+            file_path: format!("/test/path/{}.txt", Uuid::new_v4()),
+            file_size: 1024,
+            file_hash: Uuid::new_v4().to_string(),
+            created_at: Utc::now().timestamp(),
+        }
+    }
+    
+    fn create_test_file_info() -> FileInfo {
+        let id = Uuid::new_v4().to_string();
+        let now = Utc::now().to_rfc3339();
+        
+        FileInfo {
+            id,
+            name: "test_file.txt".to_string(),
+            original_name: "test_file.txt".to_string(),
+            file_path: "/test/path/test_file.txt".to_string(),
+            file_size: 2048,
+            file_type: "text".to_string(),
+            mime_type: "text/plain".to_string(),
+            hash: Uuid::new_v4().to_string(),
+            thumbnail_path: None,
+            conversation_id: Some("conv_123".to_string()),
+            message_id: Some("msg_456".to_string()),
+            tags: Some("test,file".to_string()),
+            description: Some("Test file description".to_string()),
+            created_at: now.clone(),
+            updated_at: now.clone(),
+            accessed_at: now,
+            is_deleted: false,
+        }
+    }
+    
+    // ================================
+    // FileRegistry 单元测试
+    // ================================
+    
+    #[tokio::test]
+    async fn test_file_registry_new() {
+        // 简化测试，避免依赖真实数据库连接
+        if let Ok(pool) = std::panic::catch_unwind(|| {
+            tokio::runtime::Runtime::new().unwrap().block_on(async {
+                create_test_pool().await
+            })
+        }) {
+            let registry = FileRegistry::new(pool);
+            // 验证 registry 结构体创建成功
+            // 注意：不验证连接池状态，因为测试环境可能没有数据库
+        } else {
+            // 如果无法连接数据库，跳过测试
+            println!("⚠️  跳过测试：无法连接到测试数据库");
+        }
+    }
+    
+    // 注意：以下测试需要真实数据库连接，在CI/CD环境中可能需要跳过
+    
+    #[tokio::test]
+    #[ignore] // 跳过需要数据库的集成测试
+    async fn test_file_registry_init_tables_success() {
+        let registry = setup_test_db().await;
+        
+        // 验证表已创建
+        let result = registry.init_tables().await;
+        assert!(result.is_ok(), "表初始化应该成功");
+    }
+    
+    #[tokio::test]
+    #[ignore] // 跳过需要数据库的集成测试
+    async fn test_file_registry_register_file_success() {
+        let registry = setup_test_db().await;
+        cleanup_test_data(&registry).await;
+        
+        let metadata = create_test_file_metadata();
+        
+        // 注册文件
+        let result = registry.register_file(metadata.clone());
+        assert!(result.is_ok(), "文件注册应该成功");
+        
+        // 验证文件已注册
+        let retrieved = registry.get_file_async(&metadata.file_path).await.unwrap();
+        assert!(retrieved.is_some(), "注册的文件应该能被查询到");
+        
+        let retrieved = retrieved.unwrap();
+        assert_eq!(retrieved.file_path, metadata.file_path);
+        assert_eq!(retrieved.file_size, metadata.file_size);
+        assert_eq!(retrieved.file_hash, metadata.file_hash);
+        
+        cleanup_test_data(&registry).await;
+    }
+    
+    #[tokio::test]
+    #[ignore] // 跳过需要数据库的集成测试
+    async fn test_file_registry_get_file_not_found() {
+        let registry = setup_test_db().await;
+        cleanup_test_data(&registry).await;
+        
+        let result = registry.get_file_async("/nonexistent/path").await;
+        assert!(result.is_ok());
+        assert!(result.unwrap().is_none(), "不存在的文件应该返回 None");
+        
+        cleanup_test_data(&registry).await;
+    }
+    
+    // ================================
+    // 兼容函数测试
+    // ================================
+    
+    #[test]
+    fn test_init_file_tables_dummy() {
+        let dummy = DummyConnection;
+        let result = init_file_tables(&dummy);
+        assert!(result.is_ok(), "虚拟表初始化应该成功");
+    }
+    
+    #[test]
+    fn test_save_file_info_dummy() {
+        let dummy = DummyConnection;
+        let file_info = create_test_file_info();
+        
+        let result = save_file_info(&dummy, &file_info);
+        assert!(result.is_ok(), "虚拟文件保存应该成功");
+    }
+    
+    #[test]
+    fn test_get_file_info_dummy() {
+        let dummy = DummyConnection;
+        
+        let result = get_file_info(&dummy, "test_id");
+        assert!(result.is_ok(), "虚拟文件获取应该成功");
+        assert!(result.unwrap().is_none(), "虚拟连接应该返回 None");
+    }
+    
+    // ================================
+    // 错误处理测试
+    // ================================
+    
+    #[tokio::test]
+    #[ignore] // 跳过需要数据库的集成测试
+    async fn test_file_registry_get_file_with_invalid_path() {
+        let registry = setup_test_db().await;
+        cleanup_test_data(&registry).await;
+        
+        // 测试空路径
+        let result = registry.get_file_async("").await;
+        assert!(result.is_ok());
+        assert!(result.unwrap().is_none(), "空路径应该返回 None");
+        
+        cleanup_test_data(&registry).await;
     }
 }

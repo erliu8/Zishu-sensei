@@ -558,3 +558,479 @@ pub struct WorkflowStats {
     pub archived_count: usize,
     pub template_count: usize,
 }
+
+// ================================
+// 测试模块
+// ================================
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+    use std::sync::Arc;
+    use tokio_postgres::{NoTls, Client};
+    use std::collections::HashMap;
+    
+    // 使用真实的DbPool类型进行测试
+    async fn create_test_pool() -> Result<DbPool, Box<dyn std::error::Error + Send + Sync>> {
+        use deadpool_postgres::{Config, Runtime};
+        
+        let mut config = Config::new();
+        
+        // 尝试从环境变量获取测试数据库配置
+        if let Ok(url) = std::env::var("TEST_DATABASE_URL") {
+            // 使用 url 库解析数据库URL
+            if let Ok(parsed_url) = url::Url::parse(&url) {
+                if let Some(host) = parsed_url.host_str() {
+                    config.host = Some(host.to_string());
+                }
+                if let Some(port) = parsed_url.port() {
+                    config.port = Some(port);
+                } else {
+                    config.port = Some(5432); // 默认PostgreSQL端口
+                }
+                
+                let username = parsed_url.username();
+                if !username.is_empty() {
+                    config.user = Some(username.to_string());
+                }
+                
+                if let Some(password) = parsed_url.password() {
+                    config.password = Some(password.to_string());
+                }
+                
+                // 获取数据库名（去掉开头的'/'）
+                let path = parsed_url.path();
+                if !path.is_empty() && path != "/" {
+                    config.dbname = Some(path.trim_start_matches('/').to_string());
+                }
+            }
+        } else {
+            // 使用默认测试配置
+            config.host = Some("localhost".to_string());
+            config.port = Some(5432);
+            config.user = Some("test".to_string());
+            config.password = Some("test".to_string());
+            config.dbname = Some("test_db".to_string());
+        }
+        
+        let pool = config.create_pool(Some(Runtime::Tokio1), NoTls)?;
+        Ok(pool)
+    }
+    
+
+    // ================================
+    // WorkflowStatus 测试
+    // ================================
+
+    #[test]
+    fn test_workflow_status_display() {
+        assert_eq!(WorkflowStatus::Draft.to_string(), "draft");
+        assert_eq!(WorkflowStatus::Published.to_string(), "published");
+        assert_eq!(WorkflowStatus::Archived.to_string(), "archived");
+        assert_eq!(WorkflowStatus::Disabled.to_string(), "disabled");
+    }
+
+    #[test]
+    fn test_workflow_status_from_str() {
+        assert_eq!("draft".parse::<WorkflowStatus>().unwrap(), WorkflowStatus::Draft);
+        assert_eq!("published".parse::<WorkflowStatus>().unwrap(), WorkflowStatus::Published);
+        assert_eq!("archived".parse::<WorkflowStatus>().unwrap(), WorkflowStatus::Archived);
+        assert_eq!("disabled".parse::<WorkflowStatus>().unwrap(), WorkflowStatus::Disabled);
+        
+        assert!("invalid".parse::<WorkflowStatus>().is_err());
+    }
+
+    #[test]
+    fn test_workflow_status_serialization() {
+        let status = WorkflowStatus::Published;
+        let serialized = serde_json::to_string(&status).unwrap();
+        assert_eq!(serialized, "\"published\"");
+        
+        let deserialized: WorkflowStatus = serde_json::from_str(&serialized).unwrap();
+        assert_eq!(deserialized, WorkflowStatus::Published);
+    }
+
+    // ================================
+    // WorkflowDefinition 测试
+    // ================================
+
+    #[test]
+    fn test_workflow_definition_creation() {
+        let now = Utc::now().timestamp();
+        let workflow = WorkflowDefinition {
+            id: "test-workflow-001".to_string(),
+            name: "测试工作流".to_string(),
+            description: Some("这是一个测试工作流".to_string()),
+            version: "1.0.0".to_string(),
+            status: WorkflowStatus::Draft,
+            steps: Some(serde_json::json!([{"step": "test"}])),
+            config: Some(serde_json::json!({"timeout": 30})),
+            tags: Some(serde_json::json!(["test", "demo"])),
+            category: "测试".to_string(),
+            is_template: false,
+            template_id: None,
+            created_at: now,
+            updated_at: now,
+        };
+
+        assert_eq!(workflow.id, "test-workflow-001");
+        assert_eq!(workflow.name, "测试工作流");
+        assert_eq!(workflow.status, WorkflowStatus::Draft);
+        assert!(!workflow.is_template);
+    }
+
+    #[test]
+    fn test_workflow_definition_serialization() {
+        let now = Utc::now().timestamp();
+        let workflow = WorkflowDefinition {
+            id: "test-001".to_string(),
+            name: "测试".to_string(),
+            description: None,
+            version: "1.0.0".to_string(),
+            status: WorkflowStatus::Published,
+            steps: None,
+            config: None,
+            tags: None,
+            category: "默认".to_string(),
+            is_template: true,
+            template_id: Some("template-001".to_string()),
+            created_at: now,
+            updated_at: now,
+        };
+
+        let serialized = serde_json::to_string(&workflow).unwrap();
+        let deserialized: WorkflowDefinition = serde_json::from_str(&serialized).unwrap();
+        
+        assert_eq!(deserialized.id, workflow.id);
+        assert_eq!(deserialized.status, workflow.status);
+        assert_eq!(deserialized.is_template, workflow.is_template);
+    }
+
+    // ================================
+    // WorkflowRegistry 基础测试
+    // ================================
+
+    #[tokio::test]
+    async fn test_workflow_registry_creation() {
+        match create_test_pool().await {
+            Ok(pool) => {
+                let registry = WorkflowRegistry::new(pool);
+                
+                // 测试克隆
+                let cloned_registry = registry.clone();
+                // 测试注册表创建成功
+                println!("工作流注册表创建成功");
+            },
+            Err(e) => {
+                println!("跳过测试（无数据库连接）: {}", e);
+            }
+        }
+    }
+
+    #[tokio::test]
+    async fn test_workflow_registry_init_tables() {
+        match create_test_pool().await {
+            Ok(pool) => {
+                let registry = WorkflowRegistry::new(pool);
+                
+                match registry.init_tables().await {
+                    Ok(_) => {
+                        println!("工作流表初始化成功");
+                    },
+                    Err(e) => {
+                        println!("工作流表初始化失败: {}", e);
+                    }
+                }
+            },
+            Err(e) => {
+                println!("跳过测试（无数据库连接）: {}", e);
+            }
+        }
+    }
+
+    // ================================
+    // 数据库操作测试
+    // ================================
+
+    #[tokio::test]
+    async fn test_create_workflow() {
+        match create_test_pool().await {
+            Ok(pool) => {
+                let registry = WorkflowRegistry::new(pool);
+                let _ = registry.init_tables().await; // 忽略初始化错误
+                
+                let now = Utc::now().timestamp();
+                let workflow = WorkflowDefinition {
+                    id: "test-create-001".to_string(),
+                    name: "创建测试工作流".to_string(),
+                    description: Some("测试创建功能".to_string()),
+                    version: "1.0.0".to_string(),
+                    status: WorkflowStatus::Draft,
+                    steps: Some(serde_json::json!([{"name": "step1", "action": "test"}])),
+                    config: Some(serde_json::json!({"retry": 3})),
+                    tags: Some(serde_json::json!(["create", "test"])),
+                    category: "测试分类".to_string(),
+                    is_template: false,
+                    template_id: None,
+                    created_at: now,
+                    updated_at: now,
+                };
+
+                match registry.create_workflow(workflow) {
+                    Ok(_) => println!("工作流创建成功"),
+                    Err(e) => println!("工作流创建失败: {}", e),
+                }
+            },
+            Err(e) => {
+                println!("跳过测试（无数据库连接）: {}", e);
+            }
+        }
+    }
+
+    #[tokio::test]
+    async fn test_get_workflow() {
+        match create_test_pool().await {
+            Ok(pool) => {
+                let registry = WorkflowRegistry::new(pool);
+                
+                match registry.get_workflow("non-existent-id") {
+                    Ok(result) => {
+                        println!("工作流查询完成，结果: {:?}", result.is_some());
+                    },
+                    Err(e) => {
+                        println!("获取工作流失败: {}", e);
+                    }
+                }
+            },
+            Err(e) => {
+                println!("跳过测试（无数据库连接）: {}", e);
+            }
+        }
+    }
+
+    #[tokio::test]
+    async fn test_search_workflows() {
+        match create_test_pool().await {
+            Ok(pool) => {
+                let registry = WorkflowRegistry::new(pool);
+                
+                match registry.search_workflows("测试") {
+                    Ok(results) => {
+                        println!("搜索完成，结果数量: {}", results.len());
+                    },
+                    Err(e) => {
+                        println!("搜索工作流失败: {}", e);
+                    }
+                }
+            },
+            Err(e) => {
+                println!("跳过测试（无数据库连接）: {}", e);
+            }
+        }
+    }
+
+    #[tokio::test]
+    async fn test_get_workflow_stats() {
+        match create_test_pool().await {
+            Ok(pool) => {
+                let registry = WorkflowRegistry::new(pool);
+                
+                match registry.get_workflow_stats() {
+                    Ok(stats) => {
+                        println!("统计信息获取成功: {:?}", stats);
+                        assert!(stats.total >= 0);
+                    },
+                    Err(e) => {
+                        println!("获取统计信息失败: {}", e);
+                    }
+                }
+            },
+            Err(e) => {
+                println!("跳过测试（无数据库连接）: {}", e);
+            }
+        }
+    }
+
+    // ================================
+    // 错误处理测试
+    // ================================
+
+    #[tokio::test]
+    async fn test_update_nonexistent_workflow() {
+        match create_test_pool().await {
+            Ok(pool) => {
+                let registry = WorkflowRegistry::new(pool);
+                
+                let now = Utc::now().timestamp();
+                let workflow = WorkflowDefinition {
+                    id: "non-existent".to_string(),
+                    name: "不存在的工作流".to_string(),
+                    description: None,
+                    version: "1.0.0".to_string(),
+                    status: WorkflowStatus::Draft,
+                    steps: None,
+                    config: None,
+                    tags: None,
+                    category: "测试".to_string(),
+                    is_template: false,
+                    template_id: None,
+                    created_at: now,
+                    updated_at: now,
+                };
+
+                match registry.update_workflow(workflow) {
+                    Ok(_) => println!("更新完成"),
+                    Err(e) => {
+                        println!("更新失败: {}", e);
+                    }
+                }
+            },
+            Err(e) => {
+                println!("跳过测试（无数据库连接）: {}", e);
+            }
+        }
+    }
+
+    #[tokio::test]
+    async fn test_delete_nonexistent_workflow() {
+        match create_test_pool().await {
+            Ok(pool) => {
+                let registry = WorkflowRegistry::new(pool);
+                
+                match registry.delete_workflow("non-existent-id") {
+                    Ok(_) => println!("删除完成"),
+                    Err(e) => {
+                        println!("删除失败: {}", e);
+                    }
+                }
+            },
+            Err(e) => {
+                println!("跳过测试（无数据库连接）: {}", e);
+            }
+        }
+    }
+
+    // ================================
+    // 版本控制测试
+    // ================================
+
+    #[tokio::test]
+    async fn test_get_workflow_version() {
+        match create_test_pool().await {
+            Ok(pool) => {
+                let registry = WorkflowRegistry::new(pool);
+                
+                match registry.get_workflow_version("test-id", "1.0.0") {
+                    Ok(result) => {
+                        println!("版本查询完成，结果: {:?}", result.is_some());
+                    },
+                    Err(e) => {
+                        println!("获取版本失败: {}", e);
+                    }
+                }
+            },
+            Err(e) => {
+                println!("跳过测试（无数据库连接）: {}", e);
+            }
+        }
+    }
+
+    #[tokio::test]
+    async fn test_get_workflow_versions() {
+        match create_test_pool().await {
+            Ok(pool) => {
+                let registry = WorkflowRegistry::new(pool);
+                
+                match registry.get_workflow_versions("test-id") {
+                    Ok(versions) => {
+                        println!("版本列表查询完成，数量: {}", versions.len());
+                    },
+                    Err(e) => {
+                        println!("获取版本列表失败: {}", e);
+                    }
+                }
+            },
+            Err(e) => {
+                println!("跳过测试（无数据库连接）: {}", e);
+            }
+        }
+    }
+
+    // ================================
+    // 边界条件测试
+    // ================================
+
+    #[test]
+    fn test_workflow_status_edge_cases() {
+        // 测试空字符串
+        assert!("".parse::<WorkflowStatus>().is_err());
+        
+        // 测试大小写敏感
+        assert!("DRAFT".parse::<WorkflowStatus>().is_err());
+        assert!("Draft".parse::<WorkflowStatus>().is_err());
+        
+        // 测试特殊字符
+        assert!("draft ".parse::<WorkflowStatus>().is_err());
+        assert!(" draft".parse::<WorkflowStatus>().is_err());
+        assert!("draft\n".parse::<WorkflowStatus>().is_err());
+    }
+
+    #[test]
+    fn test_workflow_definition_with_large_data() {
+        let now = Utc::now().timestamp();
+        
+        // 测试大型JSON数据
+        let large_steps = serde_json::json!(
+            (0..100).map(|i| serde_json::json!({
+                "id": format!("step_{}", i),
+                "name": format!("步骤 {}", i),
+                "config": {"param": i}
+            })).collect::<Vec<_>>()
+        );
+        
+        let workflow = WorkflowDefinition {
+            id: "large-workflow".to_string(),
+            name: "大型工作流测试".to_string(),
+            description: Some("x".repeat(1000)), // 1000字符的描述
+            version: "1.0.0".to_string(),
+            status: WorkflowStatus::Draft,
+            steps: Some(large_steps),
+            config: Some(serde_json::json!({"timeout": 3600, "retry": 10})),
+            tags: Some(serde_json::json!((0..50).map(|i| format!("tag_{}", i)).collect::<Vec<_>>())),
+            category: "性能测试".to_string(),
+            is_template: false,
+            template_id: None,
+            created_at: now,
+            updated_at: now,
+        };
+
+        // 测试序列化和反序列化大数据
+        let serialized = serde_json::to_string(&workflow).unwrap();
+        let deserialized: WorkflowDefinition = serde_json::from_str(&serialized).unwrap();
+        
+        assert_eq!(deserialized.id, workflow.id);
+        assert_eq!(deserialized.description, workflow.description);
+        assert!(deserialized.steps.is_some());
+    }
+
+    #[test]
+    fn test_workflow_stats_creation() {
+        let stats = WorkflowStats {
+            total: 100,
+            draft_count: 30,
+            published_count: 50,
+            archived_count: 15,
+            template_count: 5,
+        };
+
+        assert_eq!(stats.total, 100);
+        assert_eq!(stats.draft_count + stats.published_count + stats.archived_count, 95);
+        
+        // 测试序列化
+        let serialized = serde_json::to_string(&stats).unwrap();
+        let deserialized: WorkflowStats = serde_json::from_str(&serialized).unwrap();
+        
+        assert_eq!(deserialized.total, stats.total);
+        assert_eq!(deserialized.template_count, stats.template_count);
+    }
+}

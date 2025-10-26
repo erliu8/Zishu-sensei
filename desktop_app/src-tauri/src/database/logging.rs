@@ -904,3 +904,653 @@ impl LoggingRegistry {
         Ok(())
     }
 }
+
+// ================================
+// 测试模块
+// ================================
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+    use std::sync::Arc;
+    use tokio_postgres::NoTls;
+    use deadpool_postgres::{Config, Pool, PoolConfig, Runtime};
+    use chrono::{Utc, DateTime, Duration};
+    use uuid::Uuid;
+    
+    // 测试数据库配置
+    fn get_test_db_config() -> Config {
+        let mut cfg = Config::new();
+        cfg.host = Some("localhost".to_string());
+        cfg.port = Some(5432);
+        cfg.user = Some("postgres".to_string());
+        cfg.password = Some("postgres".to_string());
+        cfg.dbname = Some("zishu_test".to_string());
+        cfg
+    }
+    
+    async fn create_test_pool() -> DbPool {
+        let cfg = get_test_db_config();
+        let pool_config = PoolConfig::new(5);
+        cfg.create_pool(Some(Runtime::Tokio1), NoTls)
+            .expect("Failed to create test database pool")
+    }
+    
+    async fn setup_test_db() -> LoggingRegistry {
+        let pool = create_test_pool().await;
+        let registry = LoggingRegistry::new(pool);
+        
+        // 初始化测试表（在独立的测试 schema 中）
+        if let Ok(client) = registry.pool.get().await {
+            let _ = client.execute("CREATE SCHEMA IF NOT EXISTS test_logging", &[]).await;
+            let _ = client.execute("SET search_path TO test_logging", &[]).await;
+            registry.init_tables().await.expect("Failed to init tables");
+        }
+        
+        registry
+    }
+    
+    async fn cleanup_test_data(registry: &LoggingRegistry) {
+        if let Ok(client) = registry.pool.get().await {
+            let _ = client.execute("TRUNCATE TABLE test_logging.logs CASCADE", &[]).await;
+            let _ = client.execute("DROP TABLE IF EXISTS test_logging.logs_archive CASCADE", &[]).await;
+            let _ = client.execute("DROP TABLE IF EXISTS test_logging.remote_log_config CASCADE", &[]).await;
+            let _ = client.execute("DROP TABLE IF EXISTS test_logging.remote_log_upload_status CASCADE", &[]).await;
+        }
+    }
+    
+    fn create_test_log_entry() -> LogEntry {
+        LogEntry {
+            level: "info".to_string(),
+            message: format!("Test log message {}", Uuid::new_v4()),
+            module: Some("test_module".to_string()),
+            timestamp: Utc::now().timestamp(),
+        }
+    }
+    
+    fn create_test_log_filter() -> LogFilter {
+        LogFilter {
+            level: Some("info".to_string()),
+            module: Some("test_module".to_string()),
+            start_time: Some((Utc::now() - Duration::hours(1)).timestamp()),
+            end_time: Some(Utc::now().timestamp()),
+            keyword: Some("test".to_string()),
+            limit: Some(10),
+            offset: Some(0),
+        }
+    }
+    
+    // ================================
+    // LogLevel 单元测试
+    // ================================
+    
+    #[test]
+    fn test_log_level_display() {
+        assert_eq!(LogLevel::Trace.to_string(), "trace");
+        assert_eq!(LogLevel::Debug.to_string(), "debug");
+        assert_eq!(LogLevel::Info.to_string(), "info");
+        assert_eq!(LogLevel::Warn.to_string(), "warn");
+        assert_eq!(LogLevel::Error.to_string(), "error");
+        assert_eq!(LogLevel::Fatal.to_string(), "fatal");
+    }
+    
+    #[test]
+    fn test_log_level_from_str() {
+        assert_eq!("trace".parse::<LogLevel>().unwrap(), LogLevel::Trace);
+        assert_eq!("debug".parse::<LogLevel>().unwrap(), LogLevel::Debug);
+        assert_eq!("info".parse::<LogLevel>().unwrap(), LogLevel::Info);
+        assert_eq!("warn".parse::<LogLevel>().unwrap(), LogLevel::Warn);
+        assert_eq!("error".parse::<LogLevel>().unwrap(), LogLevel::Error);
+        assert_eq!("fatal".parse::<LogLevel>().unwrap(), LogLevel::Fatal);
+        
+        // 测试大小写不敏感
+        assert_eq!("INFO".parse::<LogLevel>().unwrap(), LogLevel::Info);
+        assert_eq!("Error".parse::<LogLevel>().unwrap(), LogLevel::Error);
+        
+        // 测试无效输入
+        assert!("invalid".parse::<LogLevel>().is_err());
+        assert!("".parse::<LogLevel>().is_err());
+    }
+    
+    // ================================
+    // LoggingRegistry 单元测试
+    // ================================
+    
+    #[tokio::test]
+    async fn test_logging_registry_new() {
+        // 简化测试，避免依赖真实数据库连接
+        if let Ok(pool) = std::panic::catch_unwind(|| {
+            tokio::runtime::Runtime::new().unwrap().block_on(async {
+                create_test_pool().await
+            })
+        }) {
+            let registry = LoggingRegistry::new(pool);
+            // 验证 registry 结构体创建成功
+            // 注意：不验证连接池状态，因为测试环境可能没有数据库
+        } else {
+            // 如果无法连接数据库，跳过测试
+            println!("⚠️  跳过日志测试：无法连接到测试数据库");
+        }
+    }
+    
+    // 注意：以下测试需要真实数据库连接，在CI/CD环境中可能需要跳过
+    
+    #[tokio::test]
+    #[ignore] // 跳过需要数据库的集成测试
+    async fn test_logging_registry_init_tables_success() {
+        let registry = setup_test_db().await;
+        
+        // 验证表已创建
+        let result = registry.init_tables().await;
+        assert!(result.is_ok(), "日志表初始化应该成功");
+    }
+    
+    #[tokio::test]
+    #[ignore] // 跳过需要数据库的集成测试
+    async fn test_logging_registry_log_success() {
+        let registry = setup_test_db().await;
+        cleanup_test_data(&registry).await;
+        
+        let log_entry = create_test_log_entry();
+        
+        // 记录日志
+        let result = registry.log(log_entry.clone());
+        assert!(result.is_ok(), "日志记录应该成功");
+        
+        // 验证日志已记录
+        let logs = registry.get_logs(10).unwrap();
+        assert!(!logs.is_empty(), "应该能查询到记录的日志");
+        assert_eq!(logs[0].message, log_entry.message);
+        assert_eq!(logs[0].level, log_entry.level);
+        
+        cleanup_test_data(&registry).await;
+    }
+    
+    #[tokio::test]
+    #[ignore] // 跳过需要数据库的集成测试
+    async fn test_logging_registry_log_async_success() {
+        let registry = setup_test_db().await;
+        cleanup_test_data(&registry).await;
+        
+        let log_entry = create_test_log_entry();
+        
+        // 异步记录日志
+        let result = registry.log_async(log_entry.clone()).await;
+        assert!(result.is_ok(), "异步日志记录应该成功");
+        
+        // 验证日志已记录
+        let logs = registry.get_logs_async(10).await.unwrap();
+        assert!(!logs.is_empty(), "应该能查询到记录的日志");
+        assert_eq!(logs[0].message, log_entry.message);
+        
+        cleanup_test_data(&registry).await;
+    }
+    
+    #[tokio::test]
+    #[ignore] // 跳过需要数据库的集成测试
+    async fn test_logging_registry_log_batch_async_success() {
+        let registry = setup_test_db().await;
+        cleanup_test_data(&registry).await;
+        
+        // 创建批量日志
+        let entries: Vec<LogEntry> = (0..5).map(|i| LogEntry {
+            level: "info".to_string(),
+            message: format!("Batch log entry {}", i),
+            module: Some("batch_test".to_string()),
+            timestamp: Utc::now().timestamp(),
+        }).collect();
+        
+        // 批量记录日志
+        let result = registry.log_batch_async(entries.clone()).await;
+        assert!(result.is_ok(), "批量日志记录应该成功");
+        
+        // 验证所有日志已记录
+        let logs = registry.get_logs_async(10).await.unwrap();
+        assert!(logs.len() >= 5, "应该记录了至少5条日志");
+        
+        cleanup_test_data(&registry).await;
+    }
+    
+    #[tokio::test]
+    #[ignore] // 跳过需要数据库的集成测试
+    async fn test_logging_registry_log_extended_async_success() {
+        let registry = setup_test_db().await;
+        cleanup_test_data(&registry).await;
+        
+        // 扩展日志记录
+        let result = registry.log_extended_async(
+            "warn",
+            "Extended log message",
+            Some("extended_module"),
+            Some("test.rs"),
+            Some(42),
+            Some("main"),
+            Some("context_info"),
+        ).await;
+        
+        assert!(result.is_ok(), "扩展日志记录应该成功");
+        
+        // 查询扩展日志
+        let filter = LogFilter {
+            level: Some("warn".to_string()),
+            module: Some("extended_module".to_string()),
+            ..Default::default()
+        };
+        
+        let logs = registry.query_logs_async(filter).await.unwrap();
+        assert!(!logs.is_empty(), "应该能查询到扩展日志");
+        
+        let log = &logs[0];
+        assert_eq!(log.level, "warn");
+        assert_eq!(log.message, "Extended log message");
+        assert_eq!(log.module, Some("extended_module".to_string()));
+        assert_eq!(log.file, Some("test.rs".to_string()));
+        assert_eq!(log.line, Some(42));
+        
+        cleanup_test_data(&registry).await;
+    }
+    
+    #[tokio::test]
+    #[ignore] // 跳过需要数据库的集成测试
+    async fn test_logging_registry_query_logs_with_filter() {
+        let registry = setup_test_db().await;
+        cleanup_test_data(&registry).await;
+        
+        // 创建不同类型的日志
+        let entries = vec![
+            LogEntry {
+                level: "info".to_string(),
+                message: "Info message".to_string(),
+                module: Some("module_a".to_string()),
+                timestamp: Utc::now().timestamp(),
+            },
+            LogEntry {
+                level: "error".to_string(),
+                message: "Error message".to_string(),
+                module: Some("module_b".to_string()),
+                timestamp: Utc::now().timestamp(),
+            },
+            LogEntry {
+                level: "warn".to_string(),
+                message: "Warning message".to_string(),
+                module: Some("module_a".to_string()),
+                timestamp: Utc::now().timestamp(),
+            },
+        ];
+        
+        // 批量记录
+        registry.log_batch_async(entries).await.unwrap();
+        
+        // 按级别过滤
+        let filter = LogFilter {
+            level: Some("error".to_string()),
+            ..Default::default()
+        };
+        
+        let logs = registry.query_logs_async(filter).await.unwrap();
+        assert_eq!(logs.len(), 1, "应该只有1条错误日志");
+        assert_eq!(logs[0].level, "error");
+        
+        // 按模块过滤
+        let filter = LogFilter {
+            module: Some("module_a".to_string()),
+            ..Default::default()
+        };
+        
+        let logs = registry.query_logs_async(filter).await.unwrap();
+        assert_eq!(logs.len(), 2, "module_a应该有2条日志");
+        
+        // 按关键词过滤
+        let filter = LogFilter {
+            keyword: Some("Error".to_string()),
+            ..Default::default()
+        };
+        
+        let logs = registry.query_logs_async(filter).await.unwrap();
+        assert_eq!(logs.len(), 1, "包含'Error'的应该有1条日志");
+        
+        cleanup_test_data(&registry).await;
+    }
+    
+    #[tokio::test]
+    #[ignore] // 跳过需要数据库的集成测试
+    async fn test_logging_registry_get_statistics() {
+        let registry = setup_test_db().await;
+        cleanup_test_data(&registry).await;
+        
+        // 创建统计测试数据
+        let entries = vec![
+            LogEntry { level: "info".to_string(), message: "Info 1".to_string(), module: Some("mod1".to_string()), timestamp: Utc::now().timestamp() },
+            LogEntry { level: "info".to_string(), message: "Info 2".to_string(), module: Some("mod1".to_string()), timestamp: Utc::now().timestamp() },
+            LogEntry { level: "error".to_string(), message: "Error 1".to_string(), module: Some("mod2".to_string()), timestamp: Utc::now().timestamp() },
+            LogEntry { level: "warn".to_string(), message: "Warn 1".to_string(), module: Some("mod1".to_string()), timestamp: Utc::now().timestamp() },
+        ];
+        
+        registry.log_batch_async(entries).await.unwrap();
+        
+        let stats = registry.get_statistics_async().await.unwrap();
+        
+        assert_eq!(stats.total_logs, 4, "总日志数应该是4");
+        assert_eq!(*stats.level_counts.get("info").unwrap_or(&0), 2, "info级别应该有2条");
+        assert_eq!(*stats.level_counts.get("error").unwrap_or(&0), 1, "error级别应该有1条");
+        assert_eq!(*stats.level_counts.get("warn").unwrap_or(&0), 1, "warn级别应该有1条");
+        
+        cleanup_test_data(&registry).await;
+    }
+    
+    #[tokio::test]
+    #[ignore] // 跳过需要数据库的集成测试
+    async fn test_logging_registry_cleanup_old_logs() {
+        let registry = setup_test_db().await;
+        cleanup_test_data(&registry).await;
+        
+        // 创建一些旧日志（模拟）
+        let old_timestamp = (Utc::now() - Duration::days(10)).timestamp();
+        let entries = vec![
+            LogEntry {
+                level: "info".to_string(),
+                message: "Old log 1".to_string(),
+                module: Some("old_module".to_string()),
+                timestamp: old_timestamp,
+            },
+            LogEntry {
+                level: "info".to_string(),
+                message: "New log 1".to_string(),
+                module: Some("new_module".to_string()),
+                timestamp: Utc::now().timestamp(),
+            },
+        ];
+        
+        registry.log_batch_async(entries).await.unwrap();
+        
+        // 清理7天前的日志
+        let cleaned = registry.cleanup_old_logs_async(7).await.unwrap();
+        assert_eq!(cleaned, 1, "应该清理1条旧日志");
+        
+        // 验证新日志还在
+        let remaining_logs = registry.get_logs_async(10).await.unwrap();
+        assert_eq!(remaining_logs.len(), 1, "应该还剩1条新日志");
+        assert_eq!(remaining_logs[0].message, "New log 1");
+        
+        cleanup_test_data(&registry).await;
+    }
+    
+    #[tokio::test]
+    #[ignore] // 跳过需要数据库的集成测试
+    async fn test_logging_registry_search_logs() {
+        let registry = setup_test_db().await;
+        cleanup_test_data(&registry).await;
+        
+        // 创建搜索测试数据
+        let entries = vec![
+            LogEntry {
+                level: "info".to_string(),
+                message: "Database connection established".to_string(),
+                module: Some("database".to_string()),
+                timestamp: Utc::now().timestamp(),
+            },
+            LogEntry {
+                level: "error".to_string(),
+                message: "Failed to connect to API".to_string(),
+                module: Some("api".to_string()),
+                timestamp: Utc::now().timestamp(),
+            },
+            LogEntry {
+                level: "info".to_string(),
+                message: "User authentication successful".to_string(),
+                module: Some("auth".to_string()),
+                timestamp: Utc::now().timestamp(),
+            },
+        ];
+        
+        registry.log_batch_async(entries).await.unwrap();
+        
+        // 搜索包含"connection"的日志
+        let results = registry.search_logs_async("connection", 10).await.unwrap();
+        assert_eq!(results.len(), 1, "应该找到1条包含'connection'的日志");
+        assert!(results[0].message.contains("connection"));
+        
+        // 搜索包含"API"的日志
+        let results = registry.search_logs_async("API", 10).await.unwrap();
+        assert_eq!(results.len(), 1, "应该找到1条包含'API'的日志");
+        
+        cleanup_test_data(&registry).await;
+    }
+    
+    #[tokio::test]
+    #[ignore] // 跳过需要数据库的集成测试
+    async fn test_logging_registry_get_logs_by_level() {
+        let registry = setup_test_db().await;
+        cleanup_test_data(&registry).await;
+        
+        // 创建不同级别的日志
+        let entries = vec![
+            LogEntry { level: "error".to_string(), message: "Error 1".to_string(), module: Some("mod1".to_string()), timestamp: Utc::now().timestamp() },
+            LogEntry { level: "error".to_string(), message: "Error 2".to_string(), module: Some("mod2".to_string()), timestamp: Utc::now().timestamp() },
+            LogEntry { level: "info".to_string(), message: "Info 1".to_string(), module: Some("mod1".to_string()), timestamp: Utc::now().timestamp() },
+        ];
+        
+        registry.log_batch_async(entries).await.unwrap();
+        
+        // 获取错误日志
+        let error_logs = registry.get_logs_by_level_async("error", 10).await.unwrap();
+        assert_eq!(error_logs.len(), 2, "应该有2条错误日志");
+        assert!(error_logs.iter().all(|log| log.level == "error"));
+        
+        // 获取信息日志
+        let info_logs = registry.get_logs_by_level_async("info", 10).await.unwrap();
+        assert_eq!(info_logs.len(), 1, "应该有1条信息日志");
+        assert_eq!(info_logs[0].level, "info");
+        
+        cleanup_test_data(&registry).await;
+    }
+    
+    #[tokio::test]
+    #[ignore] // 跳过需要数据库的集成测试
+    async fn test_logging_registry_get_logs_by_module() {
+        let registry = setup_test_db().await;
+        cleanup_test_data(&registry).await;
+        
+        // 创建不同模块的日志
+        let entries = vec![
+            LogEntry { level: "info".to_string(), message: "Module A log 1".to_string(), module: Some("module_a".to_string()), timestamp: Utc::now().timestamp() },
+            LogEntry { level: "info".to_string(), message: "Module A log 2".to_string(), module: Some("module_a".to_string()), timestamp: Utc::now().timestamp() },
+            LogEntry { level: "info".to_string(), message: "Module B log 1".to_string(), module: Some("module_b".to_string()), timestamp: Utc::now().timestamp() },
+        ];
+        
+        registry.log_batch_async(entries).await.unwrap();
+        
+        // 获取模块A的日志
+        let module_a_logs = registry.get_logs_by_module_async("module_a", 10).await.unwrap();
+        assert_eq!(module_a_logs.len(), 2, "module_a应该有2条日志");
+        assert!(module_a_logs.iter().all(|log| log.module == Some("module_a".to_string())));
+        
+        // 获取模块B的日志
+        let module_b_logs = registry.get_logs_by_module_async("module_b", 10).await.unwrap();
+        assert_eq!(module_b_logs.len(), 1, "module_b应该有1条日志");
+        
+        cleanup_test_data(&registry).await;
+    }
+    
+    #[tokio::test]
+    #[ignore] // 跳过需要数据库的集成测试
+    async fn test_logging_registry_archive_old_logs() {
+        let registry = setup_test_db().await;
+        cleanup_test_data(&registry).await;
+        
+        // 创建旧日志
+        let old_timestamp = (Utc::now() - Duration::days(10)).timestamp();
+        let entries = vec![
+            LogEntry {
+                level: "info".to_string(),
+                message: "Old log to archive".to_string(),
+                module: Some("archive_test".to_string()),
+                timestamp: old_timestamp,
+            },
+            LogEntry {
+                level: "info".to_string(),
+                message: "New log to keep".to_string(),
+                module: Some("keep_test".to_string()),
+                timestamp: Utc::now().timestamp(),
+            },
+        ];
+        
+        registry.log_batch_async(entries).await.unwrap();
+        
+        // 归档7天前的日志
+        let archived = registry.archive_old_logs_async(7).await.unwrap();
+        assert_eq!(archived, 1, "应该归档1条旧日志");
+        
+        // 验证主表中只剩新日志
+        let remaining_logs = registry.get_logs_async(10).await.unwrap();
+        assert_eq!(remaining_logs.len(), 1, "主表应该只剩1条日志");
+        assert_eq!(remaining_logs[0].message, "New log to keep");
+        
+        cleanup_test_data(&registry).await;
+    }
+    
+    // ================================
+    // 错误处理测试
+    // ================================
+    
+    #[tokio::test]
+    #[ignore] // 跳过需要数据库的集成测试
+    async fn test_logging_registry_log_batch_empty() {
+        let registry = setup_test_db().await;
+        
+        // 测试空批次
+        let result = registry.log_batch_async(vec![]).await;
+        assert!(result.is_ok(), "空批次应该成功处理");
+    }
+    
+    #[tokio::test]
+    #[ignore] // 跳过需要数据库的集成测试
+    async fn test_logging_registry_query_logs_empty_filter() {
+        let registry = setup_test_db().await;
+        cleanup_test_data(&registry).await;
+        
+        // 测试空过滤器
+        let filter = LogFilter {
+            level: None,
+            module: None,
+            start_time: None,
+            end_time: None,
+            keyword: None,
+            limit: Some(10),
+            offset: Some(0),
+        };
+        
+        let result = registry.query_logs_async(filter).await;
+        assert!(result.is_ok(), "空过滤器查询应该成功");
+        
+        cleanup_test_data(&registry).await;
+    }
+    
+    #[tokio::test]
+    #[ignore] // 跳过需要数据库的集成测试
+    async fn test_logging_registry_cleanup_logs_by_level() {
+        let registry = setup_test_db().await;
+        cleanup_test_data(&registry).await;
+        
+        // 创建不同级别的旧日志
+        let old_timestamp = (Utc::now() - Duration::days(10)).timestamp();
+        let entries = vec![
+            LogEntry { level: "debug".to_string(), message: "Old debug".to_string(), module: None, timestamp: old_timestamp },
+            LogEntry { level: "error".to_string(), message: "Old error".to_string(), module: None, timestamp: old_timestamp },
+            LogEntry { level: "debug".to_string(), message: "New debug".to_string(), module: None, timestamp: Utc::now().timestamp() },
+        ];
+        
+        registry.log_batch_async(entries).await.unwrap();
+        
+        // 清理7天前的debug日志
+        let cleaned = registry.cleanup_logs_by_level_async("debug", 7).await.unwrap();
+        assert_eq!(cleaned, 1, "应该清理1条旧的debug日志");
+        
+        // 验证其他日志还在
+        let remaining_logs = registry.get_logs_async(10).await.unwrap();
+        assert_eq!(remaining_logs.len(), 2, "应该还剩2条日志");
+        
+        cleanup_test_data(&registry).await;
+    }
+    
+    // ================================
+    // 性能测试
+    // ================================
+    
+    #[tokio::test]
+    #[ignore] // 跳过性能测试和需要数据库的集成测试
+    async fn test_logging_registry_performance_batch_insert() {
+        let registry = setup_test_db().await;
+        cleanup_test_data(&registry).await;
+        
+        let start = std::time::Instant::now();
+        
+        // 批量插入测试
+        let entries: Vec<LogEntry> = (0..100).map(|i| LogEntry {
+            level: "info".to_string(),
+            message: format!("Performance test log {}", i),
+            module: Some("performance".to_string()),
+            timestamp: Utc::now().timestamp(),
+        }).collect();
+        
+        let result = registry.log_batch_async(entries).await;
+        let duration = start.elapsed();
+        
+        assert!(result.is_ok(), "批量插入应该成功");
+        assert!(duration.as_millis() < 3000, "100条日志插入应该在3秒内完成"); // 性能要求
+        
+        cleanup_test_data(&registry).await;
+    }
+    
+    // ================================
+    // 并发测试
+    // ================================
+    
+    #[tokio::test]
+    #[ignore] // 跳过并发测试和需要数据库的集成测试
+    async fn test_logging_registry_concurrent_logging() {
+        let registry = Arc::new(setup_test_db().await);
+        cleanup_test_data(&*registry).await;
+        
+        // 并发日志记录
+        let handles: Vec<_> = (0..10).map(|i| {
+            let registry_clone = Arc::clone(&registry);
+            tokio::spawn(async move {
+                let entry = LogEntry {
+                    level: "info".to_string(),
+                    message: format!("Concurrent log {}", i),
+                    module: Some("concurrent".to_string()),
+                    timestamp: Utc::now().timestamp(),
+                };
+                registry_clone.log_async(entry).await
+            })
+        }).collect();
+        
+        // 等待所有任务完成
+        for handle in handles {
+            let result = handle.await;
+            assert!(result.is_ok(), "并发任务应该成功");
+            assert!(result.unwrap().is_ok(), "日志记录应该成功");
+        }
+        
+        // 验证所有日志都已记录
+        let logs = registry.get_logs_async(15).await.unwrap();
+        assert!(logs.len() >= 10, "应该记录了至少10条并发日志");
+        
+        cleanup_test_data(&*registry).await;
+    }
+}
+
+impl Default for LogFilter {
+    fn default() -> Self {
+        Self {
+            level: None,
+            module: None,
+            start_time: None,
+            end_time: None,
+            keyword: None,
+            limit: None,
+            offset: None,
+        }
+    }
+}

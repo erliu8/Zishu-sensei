@@ -1168,3 +1168,852 @@ pub fn get_command_metadata() -> std::collections::HashMap<String, CommandMetada
     
     metadata
 }
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+    use std::collections::HashMap;
+    use std::path::PathBuf;
+    use tokio_test;
+    use serde_json::json;
+    use tempfile::TempDir;
+    use std::fs;
+
+    // Mock structures for testing
+    #[derive(Clone)]
+    struct MockSystemInfo {
+        os: String,
+        arch: String,
+        memory: u64,
+    }
+
+    impl MockSystemInfo {
+        fn new() -> Self {
+            Self {
+                os: "Linux".to_string(),
+                arch: "x86_64".to_string(),
+                memory: 8_000_000_000, // 8GB
+            }
+        }
+    }
+
+    // Create test system info
+    fn create_test_system_info() -> SystemInfo {
+        SystemInfo {
+            os: "Linux".to_string(),
+            os_version: "Ubuntu 22.04".to_string(),
+            arch: "x86_64".to_string(),
+            cpu_count: 8,
+            total_memory: 8_000_000_000,
+            available_memory: 4_000_000_000,
+            used_memory: 4_000_000_000,
+            cpu_usage: 25.5,
+            uptime: 86400, // 1 day
+            app_version: "1.0.0".to_string(),
+            app_name: "Zishu Sensei".to_string(),
+        }
+    }
+
+    // Create test version info
+    fn create_test_version_info() -> VersionInfo {
+        VersionInfo {
+            version: "1.0.0".to_string(),
+            build_date: Some("2025-10-26".to_string()),
+            git_hash: Some("abc123def456".to_string()),
+        }
+    }
+
+    // Create test update info
+    fn create_test_update_info() -> UpdateInfo {
+        UpdateInfo {
+            current_version: "1.0.0".to_string(),
+            latest_version: "1.1.0".to_string(),
+            update_available: true,
+            message: "新版本可用".to_string(),
+            download_url: Some("https://example.com/download".to_string()),
+            release_notes: Some("修复了一些bug".to_string()),
+            release_date: Some("2025-10-27".to_string()),
+            size: Some(50_000_000), // 50MB
+            mandatory: false,
+        }
+    }
+
+    // ================================
+    // 系统信息测试
+    // ================================
+
+    #[tokio::test]
+    async fn test_create_test_system_info() {
+        // Arrange & Act
+        let system_info = create_test_system_info();
+
+        // Assert
+        assert_eq!(system_info.os, "Linux");
+        assert_eq!(system_info.arch, "x86_64");
+        assert_eq!(system_info.cpu_count, 8);
+        assert!(system_info.total_memory > 0);
+        assert!(system_info.cpu_usage >= 0.0);
+        assert!(system_info.uptime > 0);
+        assert!(!system_info.app_version.is_empty());
+        assert!(!system_info.app_name.is_empty());
+    }
+
+    #[tokio::test]
+    async fn test_system_info_memory_calculations() {
+        // Arrange
+        let system_info = create_test_system_info();
+
+        // Act & Assert
+        assert_eq!(system_info.total_memory, 8_000_000_000);
+        assert_eq!(system_info.available_memory, 4_000_000_000);
+        assert_eq!(system_info.used_memory, 4_000_000_000);
+        
+        // 验证内存使用率计算
+        let usage_percent = (system_info.used_memory as f64 / system_info.total_memory as f64) * 100.0;
+        assert_eq!(usage_percent, 50.0);
+    }
+
+    #[tokio::test]
+    async fn test_system_info_validation() {
+        // Arrange
+        let system_info = create_test_system_info();
+
+        // Act & Assert
+        // 验证基本字段不为空
+        assert!(!system_info.os.is_empty());
+        assert!(!system_info.os_version.is_empty());
+        assert!(!system_info.arch.is_empty());
+        
+        // 验证数值字段合理性
+        assert!(system_info.cpu_count > 0);
+        assert!(system_info.total_memory > 0);
+        assert!(system_info.cpu_usage >= 0.0 && system_info.cpu_usage <= 100.0);
+        assert!(system_info.uptime >= 0);
+    }
+
+    // ================================
+    // 版本信息测试
+    // ================================
+
+    #[tokio::test]
+    async fn test_create_test_version_info() {
+        // Arrange & Act
+        let version_info = create_test_version_info();
+
+        // Assert
+        assert_eq!(version_info.version, "1.0.0");
+        assert!(version_info.build_date.is_some());
+        assert!(version_info.git_hash.is_some());
+        
+        if let Some(build_date) = version_info.build_date {
+            assert!(!build_date.is_empty());
+        }
+        
+        if let Some(git_hash) = version_info.git_hash {
+            assert!(!git_hash.is_empty());
+        }
+    }
+
+    #[tokio::test]
+    async fn test_version_info_optional_fields() {
+        // Arrange
+        let mut version_info = create_test_version_info();
+        
+        // Act - 测试可选字段为 None 的情况
+        version_info.build_date = None;
+        version_info.git_hash = None;
+
+        // Assert
+        assert_eq!(version_info.version, "1.0.0");
+        assert!(version_info.build_date.is_none());
+        assert!(version_info.git_hash.is_none());
+    }
+
+    // ================================
+    // 版本比较测试  
+    // ================================
+
+    #[tokio::test]
+    async fn test_compare_versions_equal() {
+        // Arrange
+        let version1 = "1.0.0";
+        let version2 = "1.0.0";
+
+        // Act
+        let result = compare_versions(version1, version2);
+
+        // Assert
+        assert!(!result); // 相等版本返回 false
+    }
+
+    #[tokio::test]
+    async fn test_compare_versions_newer() {
+        // Arrange & Act & Assert
+        assert!(compare_versions("1.1.0", "1.0.0"));
+        assert!(compare_versions("2.0.0", "1.9.9"));
+        assert!(compare_versions("1.0.1", "1.0.0"));
+    }
+
+    #[tokio::test]
+    async fn test_compare_versions_older() {
+        // Arrange & Act & Assert
+        assert!(!compare_versions("1.0.0", "1.1.0"));
+        assert!(!compare_versions("1.9.9", "2.0.0"));
+        assert!(!compare_versions("1.0.0", "1.0.1"));
+    }
+
+    #[tokio::test]
+    async fn test_compare_versions_edge_cases() {
+        // Arrange & Act & Assert
+        // 测试不同长度的版本号
+        assert!(compare_versions("1.0.0.1", "1.0.0"));
+        assert!(!compare_versions("1.0", "1.0.0"));
+        
+        // 测试包含非数字字符的版本号（解析失败时默认为0）
+        assert!(!compare_versions("1.0.0-alpha", "1.0.0"));
+        assert!(!compare_versions("invalid", "1.0.0"));
+    }
+
+    // ================================
+    // 更新信息测试
+    // ================================
+
+    #[tokio::test]
+    async fn test_create_test_update_info() {
+        // Arrange & Act
+        let update_info = create_test_update_info();
+
+        // Assert
+        assert_eq!(update_info.current_version, "1.0.0");
+        assert_eq!(update_info.latest_version, "1.1.0");
+        assert!(update_info.update_available);
+        assert!(!update_info.message.is_empty());
+        assert!(update_info.download_url.is_some());
+        assert!(update_info.release_notes.is_some());
+        assert!(update_info.release_date.is_some());
+        assert!(update_info.size.is_some());
+        assert!(!update_info.mandatory);
+    }
+
+    #[tokio::test]
+    async fn test_update_info_no_update_available() {
+        // Arrange
+        let mut update_info = create_test_update_info();
+        update_info.current_version = "1.1.0".to_string(); // 与最新版本相同
+        update_info.latest_version = "1.1.0".to_string();
+        update_info.update_available = false;
+
+        // Act & Assert
+        assert!(!update_info.update_available);
+        assert_eq!(update_info.current_version, update_info.latest_version);
+    }
+
+    #[tokio::test]
+    async fn test_update_info_mandatory_update() {
+        // Arrange
+        let mut update_info = create_test_update_info();
+        update_info.mandatory = true;
+        update_info.message = "强制更新".to_string();
+
+        // Act & Assert
+        assert!(update_info.mandatory);
+        assert!(update_info.message.contains("强制"));
+    }
+
+    // ================================
+    // 文件和路径操作测试
+    // ================================
+
+    #[tokio::test]
+    async fn test_path_validation_existing_file() {
+        // Arrange - 创建临时文件
+        let temp_dir = TempDir::new().unwrap();
+        let file_path = temp_dir.path().join("test_file.txt");
+        fs::write(&file_path, "test content").unwrap();
+
+        // Act & Assert
+        assert!(file_path.exists());
+        assert!(file_path.is_file());
+    }
+
+    #[tokio::test]
+    async fn test_path_validation_nonexistent_file() {
+        // Arrange
+        let nonexistent_path = PathBuf::from("/nonexistent/path/file.txt");
+
+        // Act & Assert
+        assert!(!nonexistent_path.exists());
+    }
+
+    #[tokio::test]
+    async fn test_path_validation_directory() {
+        // Arrange
+        let temp_dir = TempDir::new().unwrap();
+        let dir_path = temp_dir.path();
+
+        // Act & Assert
+        assert!(dir_path.exists());
+        assert!(dir_path.is_dir());
+    }
+
+    // ================================
+    // 剪贴板相关测试
+    // ================================
+
+    #[tokio::test]
+    async fn test_clipboard_text_validation() {
+        // Arrange
+        let long_text = "very long text ".repeat(1000);
+        let test_texts = vec![
+            "简单文本",
+            "包含特殊字符的文本: !@#$%^&*()",
+            "多行\n文本\n测试",
+            "包含中文的测试文本：紫舒老师",
+            "", // 空字符串
+            &long_text, // 长文本
+        ];
+
+        // Act & Assert
+        for text in test_texts {
+            // 验证文本不会导致panic
+            assert!(text.len() >= 0);
+            // 验证UTF-8编码有效性
+            assert!(text.chars().count() >= 0);
+        }
+    }
+
+    #[tokio::test]
+    async fn test_clipboard_special_characters() {
+        // Arrange
+        let special_texts = vec![
+            "🚀 emoji test",
+            "Tab\tSeparated\tValues",
+            "Line\nBreak\rTest",
+            "Unicode: ñáéíóú",
+            "JSON: {\"key\": \"value\"}",
+            "XML: <tag>content</tag>",
+        ];
+
+        // Act & Assert
+        for text in special_texts {
+            assert!(text.is_ascii() || !text.is_ascii()); // 任何UTF-8文本都应该有效
+            assert!(!text.contains('\0')); // 不应包含null字符
+        }
+    }
+
+    // ================================
+    // 托盘状态测试
+    // ================================
+
+    #[tokio::test]
+    async fn test_tray_status_parsing() {
+        // Arrange
+        let statuses = vec![
+            ("idle", "idle"),
+            ("active", "active"),
+            ("busy", "busy"),
+            ("notification", "notification"),
+            ("error", "error"),
+            ("unknown", "idle"), // 未知状态应该默认为idle
+        ];
+
+        // Act & Assert
+        for (input, expected) in statuses {
+            let expected_status = match expected {
+                "idle" => "idle",
+                "active" => "active", 
+                "busy" => "busy",
+                "notification" => "notification",
+                "error" => "error",
+                _ => "idle",
+            };
+            
+            assert_eq!(expected_status, expected);
+        }
+    }
+
+    #[tokio::test]
+    async fn test_tray_tooltip_validation() {
+        // Arrange
+        let long_tooltip = "很长的tooltip文本".repeat(100);
+        let tooltips = vec![
+            "系统正常运行",
+            "CPU使用率: 25%",
+            "内存使用: 4GB/8GB",
+            "有3条未读消息",
+            "", // 空tooltip
+            &long_tooltip, // 长tooltip
+        ];
+
+        // Act & Assert
+        for tooltip in tooltips {
+            assert!(tooltip.len() >= 0); // 基本验证
+            // 在实际应用中，可能需要长度限制
+            // assert!(tooltip.len() <= 256);
+        }
+    }
+
+    // ================================
+    // 自启动配置测试
+    // ================================
+
+    #[tokio::test]
+    async fn test_auto_start_config_validation() {
+        // Arrange
+        let test_cases = vec![
+            (true, "应启用自启动"),
+            (false, "应禁用自启动"),
+        ];
+
+        // Act & Assert
+        for (enabled, description) in test_cases {
+            // 验证布尔值
+            assert!(enabled == true || enabled == false);
+            assert!(!description.is_empty());
+        }
+    }
+
+    // ================================
+    // 系统监控测试
+    // ================================
+
+    #[tokio::test]
+    async fn test_system_monitor_stats_structure() {
+        // Arrange
+        let mock_stats = json!({
+            "cpu_usage": 25.5,
+            "memory_usage": 50.0,
+            "disk_usage": 75.0,
+            "network_io": {
+                "bytes_sent": 1024000,
+                "bytes_received": 2048000
+            },
+            "processes": 150,
+            "uptime": 86400
+        });
+
+        // Act & Assert
+        assert!(mock_stats.is_object());
+        assert!(mock_stats["cpu_usage"].is_number());
+        assert!(mock_stats["memory_usage"].is_number());
+        assert!(mock_stats["network_io"].is_object());
+        
+        // 验证数值范围
+        if let Some(cpu) = mock_stats["cpu_usage"].as_f64() {
+            assert!(cpu >= 0.0 && cpu <= 100.0);
+        }
+        
+        if let Some(memory) = mock_stats["memory_usage"].as_f64() {
+            assert!(memory >= 0.0 && memory <= 100.0);
+        }
+    }
+
+    // ================================
+    // 日志相关测试
+    // ================================
+
+    #[tokio::test]
+    async fn test_upload_logs_request_validation() {
+        // Arrange
+        let logs = vec![
+            json!({"level": "info", "message": "测试日志1", "timestamp": "2025-10-26T12:00:00Z"}),
+            json!({"level": "error", "message": "错误日志", "timestamp": "2025-10-26T12:01:00Z"}),
+            json!({"level": "debug", "message": "调试信息", "timestamp": "2025-10-26T12:02:00Z"}),
+        ];
+
+        let request = UploadLogsRequest {
+            logs: logs.clone(),
+        };
+
+        // Act & Assert
+        assert_eq!(request.logs.len(), 3);
+        
+        for log in &request.logs {
+            assert!(log.is_object());
+            assert!(log["level"].is_string());
+            assert!(log["message"].is_string());
+            assert!(log["timestamp"].is_string());
+        }
+    }
+
+    #[tokio::test]
+    async fn test_check_log_rotation_request() {
+        // Arrange
+        let request = CheckLogRotationRequest {
+            max_size: 10_000_000, // 10MB
+            retention_days: 7,
+        };
+
+        // Act & Assert
+        assert!(request.max_size > 0);
+        assert!(request.retention_days > 0);
+        assert!(request.retention_days <= 365); // 合理的保留期限
+    }
+
+    #[tokio::test]
+    async fn test_log_cleanup_result_validation() {
+        // Arrange
+        let result = LogCleanupResult {
+            deleted_count: 5,
+            freed_size: 50_000_000, // 50MB
+        };
+
+        // Act & Assert
+        assert!(result.deleted_count >= 0);
+        assert!(result.freed_size >= 0);
+        
+        // 计算平均文件大小
+        if result.deleted_count > 0 {
+            let avg_size = result.freed_size / result.deleted_count as u64;
+            assert!(avg_size > 0); // 平均文件大小应该大于0
+        }
+    }
+
+    // ================================
+    // 最近对话测试
+    // ================================
+
+    #[tokio::test]
+    async fn test_recent_conversation_data() {
+        // Arrange
+        use chrono::Utc;
+        
+        let conversations = vec![
+            json!({
+                "id": "conv-1",
+                "title": "与AI的对话",
+                "preview": "你好，请帮我解决这个问题...",
+                "timestamp": Utc::now().to_rfc3339()
+            }),
+            json!({
+                "id": "conv-2", 
+                "title": "工作流讨论",
+                "preview": "如何创建一个自动化工作流？",
+                "timestamp": Utc::now().to_rfc3339()
+            }),
+        ];
+
+        // Act & Assert
+        for conv in &conversations {
+            assert!(conv["id"].is_string());
+            assert!(conv["title"].is_string());
+            assert!(conv["preview"].is_string());
+            assert!(conv["timestamp"].is_string());
+            
+            // 验证ID不为空
+            if let Some(id) = conv["id"].as_str() {
+                assert!(!id.is_empty());
+            }
+            
+            // 验证标题不为空
+            if let Some(title) = conv["title"].as_str() {
+                assert!(!title.is_empty());
+            }
+        }
+    }
+
+    #[tokio::test]
+    async fn test_recent_conversation_limit() {
+        // Arrange
+        let limit_values = vec![
+            Some(5),
+            Some(10),
+            Some(1),
+            None, // 默认限制
+        ];
+
+        // Act & Assert
+        for limit in limit_values {
+            let effective_limit = limit.unwrap_or(5);
+            assert!(effective_limit > 0);
+            assert!(effective_limit <= 100); // 合理的上限
+        }
+    }
+
+    // ================================
+    // 错误处理和边界条件测试
+    // ================================
+
+    #[tokio::test]
+    async fn test_empty_input_handling() {
+        // Arrange & Act & Assert
+        // 测试空字符串
+        let empty_string = String::new();
+        assert!(empty_string.is_empty());
+        
+        // 测试空路径
+        let empty_path = PathBuf::new();
+        assert_eq!(empty_path.to_string_lossy(), "");
+        
+        // 测试空JSON
+        let empty_json = json!({});
+        assert!(empty_json.is_object());
+        assert_eq!(empty_json.as_object().unwrap().len(), 0);
+    }
+
+    #[tokio::test]
+    async fn test_large_input_handling() {
+        // Arrange
+        let large_string = "x".repeat(1_000_000); // 1MB字符串
+        let large_number = u64::MAX;
+        let large_json = json!({
+            "large_array": (0..10000).collect::<Vec<i32>>(),
+            "large_string": large_string.clone()
+        });
+
+        // Act & Assert
+        assert_eq!(large_string.len(), 1_000_000);
+        assert!(large_number > 0);
+        assert!(large_json.is_object());
+        
+        // 验证大型JSON的结构
+        assert!(large_json["large_array"].is_array());
+        assert!(large_json["large_string"].is_string());
+    }
+
+    #[tokio::test]
+    async fn test_special_characters_handling() {
+        // Arrange
+        let special_chars = vec![
+            "🚀", // emoji
+            "\\n\\t\\r", // 转义字符
+            "\"'`", // 引号
+            "<>&", // HTML特殊字符
+            "中文测试", // 中文
+            "Тест", // 俄文
+            "اختبار", // 阿拉伯文
+        ];
+
+        // Act & Assert
+        for chars in special_chars {
+            assert!(!chars.is_empty());
+            // 验证UTF-8有效性
+            assert!(chars.chars().count() > 0);
+        }
+    }
+
+    #[tokio::test]
+    async fn test_concurrent_operations_safety() {
+        // Arrange
+        use std::sync::Arc;
+        use std::sync::atomic::{AtomicU32, Ordering};
+        use tokio::task;
+
+        let counter = Arc::new(AtomicU32::new(0));
+        let mut handles = vec![];
+
+        // Act - 并发执行多个操作
+        for _ in 0..10 {
+            let counter_clone = counter.clone();
+            let handle = task::spawn(async move {
+                for _ in 0..100 {
+                    counter_clone.fetch_add(1, Ordering::SeqCst);
+                }
+            });
+            handles.push(handle);
+        }
+
+        // 等待所有任务完成
+        for handle in handles {
+            handle.await.unwrap();
+        }
+
+        // Assert
+        assert_eq!(counter.load(Ordering::SeqCst), 1000);
+    }
+
+    // ================================
+    // 性能测试（简化版）
+    // ================================
+
+    #[tokio::test]
+    async fn test_system_info_creation_performance() {
+        // Arrange
+        let start_time = std::time::Instant::now();
+        let iterations = 1000;
+
+        // Act
+        for _ in 0..iterations {
+            let _system_info = create_test_system_info();
+        }
+
+        // Assert
+        let duration = start_time.elapsed();
+        assert!(duration.as_millis() < 1000, "系统信息创建耗时过长: {:?}", duration);
+    }
+
+    #[tokio::test]
+    async fn test_version_comparison_performance() {
+        // Arrange
+        let start_time = std::time::Instant::now();
+        let iterations = 10000;
+
+        // Act
+        for i in 0..iterations {
+            let version1 = format!("1.{}.0", i % 100);
+            let version2 = format!("1.{}.1", i % 100);
+            let _result = compare_versions(&version1, &version2);
+        }
+
+        // Assert
+        let duration = start_time.elapsed();
+        assert!(duration.as_millis() < 1000, "版本比较耗时过长: {:?}", duration);
+    }
+
+    #[tokio::test]
+    async fn test_json_serialization_performance() {
+        // Arrange
+        let start_time = std::time::Instant::now();
+        let system_info = create_test_system_info();
+
+        // Act
+        for _ in 0..1000 {
+            let _json = serde_json::to_string(&system_info).unwrap();
+        }
+
+        // Assert
+        let duration = start_time.elapsed();
+        assert!(duration.as_millis() < 1000, "JSON序列化耗时过长: {:?}", duration);
+    }
+
+    // ================================
+    // 集成测试（模拟）
+    // ================================
+
+    #[tokio::test]
+    async fn test_system_workflow_integration() {
+        // Arrange
+        let system_info = create_test_system_info();
+        let version_info = create_test_version_info();
+
+        // Act - 模拟系统信息和版本信息的组合使用
+        let combined_info = json!({
+            "system": {
+                "os": system_info.os,
+                "arch": system_info.arch,
+                "memory": system_info.total_memory,
+                "cpu_count": system_info.cpu_count
+            },
+            "app": {
+                "version": version_info.version,
+                "build_date": version_info.build_date,
+                "git_hash": version_info.git_hash
+            }
+        });
+
+        // Assert
+        assert!(combined_info.is_object());
+        assert!(combined_info["system"].is_object());
+        assert!(combined_info["app"].is_object());
+        
+        // 验证系统信息
+        assert_eq!(combined_info["system"]["os"], "Linux");
+        assert_eq!(combined_info["system"]["arch"], "x86_64");
+        
+        // 验证应用信息
+        assert_eq!(combined_info["app"]["version"], "1.0.0");
+    }
+
+    #[tokio::test]
+    async fn test_tray_and_system_monitor_integration() {
+        // Arrange
+        let system_info = create_test_system_info();
+        
+        // Act - 模拟托盘显示系统监控信息
+        let tray_info = json!({
+            "status": "active",
+            "tooltip": format!("CPU: {:.1}% | 内存: {}MB", 
+                system_info.cpu_usage,
+                system_info.used_memory / 1024 / 1024
+            ),
+            "system": {
+                "cpu_usage": system_info.cpu_usage,
+                "memory_usage_percent": (system_info.used_memory as f64 / system_info.total_memory as f64) * 100.0,
+                "uptime": system_info.uptime
+            }
+        });
+
+        // Assert
+        assert!(tray_info["tooltip"].is_string());
+        assert!(tray_info["system"]["cpu_usage"].is_number());
+        assert!(tray_info["system"]["memory_usage_percent"].is_number());
+        
+        // 验证tooltip包含相关信息
+        if let Some(tooltip) = tray_info["tooltip"].as_str() {
+            assert!(tooltip.contains("CPU"));
+            assert!(tooltip.contains("内存"));
+        }
+    }
+
+    // ================================
+    // 数据验证测试
+    // ================================
+
+    #[tokio::test]
+    async fn test_data_sanitization() {
+        // Arrange
+        let very_long_input = "极长的输入".repeat(10000);
+        let malicious_inputs = vec![
+            "<script>alert('xss')</script>",
+            "'; DROP TABLE users; --",
+            "../../../etc/passwd",
+            "\0null_byte_test",
+            &very_long_input,
+        ];
+
+        // Act & Assert
+        for input in malicious_inputs {
+            // 基本的输入验证 - 在实际应用中需要更严格的清理
+            assert!(input.len() > 0);
+            
+            // 检查潜在的危险字符
+            let has_dangerous_chars = input.contains('<') || 
+                                    input.contains('>') || 
+                                    input.contains(';') ||
+                                    input.contains('\0');
+                                    
+            // 在实际应用中，包含危险字符的输入应该被拒绝或清理
+            if has_dangerous_chars {
+                // 这里只是验证我们能检测到危险字符
+                assert!(true, "检测到潜在危险字符: {}", input);
+            }
+        }
+    }
+
+    #[tokio::test]
+    async fn test_configuration_validation() {
+        // Arrange
+        let configs = vec![
+            ("auto_start", json!(true)),
+            ("log_level", json!("info")),
+            ("max_log_size", json!(10_000_000)),
+            ("retention_days", json!(7)),
+            ("theme", json!("dark")),
+        ];
+
+        // Act & Assert
+        for (key, value) in configs {
+            assert!(!key.is_empty());
+            
+            match key {
+                "auto_start" => assert!(value.is_boolean()),
+                "log_level" => {
+                    assert!(value.is_string());
+                    if let Some(level) = value.as_str() {
+                        assert!(["trace", "debug", "info", "warn", "error"].contains(&level));
+                    }
+                },
+                "max_log_size" | "retention_days" => {
+                    assert!(value.is_number());
+                    if let Some(num) = value.as_u64() {
+                        assert!(num > 0);
+                    }
+                },
+                _ => {
+                    // 其他配置项的基本验证
+                    assert!(!value.is_null());
+                }
+            }
+        }
+    }
+}

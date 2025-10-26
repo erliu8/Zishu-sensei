@@ -444,3 +444,73 @@ pub mod helpers {
     }
 }
 
+#[cfg(test)]
+mod tests {
+    use super::*;
+    use std::time::Duration;
+    
+    /// 测试窗口状态转换逻辑
+    #[test]
+    fn test_window_state_transitions() {
+        // 测试不同的窗口状态转换
+        let state_transitions = vec![
+            ("minimized", "restored", true),
+            ("maximized", "minimized", true),
+            ("focused", "unfocused", true),
+            ("visible", "hidden", true),
+            ("invalid_state", "restored", false),
+        ];
+        
+        for (from_state, to_state, should_be_valid) in state_transitions {
+            let result = is_valid_window_transition(from_state, to_state);
+            assert_eq!(result, should_be_valid, 
+                "状态转换 {} -> {} 的有效性检查失败", from_state, to_state);
+        }
+    }
+    
+    /// 检查窗口状态转换是否有效（用于测试）
+    fn is_valid_window_transition(from: &str, to: &str) -> bool {
+        let valid_states = ["minimized", "maximized", "focused", "unfocused", "visible", "hidden", "restored"];
+        valid_states.contains(&from) && valid_states.contains(&to)
+    }
+
+    /// 测试防抖时间计算逻辑
+    #[test]
+    fn test_debounce_timing_calculation() {
+        let debounce_ms = 1000u64;
+        
+        // 测试时间差计算
+        let now = std::time::Instant::now();
+        let earlier = now - Duration::from_millis(500);
+        let much_earlier = now - Duration::from_millis(1500);
+        
+        // 500ms前的时间应该还在防抖期内
+        let elapsed_recent = now.duration_since(earlier).as_millis() as u64;
+        assert!(elapsed_recent < debounce_ms, "最近的时间应该在防抖期内");
+        
+        // 1500ms前的时间应该超出防抖期
+        let elapsed_old = now.duration_since(much_earlier).as_millis() as u64;
+        assert!(elapsed_old > debounce_ms, "较早的时间应该超出防抖期");
+    }
+
+    /// 测试窗口标签识别逻辑
+    #[test]
+    fn test_window_label_validation() {
+        let valid_labels = vec!["main", "settings", "about", "preferences"];
+        let invalid_labels = vec!["", " ", "invalid-label", "123"];
+        
+        for label in valid_labels {
+            assert!(is_valid_window_label(label), "标签 '{}' 应该是有效的", label);
+        }
+        
+        for label in invalid_labels {
+            assert!(!is_valid_window_label(label), "标签 '{}' 应该是无效的", label);
+        }
+    }
+    
+    /// 检查窗口标签是否有效（用于测试）
+    fn is_valid_window_label(label: &str) -> bool {
+        let valid_labels = ["main", "settings", "about", "preferences"];
+        valid_labels.contains(&label)
+    }
+}

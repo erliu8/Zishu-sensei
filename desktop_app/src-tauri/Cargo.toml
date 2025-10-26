@@ -278,6 +278,8 @@ rustdoc-args = ["--cfg", "docsrs"]
 # 测试框架
 tokio-test = "0.4"
 tempfile = "3.8"
+# Tauri 测试支持
+tauri = { version = "1.5", features = ["test"] }
 
 # Mock 和测试工具
 mockall = "0.12"

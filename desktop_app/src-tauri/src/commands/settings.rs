@@ -740,3 +740,534 @@ pub fn get_command_metadata() -> std::collections::HashMap<String, CommandMetada
     
     metadata
 }
+
+// ================================
+// 测试模块
+// ================================
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+    use serde_json::json;
+
+    // ================================
+    // 请求/响应数据结构测试
+    // ================================
+
+    #[test]
+    fn test_update_settings_request_serialization() {
+        // Arrange
+        let updates = json!({
+            "window": {
+                "width": 800,
+                "height": 600
+            },
+            "character": {
+                "current_character": "new_character"
+            }
+        });
+        
+        let request = UpdateSettingsRequest { updates: updates.clone() };
+        
+        // Act
+        let json = serde_json::to_string(&request).unwrap();
+        let deserialized: UpdateSettingsRequest = serde_json::from_str(&json).unwrap();
+        
+        // Assert
+        assert_eq!(deserialized.updates, updates);
+    }
+
+    #[test]
+    fn test_import_export_request_serialization() {
+        // Arrange
+        let import_request = ImportSettingsRequest {
+            file_path: "/path/to/settings.json".to_string(),
+        };
+        
+        let export_request = ExportSettingsRequest {
+            file_path: "/path/to/export.json".to_string(),
+        };
+        
+        // Act & Assert - Import
+        let json = serde_json::to_string(&import_request).unwrap();
+        let deserialized: ImportSettingsRequest = serde_json::from_str(&json).unwrap();
+        assert_eq!(deserialized.file_path, "/path/to/settings.json");
+        
+        // Act & Assert - Export
+        let json = serde_json::to_string(&export_request).unwrap();
+        let deserialized: ExportSettingsRequest = serde_json::from_str(&json).unwrap();
+        assert_eq!(deserialized.file_path, "/path/to/export.json");
+    }
+
+    #[test]
+    fn test_update_window_config_request() {
+        // Arrange
+        let request = UpdateWindowConfigRequest {
+            width: Some(1024.0),
+            height: Some(768.0),
+            always_on_top: Some(true),
+            transparent: Some(false),
+            decorations: Some(true),
+            resizable: Some(true),
+            position: Some((100, 200)),
+        };
+        
+        // Act
+        let json = serde_json::to_string(&request).unwrap();
+        let deserialized: UpdateWindowConfigRequest = serde_json::from_str(&json).unwrap();
+        
+        // Assert
+        assert_eq!(deserialized.width, Some(1024.0));
+        assert_eq!(deserialized.height, Some(768.0));
+        assert_eq!(deserialized.always_on_top, Some(true));
+        assert_eq!(deserialized.position, Some((100, 200)));
+    }
+
+    #[test]
+    fn test_update_character_config_request() {
+        // Arrange
+        let request = UpdateCharacterConfigRequest {
+            current_character: Some("test_character".to_string()),
+            scale: Some(1.5),
+            auto_idle: Some(true),
+            interaction_enabled: Some(false),
+        };
+        
+        // Act
+        let json = serde_json::to_string(&request).unwrap();
+        let deserialized: UpdateCharacterConfigRequest = serde_json::from_str(&json).unwrap();
+        
+        // Assert
+        assert_eq!(deserialized.current_character, Some("test_character".to_string()));
+        assert_eq!(deserialized.scale, Some(1.5));
+        assert_eq!(deserialized.auto_idle, Some(true));
+        assert_eq!(deserialized.interaction_enabled, Some(false));
+    }
+
+    #[test]
+    fn test_update_theme_config_request() {
+        // Arrange
+        let request = UpdateThemeConfigRequest {
+            current_theme: Some("dark".to_string()),
+            custom_css: Some("body { color: red; }".to_string()),
+        };
+        
+        // Act
+        let json = serde_json::to_string(&request).unwrap();
+        let deserialized: UpdateThemeConfigRequest = serde_json::from_str(&json).unwrap();
+        
+        // Assert
+        assert_eq!(deserialized.current_theme, Some("dark".to_string()));
+        assert_eq!(deserialized.custom_css, Some("body { color: red; }".to_string()));
+    }
+
+    #[test]
+    fn test_update_system_config_request() {
+        // Arrange
+        let request = UpdateSystemConfigRequest {
+            auto_start: Some(true),
+            minimize_to_tray: Some(false),
+            close_to_tray: Some(true),
+            show_notifications: Some(false),
+        };
+        
+        // Act
+        let json = serde_json::to_string(&request).unwrap();
+        let deserialized: UpdateSystemConfigRequest = serde_json::from_str(&json).unwrap();
+        
+        // Assert
+        assert_eq!(deserialized.auto_start, Some(true));
+        assert_eq!(deserialized.minimize_to_tray, Some(false));
+        assert_eq!(deserialized.close_to_tray, Some(true));
+        assert_eq!(deserialized.show_notifications, Some(false));
+    }
+
+    // ================================
+    // 命令元数据测试
+    // ================================
+
+    #[test]
+    fn test_get_command_metadata() {
+        // Act
+        let metadata = get_command_metadata();
+        
+        // Assert
+        assert!(!metadata.is_empty());
+        
+        // 验证核心命令存在
+        assert!(metadata.contains_key("get_settings"));
+        assert!(metadata.contains_key("update_settings"));
+        assert!(metadata.contains_key("update_partial_settings"));
+        assert!(metadata.contains_key("reset_settings"));
+        assert!(metadata.contains_key("export_settings"));
+        assert!(metadata.contains_key("import_settings"));
+        
+        // 验证get_settings元数据
+        let get_settings_meta = &metadata["get_settings"];
+        assert_eq!(get_settings_meta.name, "get_settings");
+        assert_eq!(get_settings_meta.category, "settings");
+        assert_eq!(get_settings_meta.required_permission, PermissionLevel::User);
+        assert!(get_settings_meta.is_async);
+        assert_eq!(get_settings_meta.input_type, None);
+        assert_eq!(get_settings_meta.output_type, Some("AppConfig".to_string()));
+        
+        // 验证update_settings元数据
+        let update_settings_meta = &metadata["update_settings"];
+        assert_eq!(update_settings_meta.name, "update_settings");
+        assert_eq!(update_settings_meta.description, "更新应用设置（完整替换）");
+        assert_eq!(update_settings_meta.input_type, Some("AppConfig".to_string()));
+    }
+
+    // ================================
+    // 边界条件测试
+    // ================================
+
+    #[test]
+    fn test_window_config_boundary_values() {
+        // Arrange - 测试边界值
+        let request = UpdateWindowConfigRequest {
+            width: Some(0.0), // 最小宽度
+            height: Some(0.0), // 最小高度
+            always_on_top: Some(false),
+            transparent: Some(true),
+            decorations: Some(false),
+            resizable: Some(false),
+            position: Some((i32::MIN, i32::MAX)), // 极端位置值
+        };
+        
+        // Act
+        let json = serde_json::to_string(&request).unwrap();
+        let deserialized: UpdateWindowConfigRequest = serde_json::from_str(&json).unwrap();
+        
+        // Assert
+        assert_eq!(deserialized.width, Some(0.0));
+        assert_eq!(deserialized.height, Some(0.0));
+        assert_eq!(deserialized.position, Some((i32::MIN, i32::MAX)));
+    }
+
+    #[test]
+    fn test_character_config_boundary_values() {
+        // Arrange - 测试边界值
+        let request = UpdateCharacterConfigRequest {
+            current_character: Some("".to_string()), // 空字符串
+            scale: Some(0.0), // 最小缩放
+            auto_idle: Some(true),
+            interaction_enabled: Some(true),
+        };
+        
+        // Act
+        let json = serde_json::to_string(&request).unwrap();
+        let deserialized: UpdateCharacterConfigRequest = serde_json::from_str(&json).unwrap();
+        
+        // Assert
+        assert_eq!(deserialized.current_character, Some("".to_string()));
+        assert_eq!(deserialized.scale, Some(0.0));
+    }
+
+    #[test]
+    fn test_theme_config_with_large_css() {
+        // Arrange - 测试大量CSS内容
+        let large_css = "body { color: red; }".repeat(1000);
+        let request = UpdateThemeConfigRequest {
+            current_theme: Some("custom".to_string()),
+            custom_css: Some(large_css.clone()),
+        };
+        
+        // Act
+        let json = serde_json::to_string(&request).unwrap();
+        let deserialized: UpdateThemeConfigRequest = serde_json::from_str(&json).unwrap();
+        
+        // Assert
+        assert_eq!(deserialized.custom_css, Some(large_css));
+    }
+
+    // ================================
+    // 错误场景测试
+    // ================================
+
+    #[test]
+    fn test_invalid_json_deserialization() {
+        // Arrange
+        let invalid_json = r#"{"width": "not_a_number", "invalid_field": []}"#;
+        
+        // Act & Assert
+        let result: Result<UpdateWindowConfigRequest, _> = serde_json::from_str(invalid_json);
+        assert!(result.is_err(), "应该拒绝无效的JSON格式");
+    }
+
+    #[test]
+    fn test_partial_json_deserialization() {
+        // Arrange - 只包含部分字段的JSON
+        let partial_json = r#"{"width": 800}"#;
+        
+        // Act
+        let result: Result<UpdateWindowConfigRequest, _> = serde_json::from_str(partial_json);
+        
+        // Assert
+        assert!(result.is_ok(), "应该接受部分字段的JSON");
+        let request = result.unwrap();
+        assert_eq!(request.width, Some(800.0));
+        assert_eq!(request.height, None);
+    }
+
+    #[test]
+    fn test_empty_json_deserialization() {
+        // Arrange
+        let empty_json = r#"{}"#;
+        
+        // Act
+        let result: Result<UpdateWindowConfigRequest, _> = serde_json::from_str(empty_json);
+        
+        // Assert
+        assert!(result.is_ok(), "应该接受空的JSON对象");
+        let request = result.unwrap();
+        assert_eq!(request.width, None);
+        assert_eq!(request.height, None);
+    }
+
+    // ================================
+    // Unicode和特殊字符测试
+    // ================================
+
+    #[test]
+    fn test_unicode_character_name() {
+        // Arrange - 测试Unicode字符名称
+        let unicode_name = "紫舒老师🌸测试角色";
+        let request = UpdateCharacterConfigRequest {
+            current_character: Some(unicode_name.to_string()),
+            scale: None,
+            auto_idle: None,
+            interaction_enabled: None,
+        };
+        
+        // Act
+        let json = serde_json::to_string(&request).unwrap();
+        let deserialized: UpdateCharacterConfigRequest = serde_json::from_str(&json).unwrap();
+        
+        // Assert
+        assert_eq!(deserialized.current_character, Some(unicode_name.to_string()));
+    }
+
+    #[test]
+    fn test_special_characters_in_paths() {
+        // Arrange - 测试特殊字符路径
+        let special_path = "/path/with spaces/and-dashes/file_name.json";
+        let request = ImportSettingsRequest {
+            file_path: special_path.to_string(),
+        };
+        
+        // Act
+        let json = serde_json::to_string(&request).unwrap();
+        let deserialized: ImportSettingsRequest = serde_json::from_str(&json).unwrap();
+        
+        // Assert
+        assert_eq!(deserialized.file_path, special_path);
+    }
+
+    #[test]
+    fn test_css_with_special_characters() {
+        // Arrange - 测试包含特殊字符的CSS
+        let special_css = r#"
+            body { 
+                font-family: "微软雅黑", Arial; 
+                background: url('data:image/svg+xml;utf8,<svg>...</svg>'); 
+                content: "测试内容 \u00A0 \u2603";
+            }
+        "#;
+        
+        let request = UpdateThemeConfigRequest {
+            current_theme: Some("custom".to_string()),
+            custom_css: Some(special_css.to_string()),
+        };
+        
+        // Act
+        let json = serde_json::to_string(&request).unwrap();
+        let deserialized: UpdateThemeConfigRequest = serde_json::from_str(&json).unwrap();
+        
+        // Assert
+        assert_eq!(deserialized.custom_css, Some(special_css.to_string()));
+    }
+
+    // ================================
+    // 性能相关测试
+    // ================================
+
+    #[test]
+    fn test_large_updates_object_serialization() {
+        // Arrange - 创建大型更新对象
+        let mut large_updates = serde_json::Map::new();
+        
+        // 添加大量配置项
+        for i in 0..1000 {
+            large_updates.insert(
+                format!("config_item_{}", i),
+                json!({
+                    "value": format!("test_value_{}", i),
+                    "enabled": i % 2 == 0,
+                    "priority": i,
+                }),
+            );
+        }
+        
+        let request = UpdateSettingsRequest {
+            updates: json!(large_updates),
+        };
+        
+        // Act
+        let start = std::time::Instant::now();
+        let json = serde_json::to_string(&request).unwrap();
+        let serialization_time = start.elapsed();
+        
+        let start = std::time::Instant::now();
+        let deserialized: UpdateSettingsRequest = serde_json::from_str(&json).unwrap();
+        let deserialization_time = start.elapsed();
+        
+        // Assert
+        assert!(deserialized.updates.is_object());
+        let obj = deserialized.updates.as_object().unwrap();
+        assert_eq!(obj.len(), 1000);
+        
+        // 性能断言
+        assert!(serialization_time.as_millis() < 200, "序列化时间过长");
+        assert!(deserialization_time.as_millis() < 200, "反序列化时间过长");
+    }
+
+    // ================================
+    // 嵌套对象测试
+    // ================================
+
+    #[test]
+    fn test_deeply_nested_updates() {
+        // Arrange - 创建深度嵌套的更新对象
+        let nested_updates = json!({
+            "level1": {
+                "level2": {
+                    "level3": {
+                        "level4": {
+                            "level5": {
+                                "value": "深度嵌套测试",
+                                "enabled": true
+                            }
+                        }
+                    }
+                }
+            }
+        });
+        
+        let request = UpdateSettingsRequest {
+            updates: nested_updates.clone(),
+        };
+        
+        // Act
+        let json = serde_json::to_string(&request).unwrap();
+        let deserialized: UpdateSettingsRequest = serde_json::from_str(&json).unwrap();
+        
+        // Assert
+        assert_eq!(deserialized.updates, nested_updates);
+        
+        // 验证深度嵌套访问
+        let level5 = &deserialized.updates["level1"]["level2"]["level3"]["level4"]["level5"];
+        assert_eq!(level5["value"], "深度嵌套测试");
+        assert_eq!(level5["enabled"], true);
+    }
+
+    // ================================
+    // 数组处理测试
+    // ================================
+
+    #[test]
+    fn test_array_values_in_updates() {
+        // Arrange - 测试数组值的处理
+        let updates_with_arrays = json!({
+            "themes": ["light", "dark", "auto"],
+            "languages": ["zh", "en", "ja"],
+            "plugins": [
+                {"name": "plugin1", "enabled": true},
+                {"name": "plugin2", "enabled": false}
+            ],
+            "coordinates": [100, 200, 300]
+        });
+        
+        let request = UpdateSettingsRequest {
+            updates: updates_with_arrays.clone(),
+        };
+        
+        // Act
+        let json = serde_json::to_string(&request).unwrap();
+        let deserialized: UpdateSettingsRequest = serde_json::from_str(&json).unwrap();
+        
+        // Assert
+        assert_eq!(deserialized.updates, updates_with_arrays);
+        
+        // 验证数组内容
+        let themes = deserialized.updates["themes"].as_array().unwrap();
+        assert_eq!(themes.len(), 3);
+        assert_eq!(themes[0], "light");
+        
+        let plugins = deserialized.updates["plugins"].as_array().unwrap();
+        assert_eq!(plugins.len(), 2);
+        assert_eq!(plugins[0]["name"], "plugin1");
+    }
+
+    // ================================
+    // 空值和null处理测试
+    // ================================
+
+    #[test]
+    fn test_null_values_handling() {
+        // Arrange - 测试null值处理
+        let updates_with_nulls = json!({
+            "nullable_field": null,
+            "optional_string": null,
+            "valid_field": "valid_value"
+        });
+        
+        let request = UpdateSettingsRequest {
+            updates: updates_with_nulls.clone(),
+        };
+        
+        // Act
+        let json = serde_json::to_string(&request).unwrap();
+        let deserialized: UpdateSettingsRequest = serde_json::from_str(&json).unwrap();
+        
+        // Assert
+        assert_eq!(deserialized.updates, updates_with_nulls);
+        assert!(deserialized.updates["nullable_field"].is_null());
+        assert_eq!(deserialized.updates["valid_field"], "valid_value");
+    }
+
+    // ================================
+    // 类型混合测试
+    // ================================
+
+    #[test]
+    fn test_mixed_types_in_updates() {
+        // Arrange - 测试混合数据类型
+        let mixed_updates = json!({
+            "string_value": "test",
+            "number_value": 42,
+            "float_value": 3.14,
+            "boolean_value": true,
+            "array_value": [1, 2, 3],
+            "object_value": {"nested": "value"},
+            "null_value": null
+        });
+        
+        let request = UpdateSettingsRequest {
+            updates: mixed_updates.clone(),
+        };
+        
+        // Act
+        let json = serde_json::to_string(&request).unwrap();
+        let deserialized: UpdateSettingsRequest = serde_json::from_str(&json).unwrap();
+        
+        // Assert
+        assert_eq!(deserialized.updates, mixed_updates);
+        assert!(deserialized.updates["string_value"].is_string());
+        assert!(deserialized.updates["number_value"].is_number());
+        assert!(deserialized.updates["boolean_value"].is_boolean());
+        assert!(deserialized.updates["array_value"].is_array());
+        assert!(deserialized.updates["object_value"].is_object());
+        assert!(deserialized.updates["null_value"].is_null());
+    }
+}

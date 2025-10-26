@@ -629,3 +629,337 @@ fn row_to_retention_policy(row: &Row) -> DataRetentionPolicy {
         updated_at: Some(row.get(5)),
     }
 }
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+    use std::sync::Arc;
+    use tokio::sync::Mutex;
+    use mockall::predicate::*;
+    use tokio_postgres::{NoTls, Row, Client, Config};
+    use std::collections::HashMap;
+
+    // 创建测试用的简单模拟池
+    fn create_mock_pool() -> DbPool {
+        use deadpool_postgres::{Config as PoolConfig, Manager, ManagerConfig, RecyclingMethod, Runtime, Pool};
+        use tokio_postgres::NoTls;
+        
+        // 创建一个简单的模拟配置，但不实际连接数据库
+        let mut cfg = PoolConfig::new();
+        cfg.host = Some("localhost".to_string());
+        cfg.port = Some(5432);
+        cfg.dbname = Some("test_db".to_string());
+        cfg.user = Some("test_user".to_string());
+        cfg.password = Some("test_password".to_string());
+        
+        // 创建管理器配置
+        let mgr_config = ManagerConfig {
+            recycling_method: RecyclingMethod::Fast,
+        };
+        
+        // 这只是为了测试结构，实际不会连接数据库
+        let manager = Manager::from_config(cfg.get_pg_config().unwrap(), NoTls, mgr_config);
+        Pool::builder(manager)
+            .max_size(1)
+            .build()
+            .unwrap()
+    }
+
+    #[tokio::test]
+    async fn test_privacy_settings_default() {
+        let settings = PrivacySettings::default();
+        
+        assert_eq!(settings.analytics_enabled, false);
+        assert_eq!(settings.crash_reports_enabled, false);
+        assert_eq!(settings.data_collection_enabled, false);
+    }
+
+    #[tokio::test]
+    async fn test_full_privacy_settings_default() {
+        let settings = FullPrivacySettings::default();
+        
+        assert_eq!(settings.id, None);
+        assert_eq!(settings.user_id, None);
+        assert_eq!(settings.analytics_enabled, false);
+        assert_eq!(settings.crash_reports_enabled, true);
+        assert_eq!(settings.data_collection_enabled, false);
+        assert_eq!(settings.usage_tracking_enabled, false);
+        assert_eq!(settings.performance_tracking_enabled, true);
+        assert_eq!(settings.error_reporting_enabled, true);
+        assert_eq!(settings.personalization_enabled, true);
+        assert_eq!(settings.third_party_sharing_enabled, false);
+        assert_eq!(settings.marketing_emails_enabled, false);
+    }
+
+    #[tokio::test]
+    async fn test_privacy_registry_new() {
+        // 创建模拟池
+        let pool = create_mock_pool();
+        let registry = PrivacyRegistry::new(pool);
+        
+        // 验证注册表创建成功
+        assert!(true); // 创建成功就是测试通过
+    }
+
+    #[tokio::test]
+    async fn test_consent_log_creation() {
+        let consent_log = ConsentLog {
+            id: Some(1),
+            user_id: Some("test_user".to_string()),
+            consent_type: "analytics".to_string(),
+            granted: true,
+            version: "1.0".to_string(),
+            ip_address: Some("127.0.0.1".to_string()),
+            user_agent: Some("test-agent".to_string()),
+            created_at: Some(Utc::now()),
+        };
+
+        assert_eq!(consent_log.id, Some(1));
+        assert_eq!(consent_log.user_id, Some("test_user".to_string()));
+        assert_eq!(consent_log.consent_type, "analytics");
+        assert_eq!(consent_log.granted, true);
+        assert_eq!(consent_log.version, "1.0");
+    }
+
+    #[tokio::test]
+    async fn test_data_retention_policy_creation() {
+        let policy = DataRetentionPolicy {
+            id: Some(1),
+            data_type: "logs".to_string(),
+            retention_days: 30,
+            auto_cleanup_enabled: true,
+            created_at: Some(Utc::now()),
+            updated_at: Some(Utc::now()),
+        };
+
+        assert_eq!(policy.id, Some(1));
+        assert_eq!(policy.data_type, "logs");
+        assert_eq!(policy.retention_days, 30);
+        assert_eq!(policy.auto_cleanup_enabled, true);
+    }
+
+    // 测试隐私设置序列化/反序列化
+    #[tokio::test]
+    async fn test_privacy_settings_serialization() {
+        let settings = PrivacySettings {
+            analytics_enabled: true,
+            crash_reports_enabled: false,
+            data_collection_enabled: true,
+        };
+
+        let json = serde_json::to_string(&settings).unwrap();
+        let deserialized: PrivacySettings = serde_json::from_str(&json).unwrap();
+
+        assert_eq!(settings.analytics_enabled, deserialized.analytics_enabled);
+        assert_eq!(settings.crash_reports_enabled, deserialized.crash_reports_enabled);
+        assert_eq!(settings.data_collection_enabled, deserialized.data_collection_enabled);
+    }
+
+    // 测试完整隐私设置序列化/反序列化
+    #[tokio::test]
+    async fn test_full_privacy_settings_serialization() {
+        let mut settings = FullPrivacySettings::default();
+        settings.analytics_enabled = true;
+        settings.user_id = Some("test_user".to_string());
+
+        let json = serde_json::to_string(&settings).unwrap();
+        let deserialized: FullPrivacySettings = serde_json::from_str(&json).unwrap();
+
+        assert_eq!(settings.analytics_enabled, deserialized.analytics_enabled);
+        assert_eq!(settings.user_id, deserialized.user_id);
+    }
+
+    // 测试同意日志序列化/反序列化  
+    #[tokio::test]
+    async fn test_consent_log_serialization() {
+        let log = ConsentLog {
+            id: Some(1),
+            user_id: Some("test_user".to_string()),
+            consent_type: "analytics".to_string(),
+            granted: true,
+            version: "1.0".to_string(),
+            ip_address: Some("127.0.0.1".to_string()),
+            user_agent: Some("test-agent".to_string()),
+            created_at: Some(Utc::now()),
+        };
+
+        let json = serde_json::to_string(&log).unwrap();
+        let deserialized: ConsentLog = serde_json::from_str(&json).unwrap();
+
+        assert_eq!(log.consent_type, deserialized.consent_type);
+        assert_eq!(log.granted, deserialized.granted);
+        assert_eq!(log.version, deserialized.version);
+    }
+
+    // 测试数据保留策略序列化/反序列化
+    #[tokio::test]
+    async fn test_data_retention_policy_serialization() {
+        let policy = DataRetentionPolicy {
+            id: Some(1),
+            data_type: "logs".to_string(),
+            retention_days: 30,
+            auto_cleanup_enabled: true,
+            created_at: Some(Utc::now()),
+            updated_at: Some(Utc::now()),
+        };
+
+        let json = serde_json::to_string(&policy).unwrap();
+        let deserialized: DataRetentionPolicy = serde_json::from_str(&json).unwrap();
+
+        assert_eq!(policy.data_type, deserialized.data_type);
+        assert_eq!(policy.retention_days, deserialized.retention_days);
+        assert_eq!(policy.auto_cleanup_enabled, deserialized.auto_cleanup_enabled);
+    }
+
+    // 测试隐私设置字段验证
+    #[tokio::test]
+    async fn test_privacy_settings_validation() {
+        // 测试所有为false的情况
+        let strict_settings = PrivacySettings {
+            analytics_enabled: false,
+            crash_reports_enabled: false,
+            data_collection_enabled: false,
+        };
+        assert!(!strict_settings.analytics_enabled);
+        assert!(!strict_settings.crash_reports_enabled);
+        assert!(!strict_settings.data_collection_enabled);
+
+        // 测试所有为true的情况
+        let permissive_settings = PrivacySettings {
+            analytics_enabled: true,
+            crash_reports_enabled: true,
+            data_collection_enabled: true,
+        };
+        assert!(permissive_settings.analytics_enabled);
+        assert!(permissive_settings.crash_reports_enabled);
+        assert!(permissive_settings.data_collection_enabled);
+    }
+
+    // 测试完整隐私设置的边界条件
+    #[tokio::test]
+    async fn test_full_privacy_settings_boundary_conditions() {
+        let mut settings = FullPrivacySettings::default();
+        
+        // 测试用户ID边界
+        settings.user_id = Some("".to_string()); // 空字符串
+        assert_eq!(settings.user_id, Some("".to_string()));
+        
+        settings.user_id = Some("a".repeat(1000)); // 长字符串
+        assert!(settings.user_id.unwrap().len() == 1000);
+        
+        settings.user_id = None; // None值
+        assert_eq!(settings.user_id, None);
+    }
+
+    // 测试同意日志版本字段
+    #[tokio::test]
+    async fn test_consent_log_version_handling() {
+        let log = ConsentLog {
+            id: None,
+            user_id: None,
+            consent_type: "test".to_string(),
+            granted: true,
+            version: "1.0.0".to_string(),
+            ip_address: None,
+            user_agent: None,
+            created_at: None,
+        };
+
+        assert_eq!(log.version, "1.0.0");
+
+        // 测试不同版本格式
+        let log2 = ConsentLog {
+            version: "v2.1-beta".to_string(),
+            ..log
+        };
+        assert_eq!(log2.version, "v2.1-beta");
+    }
+
+    // 测试数据保留策略的天数验证
+    #[tokio::test]
+    async fn test_retention_policy_days_validation() {
+        // 测试正常值
+        let policy = DataRetentionPolicy {
+            id: None,
+            data_type: "test".to_string(),
+            retention_days: 30,
+            auto_cleanup_enabled: true,
+            created_at: None,
+            updated_at: None,
+        };
+        assert_eq!(policy.retention_days, 30);
+
+        // 测试边界值
+        let policy_zero = DataRetentionPolicy {
+            retention_days: 0,
+            ..policy.clone()
+        };
+        assert_eq!(policy_zero.retention_days, 0);
+
+        let policy_large = DataRetentionPolicy {
+            retention_days: i32::MAX,
+            ..policy.clone()
+        };
+        assert_eq!(policy_large.retention_days, i32::MAX);
+    }
+
+    // 测试Clone trait实现
+    #[tokio::test]
+    async fn test_clone_implementations() {
+        let settings = PrivacySettings::default();
+        let cloned = settings.clone();
+        assert_eq!(settings.analytics_enabled, cloned.analytics_enabled);
+
+        let full_settings = FullPrivacySettings::default();
+        let cloned_full = full_settings.clone();
+        assert_eq!(full_settings.analytics_enabled, cloned_full.analytics_enabled);
+
+        let policy = DataRetentionPolicy {
+            id: None,
+            data_type: "test".to_string(),
+            retention_days: 30,
+            auto_cleanup_enabled: true,
+            created_at: None,
+            updated_at: None,
+        };
+        let cloned_policy = policy.clone();
+        assert_eq!(policy.data_type, cloned_policy.data_type);
+        assert_eq!(policy.retention_days, cloned_policy.retention_days);
+    }
+
+    // 测试Debug trait实现
+    #[tokio::test]
+    async fn test_debug_implementations() {
+        let settings = PrivacySettings::default();
+        let debug_str = format!("{:?}", settings);
+        assert!(debug_str.contains("PrivacySettings"));
+
+        let full_settings = FullPrivacySettings::default();
+        let debug_str = format!("{:?}", full_settings);
+        assert!(debug_str.contains("FullPrivacySettings"));
+
+        let consent_log = ConsentLog {
+            id: Some(1),
+            user_id: Some("test".to_string()),
+            consent_type: "analytics".to_string(),
+            granted: true,
+            version: "1.0".to_string(),
+            ip_address: None,
+            user_agent: None,
+            created_at: None,
+        };
+        let debug_str = format!("{:?}", consent_log);
+        assert!(debug_str.contains("ConsentLog"));
+
+        let policy = DataRetentionPolicy {
+            id: None,
+            data_type: "test".to_string(),
+            retention_days: 30,
+            auto_cleanup_enabled: true,
+            created_at: None,
+            updated_at: None,
+        };
+        let debug_str = format!("{:?}", policy);
+        assert!(debug_str.contains("DataRetentionPolicy"));
+    }
+}

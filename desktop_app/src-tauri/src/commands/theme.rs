@@ -436,3 +436,253 @@ pub async fn apply_theme(
     Ok(())
 }
 
+#[cfg(test)]
+mod tests {
+    use super::*;
+    use crate::database::theme::{Theme, ThemeDatabase, ThemeStatistics};
+    use mockall::{mock, predicate::*};
+    use std::sync::Mutex;
+    use tempfile::NamedTempFile;
+    use tokio_test;
+    use chrono::Utc;
+
+    // Mock 简单的主题数据库，直接实现方法而不用 trait
+    struct MockThemeDatabase {
+        themes: std::collections::HashMap<String, Theme>,
+        statistics: ThemeStatistics,
+    }
+
+    impl MockThemeDatabase {
+        fn new() -> Self {
+            Self {
+                themes: std::collections::HashMap::new(),
+                statistics: ThemeStatistics {
+                    total_themes: 0,
+                    installed_themes: 0,
+                    favorited_themes: 0,
+                    dark_themes: 0,
+                    light_themes: 0,
+                    categories: std::collections::HashMap::new(),
+                },
+            }
+        }
+
+        fn add_theme(&mut self, theme: Theme) {
+            self.themes.insert(theme.id.clone(), theme);
+        }
+
+        fn search_themes(
+            &self,
+            keyword: Option<&str>,
+            _category: Option<&str>,
+            _installed_only: bool,
+            _limit: i64,
+            _offset: i64,
+        ) -> Result<Vec<Theme>, Box<dyn std::error::Error + Send + Sync>> {
+            let themes: Vec<Theme> = self.themes.values()
+                .filter(|theme| {
+                    if let Some(kw) = keyword {
+                        theme.name.contains(kw) || theme.description.as_ref().map_or(false, |d| d.contains(kw))
+                    } else {
+                        true
+                    }
+                })
+                .cloned()
+                .collect();
+            Ok(themes)
+        }
+        
+        fn get_theme(&self, theme_id: &str) -> Result<Option<Theme>, Box<dyn std::error::Error + Send + Sync>> {
+            Ok(self.themes.get(theme_id).cloned())
+        }
+        
+        fn mark_installed(&mut self, theme_id: &str, installed: bool) -> Result<(), Box<dyn std::error::Error + Send + Sync>> {
+            if let Some(theme) = self.themes.get_mut(theme_id) {
+                theme.installed = installed;
+            }
+            Ok(())
+        }
+        
+        fn favorite_theme(&mut self, theme_id: &str) -> Result<(), Box<dyn std::error::Error + Send + Sync>> {
+            if let Some(theme) = self.themes.get_mut(theme_id) {
+                theme.favorited = true;
+            }
+            Ok(())
+        }
+        
+        fn unfavorite_theme(&mut self, theme_id: &str) -> Result<(), Box<dyn std::error::Error + Send + Sync>> {
+            if let Some(theme) = self.themes.get_mut(theme_id) {
+                theme.favorited = false;
+            }
+            Ok(())
+        }
+        
+        fn upsert_theme(&mut self, theme: &Theme) -> Result<(), Box<dyn std::error::Error + Send + Sync>> {
+            self.themes.insert(theme.id.clone(), theme.clone());
+            Ok(())
+        }
+        
+        fn get_statistics(&self) -> Result<ThemeStatistics, Box<dyn std::error::Error + Send + Sync>> {
+            Ok(self.statistics.clone())
+        }
+        
+        fn get_installed_themes(&self) -> Result<Vec<Theme>, Box<dyn std::error::Error + Send + Sync>> {
+            let themes: Vec<Theme> = self.themes.values()
+                .filter(|theme| theme.installed)
+                .cloned()
+                .collect();
+            Ok(themes)
+        }
+        
+        fn get_favorited_themes(&self) -> Result<Vec<Theme>, Box<dyn std::error::Error + Send + Sync>> {
+            let themes: Vec<Theme> = self.themes.values()
+                .filter(|theme| theme.favorited)
+                .cloned()
+                .collect();
+            Ok(themes)
+        }
+    }
+
+    fn create_test_theme() -> Theme {
+        Theme {
+            id: "test-theme-001".to_string(),
+            name: "Test Theme".to_string(),
+            description: Some("A test theme".to_string()),
+            author: Some("Test Author".to_string()),
+            version: "1.0.0".to_string(),
+            category: "test".to_string(),
+            variables: serde_json::json!({}),
+            custom_css: None,
+            preview_image: None,
+            is_dark: false,
+            is_default: false,
+            installed: false,
+            favorited: false,
+            download_count: 0,
+            rating: 0.0,
+            tags: vec!["test".to_string()],
+            created_at: Utc::now(),
+            updated_at: Utc::now(),
+        }
+    }
+
+    #[tokio::test]
+    async fn test_search_themes_success() {
+        // Arrange
+        let mut mock_db = MockThemeDatabase::new();
+        let test_theme = create_test_theme();
+        mock_db.add_theme(test_theme);
+
+        let options = ThemeSearchOptions {
+            keyword: Some("Test".to_string()),
+            category: None,
+            installed_only: Some(false),
+            page: Some(1),
+            page_size: Some(20),
+        };
+
+        // Act
+        let result = search_themes(
+            options,
+            tauri::State::from(&Mutex::new(mock_db)),
+        ).await;
+
+        // Assert
+        assert!(result.is_ok());
+        let search_result = result.unwrap();
+        assert_eq!(search_result.themes.len(), 1);
+        assert_eq!(search_result.page, 1);
+        assert_eq!(search_result.page_size, 20);
+    }
+
+    #[tokio::test]
+    async fn test_get_theme_success() {
+        // Arrange
+        let mut mock_db = MockThemeDatabase::new();
+        let test_theme = create_test_theme();
+        mock_db.add_theme(test_theme);
+
+        // Act
+        let result = get_theme(
+            "test-theme-001".to_string(),
+            tauri::State::from(&Mutex::new(mock_db)),
+        ).await;
+
+        // Assert
+        assert!(result.is_ok());
+        let theme = result.unwrap();
+        assert_eq!(theme.id, "test-theme-001");
+        assert_eq!(theme.name, "Test Theme");
+    }
+
+    #[tokio::test]
+    async fn test_get_theme_not_found() {
+        // Arrange
+        let mock_db = MockThemeDatabase::new(); // 空的数据库
+
+        // Act
+        let result = get_theme(
+            "nonexistent".to_string(),
+            tauri::State::from(&Mutex::new(mock_db)),
+        ).await;
+
+        // Assert
+        assert!(result.is_err());
+        assert!(result.unwrap_err().contains("Theme not found"));
+    }
+
+    // 基本的集成测试 - 测试核心功能
+    #[tokio::test]
+    async fn test_validate_theme_functions() {
+        // 测试有效的主题验证
+        let test_theme = create_test_theme();
+        let temp_file = NamedTempFile::new().unwrap();
+        let theme_json = serde_json::to_string_pretty(&test_theme).unwrap();
+        std::fs::write(temp_file.path(), theme_json).unwrap();
+
+        let result = validate_theme(
+            temp_file.path().to_string_lossy().to_string()
+        ).await;
+
+        assert!(result.is_ok());
+        let validation_result = result.unwrap();
+        assert_eq!(validation_result["valid"], true);
+
+        // 测试无效的主题验证
+        let temp_file_invalid = NamedTempFile::new().unwrap();
+        std::fs::write(temp_file_invalid.path(), "invalid json").unwrap();
+
+        let result_invalid = validate_theme(
+            temp_file_invalid.path().to_string_lossy().to_string()
+        ).await;
+
+        assert!(result_invalid.is_ok());
+        let validation_result_invalid = result_invalid.unwrap();
+        assert_eq!(validation_result_invalid["valid"], false);
+    }
+
+    #[test]
+    fn test_theme_structure() {
+        // 测试 Theme 结构体的基本功能
+        let theme = create_test_theme();
+        assert_eq!(theme.id, "test-theme-001");
+        assert_eq!(theme.name, "Test Theme");
+        assert_eq!(theme.version, "1.0.0");
+        assert_eq!(theme.category, "test");
+        assert!(!theme.installed);
+        assert!(!theme.favorited);
+    }
+
+    #[test]
+    fn test_theme_serialization() {
+        // 测试 Theme 序列化和反序列化
+        let theme = create_test_theme();
+        let serialized = serde_json::to_string(&theme).unwrap();
+        let deserialized: Theme = serde_json::from_str(&serialized).unwrap();
+        
+        assert_eq!(theme.id, deserialized.id);
+        assert_eq!(theme.name, deserialized.name);
+        assert_eq!(theme.version, deserialized.version);
+    }
+}
+
