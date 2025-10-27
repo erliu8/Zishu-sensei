@@ -4,7 +4,6 @@
  * 测试加密相关功能，包括文本加密解密、密钥管理、审计日志、数据脱敏等
  */
 
-import React from 'react'
 import { describe, it, expect, beforeEach, afterEach, vi, beforeAll, afterAll } from 'vitest'
 import { renderHook, act, waitFor } from '@testing-library/react'
 import { 
@@ -14,28 +13,30 @@ import {
   useDataMasking,
   usePasswordStrength 
 } from '@/hooks/useEncryption'
-import { waitForNextTick, mockConsole } from '../../utils/test-utils'
+import { mockConsole } from '../../utils/test-utils'
 
 // ==================== Mock 设置 ====================
 
-// Mock EncryptionService
-const mockEncryptionService = {
-  quickEncrypt: vi.fn(),
-  quickDecrypt: vi.fn(),
-  generateMasterKey: vi.fn(),
-  loadKey: vi.fn(),
-  getKeyInfo: vi.fn(),
-  rotateKey: vi.fn(),
-  deleteKey: vi.fn(),
-  unloadKey: vi.fn(),
-  keyExists: vi.fn(),
-  getRecentAuditLogs: vi.fn(),
-  getAuditStatistics: vi.fn(),
-  cleanupAuditLogs: vi.fn(),
-  maskSensitiveData: vi.fn(),
-  maskAllSensitive: vi.fn(),
-  validatePasswordStrength: vi.fn(),
-}
+// Mock objects need to be hoisted to work with vi.mock
+const { mockEncryptionService } = vi.hoisted(() => ({
+  mockEncryptionService: {
+    quickEncrypt: vi.fn(),
+    quickDecrypt: vi.fn(),
+    generateMasterKey: vi.fn(),
+    loadKey: vi.fn(),
+    getKeyInfo: vi.fn(),
+    rotateKey: vi.fn(),
+    deleteKey: vi.fn(),
+    unloadKey: vi.fn(),
+    keyExists: vi.fn(),
+    getRecentAuditLogs: vi.fn(),
+    getAuditStatistics: vi.fn(),
+    cleanupAuditLogs: vi.fn(),
+    maskSensitiveData: vi.fn(),
+    maskAllSensitive: vi.fn(),
+    validatePasswordStrength: vi.fn(),
+  },
+}))
 
 vi.mock('@/services/encryptionService', () => ({
   encryptionService: mockEncryptionService,
@@ -44,25 +45,27 @@ vi.mock('@/services/encryptionService', () => ({
 // ==================== 测试数据 ====================
 
 const mockEncryptedData = {
-  data: 'encrypted_content_base64',
+  ciphertext: 'encrypted_content_base64',
   nonce: 'nonce_base64',
-  salt: 'salt_base64',
+  version: 1,
+  timestamp: Date.now(),
 }
 
 const mockKeyDerivationParams = {
   salt: 'salt_base64',
-  iterations: 100000,
-  algorithm: 'PBKDF2',
+  memory_cost: 65536,
+  time_cost: 3,
+  parallelism: 4,
 }
 
 const mockStoredKeyInfo = {
   key_id: 'test-key-123',
+  encrypted_key: 'encrypted_key_base64',
+  derivation_params: mockKeyDerivationParams,
   purpose: 'data_encryption',
-  created_at: '2025-01-01T00:00:00Z',
-  expires_at: '2025-12-31T23:59:59Z',
-  algorithm: 'AES-256-GCM',
-  key_length: 256,
-  status: 'active' as const,
+  created_at: Date.now(),
+  expires_at: Date.now() + 365 * 24 * 60 * 60 * 1000,
+  version: 1,
 }
 
 const mockAuditEvent = {

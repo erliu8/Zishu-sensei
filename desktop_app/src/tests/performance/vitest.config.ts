@@ -7,60 +7,61 @@
  * - 性能监控工具
  */
 
-import { defineConfig, mergeConfig } from 'vitest/config'
-import baseConfig from '../../../vitest.config'
+import { defineConfig } from 'vitest/config'
+import react from '@vitejs/plugin-react-swc'
+import path from 'path'
 
-export default mergeConfig(
-  baseConfig,
-  defineConfig({
-    test: {
-      // 性能测试单独运行，不与其他测试并行
-      include: ['tests/performance/**/*.test.{ts,tsx}'],
-      
-      // 性能测试设置
-      testTimeout: 30000, // 30秒超时（某些性能测试需要更长时间）
-      hookTimeout: 10000, // 10秒钩子超时
-      
-      // 串行执行测试，避免性能测试相互影响
-      pool: 'forks',
-      poolOptions: {
-        forks: {
-          singleFork: true, // 单进程执行
-        },
-      },
-      
-      // 性能测试通常不需要覆盖率
-      coverage: {
-        enabled: false,
-      },
-      
-      // 性能测试环境配置
-      environment: 'jsdom',
-      
-      // 全局配置
-      globals: true,
-      
-      // 性能测试报告
-      reporters: ['verbose'],
-      
-      // 性能测试时的环境变量
-      env: {
-        PERFORMANCE_TEST: 'true',
-      },
-      
-      // 禁用隔离，提高性能测试准确性
-      isolate: false,
-      
-      // 性能测试不使用线程池
-      threads: false,
-      
-      // 性能测试序列化执行
-      sequence: {
-        shuffle: false, // 不随机顺序
-        concurrent: false, // 不并发执行
-      },
+export default defineConfig({
+  plugins: [react()],
+  
+  test: {
+    // 性能测试单独运行，不与其他测试并行
+    include: ['src/tests/performance/**/*.test.{ts,tsx}'],
+    
+    // 性能测试设置
+    testTimeout: 30000, // 30秒超时（某些性能测试需要更长时间）
+    hookTimeout: 10000, // 10秒钩子超时
+    
+    // 性能测试通常不需要覆盖率
+    coverage: {
+      enabled: false,
     },
-  })
-)
+    
+    // 性能测试环境配置
+    environment: 'jsdom',
+    
+    // 全局配置
+    globals: true,
+    
+    // 性能测试报告
+    reporters: ['verbose'],
+    
+    // 设置文件
+    setupFiles: ['./src/tests/setup.ts'],
+    
+    // 禁用隔离，提高性能测试准确性
+    isolate: false,
+    
+    // 测试隔离
+    clearMocks: true,
+    mockReset: true,
+    restoreMocks: true,
+  },
+  
+  resolve: {
+    alias: {
+      '@': path.resolve(__dirname, '../../..'),
+      '@components': path.resolve(__dirname, '../../../components'),
+      '@hooks': path.resolve(__dirname, '../../../hooks'),
+      '@services': path.resolve(__dirname, '../../../services'),
+      '@stores': path.resolve(__dirname, '../../../stores'),
+      '@utils': path.resolve(__dirname, '../../../utils'),
+      '@types': path.resolve(__dirname, '../../../types'),
+      '@styles': path.resolve(__dirname, '../../../styles'),
+      '@assets': path.resolve(__dirname, '../../../assets'),
+      '@tauri-apps/api/core': path.resolve(__dirname, '../../mocks/tauri-api.ts'),
+    },
+  },
+})
 
 

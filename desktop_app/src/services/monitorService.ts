@@ -8,7 +8,7 @@
  * - 获取所有显示器列表
  */
 
-import { invoke } from '@tauri-apps/api/core'
+import { invoke } from '@tauri-apps/api/tauri'
 import type { DesktopInfo, MonitorInfo } from '@/types/monitor'
 
 /**

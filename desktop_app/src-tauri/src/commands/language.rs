@@ -246,21 +246,64 @@ mod tests {
     use tempfile::TempDir;
     use std::path::PathBuf;
     use tokio_test;
+    use std::sync::{Arc, Mutex};
+    use std::collections::HashMap;
 
-    // Mock AppHandle for testing
-    struct MockAppHandle {
+    // ================================
+    // 精确高效的测试集 - 避免AppHandle复杂性
+    // ================================
+
+    // 简化的设置管理器用于测试
+    #[derive(Debug)]
+    struct TestLanguageManager {
         temp_dir: TempDir,
+        settings_cache: Arc<Mutex<Option<LanguageSettings>>>,
     }
 
-    impl MockAppHandle {
+    impl TestLanguageManager {
         fn new() -> Self {
             Self {
                 temp_dir: TempDir::new().unwrap(),
+                settings_cache: Arc::new(Mutex::new(None)),
             }
         }
 
-        fn get_app_data_dir(&self) -> PathBuf {
-            self.temp_dir.path().to_path_buf()
+        fn get_config_path(&self) -> PathBuf {
+            self.temp_dir.path().join("language_settings.json")
+        }
+
+        fn save_settings(&self, settings: &LanguageSettings) -> Result<(), Box<dyn std::error::Error>> {
+            let config_path = self.get_config_path();
+            let json_data = serde_json::to_string_pretty(settings)?;
+            fs::write(&config_path, json_data)?;
+            
+            // 更新缓存
+            let mut cache = self.settings_cache.lock().unwrap();
+            *cache = Some(settings.clone());
+            
+            Ok(())
+        }
+
+        fn load_settings(&self) -> Result<LanguageSettings, Box<dyn std::error::Error>> {
+            let config_path = self.get_config_path();
+            
+            if !config_path.exists() {
+                return Ok(LanguageSettings::default());
+            }
+            
+            let json_data = fs::read_to_string(&config_path)?;
+            let settings: LanguageSettings = serde_json::from_str(&json_data)?;
+            
+            // 更新缓存
+            let mut cache = self.settings_cache.lock().unwrap();
+            *cache = Some(settings.clone());
+            
+            Ok(settings)
+        }
+
+        fn clear_cache(&self) {
+            let mut cache = self.settings_cache.lock().unwrap();
+            *cache = None;
         }
     }
 
@@ -273,12 +316,9 @@ mod tests {
         }
     }
 
-    fn setup_test_config_file(temp_dir: &TempDir, settings: &LanguageSettings) -> PathBuf {
-        let config_path = temp_dir.path().join("language_settings.json");
-        let json_data = serde_json::to_string_pretty(settings).unwrap();
-        fs::write(&config_path, json_data).unwrap();
-        config_path
-    }
+    // ================================
+    // 核心功能测试
+    // ================================
 
     #[test]
     fn test_language_settings_default() {
@@ -295,10 +335,10 @@ mod tests {
     #[test]
     fn test_language_settings_serialization() {
         // Arrange
-        let settings = create_test_settings();
+        let original_settings = create_test_settings();
 
         // Act - Serialize
-        let json_result = serde_json::to_string(&settings);
+        let json_result = serde_json::to_string(&original_settings);
 
         // Assert
         assert!(json_result.is_ok());
@@ -312,24 +352,60 @@ mod tests {
         // Assert
         assert!(deserialized_result.is_ok());
         let deserialized = deserialized_result.unwrap();
-        assert_eq!(deserialized.language, settings.language);
-        assert_eq!(deserialized.auto_detect, settings.auto_detect);
-        assert_eq!(deserialized.fallback_language, settings.fallback_language);
-        assert_eq!(deserialized.updated_at, settings.updated_at);
+        assert_eq!(deserialized.language, original_settings.language);
+        assert_eq!(deserialized.auto_detect, original_settings.auto_detect);
+        assert_eq!(deserialized.fallback_language, original_settings.fallback_language);
+        assert_eq!(deserialized.updated_at, original_settings.updated_at);
+    }
+
+    #[test]
+    fn test_language_manager_file_operations() {
+        // Arrange
+        let manager = TestLanguageManager::new();
+        let test_settings = create_test_settings();
+
+        // Act - Save settings
+        let save_result = manager.save_settings(&test_settings);
+        assert!(save_result.is_ok());
+
+        // Assert - File exists
+        assert!(manager.get_config_path().exists());
+
+        // Act - Load settings
+        let loaded_settings = manager.load_settings().unwrap();
+
+        // Assert - Settings match
+        assert_eq!(loaded_settings.language, test_settings.language);
+        assert_eq!(loaded_settings.auto_detect, test_settings.auto_detect);
+        assert_eq!(loaded_settings.fallback_language, test_settings.fallback_language);
+    }
+
+    #[test]
+    fn test_language_manager_default_when_no_file() {
+        // Arrange
+        let manager = TestLanguageManager::new();
+        
+        // Act - Load from empty directory
+        let settings = manager.load_settings().unwrap();
+        
+        // Assert - Should return default settings
+        assert_eq!(settings.language, "zh");
+        assert_eq!(settings.auto_detect, true);
+        assert_eq!(settings.fallback_language, "en");
     }
 
     #[tokio::test]
-    async fn test_detect_system_language_english() {
-        // This test checks if the function runs without panicking
-        // Actual result depends on system locale
-        
+    async fn test_detect_system_language_functionality() {
         // Act
         let result = detect_system_language().await;
 
         // Assert
         assert!(result.is_ok());
         let language = result.unwrap();
-        assert!(["zh", "en", "ja", "ko"].contains(&language.as_str()));
+        
+        // Should return one of the supported languages
+        let supported = ["zh", "en", "ja", "ko"];
+        assert!(supported.contains(&language.as_str()));
     }
 
     #[tokio::test]
@@ -342,19 +418,60 @@ mod tests {
         let languages = result.unwrap();
         assert_eq!(languages.len(), 4);
         
-        // Check for specific languages
+        // Verify all expected languages are present
         let language_codes: Vec<String> = languages.iter().map(|l| l.code.clone()).collect();
         assert!(language_codes.contains(&"zh".to_string()));
         assert!(language_codes.contains(&"en".to_string()));
         assert!(language_codes.contains(&"ja".to_string()));
         assert!(language_codes.contains(&"ko".to_string()));
 
-        // Check structure of first language
-        let first_lang = &languages[0];
-        assert!(!first_lang.name.is_empty());
-        assert!(!first_lang.native_name.is_empty());
-        assert_eq!(first_lang.rtl, false); // All supported languages are LTR
+        // Verify structure of languages
+        for lang in &languages {
+            assert!(!lang.code.is_empty());
+            assert!(!lang.name.is_empty());
+            assert!(!lang.native_name.is_empty());
+            assert_eq!(lang.rtl, false); // All supported languages are LTR
+        }
     }
+
+    #[test]
+    fn test_language_mapping_logic() {
+        // 测试语言映射逻辑
+        struct TestCase {
+            input_locale: &'static str,
+            expected_language: &'static str,
+        }
+
+        let test_cases = vec![
+            TestCase { input_locale: "zh-CN", expected_language: "zh" },
+            TestCase { input_locale: "zh-TW", expected_language: "zh" },
+            TestCase { input_locale: "zh-HK", expected_language: "zh" },
+            TestCase { input_locale: "en-US", expected_language: "en" },
+            TestCase { input_locale: "en-GB", expected_language: "en" },
+            TestCase { input_locale: "ja-JP", expected_language: "ja" },
+            TestCase { input_locale: "ko-KR", expected_language: "ko" },
+            TestCase { input_locale: "de-DE", expected_language: "zh" }, // Default
+            TestCase { input_locale: "fr-FR", expected_language: "zh" }, // Default
+            TestCase { input_locale: "", expected_language: "zh" }, // Empty string
+        ];
+
+        for test_case in test_cases {
+            let language = match test_case.input_locale {
+                locale if locale.starts_with("zh") => "zh",
+                locale if locale.starts_with("ja") => "ja",
+                locale if locale.starts_with("ko") => "ko",
+                locale if locale.starts_with("en") => "en",
+                _ => "zh", // 默认
+            };
+            
+            assert_eq!(language, test_case.expected_language, 
+                "Failed for locale: {}", test_case.input_locale);
+        }
+    }
+
+    // ================================
+    // 数据结构测试
+    // ================================
 
     #[test]
     fn test_language_info_structure() {
@@ -413,138 +530,126 @@ mod tests {
         assert_eq!(deserialized.timestamp, timestamp);
     }
 
-    // Helper function tests
-    #[test]
-    fn test_load_language_settings_internal_with_existing_file() {
-        // This test would require a real AppHandle, so we'll simulate the logic
-        let temp_dir = TempDir::new().unwrap();
-        let settings = create_test_settings();
-        let config_path = setup_test_config_file(&temp_dir, &settings);
-
-        // Verify file exists and can be read
-        assert!(config_path.exists());
-        
-        let json_data = fs::read_to_string(&config_path).unwrap();
-        let loaded_settings: LanguageSettings = serde_json::from_str(&json_data).unwrap();
-        
-        assert_eq!(loaded_settings.language, "en");
-        assert_eq!(loaded_settings.auto_detect, true);
-        assert_eq!(loaded_settings.fallback_language, "zh");
-    }
-
-    #[test]
-    fn test_load_language_settings_internal_with_missing_file() {
-        // Test default behavior when config file doesn't exist
-        let temp_dir = TempDir::new().unwrap();
-        let nonexistent_path = temp_dir.path().join("nonexistent.json");
-        
-        // Verify file doesn't exist
-        assert!(!nonexistent_path.exists());
-        
-        // This simulates the default behavior
-        let default_settings = LanguageSettings::default();
-        assert_eq!(default_settings.language, "zh");
-        assert_eq!(default_settings.auto_detect, true);
-        assert_eq!(default_settings.fallback_language, "en");
-    }
-
-    #[test]
-    fn test_language_mapping_logic() {
-        // Test the language mapping logic from detect_system_language
-        struct TestCase {
-            input_locale: &'static str,
-            expected_language: &'static str,
-        }
-
-        let test_cases = vec![
-            TestCase { input_locale: "zh-CN", expected_language: "zh" },
-            TestCase { input_locale: "zh-TW", expected_language: "zh" },
-            TestCase { input_locale: "en-US", expected_language: "en" },
-            TestCase { input_locale: "en-GB", expected_language: "en" },
-            TestCase { input_locale: "ja-JP", expected_language: "ja" },
-            TestCase { input_locale: "ko-KR", expected_language: "ko" },
-            TestCase { input_locale: "de-DE", expected_language: "zh" }, // Default case
-            TestCase { input_locale: "fr-FR", expected_language: "zh" }, // Default case
-        ];
-
-        for test_case in test_cases {
-            let language = match test_case.input_locale {
-                locale if locale.starts_with("zh") => "zh",
-                locale if locale.starts_with("ja") => "ja",
-                locale if locale.starts_with("ko") => "ko",
-                locale if locale.starts_with("en") => "en",
-                _ => "zh", // Default
-            };
-            
-            assert_eq!(language, test_case.expected_language, 
-                "Failed for locale: {}", test_case.input_locale);
-        }
-    }
-
-    #[test]
-    fn test_config_file_format() {
-        // Test that our config file format is consistent
-        let settings = LanguageSettings {
-            language: "ja".to_string(),
-            auto_detect: false,
-            fallback_language: "en".to_string(),
-            updated_at: 1640995200,
-        };
-
-        let json_str = serde_json::to_string_pretty(&settings).unwrap();
-        
-        // Verify JSON structure
-        assert!(json_str.contains("\"language\": \"ja\""));
-        assert!(json_str.contains("\"auto_detect\": false"));
-        assert!(json_str.contains("\"fallback_language\": \"en\""));
-        assert!(json_str.contains("\"updated_at\": 1640995200"));
-
-        // Verify it can be parsed back
-        let parsed: LanguageSettings = serde_json::from_str(&json_str).unwrap();
-        assert_eq!(parsed.language, settings.language);
-        assert_eq!(parsed.auto_detect, settings.auto_detect);
-        assert_eq!(parsed.fallback_language, settings.fallback_language);
-        assert_eq!(parsed.updated_at, settings.updated_at);
-    }
+    // ================================
+    // 边界条件和错误场景测试
+    // ================================
 
     #[test]
     fn test_invalid_json_handling() {
-        // Test behavior with malformed JSON
-        let invalid_json = "{invalid json}";
-        let result: Result<LanguageSettings, _> = serde_json::from_str(invalid_json);
-        assert!(result.is_err());
+        // 测试无效JSON的错误处理
+        let invalid_json_cases = vec![
+            "{ invalid json }",
+            "",
+            "{",
+            "}",
+            "null",
+            "[]",
+            "{\"language\": }",
+            "{\"language\": \"en\", \"auto_detect\":}",
+        ];
 
-        // Test behavior with missing fields
+        for invalid_json in invalid_json_cases {
+            let result: Result<LanguageSettings, _> = serde_json::from_str(invalid_json);
+            assert!(result.is_err(), "Should fail for: {}", invalid_json);
+        }
+    }
+
+    #[test]
+    fn test_partial_json_handling() {
+        // 测试部分JSON字段的处理
         let partial_json = r#"{"language": "en"}"#;
         let result: Result<LanguageSettings, _> = serde_json::from_str(partial_json);
-        assert!(result.is_err()); // Should fail because required fields are missing
+        assert!(result.is_err()); // 应该失败，因为缺少必需字段
+
+        // 测试包含额外字段的JSON
+        let extra_fields_json = r#"{
+            "language": "en",
+            "auto_detect": true,
+            "fallback_language": "zh",
+            "updated_at": 1640995200,
+            "extra_field": "should_be_ignored"
+        }"#;
+        
+        let result: Result<LanguageSettings, _> = serde_json::from_str(extra_fields_json);
+        assert!(result.is_ok()); // 应该成功，额外字段被忽略
+        
+        let settings = result.unwrap();
+        assert_eq!(settings.language, "en");
+        assert_eq!(settings.auto_detect, true);
+        assert_eq!(settings.fallback_language, "zh");
+        assert_eq!(settings.updated_at, 1640995200);
     }
 
     #[test]
-    fn test_timestamp_handling() {
-        // Test that timestamps are handled correctly
-        let now = chrono::Utc::now().timestamp();
+    fn test_edge_cases() {
+        // 测试边界情况
+        
+        // 空字符串语言
         let settings = LanguageSettings {
-            language: "en".to_string(),
-            auto_detect: true,
-            fallback_language: "zh".to_string(),
-            updated_at: now,
+            language: "".to_string(),
+            auto_detect: false,
+            fallback_language: "en".to_string(),
+            updated_at: chrono::Utc::now().timestamp(),
         };
 
-        // Serialize and deserialize
         let json_str = serde_json::to_string(&settings).unwrap();
         let parsed: LanguageSettings = serde_json::from_str(&json_str).unwrap();
-        
-        assert_eq!(parsed.updated_at, now);
-        assert!(parsed.updated_at > 0);
+        assert_eq!(parsed.language, "");
+
+        // 很长的语言字符串
+        let long_language = "a".repeat(1000);
+        let settings = LanguageSettings {
+            language: long_language.clone(),
+            auto_detect: true,
+            fallback_language: "en".to_string(),
+            updated_at: chrono::Utc::now().timestamp(),
+        };
+
+        let json_str = serde_json::to_string(&settings).unwrap();
+        let parsed: LanguageSettings = serde_json::from_str(&json_str).unwrap();
+        assert_eq!(parsed.language, long_language);
     }
 
     #[test]
-    fn test_supported_language_codes() {
-        // Test that we have the expected language codes
+    fn test_concurrent_access_safety() {
+        // 测试并发访问时的线程安全性
+        use std::thread;
+        
+        let manager = Arc::new(TestLanguageManager::new());
+        let mut handles = vec![];
+        
+        // 创建多个线程同时访问设置
+        for i in 0..10 {
+            let manager_clone = Arc::clone(&manager);
+            let handle = thread::spawn(move || {
+                let mut settings = create_test_settings();
+                settings.language = format!("lang_{}", i);
+                settings.updated_at = chrono::Utc::now().timestamp();
+                
+                // 保存和加载操作
+                let _ = manager_clone.save_settings(&settings);
+                let _ = manager_clone.load_settings();
+            });
+            handles.push(handle);
+        }
+        
+        // 等待所有线程完成
+        for handle in handles {
+            handle.join().unwrap();
+        }
+        
+        // 验证最终状态是有效的
+        let final_settings = manager.load_settings().unwrap();
+        assert!(!final_settings.language.is_empty());
+        assert!(final_settings.updated_at > 0);
+    }
+
+    #[test]
+    fn test_supported_language_codes_consistency() {
+        // 测试支持的语言代码的一致性
         let expected_codes = vec!["zh", "en", "ja", "ko"];
         
-        // This simulates the get_supported_languages function logic
+        // 模拟get_supported_languages函数的逻辑
         let supported_languages = vec![
             LanguageInfo {
                 code: "zh".to_string(),
@@ -577,33 +682,75 @@ mod tests {
             .collect();
 
         assert_eq!(actual_codes, expected_codes);
+        
+        // 验证每个语言都有有效的字段
+        for lang in &supported_languages {
+            assert!(!lang.code.is_empty());
+            assert!(!lang.name.is_empty()); 
+            assert!(!lang.native_name.is_empty());
+            assert_eq!(lang.rtl, false);
+        }
+    }
+
+    #[tokio::test]
+    async fn test_language_validation_for_all_supported_languages() {
+        // 测试所有支持的语言的有效性
+        let supported_languages = vec!["zh", "en", "ja", "ko"];
+        
+        for lang in &supported_languages {
+            let settings = LanguageSettings {
+                language: lang.to_string(),
+                auto_detect: true,
+                fallback_language: "en".to_string(),
+                updated_at: chrono::Utc::now().timestamp(),
+            };
+            
+            // 验证序列化和反序列化
+            let json_str = serde_json::to_string(&settings).unwrap();
+            let parsed: LanguageSettings = serde_json::from_str(&json_str).unwrap();
+            
+            assert_eq!(parsed.language, *lang);
+            assert!(supported_languages.contains(&parsed.language.as_str()));
+        }
     }
 
     #[test]
-    fn test_edge_cases() {
-        // Test empty string language
+    fn test_timestamp_handling() {
+        // 测试时间戳处理
+        let now = chrono::Utc::now().timestamp();
         let settings = LanguageSettings {
-            language: "".to_string(),
-            auto_detect: false,
-            fallback_language: "en".to_string(),
-            updated_at: chrono::Utc::now().timestamp(),
-        };
-
-        let json_str = serde_json::to_string(&settings).unwrap();
-        let parsed: LanguageSettings = serde_json::from_str(&json_str).unwrap();
-        assert_eq!(parsed.language, "");
-
-        // Test very long language string
-        let long_language = "a".repeat(1000);
-        let settings = LanguageSettings {
-            language: long_language.clone(),
+            language: "en".to_string(),
             auto_detect: true,
-            fallback_language: "en".to_string(),
-            updated_at: chrono::Utc::now().timestamp(),
+            fallback_language: "zh".to_string(),
+            updated_at: now,
         };
 
+        // 序列化和反序列化
         let json_str = serde_json::to_string(&settings).unwrap();
         let parsed: LanguageSettings = serde_json::from_str(&json_str).unwrap();
-        assert_eq!(parsed.language, long_language);
+        
+        assert_eq!(parsed.updated_at, now);
+        assert!(parsed.updated_at > 0);
+    }
+
+    #[test]
+    fn test_file_system_operations() {
+        // 测试文件系统操作的健壮性
+        let manager = TestLanguageManager::new();
+        let settings = create_test_settings();
+        
+        // 测试保存到不存在的目录
+        assert!(manager.save_settings(&settings).is_ok());
+        
+        // 测试文件权限（在有权限的系统上）
+        let config_path = manager.get_config_path();
+        assert!(config_path.exists());
+        
+        // 测试加载损坏的文件
+        fs::write(&config_path, "invalid json content").unwrap();
+        let result = manager.load_settings();
+        // 应该返回错误或默认值（取决于实现）
+        // 这里我们期望它返回错误
+        assert!(result.is_err());
     }
 }

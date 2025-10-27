@@ -237,7 +237,9 @@ export function usePerformanceMetrics(
     };
 
     performanceService.on('metric_recorded', handleMetricRecorded);
-    return () => performanceService.off('metric_recorded', handleMetricRecorded);
+    return () => {
+      performanceService.off('metric_recorded', handleMetricRecorded);
+    };
   }, [category, fetchData]);
 
   return {
@@ -334,7 +336,9 @@ export function useUserOperationTracker(
     };
 
     performanceService.on('operation_recorded', handleOperationRecorded);
-    return () => performanceService.off('operation_recorded', handleOperationRecorded);
+    return () => {
+      performanceService.off('operation_recorded', handleOperationRecorded);
+    };
   }, [operationType, fetchData]);
 
   return {
@@ -399,7 +403,9 @@ export function useNetworkPerformance(
     };
 
     performanceService.on('network_recorded', handleNetworkRecorded);
-    return () => performanceService.off('network_recorded', handleNetworkRecorded);
+    return () => {
+      performanceService.off('network_recorded', handleNetworkRecorded);
+    };
   }, [fetchData]);
 
   return {
@@ -499,7 +505,9 @@ export function usePerformanceSnapshots(
     };
 
     performanceService.on('snapshot_recorded', handleSnapshotRecorded);
-    return () => performanceService.off('snapshot_recorded', handleSnapshotRecorded);
+    return () => {
+      performanceService.off('snapshot_recorded', handleSnapshotRecorded);
+    };
   }, [fetchData]);
 
   return {
@@ -568,7 +576,7 @@ export function usePerformanceAlerts(
   }, [fetchData, autoRefresh]);
 
   useEffect(() => {
-    const handleNewAlerts = (newAlerts: PerformanceAlert[]) => {
+    const handleNewAlerts = () => {
       fetchData();
     };
 

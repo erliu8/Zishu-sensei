@@ -62,12 +62,15 @@ pub async fn init_update_manager(
         .app_data_dir()
         .ok_or("Failed to get app data directory")?;
 
-    let db_path = app_data_dir.join("updates.db");
+    // 获取数据库连接池
+    let db = crate::database::get_database()
+        .ok_or("Database not initialized")?;
+    
     let current_version = app_handle.package_info().version.to_string();
     let update_endpoint = "https://update.zishu.dev/{{target}}/{{arch}}/{{current_version}}".to_string();
 
     match UpdateManager::new(
-        &db_path.to_string_lossy(),
+        db.get_pool(),
         current_version,
         update_endpoint,
         app_data_dir,

@@ -148,8 +148,14 @@ export interface FileInfo {
     path: string
     size: number
     type: string
-    lastModified: number
+    lastModified?: number
+    modified?: Date
     isDirectory: boolean
+    extension?: string
+    isDir?: boolean
+    isFile?: boolean
+    isSymlink?: boolean
+    readonly?: boolean
 }
 
 /**

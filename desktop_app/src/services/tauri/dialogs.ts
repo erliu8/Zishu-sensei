@@ -2,7 +2,7 @@
  * Tauri 对话框服务
  */
 
-import { ask, confirm, open, save } from '@tauri-apps/api/dialog'
+import { ask, confirm, message, open, save } from '@tauri-apps/api/dialog'
 import type { TauriFileDialogOptions } from '../../types/tauri'
 
 /**
@@ -50,13 +50,13 @@ export const saveFileDialog = async (options?: TauriFileDialogOptions): Promise<
 /**
  * 显示消息对话框
  */
-export const showMessageDialog = async (title: string, message: string): Promise<void> => {
+export const showMessageDialog = async (title: string, content: string): Promise<void> => {
     try {
         if (window.__TAURI__) {
-            await message(message, { title, type: 'info' })
+            await message(content, { title, type: 'info' })
         } else {
             // Web 环境下的回退方案
-            alert(`${title}\n\n${message}`)
+            alert(`${title}\n\n${content}`)
         }
     } catch (error) {
         console.error('显示消息对话框失败:', error)

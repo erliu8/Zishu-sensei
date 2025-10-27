@@ -75,7 +75,7 @@ class TexturePool {
       );
 
       // 如果需要调整大小
-      let textureImage = image;
+      let textureImage: HTMLImageElement | HTMLCanvasElement = image;
       if (optimalSize.width !== image.width || optimalSize.height !== image.height) {
         textureImage = this.resizeImage(image, optimalSize.width, optimalSize.height);
       }

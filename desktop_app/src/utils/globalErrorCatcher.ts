@@ -185,7 +185,7 @@ export class GlobalErrorCatcher {
     const target = event.target as HTMLElement
     
     // 只处理资源加载错误，不处理脚本错误
-    if (!target || target === window) {
+    if (!target || !(target instanceof HTMLElement)) {
       return
     }
 
@@ -253,7 +253,7 @@ export class GlobalErrorCatcher {
   private setupReactErrorCapture(): void {
     // 监听自定义的 React 错误事件
     window.addEventListener('react-error', ((event: CustomEvent) => {
-      const { error, errorInfo } = event.detail
+      const { error } = event.detail
 
       const capturedError: CapturedError = {
         type: ErrorType.REACT,

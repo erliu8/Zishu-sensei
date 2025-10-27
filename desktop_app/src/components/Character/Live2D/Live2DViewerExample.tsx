@@ -5,14 +5,13 @@
  */
 
 import React, { useState, useCallback } from 'react'
+import { Live2DViewer } from './index'
 import {
-  Live2DViewer,
   Live2DViewerConfig,
   Live2DModelConfig,
-  Live2DAnimationType,
   Live2DAnimationPriority,
-  Live2DLoadState
-} from './index'
+  Live2DAnimationConfig
+} from '@/types/live2d'
 import './Live2DViewerExample.css'
 
 /**
@@ -21,7 +20,6 @@ import './Live2DViewerExample.css'
 export const Live2DViewerExample: React.FC = () => {
   // ==================== State ====================
   const [selectedModel, setSelectedModel] = useState<string>('hiyori')
-  const [showControls, setShowControls] = useState(true)
   const [debugMode, setDebugMode] = useState(false)
 
   // ==================== 模型配置 ====================
@@ -49,7 +47,7 @@ export const Live2DViewerExample: React.FC = () => {
           { name: 'tap_head', file: 'tap_head.motion3.json', priority: Live2DAnimationPriority.NORMAL }
         ],
         special: [
-          { name: 'greeting', file: 'greeting.motion3.json', priority: Live2DAnimationPriority.FORCE }
+          { name: 'greeting', file: 'greeting.motion3.json', priority: Live2DAnimationPriority.URGENT }
         ]
       },
       expressions: [
@@ -59,8 +57,6 @@ export const Live2DViewerExample: React.FC = () => {
         { name: 'surprised', file: 'surprised.exp3.json' }
       ],
       physics: '/models/hiyori/hiyori.physics3.json',
-      pose: '/models/hiyori/hiyori.pose3.json',
-      userdata: '/models/hiyori/hiyori.userdata3.json',
       metadata: {
         modelSize: { width: 1024, height: 1024 },
         canvasSize: { width: 800, height: 600 },
@@ -107,29 +103,38 @@ export const Live2DViewerExample: React.FC = () => {
    * Live2D查看器配置
    */
   const viewerConfig: Live2DViewerConfig = {
+    canvasSize: { width: 800, height: 600 },
     modelConfig: sampleModels[selectedModel],
     renderConfig: {
       scale: 1.0,
       position: { x: 0, y: 0 },
-      alpha: 1.0,
-      backgroundColor: 'transparent',
-      enableCulling: true,
-      enableDepthTest: true,
-      enableBlend: true,
-      clearColor: [0, 0, 0, 0]
+      opacity: 1.0,
+      enablePhysics: true,
+      enableBreathing: true,
+      enableEyeBlink: true,
+      enableEyeTracking: false,
+      enableLipSync: false,
+      motionFadeDuration: 500,
+      expressionFadeDuration: 500
     },
     enableInteraction: true,
     enableAutoIdleAnimation: true,
     idleAnimationInterval: 10000,
     debugMode,
+    responsive: true,
     theme: {
-      primary: '#4CAF50',
-      secondary: '#FFC107',
-      background: '#1a1a1a',
-      text: '#ffffff',
+      name: 'default',
+      backgroundColor: '#1a1a1a',
+      borderColor: '#333333',
+      controls: {
+        backgroundColor: '#2a2a2a',
+        textColor: '#ffffff',
+        hoverColor: '#4CAF50',
+        activeColor: '#FFC107'
+      },
       loading: {
-        backgroundColor: 'rgba(0, 0, 0, 0.8)',
-        color: '#ffffff'
+        color: '#ffffff',
+        backgroundColor: 'rgba(0, 0, 0, 0.8)'
       }
     }
   }
@@ -144,31 +149,10 @@ export const Live2DViewerExample: React.FC = () => {
   }, [])
 
   /**
-   * 处理模型点击
-   */
-  const handleModelClick = useCallback((event: React.MouseEvent) => {
-    console.log('Model clicked:', event)
-  }, [])
-
-  /**
    * 处理动画播放
    */
-  const handleAnimationPlay = useCallback((animationType: Live2DAnimationType, animationName: string) => {
-    console.log('Playing animation:', animationType, animationName)
-  }, [])
-
-  /**
-   * 处理表情切换
-   */
-  const handleExpressionChange = useCallback((expressionIndex: number) => {
-    console.log('Changing expression:', expressionIndex)
-  }, [])
-
-  /**
-   * 处理加载状态变化
-   */
-  const handleLoadStateChange = useCallback((loadState: Live2DLoadState) => {
-    console.log('Load state changed:', loadState)
+  const handleAnimationPlay = useCallback((config: Live2DAnimationConfig) => {
+    console.log('Playing animation:', config.type, config.group)
   }, [])
 
   /**
@@ -201,18 +185,6 @@ export const Live2DViewerExample: React.FC = () => {
             </select>
           </div>
 
-          {/* 控制面板切换 */}
-          <div className="live2d-example__control-group">
-            <label>
-              <input
-                type="checkbox"
-                checked={showControls}
-                onChange={(e) => setShowControls(e.target.checked)}
-              />
-              显示控制面板
-            </label>
-          </div>
-
           {/* 调试模式切换 */}
           <div className="live2d-example__control-group">
             <label>
@@ -230,14 +202,7 @@ export const Live2DViewerExample: React.FC = () => {
       <div className="live2d-example__viewer-container">
         <Live2DViewer
           config={viewerConfig}
-          showControls={showControls}
-          controlsPosition="bottom"
-          width={800}
-          height={600}
-          onClick={handleModelClick}
           onAnimationPlay={handleAnimationPlay}
-          onExpressionChange={handleExpressionChange}
-          onLoadStateChange={handleLoadStateChange}
           onError={handleError}
           className="live2d-example__viewer"
         />

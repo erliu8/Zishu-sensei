@@ -5,19 +5,14 @@
  */
 
 import { EventEmitter } from 'events';
-import { PerformanceService } from './performanceService';
-import { MemoryService } from './memoryService';
-import { RenderingService } from './renderingService';
-import { 
-  PerformanceMetric, 
-  PerformanceSnapshot, 
-  UserOperation, 
-  NetworkMetric, 
+import { performanceService } from './performanceService';
+import { memoryService } from './memoryService';
+import { renderingService, type RenderStats } from './renderingService';
+import type { 
   NetworkTiming, 
   PerformanceCategory 
 } from '../types/performance';
-import type { MemoryInfo, MemoryPoolStats } from '../types/memory';
-import type { RenderStats } from '../types/rendering';
+import type { MemoryInfo } from '../types/memory';
 
 export interface IntegrationConfig {
   enabled: boolean;
@@ -42,14 +37,10 @@ export const DEFAULT_INTEGRATION_CONFIG: IntegrationConfig = {
 export class PerformanceIntegrationService extends EventEmitter {
   private config: IntegrationConfig = DEFAULT_INTEGRATION_CONFIG;
   private syncTimer: NodeJS.Timeout | null = null;
-  private performanceService: PerformanceService;
-  private memoryService: MemoryService;
-  private renderingService: RenderingService;
   
   // 数据缓存
   private lastMemoryInfo: MemoryInfo | null = null;
   private lastRenderStats: RenderStats | null = null;
-  private lastSystemSnapshot: any = null;
   
   // 性能监控状态
   private isIntegrationActive = false;
@@ -57,9 +48,6 @@ export class PerformanceIntegrationService extends EventEmitter {
 
   constructor() {
     super();
-    this.performanceService = new PerformanceService();
-    this.memoryService = new MemoryService();
-    this.renderingService = new RenderingService();
     
     // 初始化集成服务
     this.initializeIntegration();
@@ -90,11 +78,11 @@ export class PerformanceIntegrationService extends EventEmitter {
 
     try {
       // 启动统一性能监控
-      await this.performanceService.startMonitoring();
+      await performanceService.startMonitoring();
       
       // 启动现有监控服务
       if (this.config.renderingSync) {
-        this.renderingService.startMonitoring();
+        renderingService.startMonitoring();
       }
       
       // 开始数据同步
@@ -138,10 +126,10 @@ export class PerformanceIntegrationService extends EventEmitter {
       this.stopDataSync();
       
       // 停止现有监控服务
-      this.renderingService.stopMonitoring();
+      renderingService.stopMonitoring();
       
       // 停止统一性能监控
-      await this.performanceService.stopMonitoring();
+      await performanceService.stopMonitoring();
       
       // 清理用户操作追踪
       this.cleanupUserTracking();
@@ -223,14 +211,14 @@ export class PerformanceIntegrationService extends EventEmitter {
     }
 
     try {
-      await this.performanceService.recordUserOperation(
-        type,
+      await performanceService.recordUserOperation(
+        type as any,
         target,
         startTime,
         endTime,
         success,
         error,
-        metadata ? JSON.stringify(metadata) : undefined
+        metadata || {}
       );
     } catch (error) {
       console.error('记录用户操作失败:', error);
@@ -255,18 +243,43 @@ export class PerformanceIntegrationService extends EventEmitter {
     }
 
     try {
-      await this.performanceService.recordNetworkMetric(
+      await performanceService.recordNetworkMetric(
         url,
         method,
         statusCode,
         requestSize,
         responseSize,
-        timing || { total_time: 0 },
+        timing,
         errorType,
         errorMessage
       );
     } catch (error) {
       console.error('记录网络请求失败:', error);
+    }
+  }
+
+  /**
+   * 记录性能指标
+   */
+  async recordMetric(
+    name: string,
+    value: number,
+    unit: string,
+    category: string,
+    component?: string,
+    metadata?: Record<string, any>
+  ): Promise<void> {
+    try {
+      await performanceService.recordMetric(
+        name,
+        value,
+        unit,
+        category as PerformanceCategory,
+        component,
+        metadata
+      );
+    } catch (error) {
+      console.error('记录性能指标失败:', error);
     }
   }
 
@@ -279,15 +292,15 @@ export class PerformanceIntegrationService extends EventEmitter {
    */
   private initializeIntegration(): void {
     // 监听性能服务事件
-    this.performanceService.on('monitoringStarted', () => {
+    performanceService.on('monitoring_started', () => {
       this.emit('performanceMonitoringStarted');
     });
 
-    this.performanceService.on('monitoringStopped', () => {
+    performanceService.on('monitoring_stopped', () => {
       this.emit('performanceMonitoringStopped');
     });
 
-    this.performanceService.on('alertTriggered', (alert) => {
+    performanceService.on('alert_resolved', (alert) => {
       this.emit('performanceAlert', alert);
     });
   }
@@ -356,25 +369,25 @@ export class PerformanceIntegrationService extends EventEmitter {
   private async syncMemoryData(): Promise<void> {
     try {
       // 获取当前内存信息
-      const memoryInfo = await this.memoryService.getMemoryInfo();
-      const memoryPools = await this.memoryService.getMemoryPoolStats();
+      const memoryInfo = await memoryService.getMemoryInfo();
+      const memoryPools = await memoryService.getMemoryPoolStats();
 
       // 记录内存使用率指标
-      await this.performanceService.recordMetric(
+      await performanceService.recordMetric(
         'memory_usage_percentage',
         memoryInfo.usage_percentage,
         '%',
         'memory',
         'system',
-        JSON.stringify({ 
+        { 
           total: memoryInfo.total_memory,
           used: memoryInfo.used_memory,
           available: memoryInfo.available_memory 
-        })
+        }
       );
 
       // 记录应用内存占用
-      await this.performanceService.recordMetric(
+      await performanceService.recordMetric(
         'app_memory_usage',
         memoryInfo.app_memory,
         'bytes',
@@ -383,7 +396,7 @@ export class PerformanceIntegrationService extends EventEmitter {
       );
 
       // 记录应用内存使用率
-      await this.performanceService.recordMetric(
+      await performanceService.recordMetric(
         'app_memory_percentage',
         memoryInfo.app_memory_percentage,
         '%',
@@ -393,17 +406,17 @@ export class PerformanceIntegrationService extends EventEmitter {
 
       // 记录内存池统计
       for (const pool of memoryPools) {
-        await this.performanceService.recordMetric(
+        await performanceService.recordMetric(
           `memory_pool_usage_${pool.name}`,
           pool.usage_percentage,
           '%',
           'memory',
           'pool',
-          JSON.stringify({
+          {
             allocated: pool.allocated_count,
             capacity: pool.capacity,
             bytes: pool.total_bytes
-          })
+          }
         );
       }
 
@@ -419,11 +432,11 @@ export class PerformanceIntegrationService extends EventEmitter {
   private async syncRenderingData(): Promise<void> {
     try {
       // 获取渲染统计
-      const renderStats = await this.renderingService.getRenderStats();
-      const averageFPS = await this.renderingService.getAverageFPS(60);
+      const renderStats = await renderingService.getRenderStats();
+      const averageFPS = await renderingService.getAverageFPS(60);
 
       // 记录FPS
-      await this.performanceService.recordMetric(
+      await performanceService.recordMetric(
         'fps',
         averageFPS,
         'fps',
@@ -432,7 +445,7 @@ export class PerformanceIntegrationService extends EventEmitter {
       );
 
       // 记录平均渲染时间
-      await this.performanceService.recordMetric(
+      await performanceService.recordMetric(
         'average_render_time',
         renderStats.averageRenderTime,
         'ms',
@@ -441,7 +454,7 @@ export class PerformanceIntegrationService extends EventEmitter {
       );
 
       // 记录慢渲染次数
-      await this.performanceService.recordMetric(
+      await performanceService.recordMetric(
         'slow_render_count',
         renderStats.slowRenderCount,
         'count',
@@ -450,7 +463,7 @@ export class PerformanceIntegrationService extends EventEmitter {
       );
 
       // 记录总渲染次数
-      await this.performanceService.recordMetric(
+      await performanceService.recordMetric(
         'total_render_count',
         renderStats.totalRenders,
         'count',
@@ -473,7 +486,7 @@ export class PerformanceIntegrationService extends EventEmitter {
       const snapshot = await this.createSystemSnapshot();
       
       if (snapshot) {
-        await this.performanceService.recordSnapshot(
+        await performanceService.recordSnapshot(
           snapshot.cpu_usage,
           snapshot.memory_usage,
           snapshot.memory_used_mb,
@@ -488,8 +501,6 @@ export class PerformanceIntegrationService extends EventEmitter {
           snapshot.app_state,
           snapshot.load_average
         );
-
-        this.lastSystemSnapshot = snapshot;
       }
     } catch (error) {
       console.error('同步系统数据失败:', error);
@@ -501,9 +512,9 @@ export class PerformanceIntegrationService extends EventEmitter {
    */
   private async createSystemSnapshot(): Promise<any | null> {
     try {
-      const memoryInfo = this.lastMemoryInfo || await this.memoryService.getMemoryInfo();
-      const renderStats = this.lastRenderStats || await this.renderingService.getRenderStats();
-      const averageFPS = await this.renderingService.getAverageFPS(30);
+      const memoryInfo = this.lastMemoryInfo || await memoryService.getMemoryInfo();
+      const renderStats = this.lastRenderStats || await renderingService.getRenderStats();
+      const averageFPS = await renderingService.getAverageFPS(30);
 
       return {
         cpu_usage: 0, // TODO: 从系统获取 CPU 使用率
@@ -686,15 +697,14 @@ export class PerformanceIntegrationService extends EventEmitter {
         method,
         response.status,
         {
-          total_time: endTime - startTime,
-          dns_time: 0,
-          connect_time: 0,
-          ssl_time: 0,
-          send_time: 0,
-          wait_time: endTime - startTime,
-          receive_time: 0
+          dnsTime: 0,
+          connectTime: 0,
+          sslTime: 0,
+          sendTime: 0,
+          waitTime: endTime - startTime,
+          receiveTime: 0
         },
-        init?.body ? new Blob([init.body]).size : 0,
+        init?.body ? (typeof init.body === 'string' ? new Blob([init.body]).size : 0) : 0,
         0 // 响应大小需要从响应头获取
       );
       
@@ -708,15 +718,14 @@ export class PerformanceIntegrationService extends EventEmitter {
         method,
         0,
         {
-          total_time: endTime - startTime,
-          dns_time: 0,
-          connect_time: 0,
-          ssl_time: 0,
-          send_time: 0,
-          wait_time: endTime - startTime,
-          receive_time: 0
+          dnsTime: 0,
+          connectTime: 0,
+          sslTime: 0,
+          sendTime: 0,
+          waitTime: endTime - startTime,
+          receiveTime: 0
         },
-        init?.body ? new Blob([init.body]).size : 0,
+        init?.body ? (typeof init.body === 'string' ? new Blob([init.body]).size : 0) : 0,
         0,
         'fetch_error',
         error instanceof Error ? error.message : 'Unknown error'
@@ -733,13 +742,19 @@ export class PerformanceIntegrationService extends EventEmitter {
     const originalOpen = XMLHttpRequest.prototype.open;
     const originalSend = XMLHttpRequest.prototype.send;
     
-    XMLHttpRequest.prototype.open = function(method: string, url: string | URL, ...args) {
+    XMLHttpRequest.prototype.open = function(
+      method: string, 
+      url: string | URL, 
+      async: boolean = true,
+      username?: string | null,
+      password?: string | null
+    ) {
       (this as any)._monitorData = {
         method,
         url: url.toString(),
         startTime: 0
       };
-      return originalOpen.apply(this, [method, url, ...args] as any);
+      return originalOpen.call(this, method, url, async, username, password);
     };
     
     XMLHttpRequest.prototype.send = function(body?: Document | XMLHttpRequestBodyInit | null) {
@@ -756,15 +771,14 @@ export class PerformanceIntegrationService extends EventEmitter {
             monitorData.method,
             this.status,
             {
-              total_time: endTime - monitorData.startTime,
-              dns_time: 0,
-              connect_time: 0,
-              ssl_time: 0,
-              send_time: 0,
-              wait_time: endTime - monitorData.startTime,
-              receive_time: 0
+              dnsTime: 0,
+              connectTime: 0,
+              sslTime: 0,
+              sendTime: 0,
+              waitTime: endTime - monitorData.startTime,
+              receiveTime: 0
             },
-            body ? new Blob([body]).size : 0,
+            body ? (typeof body === 'string' ? new Blob([body]).size : 0) : 0,
             0,
             this.status >= 400 ? 'http_error' : undefined,
             this.status >= 400 ? this.statusText : undefined

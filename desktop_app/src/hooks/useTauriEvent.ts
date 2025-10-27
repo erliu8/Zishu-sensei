@@ -50,11 +50,11 @@ export function useTauriEvent<T extends AppEventType>(
             return () => { }
         }
 
-        setState(prev => ({ ...prev, loading: true, error: null }))
+        setState((prev: EventListenerState<ExtractEventPayload<T>>) => ({ ...prev, loading: true, error: null }))
 
         try {
             const unlisten = await eventService.listen(eventName, async (payload) => {
-                setState(prev => {
+                setState((prev: EventListenerState<ExtractEventPayload<T>>) => {
                     const newEvent = payload
                     const newEvents = [newEvent, ...prev.events].slice(0, maxHistory)
 
@@ -74,7 +74,7 @@ export function useTauriEvent<T extends AppEventType>(
                         await callback(payload)
                     } catch (error) {
                         console.error(`Event callback error for '${eventName}':`, error)
-                        setState(prev => ({
+                        setState((prev: EventListenerState<ExtractEventPayload<T>>) => ({
                             ...prev,
                             error: error instanceof Error ? error.message : String(error)
                         }))
@@ -83,12 +83,12 @@ export function useTauriEvent<T extends AppEventType>(
             })
 
             unlistenRef.current = unlisten
-            setState(prev => ({ ...prev, loading: false, isReady: true }))
+            setState((prev: EventListenerState<ExtractEventPayload<T>>) => ({ ...prev, loading: false, isReady: true }))
 
             return unlisten
         } catch (error) {
             const errorMessage = error instanceof Error ? error.message : String(error)
-            setState(prev => ({
+            setState((prev: EventListenerState<ExtractEventPayload<T>>) => ({
                 ...prev,
                 loading: false,
                 error: errorMessage,
@@ -106,14 +106,14 @@ export function useTauriEvent<T extends AppEventType>(
             unlistenRef.current()
             unlistenRef.current = null
         }
-        setState(prev => ({ ...prev, isReady: false }))
+        setState((prev: EventListenerState<ExtractEventPayload<T>>) => ({ ...prev, isReady: false }))
     }, [])
 
     /**
      * 清除事件历史
      */
     const clear = useCallback(() => {
-        setState(prev => ({
+        setState((prev: EventListenerState<ExtractEventPayload<T>>) => ({
             ...prev,
             events: [],
             lastEvent: null,
@@ -135,7 +135,7 @@ export function useTauriEvent<T extends AppEventType>(
 
     // 更新状态中的函数
     useEffect(() => {
-        setState(prev => ({
+        setState((prev: EventListenerState<ExtractEventPayload<T>>) => ({
             ...prev,
             subscribe,
             unsubscribe,

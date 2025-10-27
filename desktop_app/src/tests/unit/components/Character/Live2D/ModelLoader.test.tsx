@@ -304,13 +304,13 @@ describe('ModelLoader', () => {
       }
     })
 
-    it('应该处理损坏的JSON文件', async () => {
-      const loadCorruptedJson = async () => {
+    it('应该处理损坏的JSON文件', () => {
+      const loadCorruptedJson = () => {
         // 模拟损坏的JSON
         JSON.parse('{invalid json')
       }
 
-      expect(() => loadCorruptedJson()).toThrow()
+      expect(loadCorruptedJson).toThrow()
     })
 
     it('应该处理部分资源加载失败', async () => {

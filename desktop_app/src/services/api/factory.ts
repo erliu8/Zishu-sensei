@@ -340,11 +340,3 @@ export const apiServices = {
   },
 }
 
-/**
- * 导出类型
- */
-export type {
-  ApiServicesConfig,
-  ApiServices,
-}
-

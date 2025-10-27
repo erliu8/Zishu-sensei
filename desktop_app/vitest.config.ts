@@ -29,10 +29,12 @@ export default defineConfig({
         'src/tests/**',
       ],
       all: true,
-      lines: 80,
-      functions: 80,
-      branches: 80,
-      statements: 80,
+      thresholds: {
+        lines: 80,
+        functions: 80,
+        branches: 80,
+        statements: 80,
+      },
     },
     
     // 测试文件匹配模式
@@ -52,7 +54,7 @@ export default defineConfig({
     ],
     
     // 设置文件
-    setupFiles: ['./tests/setup.ts'],
+    setupFiles: ['./src/tests/setup.ts'],
     
     // 测试超时时间
     testTimeout: 10000,
@@ -72,20 +74,11 @@ export default defineConfig({
     // 测试隔离
     isolate: true,
     
-    // 并发测试
-    threads: true,
-    
     // 监视模式配置
     watch: false,
     
     // 报告器
     reporters: ['verbose'],
-    
-    // UI 配置
-    ui: {
-      enabled: true,
-      open: false,
-    },
     
     // 别名
     alias: {
@@ -98,6 +91,7 @@ export default defineConfig({
       '@types': path.resolve(__dirname, './src/types'),
       '@styles': path.resolve(__dirname, './src/styles'),
       '@assets': path.resolve(__dirname, './src/assets'),
+      '@tauri-apps/api/core': path.resolve(__dirname, './src/tests/mocks/tauri-api.ts'),
     },
   },
   
@@ -112,6 +106,7 @@ export default defineConfig({
       '@types': path.resolve(__dirname, './src/types'),
       '@styles': path.resolve(__dirname, './src/styles'),
       '@assets': path.resolve(__dirname, './src/assets'),
+      '@tauri-apps/api/core': path.resolve(__dirname, './src/tests/mocks/tauri-api.ts'),
     },
   },
 });

@@ -562,6 +562,12 @@ describe('Tooltip 组件', () => {
 })
 
 describe('SimpleTooltip 组件', () => {
+  let user: ReturnType<typeof userEvent.setup>
+
+  beforeEach(() => {
+    user = userEvent.setup()
+  })
+
   describe('✅ 基础功能测试', () => {
     it('应该渲染简单的文本提示', async () => {
       render(
@@ -611,6 +617,12 @@ describe('SimpleTooltip 组件', () => {
 })
 
 describe('Tooltip 组件集成测试', () => {
+  let user: ReturnType<typeof userEvent.setup>
+
+  beforeEach(() => {
+    user = userEvent.setup()
+  })
+
   describe('✅ 真实使用场景', () => {
     it('应该在表单字段上提供帮助信息', async () => {
       render(

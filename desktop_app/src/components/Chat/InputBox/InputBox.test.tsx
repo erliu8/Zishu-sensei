@@ -5,11 +5,12 @@
  * @module InputBox/Test
  */
 
-import { describe, it, expect, vi, beforeEach, afterEach } from 'vitest'
+import { describe, it, expect, vi } from 'vitest'
 import { render, screen, fireEvent, waitFor } from '@testing-library/react'
 import userEvent from '@testing-library/user-event'
 import InputBox from './InputBox'
-import type { Attachment, Suggestion } from './InputBox.types'
+import type { Suggestion } from './InputBox.types'
+import { SuggestionType } from './InputBox.types'
 
 describe('InputBox Component', () => {
   // ==================== 基础渲染测试 ====================
@@ -173,7 +174,7 @@ describe('InputBox Component', () => {
   
   describe('附件', () => {
     it('应该显示附件按钮', () => {
-      render(<InputBox enableAttachments />)
+      render(<InputBox showAttachmentButton />)
       const attachButton = screen.getByLabelText('添加附件')
       expect(attachButton).toBeInTheDocument()
     })
@@ -183,7 +184,7 @@ describe('InputBox Component', () => {
       const handleAttachmentAdd = vi.fn()
       const file = new File(['test'], 'test.txt', { type: 'text/plain' })
       
-      render(<InputBox enableAttachments onAttachmentAdd={handleAttachmentAdd} />)
+      render(<InputBox showAttachmentButton onAttachmentAdd={handleAttachmentAdd} />)
       const attachButton = screen.getByLabelText('添加附件')
       
       await user.click(attachButton)
@@ -198,21 +199,21 @@ describe('InputBox Component', () => {
     
     it('应该限制附件数量', async () => {
       const maxAttachments = 2
-      render(<InputBox enableAttachments maxAttachments={maxAttachments} />)
+      render(<InputBox showAttachmentButton maxAttachments={maxAttachments} />)
       
       // 添加测试逻辑
     })
     
     it('应该验证文件大小', () => {
       const maxFileSize = 1024 // 1KB
-      render(<InputBox enableAttachments maxFileSize={maxFileSize} />)
+      render(<InputBox showAttachmentButton maxFileSize={maxFileSize} />)
       
       // 添加测试逻辑
     })
     
     it('应该移除附件', async () => {
-      const user = userEvent.setup()
-      const handleAttachmentRemove = vi.fn()
+      // const user = userEvent.setup()
+      // const handleAttachmentRemove = vi.fn()
       
       // 添加测试逻辑
     })
@@ -222,14 +223,13 @@ describe('InputBox Component', () => {
   
   describe('建议', () => {
     const suggestions: Suggestion[] = [
-      { id: '1', text: 'Hello', icon: '👋', type: 'quick_reply' },
-      { id: '2', text: 'Thanks', icon: '🙏', type: 'quick_reply' },
+      { id: '1', text: 'Hello', icon: '👋', type: SuggestionType.PROMPT },
+      { id: '2', text: 'Thanks', icon: '🙏', type: SuggestionType.PROMPT },
     ]
     
     it('应该显示建议列表', () => {
       render(
         <InputBox
-          enableSuggestions
           suggestions={suggestions}
           showSuggestions
         />
@@ -249,7 +249,6 @@ describe('InputBox Component', () => {
       
       render(
         <InputBox
-          enableSuggestions
           suggestions={suggestions}
           showSuggestions
           onSuggestionSelect={handleSuggestionSelect}
@@ -270,7 +269,6 @@ describe('InputBox Component', () => {
       
       render(
         <InputBox
-          enableSuggestions
           suggestions={suggestions}
           showSuggestions
         />
@@ -368,7 +366,7 @@ describe('InputBox Component', () => {
   
   describe('拖拽上传', () => {
     it('应该处理拖拽进入', () => {
-      const { container } = render(<InputBox enableDragDrop enableAttachments />)
+      const { container } = render(<InputBox enableDragDrop showAttachmentButton />)
       
       const dropzone = container.firstChild as HTMLElement
       fireEvent.dragEnter(dropzone, {
@@ -385,7 +383,7 @@ describe('InputBox Component', () => {
       const { container } = render(
         <InputBox
           enableDragDrop
-          enableAttachments
+          showAttachmentButton
           onAttachmentAdd={handleAttachmentAdd}
         />
       )
@@ -467,7 +465,7 @@ describe('InputBox Component', () => {
     it('应该有键盘导航支持', async () => {
       const user = userEvent.setup()
       
-      render(<InputBox enableAttachments enableEmoji />)
+      render(<InputBox showAttachmentButton showEmojiButton />)
       
       // Tab 导航测试
       await user.tab()

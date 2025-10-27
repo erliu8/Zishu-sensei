@@ -95,7 +95,7 @@ export const FILE_TYPES = {
   AUDIO: ['audio/mpeg', 'audio/wav', 'audio/ogg', 'audio/webm', 'audio/mp3'],
   VIDEO: ['video/mp4', 'video/webm', 'video/ogg', 'video/quicktime'],
   ARCHIVE: ['application/zip', 'application/x-rar-compressed', 'application/x-7z-compressed'],
-} as const
+}
 
 /**
  * 常用正则表达式

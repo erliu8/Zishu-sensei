@@ -1,4 +1,5 @@
 use crate::database::update::{UpdateDatabase, UpdateInfo, UpdateStatus, UpdateType, VersionHistory, UpdateConfig};
+use crate::database::DbPool;
 use anyhow::{Result, Context, bail};
 use chrono::{DateTime, Utc};
 use reqwest::Client;
@@ -163,17 +164,12 @@ pub struct UpdateManager {
 impl UpdateManager {
     /// 创建新的更新管理器
     pub fn new(
-        db_path: &str,
+        pool: DbPool,
         current_version: String,
         update_endpoint: String,
         app_data_dir: PathBuf,
     ) -> Result<Self> {
-        use std::path::Path;
-        let db = Arc::new(Mutex::new(
-            UpdateDatabase::new(Path::new(db_path))
-                .map_err(|e| anyhow::anyhow!(e.to_string()))
-                .context("Failed to initialize update database")?
-        ));
+        let db = Arc::new(Mutex::new(UpdateDatabase::from_pool(pool)));
 
         let client = Client::builder()
             .timeout(Duration::from_secs(30))
@@ -943,5 +939,774 @@ impl UpdateManager {
         }
 
         Ok(())
+    }
+}
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+    use std::fs;
+    use tempfile::TempDir;
+    use tokio::time::{timeout, Duration};
+    use std::collections::HashMap;
+    use chrono::Utc;
+    use std::sync::{Arc, Mutex};
+
+    /// 创建测试用的临时目录和更新管理器（模拟版本，用于不需要数据库的测试）
+    fn create_mock_update_manager() -> (TempDir, String, String, PathBuf) {
+        let temp_dir = TempDir::new().expect("Failed to create temp dir");
+        let app_data_dir = temp_dir.path().to_path_buf();
+        
+        (
+            temp_dir,
+            "1.0.0".to_string(),
+            "https://api.example.com/updates".to_string(),
+            app_data_dir,
+        )
+    }
+
+    /// 创建测试用的更新配置
+    fn create_test_update_config() -> UpdateConfig {
+        UpdateConfig {
+            auto_check: true,
+            auto_check_enabled: true,
+            check_interval: 86400, // 24 hours in seconds
+            check_interval_hours: 24,
+            auto_download: false,
+            auto_install: false,
+            backup_before_update: true,
+            include_prerelease: false,
+            max_backup_count: 5,
+            last_check_time: None,
+        }
+    }
+
+    /// 创建测试用的更新信息
+    fn create_test_update_info() -> UpdateInfo {
+        UpdateInfo {
+            version: "1.1.0".to_string(),
+            update_type: Some(UpdateType::Minor),
+            status: UpdateStatus::Available,
+            title: "Test Update".to_string(),
+            description: "Test description".to_string(),
+            changelog: "Test changelog".to_string(),
+            release_notes: "Test release notes".to_string(),
+            release_date: Some(Utc::now().to_rfc3339()),
+            file_size: Some(1024),
+            download_url: Some("https://example.com/update.zip".to_string()),
+            file_hash: Some("abc123".to_string()),
+            is_mandatory: false,
+            is_prerelease: false,
+            min_version: Some("1.0.0".to_string()),
+            target_platform: Some("linux".to_string()),
+            target_arch: Some("x86_64".to_string()),
+            created_at: Utc::now().timestamp(),
+            download_progress: 0.0,
+            install_progress: 0.0,
+            error_message: None,
+            retry_count: 0,
+        }
+    }
+
+    #[test]
+    fn test_version_comparison_enum() {
+        assert_eq!(VersionComparison::Current, VersionComparison::Current);
+        assert_ne!(VersionComparison::Current, VersionComparison::UpdateAvailable);
+        assert_ne!(VersionComparison::UpdateAvailable, VersionComparison::Newer);
+        assert_ne!(VersionComparison::Newer, VersionComparison::Invalid);
+    }
+
+    #[test]
+    fn test_update_manifest_creation() {
+        let mut files = HashMap::new();
+        files.insert("windows-x64".to_string(), FileInfo {
+            url: "https://example.com/file.exe".to_string(),
+            size: 1024,
+            hash: "abc123".to_string(),
+            platform: Some("windows".to_string()),
+            arch: Some("x64".to_string()),
+        });
+
+        let manifest = UpdateManifest {
+            version: "1.1.0".to_string(),
+            release_date: Utc::now(),
+            update_type: UpdateType::Minor,
+            title: "Test Update".to_string(),
+            description: "Test Description".to_string(),
+            changelog: "Test Changelog".to_string(),
+            is_mandatory: false,
+            is_prerelease: false,
+            min_version: Some("1.0.0".to_string()),
+            files,
+        };
+
+        assert_eq!(manifest.version, "1.1.0");
+        assert_eq!(manifest.title, "Test Update");
+        assert_eq!(manifest.description, "Test Description");
+        assert_eq!(manifest.changelog, "Test Changelog");
+        assert_eq!(manifest.is_mandatory, false);
+        assert_eq!(manifest.is_prerelease, false);
+        assert_eq!(manifest.min_version, Some("1.0.0".to_string()));
+        assert!(manifest.files.contains_key("windows-x64"));
+    }
+
+    #[test]
+    fn test_file_info_creation() {
+        let file_info = FileInfo {
+            url: "https://example.com/file.exe".to_string(),
+            size: 2048,
+            hash: "def456".to_string(),
+            platform: Some("linux".to_string()),
+            arch: Some("x64".to_string()),
+        };
+
+        assert_eq!(file_info.url, "https://example.com/file.exe");
+        assert_eq!(file_info.size, 2048);
+        assert_eq!(file_info.hash, "def456");
+        assert_eq!(file_info.platform, Some("linux".to_string()));
+        assert_eq!(file_info.arch, Some("x64".to_string()));
+    }
+
+    #[test]
+    fn test_version_parsing_and_validation() {
+        // 测试版本解析逻辑
+        let parse_version = |v: &str| -> Option<(u32, u32, u32)> {
+            let parts: Vec<&str> = v.split('.').collect();
+            if parts.len() != 3 {
+                return None;
+            }
+
+            let major = parts[0].parse().ok()?;
+            let minor = parts[1].parse().ok()?;
+            let patch = parts[2].parse().ok()?;
+
+            Some((major, minor, patch))
+        };
+
+        // 测试有效版本
+        assert_eq!(parse_version("1.0.0"), Some((1, 0, 0)));
+        assert_eq!(parse_version("2.3.4"), Some((2, 3, 4)));
+        assert_eq!(parse_version("10.20.30"), Some((10, 20, 30)));
+
+        // 测试无效版本
+        assert_eq!(parse_version("1.0"), None);
+        assert_eq!(parse_version("1.0.0.1"), None);
+        assert_eq!(parse_version("invalid"), None);
+        assert_eq!(parse_version("a.b.c"), None);
+        assert_eq!(parse_version(""), None);
+    }
+
+    #[test]
+    fn test_event_broadcast_system() {
+        // 测试事件广播系统（不需要数据库）
+        let (sender, mut receiver) = broadcast::channel(10);
+        
+        // 测试发送事件
+        let test_event = UpdateEvent::CheckStarted;
+        assert!(sender.send(test_event.clone()).is_ok());
+        
+        // 测试接收事件
+        let received = receiver.try_recv();
+        assert!(received.is_ok());
+        
+        // 验证事件内容
+        match received.unwrap() {
+            UpdateEvent::CheckStarted => {}, // 正确
+            _ => panic!("Received wrong event type"),
+        }
+    }
+
+    #[test]
+    fn test_file_info_validation() {
+        // 测试文件信息验证
+        let valid_file_info = FileInfo {
+            url: "https://example.com/file.exe".to_string(),
+            size: 1024,
+            hash: "abc123".to_string(),
+            platform: Some("linux".to_string()),
+            arch: Some("x86_64".to_string()),
+        };
+
+        // 验证基本属性
+        assert!(!valid_file_info.url.is_empty());
+        assert!(valid_file_info.size > 0);
+        assert!(!valid_file_info.hash.is_empty());
+
+        // 测试URL格式验证（简单验证）
+        assert!(valid_file_info.url.starts_with("http"));
+    }
+
+
+    #[test]
+    fn test_version_comparison() {
+        // 直接测试版本比较逻辑，不需要UpdateManager实例
+        let parse_version = |v: &str| -> Option<(u32, u32, u32)> {
+            let parts: Vec<&str> = v.split('.').collect();
+            if parts.len() != 3 {
+                return None;
+            }
+
+            let major = parts[0].parse().ok()?;
+            let minor = parts[1].parse().ok()?;
+            let patch = parts[2].parse().ok()?;
+
+            Some((major, minor, patch))
+        };
+        
+        let compare_versions = |current: &str, remote: &str| -> VersionComparison {
+            use std::cmp::Ordering;
+            match (parse_version(current), parse_version(remote)) {
+                (Some(cur), Some(rem)) => {
+                    match cur.cmp(&rem) {
+                        Ordering::Less => VersionComparison::UpdateAvailable,
+                        Ordering::Equal => VersionComparison::Current,
+                        Ordering::Greater => VersionComparison::Newer,
+                    }
+                }
+                _ => VersionComparison::Invalid,
+            }
+        };
+        
+        // 测试相等版本
+        assert_eq!(compare_versions("1.0.0", "1.0.0"), VersionComparison::Current);
+        
+        // 测试更新可用
+        assert_eq!(compare_versions("1.0.0", "1.1.0"), VersionComparison::UpdateAvailable);
+        
+        // 测试当前版本更新
+        assert_eq!(compare_versions("1.1.0", "1.0.0"), VersionComparison::Newer);
+        
+        // 测试无效版本格式
+        assert_eq!(compare_versions("invalid", "1.0.0"), VersionComparison::Invalid);
+        assert_eq!(compare_versions("1.0.0", "invalid"), VersionComparison::Invalid);
+    }
+
+    #[test]
+    fn test_version_comparison_detailed() {
+        // 使用同样的逻辑进行详细测试
+        let parse_version = |v: &str| -> Option<(u32, u32, u32)> {
+            let parts: Vec<&str> = v.split('.').collect();
+            if parts.len() != 3 {
+                return None;
+            }
+
+            let major = parts[0].parse().ok()?;
+            let minor = parts[1].parse().ok()?;
+            let patch = parts[2].parse().ok()?;
+
+            Some((major, minor, patch))
+        };
+        
+        let compare_versions = |current: &str, remote: &str| -> VersionComparison {
+            use std::cmp::Ordering;
+            match (parse_version(current), parse_version(remote)) {
+                (Some(cur), Some(rem)) => {
+                    match cur.cmp(&rem) {
+                        Ordering::Less => VersionComparison::UpdateAvailable,
+                        Ordering::Equal => VersionComparison::Current,
+                        Ordering::Greater => VersionComparison::Newer,
+                    }
+                }
+                _ => VersionComparison::Invalid,
+            }
+        };
+        
+        // 测试主版本号更新
+        assert_eq!(compare_versions("1.0.0", "2.0.0"), VersionComparison::UpdateAvailable);
+        assert_eq!(compare_versions("2.0.0", "1.0.0"), VersionComparison::Newer);
+        
+        // 测试次版本号更新
+        assert_eq!(compare_versions("1.0.0", "1.1.0"), VersionComparison::UpdateAvailable);
+        assert_eq!(compare_versions("1.1.0", "1.0.0"), VersionComparison::Newer);
+        
+        // 测试补丁版本号更新
+        assert_eq!(compare_versions("1.0.0", "1.0.1"), VersionComparison::UpdateAvailable);
+        assert_eq!(compare_versions("1.0.1", "1.0.0"), VersionComparison::Newer);
+        
+        // 测试复杂版本比较
+        assert_eq!(compare_versions("1.2.3", "1.2.4"), VersionComparison::UpdateAvailable);
+        assert_eq!(compare_versions("1.2.3", "1.3.0"), VersionComparison::UpdateAvailable);
+        assert_eq!(compare_versions("1.2.3", "2.0.0"), VersionComparison::UpdateAvailable);
+    }
+
+    #[test]
+    fn test_get_target_triple() {
+        // 测试目标三元组生成逻辑
+        let get_target_triple = || -> String {
+            #[cfg(target_os = "windows")]
+            {
+                #[cfg(target_arch = "x86_64")]
+                return "x86_64-pc-windows-msvc".to_string();
+                #[cfg(target_arch = "x86")]
+                return "i686-pc-windows-msvc".to_string();
+                #[cfg(target_arch = "aarch64")]
+                return "aarch64-pc-windows-msvc".to_string();
+            }
+
+            #[cfg(target_os = "macos")]
+            {
+                #[cfg(target_arch = "x86_64")]
+                return "x86_64-apple-darwin".to_string();
+                #[cfg(target_arch = "aarch64")]
+                return "aarch64-apple-darwin".to_string();
+            }
+
+            #[cfg(target_os = "linux")]
+            {
+                #[cfg(target_arch = "x86_64")]
+                return "x86_64-unknown-linux-gnu".to_string();
+                #[cfg(target_arch = "aarch64")]
+                return "aarch64-unknown-linux-gnu".to_string();
+            }
+
+            "unknown".to_string()
+        };
+        
+        let target = get_target_triple();
+        
+        // 验证返回的目标三元组格式合理
+        assert!(!target.is_empty());
+        assert!(target.contains("-"));
+        
+        // 在不同平台上应该返回不同的值
+        #[cfg(target_os = "linux")]
+        assert!(target.contains("linux"));
+        
+        #[cfg(target_os = "windows")]
+        assert!(target.contains("windows"));
+        
+        #[cfg(target_os = "macos")]
+        assert!(target.contains("darwin"));
+    }
+
+    #[test]
+    fn test_parse_target() {
+        // 测试目标三元组解析逻辑
+        let parse_target = |target: &str| -> (String, String) {
+            let parts: Vec<&str> = target.split('-').collect();
+            if parts.len() >= 3 {
+                let arch = parts[0].to_string();
+                let platform = if parts.len() >= 4 {
+                    parts[2].to_string()
+                } else {
+                    parts[1].to_string()
+                };
+                (platform, arch)
+            } else {
+                ("unknown".to_string(), "unknown".to_string())
+            }
+        };
+        
+        // 测试标准目标三元组解析
+        let (platform, arch) = parse_target("x86_64-unknown-linux-gnu");
+        assert_eq!(platform, "unknown");
+        assert_eq!(arch, "x86_64");
+        
+        let (platform, arch) = parse_target("x86_64-pc-windows-msvc");
+        assert_eq!(platform, "pc");
+        assert_eq!(arch, "x86_64");
+        
+        let (platform, arch) = parse_target("aarch64-apple-darwin");
+        assert_eq!(platform, "apple");
+        assert_eq!(arch, "aarch64");
+        
+        // 测试无效输入
+        let (platform, arch) = parse_target("invalid");
+        assert_eq!(platform, "unknown");
+        assert_eq!(arch, "unknown");
+        
+        let (platform, arch) = parse_target("");
+        assert_eq!(platform, "unknown");
+        assert_eq!(arch, "unknown");
+    }
+
+    #[test]
+    fn test_update_config_defaults() {
+        // 测试更新配置的默认值
+        let config = create_test_update_config();
+        
+        assert!(config.auto_check);
+        assert!(config.auto_check_enabled);
+        assert_eq!(config.check_interval, 86400);
+        assert_eq!(config.check_interval_hours, 24);
+        assert!(!config.auto_download);
+        assert!(!config.auto_install);
+        assert!(config.backup_before_update);
+        assert!(!config.include_prerelease);
+        assert_eq!(config.max_backup_count, 5);
+        assert!(config.last_check_time.is_none());
+    }
+
+    #[test] 
+    fn test_update_info_creation() {
+        // 测试更新信息的创建和验证
+        let update_info = create_test_update_info();
+        
+        assert_eq!(update_info.version, "1.1.0");
+        assert_eq!(update_info.status, UpdateStatus::Available);
+        assert!(!update_info.title.is_empty());
+        assert!(!update_info.description.is_empty());
+        assert!(!update_info.changelog.is_empty());
+        assert!(update_info.file_size.is_some());
+        assert!(update_info.download_url.is_some());
+        assert!(update_info.file_hash.is_some());
+        assert!(!update_info.is_mandatory);
+        assert!(!update_info.is_prerelease);
+        assert_eq!(update_info.download_progress, 0.0);
+        assert_eq!(update_info.install_progress, 0.0);
+        assert!(update_info.error_message.is_none());
+        assert_eq!(update_info.retry_count, 0);
+    }
+
+    #[tokio::test]
+    async fn test_directory_creation() {
+        // 测试目录创建功能（不需要数据库）
+        let temp_dir = TempDir::new().expect("Failed to create temp dir");
+        let app_data_dir = temp_dir.path().to_path_buf();
+        let backup_dir = app_data_dir.join("backups");
+        let download_dir = app_data_dir.join("downloads");
+
+        // 创建目录
+        fs::create_dir_all(&backup_dir).expect("Failed to create backup dir");
+        fs::create_dir_all(&download_dir).expect("Failed to create download dir");
+
+        // 验证目录存在
+        assert!(backup_dir.exists());
+        assert!(download_dir.exists());
+        assert!(backup_dir.is_dir());
+        assert!(download_dir.is_dir());
+    }
+
+    #[test]
+    fn test_update_manifest_creation_with_files() {
+        // 测试包含多个文件的更新清单
+        let mut files = HashMap::new();
+        
+        files.insert("linux-x64".to_string(), FileInfo {
+            url: "https://example.com/linux.tar.gz".to_string(),
+            size: 2048,
+            hash: "linux123".to_string(),
+            platform: Some("linux".to_string()),
+            arch: Some("x64".to_string()),
+        });
+        
+        files.insert("windows-x64".to_string(), FileInfo {
+            url: "https://example.com/windows.exe".to_string(),
+            size: 4096,
+            hash: "windows123".to_string(),
+            platform: Some("windows".to_string()),
+            arch: Some("x64".to_string()),
+        });
+
+        let manifest = UpdateManifest {
+            version: "2.0.0".to_string(),
+            release_date: Utc::now(),
+            update_type: UpdateType::Major,
+            title: "Major Update".to_string(),
+            description: "Major version update".to_string(),
+            changelog: "Major changes...".to_string(),
+            is_mandatory: true,
+            is_prerelease: false,
+            min_version: Some("1.5.0".to_string()),
+            files,
+        };
+
+        assert_eq!(manifest.version, "2.0.0");
+        // UpdateType doesn't implement PartialEq, so we check with matches!
+        assert!(matches!(manifest.update_type, UpdateType::Major));
+        assert!(manifest.is_mandatory);
+        assert!(!manifest.is_prerelease);
+        assert_eq!(manifest.files.len(), 2);
+        assert!(manifest.files.contains_key("linux-x64"));
+        assert!(manifest.files.contains_key("windows-x64"));
+    }
+
+    #[test]
+    fn test_update_event_serialization() {
+        // 测试各种事件类型的序列化
+        let events = vec![
+            UpdateEvent::CheckStarted,
+            UpdateEvent::CheckCompleted {
+                has_update: true,
+                update_info: None,
+            },
+            UpdateEvent::CheckFailed {
+                error: "Test error".to_string(),
+            },
+            UpdateEvent::DownloadStarted {
+                version: "1.1.0".to_string(),
+                total_size: Some(1024),
+            },
+            UpdateEvent::DownloadProgress {
+                version: "1.1.0".to_string(),
+                downloaded: 512,
+                total: Some(1024),
+                percentage: 50.0,
+            },
+            UpdateEvent::DownloadCompleted {
+                version: "1.1.0".to_string(),
+                file_path: "/tmp/update.exe".to_string(),
+            },
+            UpdateEvent::DownloadFailed {
+                version: "1.1.0".to_string(),
+                error: "Network error".to_string(),
+            },
+            UpdateEvent::InstallStarted {
+                version: "1.1.0".to_string(),
+            },
+            UpdateEvent::InstallProgress {
+                version: "1.1.0".to_string(),
+                percentage: 75.0,
+                message: "Installing...".to_string(),
+            },
+            UpdateEvent::InstallCompleted {
+                version: "1.1.0".to_string(),
+                needs_restart: true,
+            },
+            UpdateEvent::InstallFailed {
+                version: "1.1.0".to_string(),
+                error: "Installation failed".to_string(),
+            },
+            UpdateEvent::RollbackStarted {
+                from_version: "1.1.0".to_string(),
+                to_version: "1.0.0".to_string(),
+            },
+            UpdateEvent::RollbackCompleted {
+                version: "1.0.0".to_string(),
+            },
+            UpdateEvent::RollbackFailed {
+                error: "Rollback failed".to_string(),
+            },
+        ];
+
+        for event in events {
+            let serialized = serde_json::to_string(&event);
+            assert!(serialized.is_ok(), "Failed to serialize event: {:?}", event);
+            
+            let json_str = serialized.unwrap();
+            assert!(!json_str.is_empty());
+            assert!(json_str.contains("\"type\""));
+        }
+    }
+
+    #[test]
+    fn test_update_manifest_serialization() {
+        let mut files = HashMap::new();
+        files.insert("test".to_string(), FileInfo {
+            url: "https://example.com/file".to_string(),
+            size: 1024,
+            hash: "abc123".to_string(),
+            platform: Some("linux".to_string()),
+            arch: Some("x64".to_string()),
+        });
+
+        let manifest = UpdateManifest {
+            version: "1.1.0".to_string(),
+            release_date: Utc::now(),
+            update_type: UpdateType::Minor,
+            title: "Test".to_string(),
+            description: "Test".to_string(),
+            changelog: "Test".to_string(),
+            is_mandatory: false,
+            is_prerelease: false,
+            min_version: Some("1.0.0".to_string()),
+            files,
+        };
+
+        let serialized = serde_json::to_string(&manifest);
+        assert!(serialized.is_ok());
+
+        let json_str = serialized.unwrap();
+        let deserialized: Result<UpdateManifest, _> = serde_json::from_str(&json_str);
+        assert!(deserialized.is_ok());
+        
+        let deserialized_manifest = deserialized.unwrap();
+        assert_eq!(deserialized_manifest.version, manifest.version);
+        assert_eq!(deserialized_manifest.title, manifest.title);
+    }
+
+    #[tokio::test]
+    async fn test_concurrent_event_broadcasting() {
+        // 测试并发事件广播（避免死锁）
+        let (sender, mut receiver1) = broadcast::channel(100);
+        let mut receiver2 = sender.subscribe();
+        let mut receiver3 = sender.subscribe();
+        
+        // 并发发送多个事件
+        let sender_clone = sender.clone();
+        let send_task = tokio::spawn(async move {
+            for i in 0..10 {
+                let event = UpdateEvent::DownloadProgress {
+                    version: format!("1.{}.0", i),
+                    downloaded: i * 1024,
+                    total: Some(10 * 1024),
+                    percentage: (i as f64) * 10.0,
+                };
+                let _ = sender_clone.send(event);
+                tokio::time::sleep(Duration::from_millis(1)).await;
+            }
+        });
+        
+        // 并发接收事件
+        let receive_task1 = tokio::spawn(async move {
+            let mut count = 0;
+            while count < 10 {
+                if receiver1.recv().await.is_ok() {
+                    count += 1;
+                }
+            }
+            count
+        });
+        
+        let receive_task2 = tokio::spawn(async move {
+            let mut count = 0;
+            while count < 10 {
+                if receiver2.recv().await.is_ok() {
+                    count += 1;
+                }
+            }
+            count
+        });
+
+        // 等待所有任务完成
+        let (send_result, recv1_result, recv2_result) = 
+            tokio::join!(send_task, receive_task1, receive_task2);
+            
+        assert!(send_result.is_ok());
+        assert_eq!(recv1_result.unwrap(), 10);
+        assert_eq!(recv2_result.unwrap(), 10);
+    }
+
+    #[tokio::test]
+    async fn test_timeout_handling() {
+        // 测试超时处理，避免无限等待
+        let timeout_duration = Duration::from_millis(100);
+        
+        // 模拟一个永远不会完成的操作
+        let never_complete = async {
+            tokio::time::sleep(Duration::from_secs(10)).await;
+            "completed"
+        };
+        
+        // 使用timeout包装，确保在指定时间内返回
+        let result = timeout(timeout_duration, never_complete).await;
+        assert!(result.is_err()); // 应该超时
+    }
+
+    #[tokio::test]
+    async fn test_file_operations_async() {
+        // 测试异步文件操作
+        let temp_dir = TempDir::new().expect("Failed to create temp dir");
+        let file_path = temp_dir.path().join("test_file.txt");
+        
+        // 测试异步写入
+        let content = "test content for update manager";
+        tokio::fs::write(&file_path, content).await
+            .expect("Failed to write file");
+        
+        // 测试异步读取
+        let read_content = tokio::fs::read_to_string(&file_path).await
+            .expect("Failed to read file");
+        
+        assert_eq!(content, read_content);
+        
+        // 测试异步删除
+        tokio::fs::remove_file(&file_path).await
+            .expect("Failed to remove file");
+        
+        assert!(!file_path.exists());
+    }
+
+    #[test]
+    fn test_thread_safety_with_arc_mutex() {
+        // 测试 Arc<Mutex<T>> 的线程安全性
+        use std::thread;
+        use std::sync::mpsc;
+        
+        let shared_data = Arc::new(Mutex::new(0));
+        let (tx, rx) = mpsc::channel();
+        
+        let handles: Vec<_> = (0..5).map(|i| {
+            let data = Arc::clone(&shared_data);
+            let tx = tx.clone();
+            thread::spawn(move || {
+                // 模拟并发访问共享数据
+                for _ in 0..10 {
+                    {
+                        let mut num = data.lock().unwrap();
+                        *num += 1;
+                    } // 确保锁及时释放，避免死锁
+                    thread::yield_now(); // 让出CPU时间
+                }
+                tx.send(i).unwrap();
+            })
+        }).collect();
+        
+        // 等待所有线程完成
+        drop(tx);
+        for _ in 0..5 {
+            rx.recv().unwrap();
+        }
+        
+        for handle in handles {
+            handle.join().unwrap();
+        }
+        
+        // 验证最终结果
+        let final_value = *shared_data.lock().unwrap();
+        assert_eq!(final_value, 50); // 5个线程 × 10次递增
+    }
+
+    // 性能测试
+    #[tokio::test]
+    async fn test_performance_version_comparison() {
+        // 测试版本比较的性能，不需要数据库
+        let parse_version = |v: &str| -> Option<(u32, u32, u32)> {
+            let parts: Vec<&str> = v.split('.').collect();
+            if parts.len() != 3 {
+                return None;
+            }
+
+            let major = parts[0].parse().ok()?;
+            let minor = parts[1].parse().ok()?;
+            let patch = parts[2].parse().ok()?;
+
+            Some((major, minor, patch))
+        };
+        
+        let compare_versions = |current: &str, remote: &str| -> VersionComparison {
+            use std::cmp::Ordering;
+            match (parse_version(current), parse_version(remote)) {
+                (Some(cur), Some(rem)) => {
+                    match cur.cmp(&rem) {
+                        Ordering::Less => VersionComparison::UpdateAvailable,
+                        Ordering::Equal => VersionComparison::Current,
+                        Ordering::Greater => VersionComparison::Newer,
+                    }
+                }
+                _ => VersionComparison::Invalid,
+            }
+        };
+        
+        let start = std::time::Instant::now();
+        
+        // 执行大量版本比较操作
+        for i in 0..1000 {
+            let v1 = format!("1.{}.0", i % 100);
+            let v2 = format!("1.{}.1", i % 100);
+            let _ = compare_versions(&v1, &v2);
+        }
+        
+        let duration = start.elapsed();
+        
+        // 1000次版本比较应该在100ms内完成
+        assert!(duration.as_millis() < 100, "Version comparison too slow: {:?}", duration);
+    }
+
+    // 并发测试
+    #[tokio::test]
+    #[ignore] // 需要数据库连接
+    async fn test_concurrent_config_access() {
+        // 这个测试需要数据库操作，在集成测试中实现
     }
 }

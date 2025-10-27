@@ -100,7 +100,7 @@ export class ErrorBoundary extends Component<ErrorBoundaryProps, ErrorBoundarySt
     const timestamp = new Date().toISOString()
     
     // 从错误信息中提取组件栈
-    const componentStack = errorInfo.componentStack
+    const componentStack = errorInfo.componentStack || ''
     const firstComponent = componentStack.split('\n')[1]?.trim()
     
     return {
@@ -113,7 +113,7 @@ export class ErrorBoundary extends Component<ErrorBoundaryProps, ErrorBoundarySt
       name: error.name,
       message: error.message,
       stack: error.stack,
-      cause: error.cause ? String(error.cause) : undefined,
+      cause: (error as any).cause ? String((error as any).cause) : undefined,
       context: {
         timestamp,
         sessionId: `session_${Date.now()}`,
@@ -207,7 +207,7 @@ export class ErrorBoundary extends Component<ErrorBoundaryProps, ErrorBoundarySt
 
   private shouldAttemptRecovery(errorDetails: ErrorDetails): boolean {
     return (
-      errorDetails.canRecover && 
+      (errorDetails.canRecover ?? false) && 
       this.state.retryCount < this.maxRetries &&
       errorDetails.recoveryStrategy !== RecoveryStrategy.USER_ACTION
     )
@@ -318,7 +318,7 @@ export class ErrorBoundary extends Component<ErrorBoundaryProps, ErrorBoundarySt
     if (this.state.hasError) {
       const fallbackProps: ErrorBoundaryFallbackProps = {
         error: this.state.error!,
-        errorDetails: this.state.errorDetails,
+        errorDetails: this.state.errorDetails ?? undefined,
         resetError: this.handleReset,
         reportError: this.handleReport,
       }

@@ -24,7 +24,7 @@ import { mockConsole } from '../../utils/test-utils'
 
 // ==================== Mock 设置 ====================
 
-const mockPermissionService = {
+vi.mock('@/services/permissionService', () => ({
   getAllPermissions: vi.fn(),
   getEntityGrants: vi.fn(),
   getPendingGrants: vi.fn(),
@@ -36,20 +36,36 @@ const mockPermissionService = {
   getPermissionUsageLogs: vi.fn(),
   applyPermissionPreset: vi.fn(),
   PERMISSION_PRESETS: {
-    FULL_ACCESS: {
-      name: '完全访问',
-      description: '授予所有权限',
-      permissions: [],
-    },
-    READ_ONLY: {
-      name: '只读访问',
-      description: '仅授予读取权限',
-      permissions: [],
-    },
+    BASIC_ADAPTER: [
+      { type: 'FILE_READ', level: 'READ_ONLY' },
+      { type: 'SYSTEM_INFO', level: 'READ_ONLY' },
+    ],
+    FILE_PROCESSOR: [
+      { type: 'FILE_READ', level: 'READ_ONLY' },
+      { type: 'FILE_WRITE', level: 'READ_WRITE' },
+    ],
+    NETWORK_SERVICE: [
+      { type: 'NETWORK_HTTP', level: 'FULL' },
+      { type: 'NETWORK_WEBSOCKET', level: 'READ_WRITE' },
+    ],
+    DATA_ANALYZER: [
+      { type: 'FILE_READ', level: 'READ_ONLY' },
+      { type: 'APP_DATABASE', level: 'READ_ONLY' },
+    ],
+    SYSTEM_TOOL: [
+      { type: 'SYSTEM_INFO', level: 'READ_ONLY' },
+      { type: 'SYSTEM_CLIPBOARD', level: 'READ_WRITE' },
+    ],
+    TRUSTED: [
+      { type: 'FILE_READ', level: 'FULL' },
+      { type: 'FILE_WRITE', level: 'FULL' },
+      { type: 'NETWORK_HTTP', level: 'FULL' },
+    ],
   },
-}
+}))
 
-vi.mock('@/services/permissionService', () => mockPermissionService)
+// Get mocked functions after the mock is set up
+let mockPermissionService: any
 
 // ==================== 测试数据 ====================
 
@@ -59,21 +75,21 @@ const mockPermissions = [
     name: '文件读取',
     description: '读取文件内容',
     category: 'file',
-    required_level: PermissionLevel.READ,
+    required_level: PermissionLevel.READ_ONLY,
   },
   {
     type: PermissionType.FILE_WRITE,
     name: '文件写入',
     description: '写入文件内容',
     category: 'file',
-    required_level: PermissionLevel.WRITE,
+    required_level: PermissionLevel.READ_WRITE,
   },
   {
-    type: PermissionType.NETWORK_ACCESS,
+    type: PermissionType.NETWORK_HTTP,
     name: '网络访问',
     description: '访问网络',
     category: 'network',
-    required_level: PermissionLevel.EXECUTE,
+    required_level: PermissionLevel.FULL,
   },
 ]
 
@@ -83,7 +99,7 @@ const mockGrants = [
     entity_type: 'adapter',
     entity_id: 'test-adapter',
     permission_type: PermissionType.FILE_READ,
-    level: PermissionLevel.READ,
+    level: PermissionLevel.READ_ONLY,
     status: PermissionStatus.GRANTED,
     granted_at: '2025-01-01T00:00:00Z',
     granted_by: 'user',
@@ -93,7 +109,7 @@ const mockGrants = [
     entity_type: 'adapter',
     entity_id: 'test-adapter',
     permission_type: PermissionType.FILE_WRITE,
-    level: PermissionLevel.WRITE,
+    level: PermissionLevel.READ_WRITE,
     status: PermissionStatus.PENDING,
     requested_at: '2025-01-01T00:00:00Z',
   },
@@ -106,7 +122,7 @@ const mockStats = {
   denied_grants: 1,
   revoked_grants: 0,
   most_used_permission: PermissionType.FILE_READ,
-  least_used_permission: PermissionType.SYSTEM_ADMIN,
+  least_used_permission: PermissionType.ADVANCED_ADMIN,
   total_usage_count: 100,
 }
 
@@ -139,9 +155,12 @@ const mockUsageLogs = [
 describe('usePermissions Hook', () => {
   const consoleMock = mockConsole()
 
-  beforeEach(() => {
+  beforeEach(async () => {
     consoleMock.mockAll()
     vi.clearAllMocks()
+    
+    // Get the mocked service
+    mockPermissionService = await vi.importMock('@/services/permissionService')
     mockPermissionService.getAllPermissions.mockResolvedValue(mockPermissions)
   })
 
@@ -201,8 +220,9 @@ describe('usePermissions Hook', () => {
 })
 
 describe('useEntityGrants Hook', () => {
-  beforeEach(() => {
+  beforeEach(async () => {
     vi.clearAllMocks()
+    mockPermissionService = await vi.importMock('@/services/permissionService')
     mockPermissionService.getEntityGrants.mockResolvedValue(mockGrants)
     mockPermissionService.grantPermission.mockResolvedValue(undefined)
     mockPermissionService.revokePermission.mockResolvedValue(undefined)
@@ -238,8 +258,8 @@ describe('useEntityGrants Hook', () => {
       let success: boolean = false
       await act(async () => {
         success = await result.current.grant(
-          PermissionType.NETWORK_ACCESS,
-          PermissionLevel.EXECUTE
+          PermissionType.NETWORK_HTTP,
+          PermissionLevel.FULL
         )
       })
 
@@ -247,8 +267,8 @@ describe('useEntityGrants Hook', () => {
       expect(mockPermissionService.grantPermission).toHaveBeenCalledWith({
         entity_type: 'adapter',
         entity_id: 'test-adapter',
-        permission_type: PermissionType.NETWORK_ACCESS,
-        level: PermissionLevel.EXECUTE,
+        permission_type: PermissionType.NETWORK_HTTP,
+        level: PermissionLevel.FULL,
         granted_by: 'user',
       })
     })
@@ -291,7 +311,7 @@ describe('useEntityGrants Hook', () => {
       let success: boolean = false
       await act(async () => {
         success = await result.current.deny(
-          PermissionType.SYSTEM_ADMIN,
+          PermissionType.ADVANCED_ADMIN,
           '权限过高'
         )
       })
@@ -300,7 +320,7 @@ describe('useEntityGrants Hook', () => {
       expect(mockPermissionService.denyPermission).toHaveBeenCalledWith({
         entity_type: 'adapter',
         entity_id: 'test-adapter',
-        permission_type: PermissionType.SYSTEM_ADMIN,
+        permission_type: PermissionType.ADVANCED_ADMIN,
         scope: undefined,
         reason: '权限过高',
       })
@@ -336,8 +356,9 @@ describe('useEntityGrants Hook', () => {
 })
 
 describe('usePendingGrants Hook', () => {
-  beforeEach(() => {
+  beforeEach(async () => {
     vi.clearAllMocks()
+    mockPermissionService = await vi.importMock('@/services/permissionService')
     const pendingGrants = mockGrants.filter(
       (g) => g.status === PermissionStatus.PENDING
     )
@@ -407,8 +428,9 @@ describe('usePendingGrants Hook', () => {
 })
 
 describe('usePermissionCheck Hook', () => {
-  beforeEach(() => {
+  beforeEach(async () => {
     vi.clearAllMocks()
+    mockPermissionService = await vi.importMock('@/services/permissionService')
     mockPermissionService.checkPermission.mockResolvedValue(true)
   })
 
@@ -419,7 +441,7 @@ describe('usePermissionCheck Hook', () => {
           'adapter',
           'test-adapter',
           PermissionType.FILE_READ,
-          PermissionLevel.READ
+          PermissionLevel.READ_ONLY
         )
       )
 
@@ -432,7 +454,7 @@ describe('usePermissionCheck Hook', () => {
         entity_type: 'adapter',
         entity_id: 'test-adapter',
         permission_type: PermissionType.FILE_READ,
-        level: PermissionLevel.READ,
+        level: PermissionLevel.READ_ONLY,
       })
     })
 
@@ -443,8 +465,8 @@ describe('usePermissionCheck Hook', () => {
         usePermissionCheck(
           'adapter',
           'test-adapter',
-          PermissionType.SYSTEM_ADMIN,
-          PermissionLevel.ADMIN
+          PermissionType.ADVANCED_ADMIN,
+          PermissionLevel.FULL
         )
       )
 
@@ -464,7 +486,7 @@ describe('usePermissionCheck Hook', () => {
           'adapter',
           'test-adapter',
           PermissionType.FILE_READ,
-          PermissionLevel.READ
+          PermissionLevel.READ_ONLY
         )
       )
 
@@ -481,7 +503,7 @@ describe('usePermissionCheck Hook', () => {
           'adapter',
           'test-adapter',
           PermissionType.FILE_READ,
-          PermissionLevel.READ
+          PermissionLevel.READ_ONLY
         )
       )
 
@@ -504,8 +526,9 @@ describe('usePermissionCheck Hook', () => {
 })
 
 describe('usePermissionStats Hook', () => {
-  beforeEach(() => {
+  beforeEach(async () => {
     vi.clearAllMocks()
+    mockPermissionService = await vi.importMock('@/services/permissionService')
     mockPermissionService.getPermissionStats.mockResolvedValue(mockStats)
   })
 
@@ -547,8 +570,9 @@ describe('usePermissionStats Hook', () => {
 })
 
 describe('usePermissionUsageLogs Hook', () => {
-  beforeEach(() => {
+  beforeEach(async () => {
     vi.clearAllMocks()
+    mockPermissionService = await vi.importMock('@/services/permissionService')
     mockPermissionService.getPermissionUsageLogs.mockResolvedValue(
       mockUsageLogs
     )
@@ -624,8 +648,9 @@ describe('usePermissionUsageLogs Hook', () => {
 })
 
 describe('usePermissionPresets Hook', () => {
-  beforeEach(() => {
+  beforeEach(async () => {
     vi.clearAllMocks()
+    mockPermissionService = await vi.importMock('@/services/permissionService')
     mockPermissionService.applyPermissionPreset.mockResolvedValue(undefined)
   })
 
@@ -646,7 +671,7 @@ describe('usePermissionPresets Hook', () => {
         success = await result.current.applyPreset(
           'adapter',
           'test-adapter',
-          'FULL_ACCESS'
+          'TRUSTED'
         )
       })
 
@@ -654,7 +679,7 @@ describe('usePermissionPresets Hook', () => {
       expect(mockPermissionService.applyPermissionPreset).toHaveBeenCalledWith(
         'adapter',
         'test-adapter',
-        'FULL_ACCESS',
+        'TRUSTED',
         'user'
       )
     })
@@ -671,7 +696,7 @@ describe('usePermissionPresets Hook', () => {
           await result.current.applyPreset(
             'adapter',
             'test-adapter',
-            'FULL_ACCESS'
+            'TRUSTED'
           )
         })
       ).rejects.toThrow('Apply failed')
@@ -682,8 +707,9 @@ describe('usePermissionPresets Hook', () => {
 // ==================== 集成测试 ====================
 
 describe('Permission Hooks 集成测试', () => {
-  beforeEach(() => {
+  beforeEach(async () => {
     vi.clearAllMocks()
+    mockPermissionService = await vi.importMock('@/services/permissionService')
     mockPermissionService.getAllPermissions.mockResolvedValue(mockPermissions)
     mockPermissionService.getEntityGrants.mockResolvedValue(mockGrants)
     mockPermissionService.grantPermission.mockResolvedValue(undefined)
@@ -710,8 +736,8 @@ describe('Permission Hooks 集成测试', () => {
     // 3. 授予新权限
     await act(async () => {
       await grantsHook.result.current.grant(
-        PermissionType.NETWORK_ACCESS,
-        PermissionLevel.EXECUTE
+        PermissionType.NETWORK_HTTP,
+        PermissionLevel.FULL
       )
     })
 
@@ -720,8 +746,8 @@ describe('Permission Hooks 集成测试', () => {
       usePermissionCheck(
         'adapter',
         'test-adapter',
-        PermissionType.NETWORK_ACCESS,
-        PermissionLevel.EXECUTE
+        PermissionType.NETWORK_HTTP,
+        PermissionLevel.FULL
       )
     )
 

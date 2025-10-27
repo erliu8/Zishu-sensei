@@ -16,10 +16,7 @@ import {
   Download, 
   RefreshCw, 
   Eye, 
-  EyeOff, 
-  Calendar,
   BarChart3,
-  Settings,
   Trash2,
   Upload,
   AlertCircle,
@@ -29,7 +26,7 @@ import {
   Zap
 } from 'lucide-react';
 import { useLogging } from '../../hooks/useLogging';
-import { LogLevel, LogFilter, LogEntry, LogStatistics } from '../../services/loggingService';
+import { LogLevel, LogFilter, LogEntry } from '../../services/loggingService';
 import './LogViewer.css';
 
 // ================================
@@ -203,11 +200,11 @@ export const LogViewer: React.FC<LogViewerProps> = ({
       const timestamp = new Date().toISOString().replace(/[:.]/g, '-');
       const filename = `logs-${timestamp}.${format}`;
       
-      await exportLogs({
+      await exportLogs(
         format,
-        filter: Object.keys(fullFilter).length > 0 ? fullFilter : undefined,
-        filePath: filename
-      });
+        Object.keys(fullFilter).length > 0 ? fullFilter : undefined,
+        filename
+      );
       
       // 通知用户导出成功
       alert(`日志已导出到 ${filename}`);
@@ -248,11 +245,11 @@ export const LogViewer: React.FC<LogViewerProps> = ({
   }, [selectedLogs, handleSearch]);
 
   const handleSelectAll = useCallback(() => {
-    if (logs.logs.length === 0) return;
+    if (!logs || logs.logs.length === 0) return;
     
     const allIds = new Set(logs.logs.map((_, index) => index));
     setSelectedLogs(selectedLogs.size === logs.logs.length ? new Set() : allIds);
-  }, [logs.logs, selectedLogs.size]);
+  }, [logs, selectedLogs.size]);
 
   const handleSelectLog = useCallback((index: number) => {
     const newSelected = new Set(selectedLogs);
@@ -489,7 +486,7 @@ export const LogViewer: React.FC<LogViewerProps> = ({
         <div className="bulk-actions">
           <input
             type="checkbox"
-            checked={selectedLogs.size > 0 && selectedLogs.size === logs.logs.length}
+            checked={selectedLogs.size > 0 && logs !== null && selectedLogs.size === logs.logs.length}
             onChange={handleSelectAll}
           />
           <span>选中 {selectedLogs.size} 条</span>
@@ -528,7 +525,7 @@ export const LogViewer: React.FC<LogViewerProps> = ({
       </div>
       
       <div className={`log-list ${viewConfig.compactMode ? 'compact' : ''}`}>
-        {logs.logs.map((log, index) => {
+        {logs && logs.logs.map((log, index) => {
           const LevelIcon = levelIcons[log.level];
           const isSelected = selectedLogs.has(index);
           

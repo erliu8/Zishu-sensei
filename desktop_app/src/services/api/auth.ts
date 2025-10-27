@@ -10,7 +10,7 @@
  */
 
 import type { ApiClient, ApiResponse } from '../api'
-import { invoke } from '@tauri-apps/api/core'
+import { invoke } from '@tauri-apps/api/tauri'
 
 // ================================
 // 类型定义
@@ -567,19 +567,5 @@ export class AuthApiService {
  */
 export function createAuthApiService(apiClient: ApiClient): AuthApiService {
   return new AuthApiService(apiClient)
-}
-
-/**
- * 导出类型
- */
-export type {
-  LoginParams,
-  RegisterParams,
-  AuthResponse,
-  RefreshTokenResponse,
-  OAuthProvider,
-  OAuthParams,
-  TwoFactorSetup,
-  TwoFactorVerifyParams,
 }
 

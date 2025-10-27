@@ -11,6 +11,9 @@ import {
   UseErrorMonitorResult,
   ErrorContext,
   ErrorStatus,
+  ErrorSeverity,
+  ErrorType,
+  ErrorSource,
   RecoveryResult,
   ErrorFilter,
 } from '../types/error'
@@ -29,14 +32,40 @@ export function useErrorMonitor(): UseErrorMonitorResult {
     totalErrors: 0,
     newErrors: 0,
     resolvedErrors: 0,
-    bySeverity: {},
-    byType: {},
-    bySource: {},
+    bySeverity: {
+      [ErrorSeverity.LOW]: 0,
+      [ErrorSeverity.MEDIUM]: 0,
+      [ErrorSeverity.HIGH]: 0,
+      [ErrorSeverity.CRITICAL]: 0,
+    },
+    byType: {
+      [ErrorType.JAVASCRIPT]: 0,
+      [ErrorType.REACT]: 0,
+      [ErrorType.RUST]: 0,
+      [ErrorType.SYSTEM]: 0,
+      [ErrorType.NETWORK]: 0,
+      [ErrorType.API]: 0,
+      [ErrorType.TIMEOUT]: 0,
+      [ErrorType.VALIDATION]: 0,
+      [ErrorType.PERMISSION]: 0,
+      [ErrorType.NOT_FOUND]: 0,
+      [ErrorType.MEMORY]: 0,
+      [ErrorType.FILE]: 0,
+      [ErrorType.DATABASE]: 0,
+      [ErrorType.USER_INPUT]: 0,
+      [ErrorType.CONFIGURATION]: 0,
+      [ErrorType.UNKNOWN]: 0,
+    },
+    bySource: {
+      [ErrorSource.FRONTEND]: 0,
+      [ErrorSource.BACKEND]: 0,
+      [ErrorSource.SYSTEM]: 0,
+      [ErrorSource.EXTERNAL]: 0,
+    },
     hourlyTrend: [],
     topErrors: [],
   })
   const [isMonitoring, setIsMonitoring] = useState(false)
-  const [config, setConfig] = useState<ErrorMonitorConfig>(errorMonitoringService.getConfig())
 
   // 报告错误
   const reportError = useCallback(async (
@@ -80,7 +109,7 @@ export function useErrorMonitor(): UseErrorMonitorResult {
   }, [])
 
   // 重试错误
-  const retryError = useCallback(async (errorId: string): Promise<RecoveryResult> => {
+  const retryError = useCallback(async (_errorId: string): Promise<RecoveryResult> => {
     // 这里可以实现具体的重试逻辑
     return {
       success: true,
@@ -95,7 +124,6 @@ export function useErrorMonitor(): UseErrorMonitorResult {
   const updateConfig = useCallback(async (newConfig: Partial<ErrorMonitorConfig>): Promise<void> => {
     try {
       await errorMonitoringService.updateConfig(newConfig)
-      setConfig(errorMonitoringService.getConfig())
     } catch (err) {
       console.error('Failed to update config:', err)
     }

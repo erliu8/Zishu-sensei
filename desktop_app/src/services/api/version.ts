@@ -583,15 +583,3 @@ export const versionUtils = {
     }
   },
 }
-
-/**
- * 导出类型
- */
-export type {
-  ApiVersion,
-  VersionMigration,
-  MigrationStep,
-  VersionCompatibility,
-  VersionManagerConfig,
-}
-

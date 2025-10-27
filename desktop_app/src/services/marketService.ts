@@ -4,7 +4,7 @@
  * 提供适配器和主题商店的客户端功能
  */
 
-import { invoke } from '@tauri-apps/api/core';
+import { invoke } from '@tauri-apps/api/tauri';
 import { CommandResponse, PaginatedResponse } from './types';
 
 // ================================

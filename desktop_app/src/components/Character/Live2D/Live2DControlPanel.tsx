@@ -10,7 +10,6 @@ import {
   Live2DControlPanelProps,
   Live2DAnimationConfig,
   Live2DAnimationType,
-  Live2DViewerConfig,
   LIVE2D_ANIMATION_PRIORITY
 } from '@/types/live2d'
 import './Live2DControlPanel.css'
@@ -29,8 +28,7 @@ export const Live2DControlPanel: React.FC<Live2DControlPanelProps> = ({
   onStopAnimation,
   onSetExpression,
   onResetTransform,
-  onToggleFullscreen,
-  onUpdateSettings
+  onToggleFullscreen
 }) => {
   // ==================== State ====================
   const [activeTab, setActiveTab] = useState<'animations' | 'expressions' | 'settings'>('animations')
@@ -105,12 +103,6 @@ export const Live2DControlPanel: React.FC<Live2DControlPanelProps> = ({
     onSetExpression(index)
   }, [onSetExpression])
 
-  /**
-   * 更新设置
-   */
-  const handleUpdateSettings = useCallback((settings: Partial<Live2DViewerConfig>) => {
-    onUpdateSettings(settings)
-  }, [onUpdateSettings])
 
   // ==================== 渲染函数 ====================
 
@@ -158,7 +150,7 @@ export const Live2DControlPanel: React.FC<Live2DControlPanelProps> = ({
             </div>
             
             <div className="live2d-control-panel__animation-items">
-              {currentTypeAnimations.map((animation, index) => (
+              {currentTypeAnimations.map((animation) => (
                 <button
                   key={`${animation.group}_${animation.index || 0}`}
                   className={`live2d-control-panel__animation-item ${
@@ -175,7 +167,7 @@ export const Live2DControlPanel: React.FC<Live2DControlPanelProps> = ({
                     {animation.group}[{animation.index || 0}]
                   </span>
                   <span className="live2d-control-panel__animation-priority">
-                    P{animation.priority || ANIMATION_PRIORITY.NORMAL}
+                    P{animation.priority || LIVE2D_ANIMATION_PRIORITY.NORMAL}
                   </span>
                 </button>
               ))}

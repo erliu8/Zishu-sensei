@@ -13,9 +13,17 @@ import type {
     AppCommand,
     TauriCommandPayload,
     TauriEnvironment,
-    TauriError,
     TauriResponse
 } from '../../types/tauri'
+
+/**
+ * Tauri 错误接口
+ */
+export interface TauriError extends Error {
+    code?: string
+    command?: string
+    payload?: any
+}
 
 /**
  * Tauri 核心服务类
@@ -67,12 +75,12 @@ export class TauriService {
             if (!TauriService.isTauriEnv()) {
                 console.warn('Not running in Tauri environment')
                 this._environment = {
-                    isTauriEnv: false,
-                    version: 'unknown',
                     platform: 'web',
                     arch: 'unknown',
-                    locale: navigator.language || 'en-US',
-                    theme: 'light'
+                    os: 'unknown',
+                    version: '1.0.0',
+                    tauriVersion: 'unknown',
+                    webviewVersion: 'unknown'
                 }
                 this._isReady = true
                 return
@@ -96,12 +104,12 @@ export class TauriService {
             ])
 
             this._environment = {
-                isTauriEnv: true,
-                version: appVersion,
                 platform: platformName,
                 arch: archName,
-                locale: localeName,
-                theme: currentTheme
+                os: platformName,
+                version: appVersion,
+                tauriVersion: tauriVersion as string,
+                webviewVersion: 'unknown'
             }
 
             this._isReady = true
@@ -150,28 +158,22 @@ export class TauriService {
         try {
             await this.waitForReady()
 
-            if (!this._environment?.isTauriEnv) {
+            if (!TauriService.isTauriEnv()) {
                 throw new Error('Not running in Tauri environment')
             }
 
-            const startTime = Date.now()
             const result = await this._safeInvoke<T>(command, payload)
-            const endTime = Date.now()
 
             return {
                 success: true,
-                data: result,
-                timestamp: endTime,
-                code: 200
+                data: result
             }
         } catch (error) {
             console.error(`Command '${command}' failed:`, error)
 
             return {
                 success: false,
-                error: error instanceof Error ? error.message : String(error),
-                code: 500,
-                timestamp: Date.now()
+                error: error instanceof Error ? error.message : String(error)
             }
         }
     }

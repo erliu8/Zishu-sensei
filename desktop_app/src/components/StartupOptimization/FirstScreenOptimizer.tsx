@@ -5,12 +5,12 @@
 import React, { useEffect, useState, useCallback, useRef } from 'react';
 import { resourcePreloader, PreloadResource, smartPreloadResources } from '../../utils/resourcePreloader';
 import { useStartupOptimization } from '../../hooks/useStartupOptimization';
+import { StartupPhase } from '../../types/startup';
 import './FirstScreenOptimizer.css';
 
 interface FirstScreenOptimizerProps {
   children: React.ReactNode;
   criticalResources?: PreloadResource[];
-  enableVirtualization?: boolean;
   enableImageOptimization?: boolean;
   enableCSSOptimization?: boolean;
   onOptimizationComplete?: () => void;
@@ -30,7 +30,6 @@ interface OptimizationStage {
 export const FirstScreenOptimizer: React.FC<FirstScreenOptimizerProps> = ({
   children,
   criticalResources = [],
-  enableVirtualization = true,
   enableImageOptimization = true,
   enableCSSOptimization = true,
   onOptimizationComplete,
@@ -42,7 +41,7 @@ export const FirstScreenOptimizer: React.FC<FirstScreenOptimizerProps> = ({
   const [stages, setStages] = useState<OptimizationStage[]>([]);
   const [isReady, setIsReady] = useState(false);
   
-  const { startupState } = useStartupOptimization();
+  const { progress } = useStartupOptimization();
   const optimizationRef = useRef<boolean>(false);
 
   // 定义优化阶段
@@ -165,9 +164,9 @@ export const FirstScreenOptimizer: React.FC<FirstScreenOptimizerProps> = ({
       });
 
       // 内联关键 CSS
-      const criticalCSS = await this.loadCriticalCSS();
+      const criticalCSS = await loadCriticalCSS();
       if (criticalCSS) {
-        this.inlineCriticalCSS(criticalCSS);
+        inlineCriticalCSS(criticalCSS);
       }
 
       updateProgress('critical-css', 100);
@@ -332,7 +331,7 @@ export const FirstScreenOptimizer: React.FC<FirstScreenOptimizerProps> = ({
   }, [updateProgress]);
 
   // 加载关键 CSS
-  private loadCriticalCSS = async (): Promise<string | null> => {
+  const loadCriticalCSS = useCallback(async (): Promise<string | null> => {
     try {
       const response = await fetch('/css/critical.css');
       return await response.text();
@@ -340,15 +339,15 @@ export const FirstScreenOptimizer: React.FC<FirstScreenOptimizerProps> = ({
       console.error('Failed to load critical CSS:', error);
       return null;
     }
-  };
+  }, []);
 
   // 内联关键 CSS
-  private inlineCriticalCSS = (css: string): void => {
+  const inlineCriticalCSS = useCallback((css: string): void => {
     const style = document.createElement('style');
     style.textContent = css;
     style.dataset.critical = 'true';
     document.head.insertBefore(style, document.head.firstChild);
-  };
+  }, []);
 
   // 执行所有优化
   const runOptimizations = useCallback(async () => {
@@ -391,10 +390,12 @@ export const FirstScreenOptimizer: React.FC<FirstScreenOptimizerProps> = ({
 
   // 开始优化
   useEffect(() => {
-    if (startupState.phase === 'initializing' || startupState.phase === 'loading') {
+    if (progress.currentPhase === StartupPhase.AppInitialization || 
+        progress.currentPhase === StartupPhase.FrontendInitialization ||
+        progress.currentPhase === null) {
       runOptimizations();
     }
-  }, [startupState.phase, runOptimizations]);
+  }, [progress.currentPhase, runOptimizations]);
 
   // 渲染优化 UI
   if (isOptimizing) {

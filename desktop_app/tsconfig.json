@@ -1,6 +1,7 @@
 {
     "compilerOptions": {
         "target": "ES2020",
+        "downlevelIteration": true,
         "useDefineForClassFields": true,
         "lib": [
             "ES2020",
@@ -8,9 +9,9 @@
             "DOM.Iterable"
         ],
         "module": "ESNext",
+        "moduleResolution": "bundler",
         "skipLibCheck": true,
         /* Bundler mode */
-        "moduleResolution": "bundler",
         "allowImportingTsExtensions": true,
         "resolveJsonModule": true,
         "isolatedModules": true,
@@ -59,6 +60,12 @@
             ],
             "@/contexts/*": [
                 "src/contexts/*"
+            ],
+            "@/services/*": [
+                "src/services/*"
+            ],
+            "@/tests/*": [
+                "src/tests/*"
             ]
         },
         /* Additional options */

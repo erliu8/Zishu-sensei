@@ -219,21 +219,6 @@ declare global {
         __APP_VERSION__?: string
         __BUILD_TIME__?: string
     }
-    
-    interface ImportMeta {
-        readonly env: ImportMetaEnv
-        readonly hot?: {
-            accept(): void
-            accept(cb: () => void): void
-        }
-    }
-    
-    interface ImportMetaEnv {
-        readonly DEV: boolean
-        readonly PROD: boolean
-        readonly MODE: string
-        readonly BASE_URL: string
-    }
 }
 
 // 导出类型

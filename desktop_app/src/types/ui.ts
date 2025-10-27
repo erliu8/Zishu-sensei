@@ -33,7 +33,7 @@ export type ModalSize = 'xs' | 'sm' | 'md' | 'lg' | 'xl' | 'full'
 /**
  * 按钮变体
  */
-export type ButtonVariant = 'primary' | 'secondary' | 'outline' | 'ghost' | 'link' | 'destructive'
+export type ButtonVariant = 'primary' | 'secondary' | 'outline' | 'ghost' | 'link' | 'destructive' | 'success' | 'warning' | 'error'
 
 /**
  * 按钮大小
@@ -61,9 +61,14 @@ export type ToastType = 'info' | 'success' | 'warning' | 'error'
 export type ToastPosition = 'top-left' | 'top-center' | 'top-right' | 'bottom-left' | 'bottom-center' | 'bottom-right'
 
 /**
- * 加载状态
+ * 加载状态（用于按钮等组件）
  */
-export interface LoadingState {
+export type LoadingState = 'idle' | 'loading' | 'success' | 'error'
+
+/**
+ * 加载状态详情（用于全局加载状态）
+ */
+export interface LoadingStateDetails {
     isLoading: boolean
     message?: string
     progress?: number

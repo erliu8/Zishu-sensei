@@ -1,13 +1,205 @@
 // 统一导出所有类型定义
-export * from './adapter'
-export * from './api'
-export * from './app'
+
+// 从adapter导出（排除重复的PaginatedResponse）
+export type {
+  AdapterStatus,
+  AdapterType,
+  CapabilityLevel,
+  PermissionLevel,
+  AdapterCapability,
+  AdapterResourceRequirements,
+  AdapterCompatibility,
+  AdapterMetadata,
+  AdapterInfo,
+  AdapterInstallRequest,
+  AdapterExecutionRequest,
+  AdapterConfigUpdateRequest,
+  AdapterSearchRequest,
+  CommandMetadata,
+  CommandResponse,
+  AdapterExecutionResult,
+  AdapterExecutionContext,
+  AdapterEvent,
+  AdapterMarketProduct,
+  AdapterMarketFilter,
+  AdapterConfigItem,
+  AdapterConfigSchema,
+  AdapterConfigValidationResult,
+  AdapterStatusInfo,
+  AdapterManagerStatus,
+  AdapterOperation,
+  AdapterOperationResult,
+  AdapterBatchOperationRequest,
+  AdapterBatchOperationResult,
+  DEFAULT_ADAPTER_CONFIG,
+  DEFAULT_RESOURCE_REQUIREMENTS,
+  DEFAULT_COMPATIBILITY,
+  SUPPORTED_ADAPTER_OPERATIONS,
+  ADAPTER_STATUS_PRIORITY,
+  CAPABILITY_LEVEL_PRIORITY,
+} from './adapter'
+
+// 从app导出（使用app的分页定义作为主要定义）
+export type {
+  AppError,
+  AppState,
+  WindowMode,
+  WindowState as AppWindowState,
+  ThemeMode,
+  AppSettings,
+  UserConfig,
+  AppEvent,
+  ApiResponse,
+  PaginationParams,
+  PaginatedResponse,
+  FileInfo,
+  ExportData,
+} from './app'
+
+// 从character导出
 export * from './character'
-export * from './chat'
-export * from './common'
-export * from './desktop'
-export * from './live2d'
-export * from './settings'
+
+// 从chat导出（排除重复的PaginationParams和PaginatedResponse）
+export type {
+  MessageRole,
+  MessageStatus,
+  MessageType,
+  SessionStatus,
+  SessionType,
+  StreamStatus,
+  FinishReason,
+  MessageContent,
+  MessageMetadata,
+  ChatMessage,
+  SimpleMessage,
+  SessionConfig,
+  ChatSession,
+  StreamChunk,
+  StreamOptions,
+  ChatRequest,
+  ChatResponse,
+  HistoryQueryParams,
+  ChatHistoryResponse,
+  SessionStats,
+  GlobalChatStats,
+  MessageExport,
+  MessageSearchOptions,
+  MessageSearchResult,
+  BatchOperationResult,
+  ChatContext,
+  ChatSuggestion,
+  ChatTemplate,
+  ChatEvent,
+  ChatEventListener,
+  ApiError,
+  OperationResult,
+  DEFAULT_SESSION_CONFIG,
+  MESSAGE_LIMITS,
+  SESSION_LIMITS,
+  TIMEOUT_CONFIG,
+} from './chat'
+
+// export * from './common' // Not a module
+
+// 从desktop导出（排除重复的WindowMode等）
+export type {
+  DesktopEnvironment,
+  WindowState,
+  SystemInfo,
+  AppInfo,
+  PerformanceMetrics,
+  ConnectivityStatus,
+  UpdateInfo,
+  TauriNotificationOptions,
+  TauriFileDialogOptions,
+  FileOperationResult,
+  ShortcutConfig,
+  OperationHistory,
+  RetryQueueItem,
+  DesktopAppState,
+  DesktopOperationState,
+  ShortcutState,
+  FileOperationState,
+  NotificationState,
+  DesktopStoreState,
+  DesktopApiConfig,
+  SyncStatus,
+  ErrorInfo,
+  RecoveryStrategy,
+  RetryConfig,
+  ErrorHandleResult,
+  DesktopEvent,
+  UseDesktopReturn,
+  UseDesktopApiReturn,
+  UseErrorHandlerReturn,
+  UseTaskMonitorReturn,
+  TaskExecutionContext,
+  TaskExecutionResult,
+  TaskQueueConfig,
+  TaskSchedulerState,
+} from './desktop'
+
+// 从live2d导出（明确指定以避免冲突）
+export type {
+  Position as Live2DPosition,
+  Size as Live2DSize,
+  Rect,
+  ColorConfig,
+  Live2DLoadState,
+  Live2DModelConfig,
+  Live2DAnimationDefinition,
+  Live2DExpressionDefinition,
+  Live2DRenderConfig,
+  Live2DModelState,
+  Live2DAnimationType,
+  Live2DAnimationPriority,
+  Live2DAnimationState,
+  Live2DAnimationConfig,
+  Live2DAnimationPlayInfo,
+  Live2DInteractionType,
+  Live2DInteractionArea,
+  Live2DInteractionEvent,
+  Live2DViewerTheme,
+  Live2DViewerControls,
+  Live2DViewerPerformance,
+  Live2DViewerConfig,
+  Live2DViewerEvent,
+  Live2DViewerEventHandler,
+  Live2DViewerEventMap,
+  UseLive2DViewerReturn,
+  Live2DViewerProps,
+  Live2DControlPanelProps,
+  Live2DLoadingIndicatorProps,
+  Live2DUtils,
+} from './live2d'
+
+// 从settings导出
+export type {
+  WindowPosition as SettingsWindowPosition,
+  CharacterId,
+  ThemeName,
+  ScaleValue,
+  WindowConfig,
+  CharacterConfig,
+  ThemeConfig,
+  SystemConfig,
+  AppConfig,
+  UpdateWindowConfigRequest,
+  UpdateCharacterConfigRequest,
+  UpdateThemeConfigRequest,
+  UpdateSystemConfigRequest,
+  PartialConfigUpdate,
+  ConfigPaths,
+  ConfigExportOptions,
+  ConfigImportOptions,
+  DEFAULT_CONFIG,
+  CONFIG_VALIDATION_RULES,
+  ConfigValidationError,
+  ConfigValidationResult,
+  ConfigChangeEvent,
+  ConfigHistoryEntry,
+} from './settings'
+
 export * from './sound'
 export * from './tauri'
 export * from './ui'

@@ -10,7 +10,7 @@
  * - 同步策略配置
  */
 
-import { invoke } from '@tauri-apps/api/core'
+import { invoke } from '@tauri-apps/api/tauri'
 import { EventEmitter } from 'events'
 import type { ApiClient } from '../api'
 
@@ -772,15 +772,3 @@ export class SyncManager extends EventEmitter {
 export function createSyncManager(apiClient: ApiClient, config?: Partial<SyncConfig>): SyncManager {
   return new SyncManager(apiClient, config)
 }
-
-/**
- * 导出类型
- */
-export type {
-  SyncConfig,
-  SyncItem,
-  SyncConflict,
-  SyncResult,
-  EntitySyncer,
-}
-

@@ -14,7 +14,6 @@ import {
   waitForCharacterAnimation,
   sendChatMessage,
   waitForAIResponse,
-  getUserMessages,
   getAIMessages,
   takeScreenshot,
   hasErrorMessage,
@@ -188,7 +187,7 @@ test.describe('角色切换 E2E 测试', () => {
       
       // 开始切换角色
       await page.click(E2E_SELECTORS.CHARACTER_SELECTOR);
-      await page.click(E2E_SELECTORS.CHARACTER_OPTION, { hasText: 'Shizuku' });
+      await page.locator(E2E_SELECTORS.CHARACTER_OPTION).filter({ hasText: 'Shizuku' }).click();
       
       // 验证加载指示器显示
       await waitForElement(page, E2E_SELECTORS.CHARACTER_LOADING, 1000);
@@ -233,7 +232,7 @@ test.describe('角色切换 E2E 测试', () => {
       
       // 尝试切换角色
       await page.click(E2E_SELECTORS.CHARACTER_SELECTOR);
-      await page.click(E2E_SELECTORS.CHARACTER_OPTION, { hasText: 'Shizuku' });
+      await page.locator(E2E_SELECTORS.CHARACTER_OPTION).filter({ hasText: 'Shizuku' }).click();
       
       // 等待错误提示
       await page.waitForTimeout(1000);
@@ -261,11 +260,8 @@ test.describe('角色切换 E2E 测试', () => {
         success: true,
       });
       
-      // 获取初始透明度
+      // 获取角色查看器
       const characterViewer = page.locator(E2E_SELECTORS.CHARACTER_VIEWER);
-      const initialOpacity = await characterViewer.evaluate((el) => {
-        return window.getComputedStyle(el).opacity;
-      });
       
       // 切换角色
       await switchCharacter(page, 'Shizuku');
@@ -791,7 +787,7 @@ test.describe('角色切换 E2E 测试', () => {
       
       // 尝试切换
       await page.click(E2E_SELECTORS.CHARACTER_SELECTOR);
-      await page.click(E2E_SELECTORS.CHARACTER_OPTION, { hasText: 'Shizuku' });
+      await page.locator(E2E_SELECTORS.CHARACTER_OPTION).filter({ hasText: 'Shizuku' }).click();
       
       // 验证错误提示
       await page.waitForTimeout(1000);

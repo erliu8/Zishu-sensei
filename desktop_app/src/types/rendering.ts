@@ -233,6 +233,8 @@ export interface WebGLConfig {
 export interface TexturePoolConfig {
   // 最大纹理数量
   maxTextures: number;
+  // 最大纹理大小
+  maxTextureSize?: number;
   // 纹理预加载数量
   preloadCount: number;
   // 是否启用压缩

@@ -6,12 +6,30 @@
  */
 
 import type {
-  Attachment,
-  AttachmentType,
   AttachmentValidation,
   FileSizeFormatOptions,
-  FILE_TYPES,
 } from './InputBox.types'
+import { AttachmentType } from './InputBox.types'
+
+// TypeScript type declaration for Intl.Segmenter
+declare namespace Intl {
+  interface SegmenterOptions {
+    granularity?: 'grapheme' | 'word' | 'sentence'
+    localeMatcher?: 'best fit' | 'lookup'
+  }
+
+  interface Segmenter {
+    segment(input: string): {
+      containing(codeUnitIndex: number): any
+      [Symbol.iterator](): IterableIterator<any>
+    }
+  }
+
+  const Segmenter: {
+    prototype: Segmenter
+    new (locales?: string | string[], options?: SegmenterOptions): Segmenter
+  }
+}
 
 // ==================== 文件类型判断 ====================
 
@@ -22,13 +40,13 @@ import type {
  */
 export function getFileType(mimeType: string): AttachmentType {
   if (mimeType.startsWith('image/')) {
-    return 'image'
+    return AttachmentType.IMAGE
   }
   if (mimeType.startsWith('audio/')) {
-    return 'audio'
+    return AttachmentType.AUDIO
   }
   if (mimeType.startsWith('video/')) {
-    return 'video'
+    return AttachmentType.VIDEO
   }
   if (
     mimeType.includes('pdf') ||
@@ -37,9 +55,9 @@ export function getFileType(mimeType: string): AttachmentType {
     mimeType.includes('msword') ||
     mimeType.includes('officedocument')
   ) {
-    return 'document'
+    return AttachmentType.DOCUMENT
   }
-  return 'other'
+  return AttachmentType.OTHER
 }
 
 /**

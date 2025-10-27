@@ -10,8 +10,8 @@
 
 import React from 'react'
 import { useMonitor } from '@/hooks/useMonitor'
-import { formatMonitorInfo, calculateMonitorStats, getPhysicalSize } from '@/types/monitor'
-import type { MonitorInfo } from '@/types/monitor'
+import { calculateMonitorStats, getPhysicalSize } from '@/types/monitor'
+import type { MonitorInfo as MonitorInfoType } from '@/types/monitor'
 
 /**
  * 显示器信息组件属性
@@ -30,7 +30,7 @@ export interface MonitorInfoProps {
 /**
  * 显示器卡片组件
  */
-const MonitorCard: React.FC<{ monitor: MonitorInfo; index: number }> = ({ monitor, index }) => {
+const MonitorCard: React.FC<{ monitor: MonitorInfoType; index: number }> = ({ monitor, index }) => {
   const physicalSize = getPhysicalSize(monitor)
   
   return (
@@ -210,7 +210,7 @@ export const MonitorInfo: React.FC<MonitorInfoProps> = ({
         </div>
       )}
 
-      <style jsx>{`
+      <style>{`
         .monitor-info {
           padding: 20px;
           background: var(--bg-secondary, #f8f9fa);

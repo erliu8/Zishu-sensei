@@ -209,7 +209,7 @@ class FileService {
   async downloadFileAsBlob(fileId: string): Promise<Blob> {
     const fileInfo = await this.getFile(fileId);
     const content = await this.readFileContent(fileId);
-    return new Blob([content], { type: fileInfo.mime_type });
+    return new Blob([content as BlobPart], { type: fileInfo.mime_type });
   }
 
   /**

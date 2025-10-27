@@ -56,8 +56,9 @@ const I18nProvider: React.FC<I18nProviderProps> = ({
 
   // 监听语言变化
   useEffect(() => {
-    const handleLanguageChange = async (event: CustomEvent) => {
-      const { language } = event.detail;
+    const handleLanguageChange = async (event: Event) => {
+      const customEvent = event as CustomEvent;
+      const { language } = customEvent.detail;
       
       try {
         setIsLoading(true);
@@ -70,10 +71,10 @@ const I18nProvider: React.FC<I18nProviderProps> = ({
       }
     };
 
-    window.addEventListener('languageChanged', handleLanguageChange as EventListener);
+    window.addEventListener('languageChanged', handleLanguageChange);
     
     return () => {
-      window.removeEventListener('languageChanged', handleLanguageChange as EventListener);
+      window.removeEventListener('languageChanged', handleLanguageChange);
     };
   }, [requiredNamespaces]);
 
@@ -94,6 +95,7 @@ const I18nProvider: React.FC<I18nProviderProps> = ({
   }
 
   return (
+    // @ts-ignore - React 18 兼容性问题
     <I18nextProvider i18n={i18n}>
       <Suspense fallback={fallback || <LoadingSpinner message="正在切换语言..." />}>
         {children}

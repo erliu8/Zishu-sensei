@@ -11,18 +11,15 @@
  * - 生命周期测试：初始化、更新、清理
  */
 
-import React from 'react'
 import { describe, it, expect, vi, beforeEach, afterEach } from 'vitest'
 import { screen, waitFor, act } from '@testing-library/react'
 import {
   renderWithProviders,
   mockTauriAPI,
   expectVisible,
-  expectHidden,
   expectHasClass,
   wait,
   randomString,
-  createMockFn,
 } from '../../../utils/test-utils'
 import { createMockSettings } from '../../../mocks/factories'
 
@@ -116,7 +113,7 @@ describe('TrayMenu 托盘菜单组件', () => {
           {
             id: 'sub-item-2',
             label: '子项目2',
-            disabled: true,
+            enabled: false,
           },
         ],
       },
@@ -418,9 +415,9 @@ describe('TrayMenu 托盘菜单组件', () => {
       // 更新设置
       const updatedSettings = {
         ...mockSettings,
-        system: {
-          ...mockSettings.system,
-          auto_start: true,
+        general: {
+          ...mockSettings.general,
+          startup_on_boot: true,
         },
       }
       
@@ -740,9 +737,9 @@ describe('TrayMenu 托盘菜单组件', () => {
       // 更新配置
       const newConfig = {
         ...mockSettings,
-        theme: {
-          ...mockSettings.theme,
-          current_theme: 'dark',
+        general: {
+          ...mockSettings.general,
+          theme: 'dark',
         },
       }
       

@@ -14,7 +14,7 @@
  */
 
 import { invoke } from '@tauri-apps/api/tauri';
-import { BaseDirectory, createDir, writeTextFile, readTextFile, exists } from '@tauri-apps/api/fs';
+import { createDir, writeTextFile, readTextFile, exists } from '@tauri-apps/api/fs';
 import { appLogDir, join } from '@tauri-apps/api/path';
 
 // ================================
@@ -530,7 +530,7 @@ export class Logger {
   /**
    * 开始性能监控
    */
-  public startPerformance(name: string): () => void {
+  public startPerformance(name: string): (metadata?: Record<string, any>) => void {
     const startTime = performance.now();
 
     return (metadata?: Record<string, any>) => {
@@ -568,7 +568,7 @@ export class Logger {
       end({ ...metadata, success: true });
       return result;
     } catch (error) {
-      end({ ...metadata, success: false, error });
+      end({ ...metadata, success: false, error: error });
       throw error;
     }
   }
@@ -587,7 +587,7 @@ export class Logger {
       end({ ...metadata, success: true });
       return result;
     } catch (error) {
-      end({ ...metadata, success: false, error });
+      end({ ...metadata, success: false, error: error });
       throw error;
     }
   }

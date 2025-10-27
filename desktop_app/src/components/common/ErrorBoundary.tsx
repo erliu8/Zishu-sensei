@@ -188,3 +188,63 @@ export const useErrorBoundary = () => {
     }
 }
 
+/**
+ * 简化的错误边界组件（用于懒加载等场景）
+ */
+interface SimpleErrorBoundaryProps {
+    children: ReactNode;
+    fallback?: (error: Error, retry: () => void) => ReactNode;
+}
+
+interface SimpleErrorBoundaryState {
+    hasError: boolean;
+    error: Error | null;
+}
+
+export class ErrorBoundary extends Component<SimpleErrorBoundaryProps, SimpleErrorBoundaryState> {
+    constructor(props: SimpleErrorBoundaryProps) {
+        super(props);
+        this.state = {
+            hasError: false,
+            error: null,
+        };
+    }
+
+    static getDerivedStateFromError(error: Error): SimpleErrorBoundaryState {
+        return {
+            hasError: true,
+            error,
+        };
+    }
+
+    componentDidCatch(error: Error, errorInfo: ErrorInfo) {
+        console.error('ErrorBoundary caught an error:', error, errorInfo);
+    }
+
+    retry = () => {
+        this.setState({ hasError: false, error: null });
+    };
+
+    render() {
+        if (this.state.hasError && this.state.error) {
+            if (this.props.fallback) {
+                return this.props.fallback(this.state.error, this.retry);
+            }
+
+            return (
+                <div className="error-boundary-fallback p-4 text-center">
+                    <p className="text-red-500">组件加载失败</p>
+                    <button 
+                        onClick={this.retry}
+                        className="mt-2 px-4 py-2 bg-blue-500 text-white rounded hover:bg-blue-600"
+                    >
+                        重试
+                    </button>
+                </div>
+            );
+        }
+
+        return this.props.children;
+    }
+}
+

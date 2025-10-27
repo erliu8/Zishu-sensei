@@ -422,28 +422,28 @@ export class ConversationApiService {
   /**
    * 收藏对话
    */
-  async favoriteConversation(conversationId: string): Promise<ApiResponse<void>> {
+  async favoriteConversation(conversationId: string): Promise<ApiResponse<Conversation>> {
     return this.updateConversation(conversationId, { isFavorite: true })
   }
 
   /**
    * 取消收藏对话
    */
-  async unfavoriteConversation(conversationId: string): Promise<ApiResponse<void>> {
+  async unfavoriteConversation(conversationId: string): Promise<ApiResponse<Conversation>> {
     return this.updateConversation(conversationId, { isFavorite: false })
   }
 
   /**
    * 置顶对话
    */
-  async pinConversation(conversationId: string): Promise<ApiResponse<void>> {
+  async pinConversation(conversationId: string): Promise<ApiResponse<Conversation>> {
     return this.updateConversation(conversationId, { isPinned: true })
   }
 
   /**
    * 取消置顶对话
    */
-  async unpinConversation(conversationId: string): Promise<ApiResponse<void>> {
+  async unpinConversation(conversationId: string): Promise<ApiResponse<Conversation>> {
     return this.updateConversation(conversationId, { isPinned: false })
   }
 
@@ -638,22 +638,5 @@ export class ConversationApiService {
  */
 export function createConversationApiService(apiClient: ApiClient): ConversationApiService {
   return new ConversationApiService(apiClient)
-}
-
-/**
- * 导出类型
- */
-export type {
-  Conversation,
-  Message,
-  MessageAttachment,
-  CreateConversationParams,
-  UpdateConversationParams,
-  SendMessageParams,
-  SearchConversationsParams,
-  SearchMessagesParams,
-  ConversationShareSettings,
-  ConversationShare,
-  ConversationExportFormat,
 }
 

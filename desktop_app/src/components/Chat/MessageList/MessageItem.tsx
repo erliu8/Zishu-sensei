@@ -35,8 +35,8 @@ import {
 } from 'lucide-react'
 import { format } from 'date-fns'
 import { zhCN } from 'date-fns/locale'
-import type {
-  ChatMessage,
+import type { ChatMessage } from '@/types/chat'
+import {
   MessageRole,
   MessageStatus,
   MessageType,

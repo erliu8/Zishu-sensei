@@ -4,7 +4,7 @@
  */
 import React, { useState, useEffect, useCallback } from 'react';
 import { useStartupOptimization } from '../../hooks/useStartupOptimization';
-import { StartupMetrics, PerformanceMetric } from '../../types/startup';
+import { StartupMetrics, StartupPhase } from '../../types/startup';
 import './StartupMonitor.css';
 
 interface StartupMonitorProps {
@@ -36,15 +36,14 @@ interface OptimizationRecommendation {
  */
 export const StartupMonitor: React.FC<StartupMonitorProps> = ({
   showRealTime = true,
-  showCharts = true,
   showRecommendations = true,
   onMetricsUpdate,
 }) => {
   const { 
-    startupState, 
-    getMetrics, 
-    getDetailedMetrics,
-    isStartupComplete,
+    progress, 
+    stats,
+    phaseExecution,
+    context,
   } = useStartupOptimization();
 
   const [metrics, setMetrics] = useState<StartupMetrics | null>(null);
@@ -53,10 +52,36 @@ export const StartupMonitor: React.FC<StartupMonitorProps> = ({
   const [isExpanded, setIsExpanded] = useState(false);
   const [selectedTab, setSelectedTab] = useState<'overview' | 'details' | 'recommendations'>('overview');
 
+  // 判断启动是否完成
+  const isStartupComplete = useCallback(() => {
+    return progress.currentPhase === StartupPhase.Completed || progress.progress >= 1;
+  }, [progress.currentPhase, progress.progress]);
+
+  // 从统计数据和阶段结果生成指标
+  const getMetrics = useCallback((): StartupMetrics | null => {
+    if (!stats.stats) return null;
+
+    const phases: Record<string, number> = {};
+    phaseExecution.phaseResults.forEach((result, phase) => {
+      if (result.duration) {
+        phases[phase] = result.duration;
+      }
+    });
+
+    return {
+      totalDuration: stats.stats.total_duration,
+      phases,
+      memoryUsage: stats.stats.memory_peak,
+      cpuUsage: stats.stats.cpu_usage_avg,
+      startTimestamp: context.startTime,
+      endTimestamp: context.startTime + stats.stats.total_duration,
+    };
+  }, [stats.stats, phaseExecution.phaseResults, context.startTime]);
+
   // 更新性能指标
   const updateMetrics = useCallback(async () => {
     try {
-      const currentMetrics = await getMetrics();
+      const currentMetrics = getMetrics();
       if (currentMetrics) {
         setMetrics(currentMetrics);
         onMetricsUpdate?.(currentMetrics);
@@ -413,25 +438,28 @@ export const StartupMonitor: React.FC<StartupMonitorProps> = ({
                 <div className="details-section">
                   <h4>阶段详情</h4>
                   <div className="phase-details">
-                    {Object.entries(metrics.phases).map(([phase, duration]) => (
-                      <div key={phase} className="phase-item">
-                        <div className="phase-info">
-                          <span className="phase-name">{phase}</span>
-                          <span className="phase-duration">{formatTime(duration)}</span>
+                    {Object.entries(metrics.phases).map(([phase, duration]) => {
+                      const durationMs = typeof duration === 'number' ? duration : 0;
+                      return (
+                        <div key={phase} className="phase-item">
+                          <div className="phase-info">
+                            <span className="phase-name">{phase}</span>
+                            <span className="phase-duration">{formatTime(durationMs)}</span>
+                          </div>
+                          <div className="phase-bar">
+                            <div 
+                              className="phase-fill"
+                              style={{ 
+                                width: `${(durationMs / metrics.totalDuration) * 100}%`,
+                                backgroundColor: getScoreColor(
+                                  Math.max(0, 100 - (durationMs / (metrics.totalDuration * 0.1)))
+                                )
+                              }}
+                            />
+                          </div>
                         </div>
-                        <div className="phase-bar">
-                          <div 
-                            className="phase-fill"
-                            style={{ 
-                              width: `${(duration / metrics.totalDuration) * 100}%`,
-                              backgroundColor: getScoreColor(
-                                Math.max(0, 100 - (duration / (metrics.totalDuration * 0.1)))
-                              )
-                            }}
-                          />
-                        </div>
-                      </div>
-                    ))}
+                      );
+                    })}
                   </div>
                 </div>
               </div>

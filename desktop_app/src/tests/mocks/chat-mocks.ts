@@ -10,10 +10,8 @@ import {
   createMockMessage, 
   createMockConversation, 
   createMockSettings,
-  createMockApiResponse,
-  createMockErrorResponse 
 } from './factories'
-import type { ChatMessage, ChatSession, ChatSettings } from '@/types/chat'
+import type { ChatSession } from '@/types/chat'
 
 // ==================== Mock WebSocket ====================
 
@@ -97,7 +95,7 @@ export class MockWebSocket {
 
 export const mockChatService = {
   // 发送消息
-  sendMessage: vi.fn((message: string, sessionId?: string) => {
+  sendMessage: vi.fn((_message: string, _sessionId?: string) => {
     const responses = [
       '这是一个测试回复',
       '我理解了您的问题',
@@ -119,14 +117,20 @@ export const mockChatService = {
     return Promise.resolve({
       id: `session-${Date.now()}`,
       title: title || '新对话',
+      type: 'chat' as const,
+      status: 'active' as const,
       messages: [],
+      config: {},
       createdAt: Date.now(),
       updatedAt: Date.now(),
+      lastActivityAt: Date.now(),
+      messageCount: 0,
+      totalTokens: 0,
     } as ChatSession)
   }),
 
   // 删除会话
-  deleteSession: vi.fn((sessionId: string) => {
+  deleteSession: vi.fn((_sessionId: string) => {
     return Promise.resolve()
   }),
 
@@ -171,7 +175,7 @@ export const mockChatService = {
   }),
 
   // 搜索消息
-  searchMessages: vi.fn((query: string, sessionId?: string) => {
+  searchMessages: vi.fn((query: string, _sessionId?: string) => {
     const mockResults = [
       createMockMessage({
         id: 'search-result-1',
@@ -203,7 +207,7 @@ export const mockVoiceService = {
   }),
 
   // 语音转文字
-  speechToText: vi.fn((audioBlob: Blob) => {
+  speechToText: vi.fn((_audioBlob: Blob) => {
     const texts = [
       '你好，我需要帮助',
       '请问如何使用这个功能',
@@ -215,7 +219,7 @@ export const mockVoiceService = {
   }),
 
   // 文字转语音
-  textToSpeech: vi.fn((text: string) => {
+  textToSpeech: vi.fn((_text: string) => {
     return Promise.resolve(new Blob(['mock tts audio'], { type: 'audio/mp3' }))
   }),
 
@@ -261,7 +265,7 @@ export const mockFileService = {
   }),
 
   // 删除文件
-  deleteFile: vi.fn((fileId: string) => {
+  deleteFile: vi.fn((_fileId: string) => {
     return Promise.resolve()
   }),
 
@@ -286,7 +290,7 @@ export const mockSettingsService = {
   }),
 
   // 保存设置
-  saveSettings: vi.fn((settings: Partial<ChatSettings>) => {
+  saveSettings: vi.fn((settings: any) => {
     return Promise.resolve({ ...createMockSettings(), ...settings })
   }),
 
@@ -300,7 +304,7 @@ export const mockSettingsService = {
 
 export const mockNotificationService = {
   // 显示通知
-  showNotification: vi.fn((title: string, options?: NotificationOptions) => {
+  showNotification: vi.fn((_title: string, _options?: NotificationOptions) => {
     return Promise.resolve()
   }),
 
@@ -318,7 +322,7 @@ export const mockNotificationService = {
 // ==================== Mock 剪贴板 API ====================
 
 export const mockClipboard = {
-  writeText: vi.fn((text: string) => Promise.resolve()),
+  writeText: vi.fn((_text: string) => Promise.resolve()),
   readText: vi.fn(() => Promise.resolve('剪贴板内容')),
   write: vi.fn(() => Promise.resolve()),
   read: vi.fn(() => Promise.resolve([] as ClipboardItem[])),
@@ -327,7 +331,7 @@ export const mockClipboard = {
 // ==================== Mock 媒体 API ====================
 
 export const mockMediaDevices = {
-  getUserMedia: vi.fn((constraints: MediaStreamConstraints) => {
+  getUserMedia: vi.fn((_constraints: MediaStreamConstraints) => {
     const mockTrack = {
       stop: vi.fn(),
       kind: 'audio',
@@ -357,9 +361,12 @@ export const mockMediaDevices = {
       addEventListener: vi.fn(),
       removeEventListener: vi.fn(),
       dispatchEvent: vi.fn(() => true),
+      onaddtrack: null,
+      onremovetrack: null,
+      getTrackById: vi.fn(() => null),
     }
 
-    return Promise.resolve(mockStream as MediaStream)
+    return Promise.resolve(mockStream as unknown as MediaStream)
   }),
 
   enumerateDevices: vi.fn(() => {
@@ -400,7 +407,7 @@ export class MockMediaRecorder {
     this.mimeType = options?.mimeType || 'audio/webm'
   }
 
-  start(timeslice?: number) {
+  start(_timeslice?: number) {
     this.state = 'recording'
     setTimeout(() => {
       this.onstart?.(new Event('start'))
@@ -445,16 +452,26 @@ export class MockMediaRecorder {
     }, 10)
   }
 
-  addEventListener(type: string, listener: EventListener) {
+  addEventListener(_type: string, _listener: EventListener) {
     // 实现事件监听器
   }
 
-  removeEventListener(type: string, listener: EventListener) {
+  removeEventListener(_type: string, _listener: EventListener) {
     // 移除事件监听器
   }
 }
 
 // ==================== Mock Speech Recognition ====================
+
+// Mock types for SpeechRecognition API
+interface MockSpeechRecognitionEvent extends Event {
+  results: SpeechRecognitionResultList
+  resultIndex: number
+}
+
+interface MockSpeechRecognitionErrorEvent extends Event {
+  error: string
+}
 
 export class MockSpeechRecognition {
   public continuous = false
@@ -466,15 +483,15 @@ export class MockSpeechRecognition {
 
   public onstart: ((event: Event) => void) | null = null
   public onend: ((event: Event) => void) | null = null
-  public onresult: ((event: SpeechRecognitionEvent) => void) | null = null
-  public onerror: ((event: SpeechRecognitionErrorEvent) => void) | null = null
+  public onresult: ((event: MockSpeechRecognitionEvent) => void) | null = null
+  public onerror: ((event: MockSpeechRecognitionErrorEvent) => void) | null = null
   public onspeechstart: ((event: Event) => void) | null = null
   public onspeechend: ((event: Event) => void) | null = null
   public onsoundstart: ((event: Event) => void) | null = null
   public onsoundend: ((event: Event) => void) | null = null
   public onaudiostart: ((event: Event) => void) | null = null
   public onaudioend: ((event: Event) => void) | null = null
-  public onnomatch: ((event: SpeechRecognitionEvent) => void) | null = null
+  public onnomatch: ((event: MockSpeechRecognitionEvent) => void) | null = null
 
   start() {
     setTimeout(() => {
@@ -492,7 +509,7 @@ export class MockSpeechRecognition {
             length: 1,
           }],
           resultIndex: 0,
-        } as SpeechRecognitionEvent
+        } as unknown as MockSpeechRecognitionEvent
 
         this.onresult?.(mockResult)
         
@@ -511,17 +528,17 @@ export class MockSpeechRecognition {
 
   abort() {
     setTimeout(() => {
-      const errorEvent = new Event('error') as SpeechRecognitionErrorEvent
+      const errorEvent = new Event('error') as unknown as MockSpeechRecognitionErrorEvent
       Object.defineProperty(errorEvent, 'error', { value: 'aborted' })
       this.onerror?.(errorEvent)
     }, 100)
   }
 
-  addEventListener(type: string, listener: EventListener) {
+  addEventListener(_type: string, _listener: EventListener) {
     // 实现事件监听器
   }
 
-  removeEventListener(type: string, listener: EventListener) {
+  removeEventListener(_type: string, _listener: EventListener) {
     // 移除事件监听器
   }
 }
@@ -562,8 +579,8 @@ export function setupChatMocks() {
   global.MediaRecorder = MockMediaRecorder as any
   
   // Mock SpeechRecognition
-  global.SpeechRecognition = MockSpeechRecognition as any
-  global.webkitSpeechRecognition = MockSpeechRecognition as any
+  (global as any).SpeechRecognition = MockSpeechRecognition as any;
+  (global as any).webkitSpeechRecognition = MockSpeechRecognition as any
   
   // Mock Navigator APIs
   Object.defineProperty(navigator, 'mediaDevices', {
@@ -597,7 +614,11 @@ export function setupChatMocks() {
   // Mock Notification
   global.Notification = vi.fn() as any
   global.Notification.requestPermission = vi.fn(() => Promise.resolve('granted'))
-  global.Notification.permission = 'granted'
+  Object.defineProperty(global.Notification, 'permission', {
+    value: 'granted',
+    writable: true,
+    configurable: true,
+  })
 }
 
 /**

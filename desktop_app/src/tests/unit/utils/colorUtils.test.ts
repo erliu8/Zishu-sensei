@@ -442,7 +442,7 @@ describe('colorUtils - 颜色调整', () => {
 
     it('应该限制在 0-100 范围内', () => {
       const white = '#FFFFFF'
-      const tooB right = adjustBrightness(white, 50)
+      const tooBright = adjustBrightness(white, 50)
       expect(hexToHsl(tooBright)?.l).toBe(100)
 
       const black = '#000000'

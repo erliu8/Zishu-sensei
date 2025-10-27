@@ -40,6 +40,33 @@ vi.mock('@/components/Character/Live2D/Live2DViewer', () => ({
   ))
 }))
 
+// Mock ModelLoader hook
+vi.mock('@/components/Character/ModelLoader', () => ({
+  useModelLoader: () => ({
+    currentCharacter: { id: 'hiyori', name: 'Hiyori' },
+    switchCharacter: vi.fn().mockResolvedValue(undefined)
+  })
+}))
+
+// Mock modelManager - 使用 vi.fn() 直接在 mock 中创建
+vi.mock('@/utils/modelManager', () => ({
+  modelManager: {
+    createModelConfig: vi.fn().mockResolvedValue({
+      id: 'hiyori',
+      path: '/models/hiyori/hiyori.model3.json',
+      textures: []
+    }),
+    setCurrentModelId: vi.fn(),
+    getAvailableModels: vi.fn().mockReturnValue([])
+  }
+}))
+
+// Mock CharacterTransition - 总是渲染 children 以简化测试
+vi.mock('@/components/Character/Animations/CharacterTransition', () => ({
+  CharacterTransitionWithLoading: ({ children }: any) => <>{children}</>,
+  TransitionType: 'fade'
+}))
+
 // 测试用角色数据
 const mockCharacter = {
   id: 'test-character-1',
@@ -64,7 +91,7 @@ describe('Character组件', () => {
   })
 
   describe('渲染测试', () => {
-    it('应该正确渲染角色组件', () => {
+    it('应该正确渲染角色组件', async () => {
       const mockOnInteraction = vi.fn()
       
       render(
@@ -74,8 +101,11 @@ describe('Character组件', () => {
         />
       )
 
-      const viewer = screen.getByTestId('live2d-viewer')
-      expect(viewer).toBeInTheDocument()
+      // 等待异步加载完成
+      await waitFor(() => {
+        const viewer = screen.getByTestId('live2d-viewer')
+        expect(viewer).toBeInTheDocument()
+      }, { timeout: 3000 })
     })
 
     it('当没有角色时应该返回null', () => {
@@ -91,7 +121,7 @@ describe('Character组件', () => {
       expect(container.firstChild).toBeNull()
     })
 
-    it('应该正确传递角色数据到Live2D组件', () => {
+    it('应该正确传递角色数据到Live2D组件', async () => {
       const mockOnInteraction = vi.fn()
       
       render(
@@ -101,8 +131,10 @@ describe('Character组件', () => {
         />
       )
 
-      const viewer = screen.getByTestId('live2d-viewer')
-      expect(viewer).toHaveAttribute('data-model-id', 'hiyori')
+      await waitFor(() => {
+        const viewer = screen.getByTestId('live2d-viewer')
+        expect(viewer).toHaveAttribute('data-model-id', 'hiyori')
+      }, { timeout: 3000 })
     })
 
     it('应该渲染包装容器并设置正确的样式', () => {
@@ -122,14 +154,13 @@ describe('Character组件', () => {
         height: '100%',
         pointerEvents: 'auto',
         display: 'flex',
-        alignItems: 'center',
-        justifyContent: 'center'
+        flexDirection: 'column'
       })
     })
   })
 
   describe('配置测试', () => {
-    it('应该正确生成Hiyori模型配置', () => {
+    it('应该正确生成Hiyori模型配置', async () => {
       const mockOnInteraction = vi.fn()
       
       render(
@@ -139,11 +170,13 @@ describe('Character组件', () => {
         />
       )
 
-      const viewer = screen.getByTestId('live2d-viewer')
-      expect(viewer).toHaveAttribute('data-model-id', 'hiyori')
+      await waitFor(() => {
+        const viewer = screen.getByTestId('live2d-viewer')
+        expect(viewer).toHaveAttribute('data-model-id', 'hiyori')
+      }, { timeout: 3000 })
     })
 
-    it('应该正确设置Live2D查看器配置', () => {
+    it('应该正确设置Live2D查看器配置', async () => {
       const mockOnInteraction = vi.fn()
       
       render(
@@ -154,10 +187,12 @@ describe('Character组件', () => {
       )
 
       // 验证Live2DViewer被调用
-      expect(screen.getByTestId('live2d-viewer')).toBeInTheDocument()
+      await waitFor(() => {
+        expect(screen.getByTestId('live2d-viewer')).toBeInTheDocument()
+      })
     })
 
-    it('配置应该使用useMemo缓存', () => {
+    it('配置应该使用useMemo缓存', async () => {
       const mockOnInteraction = vi.fn()
       
       const { rerender } = render(
@@ -166,6 +201,10 @@ describe('Character组件', () => {
           onInteraction={mockOnInteraction}
         />
       )
+
+      await waitFor(() => {
+        expect(screen.getByTestId('live2d-viewer')).toBeInTheDocument()
+      })
 
       // 重新渲染组件
       rerender(
@@ -176,10 +215,12 @@ describe('Character组件', () => {
       )
 
       // 验证组件仍然正常渲染
-      expect(screen.getByTestId('live2d-viewer')).toBeInTheDocument()
+      await waitFor(() => {
+        expect(screen.getByTestId('live2d-viewer')).toBeInTheDocument()
+      })
     })
 
-    it('应该包含正确的模型路径', () => {
+    it('应该包含正确的模型路径', async () => {
       const mockOnInteraction = vi.fn()
       
       render(
@@ -189,10 +230,12 @@ describe('Character组件', () => {
         />
       )
 
-      expect(screen.getByTestId('live2d-viewer')).toBeInTheDocument()
+      await waitFor(() => {
+        expect(screen.getByTestId('live2d-viewer')).toBeInTheDocument()
+      })
     })
 
-    it('应该包含动画配置', () => {
+    it('应该包含动画配置', async () => {
       const mockOnInteraction = vi.fn()
       
       render(
@@ -202,10 +245,12 @@ describe('Character组件', () => {
         />
       )
 
-      expect(screen.getByTestId('live2d-viewer')).toBeInTheDocument()
+      await waitFor(() => {
+        expect(screen.getByTestId('live2d-viewer')).toBeInTheDocument()
+      })
     })
 
-    it('应该包含表情配置', () => {
+    it('应该包含表情配置', async () => {
       const mockOnInteraction = vi.fn()
       
       render(
@@ -215,10 +260,12 @@ describe('Character组件', () => {
         />
       )
 
-      expect(screen.getByTestId('live2d-viewer')).toBeInTheDocument()
+      await waitFor(() => {
+        expect(screen.getByTestId('live2d-viewer')).toBeInTheDocument()
+      })
     })
 
-    it('应该设置正确的画布尺寸', () => {
+    it('应该设置正确的画布尺寸', async () => {
       const mockOnInteraction = vi.fn()
       
       render(
@@ -228,10 +275,12 @@ describe('Character组件', () => {
         />
       )
 
-      expect(screen.getByTestId('live2d-viewer')).toBeInTheDocument()
+      await waitFor(() => {
+        expect(screen.getByTestId('live2d-viewer')).toBeInTheDocument()
+      })
     })
 
-    it('应该启用交互功能', () => {
+    it('应该启用交互功能', async () => {
       const mockOnInteraction = vi.fn()
       
       render(
@@ -241,10 +290,12 @@ describe('Character组件', () => {
         />
       )
 
-      expect(screen.getByTestId('live2d-viewer')).toBeInTheDocument()
+      await waitFor(() => {
+        expect(screen.getByTestId('live2d-viewer')).toBeInTheDocument()
+      })
     })
 
-    it('应该启用自动空闲动画', () => {
+    it('应该启用自动空闲动画', async () => {
       const mockOnInteraction = vi.fn()
       
       render(
@@ -254,10 +305,12 @@ describe('Character组件', () => {
         />
       )
 
-      expect(screen.getByTestId('live2d-viewer')).toBeInTheDocument()
+      await waitFor(() => {
+        expect(screen.getByTestId('live2d-viewer')).toBeInTheDocument()
+      })
     })
 
-    it('应该设置性能配置', () => {
+    it('应该设置性能配置', async () => {
       const mockOnInteraction = vi.fn()
       
       render(
@@ -267,7 +320,9 @@ describe('Character组件', () => {
         />
       )
 
-      expect(screen.getByTestId('live2d-viewer')).toBeInTheDocument()
+      await waitFor(() => {
+        expect(screen.getByTestId('live2d-viewer')).toBeInTheDocument()
+      })
     })
   })
 
@@ -494,7 +549,7 @@ describe('Character组件', () => {
   })
 
   describe('边界情况测试', () => {
-    it('应该处理角色从有到无的变化', () => {
+    it('应该处理角色从有到无的变化', async () => {
       const mockOnInteraction = vi.fn()
       
       const { rerender, container } = render(
@@ -504,7 +559,9 @@ describe('Character组件', () => {
         />
       )
 
-      expect(screen.getByTestId('live2d-viewer')).toBeInTheDocument()
+      await waitFor(() => {
+        expect(screen.getByTestId('live2d-viewer')).toBeInTheDocument()
+      })
 
       rerender(
         <Character 
@@ -516,7 +573,7 @@ describe('Character组件', () => {
       expect(container.firstChild).toBeNull()
     })
 
-    it('应该处理角色从无到有的变化', () => {
+    it('应该处理角色从无到有的变化', async () => {
       const mockOnInteraction = vi.fn()
       
       const { rerender } = render(
@@ -535,10 +592,12 @@ describe('Character组件', () => {
         />
       )
 
-      expect(screen.getByTestId('live2d-viewer')).toBeInTheDocument()
+      await waitFor(() => {
+        expect(screen.getByTestId('live2d-viewer')).toBeInTheDocument()
+      })
     })
 
-    it('应该处理角色切换', () => {
+    it('应该处理角色切换', async () => {
       const mockOnInteraction = vi.fn()
       
       const { rerender } = render(
@@ -548,7 +607,9 @@ describe('Character组件', () => {
         />
       )
 
-      expect(screen.getByTestId('live2d-viewer')).toBeInTheDocument()
+      await waitFor(() => {
+        expect(screen.getByTestId('live2d-viewer')).toBeInTheDocument()
+      })
 
       const newCharacter = {
         id: 'test-character-2',
@@ -564,10 +625,12 @@ describe('Character组件', () => {
         />
       )
 
-      expect(screen.getByTestId('live2d-viewer')).toBeInTheDocument()
+      await waitFor(() => {
+        expect(screen.getByTestId('live2d-viewer')).toBeInTheDocument()
+      })
     })
 
-    it('应该处理undefined的onInteraction回调', () => {
+    it('应该处理undefined的onInteraction回调', async () => {
       render(
         <Character 
           character={mockCharacter} 
@@ -575,7 +638,9 @@ describe('Character组件', () => {
         />
       )
 
-      expect(screen.getByTestId('live2d-viewer')).toBeInTheDocument()
+      await waitFor(() => {
+        expect(screen.getByTestId('live2d-viewer')).toBeInTheDocument()
+      })
     })
 
     it('应该处理回调函数的变化', async () => {
@@ -589,6 +654,10 @@ describe('Character组件', () => {
           onInteraction={mockOnInteraction1}
         />
       )
+
+      await waitFor(() => {
+        expect(screen.getByTestId('live2d-viewer')).toBeInTheDocument()
+      })
 
       const viewer = screen.getByTestId('live2d-viewer')
       await user.click(viewer)
@@ -616,7 +685,7 @@ describe('Character组件', () => {
   })
 
   describe('性能测试', () => {
-    it('配置对象应该被正确缓存', () => {
+    it('配置对象应该被正确缓存', async () => {
       const mockOnInteraction = vi.fn()
       
       const { rerender } = render(
@@ -625,6 +694,10 @@ describe('Character组件', () => {
           onInteraction={mockOnInteraction}
         />
       )
+
+      await waitFor(() => {
+        expect(screen.getByTestId('live2d-viewer')).toBeInTheDocument()
+      })
 
       const viewer1 = screen.getByTestId('live2d-viewer')
 
@@ -643,7 +716,7 @@ describe('Character组件', () => {
       expect(viewer2).toBeInTheDocument()
     })
 
-    it('应该在多次渲染时保持稳定', () => {
+    it('应该在多次渲染时保持稳定', async () => {
       const mockOnInteraction = vi.fn()
       
       const { rerender } = render(
@@ -652,6 +725,10 @@ describe('Character组件', () => {
           onInteraction={mockOnInteraction}
         />
       )
+
+      await waitFor(() => {
+        expect(screen.getByTestId('live2d-viewer')).toBeInTheDocument()
+      })
 
       // 多次重新渲染
       for (let i = 0; i < 10; i++) {
@@ -663,7 +740,9 @@ describe('Character组件', () => {
         )
       }
 
-      expect(screen.getByTestId('live2d-viewer')).toBeInTheDocument()
+      await waitFor(() => {
+        expect(screen.getByTestId('live2d-viewer')).toBeInTheDocument()
+      })
     })
   })
 
@@ -678,6 +757,11 @@ describe('Character组件', () => {
           onInteraction={mockOnInteraction}
         />
       )
+
+      // 等待viewer加载
+      await waitFor(() => {
+        expect(screen.getByTestId('live2d-viewer')).toBeInTheDocument()
+      })
 
       // 模拟模型加载
       const triggerLoadButton = screen.getByTestId('trigger-load')
@@ -712,6 +796,10 @@ describe('Character组件', () => {
           onInteraction={mockOnInteraction}
         />
       )
+
+      await waitFor(() => {
+        expect(screen.getByTestId('live2d-viewer')).toBeInTheDocument()
+      })
 
       const viewer = screen.getByTestId('live2d-viewer')
 

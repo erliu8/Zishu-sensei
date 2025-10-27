@@ -9,11 +9,23 @@
  * - 更新检查
  */
 
-import { invoke } from '@tauri-apps/api/core'
+import { invoke } from '@tauri-apps/api/tauri'
 import { listen } from '@tauri-apps/api/event'
 import type { ApiResponse } from '@/types/app'
-import type { AppSettings, AppConfig } from '@/types/settings'
-import type { DesktopAppState, DesktopOperationState } from '@/stores/desktopStore'
+
+/**
+ * 应用设置
+ */
+interface AppSettings {
+    [key: string]: any
+}
+
+/**
+ * 应用配置
+ */
+interface AppConfig {
+    [key: string]: any
+}
 
 /**
  * API 配置
@@ -260,7 +272,7 @@ export class DesktopApi {
     async checkForUpdates(): Promise<ApiResponse<UpdateInfo | null>> {
         try {
             const currentVersion = await invoke<string>('get_app_version')
-            const response = await this.makeRequest('/api/desktop/updates/check', {
+            const response = await this.makeRequest<UpdateInfo | null>('/api/desktop/updates/check', {
                 method: 'POST',
                 body: JSON.stringify({
                     currentVersion,

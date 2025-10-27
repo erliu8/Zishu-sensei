@@ -10,13 +10,13 @@
  * - 1000 条消息滚动应该流畅
  */
 
-import { describe, it, expect, beforeEach, afterEach, vi } from 'vitest'
+import { describe, it, expect, vi } from 'vitest'
 import { render, screen, waitFor } from '@testing-library/react'
 import { renderWithProviders } from '../utils/test-utils'
 import { ChatWindow } from '@/components/Chat/ChatWindow'
-import { MessageList } from '@/components/Chat/MessageList'
-import { Chat } from '@/components/Chat'
+import MessageList from '@/components/Chat/MessageList/index'
 import type { ChatMessage } from '@/types/chat'
+import { MessageRole, MessageStatus, MessageType } from '@/types/chat'
 
 // ==================== 性能测试工具 ====================
 
@@ -31,26 +31,17 @@ function measureRenderTime(callback: () => void): number {
 }
 
 /**
- * 测量异步渲染时间
- */
-async function measureAsyncRenderTime(callback: () => Promise<void>): Promise<number> {
-  const startTime = performance.now()
-  await callback()
-  const endTime = performance.now()
-  return endTime - startTime
-}
-
-/**
  * 生成测试消息数据
  */
 function generateMessages(count: number): ChatMessage[] {
   return Array.from({ length: count }, (_, i) => ({
     id: `msg-${i}`,
+    sessionId: 'test-session',
     content: `测试消息 ${i}: ${Math.random().toString(36).substring(7)}`,
-    sender: i % 2 === 0 ? 'user' : 'assistant',
-    timestamp: new Date(Date.now() - (count - i) * 60000).toISOString(),
-    role: i % 2 === 0 ? 'user' as const : 'assistant' as const,
-    status: 'sent' as const,
+    timestamp: Date.now() - (count - i) * 60000,
+    role: i % 2 === 0 ? MessageRole.USER : MessageRole.ASSISTANT,
+    status: MessageStatus.SENT,
+    type: MessageType.TEXT,
   }))
 }
 
@@ -129,8 +120,6 @@ describe('渲染性能测试', () => {
     })
 
     it('有少量消息时渲染应该很快 (< 30ms)', () => {
-      const messages = generateMessages(10)
-      
       const renderTime = measureRenderTime(() => {
         render(
           <ChatWindow
@@ -337,11 +326,12 @@ describe('渲染性能测试', () => {
     it('渲染包含长文本的消息应该快速', () => {
       const longMessage: ChatMessage = {
         id: 'long-msg',
+        sessionId: 'test-session',
         content: generateLongMessage(1000), // 1000个单词
-        sender: 'assistant',
-        timestamp: new Date().toISOString(),
-        role: 'assistant',
-        status: 'sent',
+        timestamp: Date.now(),
+        role: MessageRole.ASSISTANT,
+        status: MessageStatus.SENT,
+        type: MessageType.TEXT,
       }
 
       const renderTime = measureRenderTime(() => {
@@ -363,16 +353,17 @@ describe('渲染性能测试', () => {
     it('渲染包含代码块的消息应该高效', () => {
       const codeMessage: ChatMessage = {
         id: 'code-msg',
+        sessionId: 'test-session',
         content: '```typescript\n' + 
                 'function fibonacci(n: number): number {\n' +
                 '  if (n <= 1) return n;\n' +
                 '  return fibonacci(n - 1) + fibonacci(n - 2);\n' +
                 '}\n' +
                 '```',
-        sender: 'assistant',
-        timestamp: new Date().toISOString(),
-        role: 'assistant',
-        status: 'sent',
+        timestamp: Date.now(),
+        role: MessageRole.ASSISTANT,
+        status: MessageStatus.SENT,
+        type: MessageType.TEXT,
       }
 
       const renderTime = measureRenderTime(() => {
@@ -394,11 +385,12 @@ describe('渲染性能测试', () => {
     it('渲染混合内容（文本+代码+列表）应该保持性能', () => {
       const mixedMessage: ChatMessage = {
         id: 'mixed-msg',
+        sessionId: 'test-session',
         content: `# 标题\n\n这是一段文本。\n\n## 代码示例\n\n\`\`\`javascript\nconsole.log('Hello');\n\`\`\`\n\n## 列表\n\n- 项目 1\n- 项目 2\n- 项目 3`,
-        sender: 'assistant',
-        timestamp: new Date().toISOString(),
-        role: 'assistant',
-        status: 'sent',
+        timestamp: Date.now(),
+        role: MessageRole.ASSISTANT,
+        status: MessageStatus.SENT,
+        type: MessageType.TEXT,
       }
 
       const renderTime = measureRenderTime(() => {
@@ -468,11 +460,12 @@ describe('渲染性能测试', () => {
     it('流式响应更新应该高效', async () => {
       const baseMessage: ChatMessage = {
         id: 'streaming-msg',
+        sessionId: 'test-session',
         content: '',
-        sender: 'assistant',
-        timestamp: new Date().toISOString(),
-        role: 'assistant',
-        status: 'sending',
+        timestamp: Date.now(),
+        role: MessageRole.ASSISTANT,
+        status: MessageStatus.SENDING,
+        type: MessageType.TEXT,
       }
 
       const { rerender } = renderWithProviders(

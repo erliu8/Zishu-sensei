@@ -67,7 +67,7 @@ export class TauriCommandService {
      * 关闭窗口
      */
     public async closeWindow(label: string) {
-        return this.execute('close_window', { label })
+        return this.execute('close_window')
     }
 
     /**
@@ -95,14 +95,14 @@ export class TauriCommandService {
      * 最小化窗口
      */
     public async minimizeWindow(label: string) {
-        return this.execute('minimize_window', { label })
+        return this.execute('minimize_window')
     }
 
     /**
      * 最大化窗口
      */
     public async maximizeWindow(label: string) {
-        return this.execute('maximize_window', { label })
+        return this.execute('maximize_window')
     }
 
     /**
@@ -146,7 +146,7 @@ export class TauriCommandService {
      * 写入文件
      */
     public async writeFile(path: string, contents: string) {
-        return this.execute('write_file', { path, contents })
+        return this.execute('write_file', { path, content: contents })
     }
 
     /**

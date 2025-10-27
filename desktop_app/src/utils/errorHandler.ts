@@ -5,7 +5,15 @@
  */
 
 import { ERROR_CODES, LOG_LEVELS } from '../constants/tauri'
-import type { ErrorContext, ErrorHandler, TauriError } from '../types/tauri'
+import type { ErrorContext, ErrorHandler, ErrorDetails } from '../types/error'
+import { ErrorType, ErrorSource, ErrorSeverity as ErrorSeverityEnum, ErrorStatus } from '../types/error'
+
+/**
+ * Tauri 错误接口 - 扩展 ErrorDetails
+ */
+export interface TauriError extends ErrorDetails {
+  // 继承 ErrorDetails 的所有属性，同时保持向后兼容
+}
 
 /**
  * 错误严重程度
@@ -39,16 +47,59 @@ export function createTauriError(
     code: string = ERROR_CODES.UNKNOWN_ERROR,
     category: ErrorCategory = ErrorCategory.SYSTEM,
     severity: string = 'medium',
-    context?: ErrorContext
+    context?: Partial<ErrorContext>
 ): TauriError {
-    const error = new Error(message) as TauriError
+    const timestamp = new Date().toISOString()
+    const errorId = `${code}_${Date.now()}`
+    
+    // Create a proper ErrorContext with required fields
+    const fullContext: ErrorContext = {
+        timestamp,
+        sessionId: 'default-session',
+        platform: typeof navigator !== 'undefined' ? navigator.platform : 'unknown',
+        appVersion: '1.0.0',
+        buildVersion: '1.0.0',
+        ...context
+    }
 
-    error.name = 'TauriError'
-    error.code = code
-    error.category = category
-    error.severity = severity
-    error.timestamp = Date.now()
-    error.context = context
+    // Map category to ErrorType
+    const mapCategoryToErrorType = (cat: ErrorCategory): ErrorType => {
+        switch (cat) {
+            case ErrorCategory.NETWORK: return ErrorType.NETWORK
+            case ErrorCategory.FILE: return ErrorType.FILE
+            case ErrorCategory.VALIDATION: return ErrorType.VALIDATION
+            case ErrorCategory.USER: return ErrorType.USER_INPUT
+            case ErrorCategory.SYSTEM: return ErrorType.SYSTEM
+            default: return ErrorType.UNKNOWN
+        }
+    }
+
+    // Map severity string to enum
+    const mapSeverityToEnum = (sev: string): ErrorSeverityEnum => {
+        switch (sev) {
+            case 'low': return ErrorSeverityEnum.LOW
+            case 'medium': return ErrorSeverityEnum.MEDIUM
+            case 'high': return ErrorSeverityEnum.HIGH
+            case 'critical': return ErrorSeverityEnum.CRITICAL
+            default: return ErrorSeverityEnum.MEDIUM
+        }
+    }
+
+    const error: TauriError = {
+        id: errorId,
+        errorId,
+        name: 'TauriError',
+        message,
+        type: mapCategoryToErrorType(category),
+        source: ErrorSource.FRONTEND,
+        severity: mapSeverityToEnum(severity),
+        status: ErrorStatus.NEW,
+        context: fullContext,
+        occurrenceCount: 1,
+        firstOccurred: timestamp,
+        lastOccurred: timestamp,
+        stack: new Error().stack
+    }
 
     return error
 }
@@ -79,7 +130,7 @@ export class TauriErrorHandler {
     /**
      * 处理错误
      */
-    public async handle(error: Error | TauriError | string, context?: ErrorContext): Promise<void> {
+    public async handle(error: Error | TauriError | string, context?: Partial<ErrorContext>): Promise<void> {
         const tauriError = this.normalizeError(error, context)
 
         // 记录错误历史
@@ -89,7 +140,7 @@ export class TauriErrorHandler {
         this.logError(tauriError)
 
         // 查找特定处理器
-        const handler = this.handlers.get(tauriError.code)
+        const handler = this.handlers.get(tauriError.errorId)
         if (handler) {
             try {
                 await handler(tauriError)
@@ -116,7 +167,7 @@ export class TauriErrorHandler {
     /**
      * 标准化错误对象
      */
-    private normalizeError(error: Error | TauriError | string, context?: ErrorContext): TauriError {
+    private normalizeError(error: Error | TauriError | string, context?: Partial<ErrorContext>): TauriError {
         if (typeof error === 'string') {
             return createTauriError(error, ERROR_CODES.UNKNOWN_ERROR, ErrorCategory.SYSTEM, 'medium', context)
         }
@@ -145,7 +196,7 @@ export class TauriErrorHandler {
      * 检查是否为 TauriError
      */
     private isTauriError(error: any): error is TauriError {
-        return error && error.name === 'TauriError' && typeof error.code === 'string'
+        return error && (error.name === 'TauriError' || error.errorId) && typeof error.id === 'string'
     }
 
     /**
@@ -201,16 +252,19 @@ export class TauriErrorHandler {
      * 格式化错误消息
      */
     private formatErrorMessage(error: TauriError): string {
-        const timestamp = new Date(error.timestamp).toISOString()
-        return `[${timestamp}] [${error.severity.toUpperCase()}] [${error.category}] ${error.code}: ${error.message}`
+        const timestamp = error.context.timestamp
+        const severity = error.severity.toString()
+        const type = error.type.toString()
+        return `[${timestamp}] [${severity.toUpperCase()}] [${type}] ${error.errorId}: ${error.message}`
     }
 
     /**
      * 默认错误处理
      */
     private defaultHandle(error: TauriError): void {
+        const severity = error.severity.toString()
         // 根据严重程度决定处理方式
-        switch (error.severity) {
+        switch (severity) {
             case 'critical':
                 // 关键错误，可能需要重启应用
                 console.error('Critical error occurred:', error)
@@ -271,9 +325,11 @@ export class TauriErrorHandler {
 
         // 统计错误
         this.errorHistory.forEach(error => {
-            stats.bySeverity[error.severity]++
-            stats.byCategory[error.category]++
-            stats.byCode[error.code] = (stats.byCode[error.code] || 0) + 1
+            const severity = error.severity.toString()
+            const type = error.type.toString()
+            stats.bySeverity[severity] = (stats.bySeverity[severity] || 0) + 1
+            stats.byCategory[type as ErrorCategory] = (stats.byCategory[type as ErrorCategory] || 0) + 1
+            stats.byCode[error.errorId] = (stats.byCode[error.errorId] || 0) + 1
         })
 
         return stats
@@ -376,7 +432,12 @@ export const errorRecovery = {
             ERROR_CODES.OPERATION_FAILED,
             ErrorCategory.SYSTEM,
             'high',
-            { originalError: lastError!, attempts: maxAttempts }
+            { 
+                metadata: { 
+                    originalError: lastError!.message, 
+                    attempts: maxAttempts 
+                } 
+            }
         )
     },
 
@@ -396,7 +457,7 @@ export const errorRecovery = {
                         ERROR_CODES.TIMEOUT,
                         ErrorCategory.SYSTEM,
                         'medium',
-                        { timeout }
+                        { metadata: { timeout } }
                     ))
                 }, timeout)
             })
@@ -413,7 +474,7 @@ export const errorRecovery = {
         try {
             return await operation()
         } catch (error) {
-            await errorHandler.handle(error)
+            await errorHandler.handle(error as Error)
             return fallback
         }
     }
@@ -442,7 +503,7 @@ export const userFriendlyMessages: Record<string, string> = {
  * 获取用户友好的错误消息
  */
 export function getUserFriendlyMessage(error: TauriError | string): string {
-    const code = typeof error === 'string' ? error : error.code
+    const code = typeof error === 'string' ? error : error.errorId
     return userFriendlyMessages[code] || '发生了未知错误'
 }
 
@@ -460,8 +521,8 @@ export function initializeErrorHandling(): void {
         // 在开发环境中显示详细错误信息
         if (process.env.NODE_ENV === 'development') {
             console.group('Error Details')
-            console.log('Code:', error.code)
-            console.log('Category:', error.category)
+            console.log('ID:', error.errorId)
+            console.log('Type:', error.type)
             console.log('Severity:', error.severity)
             console.log('Context:', error.context)
             console.log('Stack:', error.stack)

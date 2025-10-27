@@ -713,11 +713,14 @@ export const useDesktop = (): UseDesktopReturn => {
     const registerGlobalShortcuts = useCallback(() => {
         // 显示/隐藏窗口
         register({
-            key: 'Space',
-            ctrl: true,
-            alt: true,
-            global: true,
+            id: 'window-toggle-visibility',
+            name: '显示/隐藏窗口',
             description: '显示/隐藏窗口',
+            key: 'Space',
+            modifiers: { ctrl: true, alt: true },
+            scope: 'global',
+            category: 'window',
+            enabled: true,
             callback: async () => {
                 if (state.isMinimizedToTray) {
                     await restoreFromTray()
@@ -729,10 +732,14 @@ export const useDesktop = (): UseDesktopReturn => {
 
         // 打开设置
         register({
-            key: ',',
-            ctrl: true,
-            global: true,
+            id: 'system-open-settings',
+            name: '打开设置',
             description: '打开设置',
+            key: ',',
+            modifiers: { ctrl: true },
+            scope: 'global',
+            category: 'settings',
+            enabled: true,
             callback: () => {
                 window.dispatchEvent(new CustomEvent('open-settings'))
             },
@@ -740,11 +747,14 @@ export const useDesktop = (): UseDesktopReturn => {
 
         // 退出应用
         register({
-            key: 'Q',
-            ctrl: true,
-            shift: true,
-            global: true,
+            id: 'system-quit',
+            name: '退出应用',
             description: '退出应用',
+            key: 'Q',
+            modifiers: { ctrl: true, shift: true },
+            scope: 'global',
+            category: 'system',
+            enabled: true,
             callback: async () => {
                 await close()
             },
@@ -753,18 +763,23 @@ export const useDesktop = (): UseDesktopReturn => {
 
     // 取消注册全局快捷键
     const unregisterGlobalShortcuts = useCallback(() => {
-        unregister('Space-true-true-false-false')
-        unregister(',-true-false-false-false')
-        unregister('Q-true-false-true-false')
+        unregister('window-toggle-visibility')
+        unregister('system-open-settings')
+        unregister('system-quit')
     }, [unregister])
 
     // 注册单个快捷键
     const registerShortcut = useCallback(async (shortcut: string, callback: () => void) => {
         await executeOperation('register_shortcut', async () => {
             register({
-                key: shortcut,
-                global: true,
+                id: `custom-${shortcut}`,
+                name: `自定义快捷键: ${shortcut}`,
                 description: `自定义快捷键: ${shortcut}`,
+                key: shortcut,
+                modifiers: {},
+                scope: 'global',
+                category: 'custom',
+                enabled: true,
                 callback,
             })
         })

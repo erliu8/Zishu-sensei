@@ -7,7 +7,6 @@
 import { useState, useEffect, useCallback, useRef } from 'react';
 import { 
   performanceIntegration, 
-  PerformanceIntegrationService, 
   IntegrationConfig, 
   DEFAULT_INTEGRATION_CONFIG 
 } from '../services/performanceIntegration';
@@ -386,11 +385,21 @@ export function useNetworkTracker() {
   // 追踪 fetch 请求
   const trackFetch = useCallback(async (
     url: string,
-    options?: RequestInit,
-    metadata?: any
+    options?: RequestInit
   ): Promise<Response> => {
     const startTime = Date.now();
     const method = options?.method || 'GET';
+
+    // 计算请求体大小
+    const getBodySize = (body?: BodyInit | null): number => {
+      if (!body) return 0;
+      if (typeof body === 'string') return new Blob([body]).size;
+      if (body instanceof Blob) return body.size;
+      if (body instanceof ArrayBuffer) return body.byteLength;
+      if (body instanceof FormData) return 0; // FormData 大小难以准确计算
+      if (body instanceof URLSearchParams) return body.toString().length;
+      return 0;
+    };
 
     try {
       const response = await fetch(url, options);
@@ -410,7 +419,7 @@ export function useNetworkTracker() {
           wait_time: endTime - startTime,
           receive_time: 0,
         },
-        options?.body ? new Blob([options.body]).size : 0,
+        getBodySize(options?.body),
         0 // 响应大小需要从响应头获取
       );
 
@@ -432,7 +441,7 @@ export function useNetworkTracker() {
           wait_time: endTime - startTime,
           receive_time: 0,
         },
-        options?.body ? new Blob([options.body]).size : 0,
+        getBodySize(options?.body),
         0,
         'fetch_error',
         error instanceof Error ? error.message : 'Unknown error'
@@ -453,29 +462,28 @@ export function useNetworkTracker() {
  * 手动记录自定义性能指标
  */
 export function useMetricsTracker() {
-  const integration = performanceIntegration;
-
   const trackMetric = useCallback(async (
     name: string,
     value: number,
     unit: string,
     category: string,
     component?: string,
-    metadata?: any
+    metadata?: Record<string, any>
   ) => {
     try {
-      await integration.performanceService.recordMetric(
+      // 使用公开的 API 记录指标
+      await performanceIntegration.recordMetric(
         name,
         value,
         unit,
-        category as any,
+        category,
         component,
-        metadata ? JSON.stringify(metadata) : undefined
+        metadata
       );
     } catch (error) {
       console.error('记录性能指标失败:', error);
     }
-  }, [integration]);
+  }, []);
 
   const trackTiming = useCallback(async (
     name: string,

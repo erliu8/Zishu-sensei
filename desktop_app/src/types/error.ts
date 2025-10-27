@@ -452,4 +452,4 @@ export interface ErrorFormatter {
 // 导出所有类型
 // ================================
 
-export * from './common'
+// export * from './common' // Not a module

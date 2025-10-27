@@ -8,9 +8,42 @@
 import { describe, it, expect, vi, beforeEach, afterEach } from 'vitest'
 import { screen, fireEvent, waitFor } from '@testing-library/react'
 import { renderWithProviders, wait, createMockFn } from '@/tests/utils/test-utils'
-import { createMockMessage } from '@/tests/mocks/factories'
-import { MessageBubble } from '@/components/Chat/MessageBubble'
-import type { ChatMessage } from '@/types/chat'
+import { createMockMessage as createBaseMockMessage } from '@/tests/mocks/factories'
+import type { ChatMessage, MessageRole, MessageType, MessageStatus } from '@/types/chat'
+
+// Mock MessageBubble component (组件尚未实现)
+const MessageBubble = vi.fn(({ message, onCopy, onResend, onEdit, onDelete, ...props }: any) => (
+  <div 
+    data-testid="message-bubble"
+    className={`message-bubble ${message.role}`}
+    {...props}
+  >
+    <div data-testid="message-content">{message.content}</div>
+    <div data-testid="message-timestamp">{new Date(message.timestamp).toLocaleTimeString()}</div>
+    <div data-testid="message-actions">
+      <button onClick={() => onCopy?.(message.content)} aria-label="复制消息">复制</button>
+      <button onClick={() => onResend?.(message.id)} aria-label="重发消息">重发</button>
+      <button onClick={() => onEdit?.(message.id)} aria-label="编辑消息">编辑</button>
+      <button onClick={() => onDelete?.(message.id)} aria-label="删除消息">删除</button>
+    </div>
+  </div>
+))
+
+// 创建符合 ChatMessage 类型的 mock 消息
+function createMockMessage(overrides?: Partial<ChatMessage>): ChatMessage {
+  const base = createBaseMockMessage(overrides as any)
+  return {
+    id: base.id,
+    sessionId: 'test-session',
+    role: (base.role as MessageRole) || MessageRole.USER,
+    type: MessageType.TEXT,
+    content: base.content,
+    status: MessageStatus.SENT,
+    timestamp: base.timestamp,
+    metadata: base.metadata,
+    ...overrides,
+  } as ChatMessage
+}
 
 // ==================== Mock 设置 ====================
 

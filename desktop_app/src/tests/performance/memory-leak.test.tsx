@@ -15,9 +15,9 @@ import { describe, it, expect, beforeEach, afterEach, vi } from 'vitest'
 import { render, waitFor } from '@testing-library/react'
 import { renderWithProviders } from '../utils/test-utils'
 import { ChatWindow } from '@/components/Chat/ChatWindow'
-import { MessageList } from '@/components/Chat/MessageList'
-import { Chat } from '@/components/Chat'
+import MessageList from '@/components/Chat/MessageList/index'
 import type { ChatMessage } from '@/types/chat'
+import { MessageRole, MessageStatus, MessageType } from '@/types/chat'
 
 // ==================== 测试工具 ====================
 
@@ -178,11 +178,12 @@ class RAFMonitor {
 function generateMessages(count: number): ChatMessage[] {
   return Array.from({ length: count }, (_, i) => ({
     id: `msg-${i}`,
+    sessionId: 'test-session',
     content: `测试消息 ${i}`,
-    sender: i % 2 === 0 ? 'user' : 'assistant',
-    timestamp: new Date(Date.now() - (count - i) * 60000).toISOString(),
-    role: i % 2 === 0 ? 'user' as const : 'assistant' as const,
-    status: 'sent' as const,
+    timestamp: Date.now() - (count - i) * 60000,
+    role: i % 2 === 0 ? MessageRole.USER : MessageRole.ASSISTANT,
+    status: MessageStatus.SENT,
+    type: MessageType.TEXT,
   }))
 }
 
@@ -349,11 +350,12 @@ describe('内存泄漏测试', () => {
     it('流式响应组件应该正确清理定时器', async () => {
       const messages: ChatMessage[] = [{
         id: 'streaming-msg',
+        sessionId: 'test-session',
         content: '流式消息...',
-        sender: 'assistant',
-        timestamp: new Date().toISOString(),
-        role: 'assistant',
-        status: 'sending',
+        timestamp: Date.now(),
+        role: MessageRole.ASSISTANT,
+        status: MessageStatus.SENDING,
+        type: MessageType.TEXT,
       }]
 
       const beforeCount = timerMonitor.getTotalActiveCount()

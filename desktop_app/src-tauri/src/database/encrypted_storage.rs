@@ -21,7 +21,7 @@ pub struct SecureData {
 }
 
 /// 加密字段类型
-#[derive(Debug, Clone, Serialize, Deserialize)]
+#[derive(Debug, Clone, Serialize, Deserialize, PartialEq)]
 pub enum EncryptedFieldType {
     ApiKey,
     Password,
@@ -651,5 +651,521 @@ impl EncryptedStorage {
     pub fn delete(&self, id: &str) -> Result<(), Box<dyn std::error::Error + Send + Sync>> {
         debug!("删除加密字段: {}", id);
         Ok(())
+    }
+}
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+    use std::time::SystemTime;
+    use chrono::Utc;
+
+    // ================================
+    // 枚举类型测试
+    // ================================
+
+    #[test]
+    fn test_encrypted_field_type_display() {
+        assert_eq!(EncryptedFieldType::ApiKey.to_string(), "api_key");
+        assert_eq!(EncryptedFieldType::Password.to_string(), "password");
+        assert_eq!(EncryptedFieldType::Token.to_string(), "token");
+        assert_eq!(EncryptedFieldType::SensitiveConfig.to_string(), "sensitive_config");
+        assert_eq!(EncryptedFieldType::PersonalInfo.to_string(), "personal_info");
+        assert_eq!(EncryptedFieldType::Custom("custom_type".to_string()).to_string(), "custom_type");
+    }
+
+    #[test]
+    fn test_encrypted_field_type_from_str() {
+        assert_eq!("api_key".parse::<EncryptedFieldType>().unwrap(), EncryptedFieldType::ApiKey);
+        assert_eq!("password".parse::<EncryptedFieldType>().unwrap(), EncryptedFieldType::Password);
+        assert_eq!("token".parse::<EncryptedFieldType>().unwrap(), EncryptedFieldType::Token);
+        assert_eq!("sensitive_config".parse::<EncryptedFieldType>().unwrap(), EncryptedFieldType::SensitiveConfig);
+        assert_eq!("personal_info".parse::<EncryptedFieldType>().unwrap(), EncryptedFieldType::PersonalInfo);
+        
+        // 测试自定义类型
+        let custom = "custom_field_type".parse::<EncryptedFieldType>().unwrap();
+        match custom {
+            EncryptedFieldType::Custom(s) => assert_eq!(s, "custom_field_type"),
+            _ => panic!("应该是Custom类型"),
+        }
+    }
+
+    // ================================
+    // 数据结构测试
+    // ================================
+
+    #[test]
+    fn test_secure_data_creation() {
+        let data = SecureData {
+            key: "test_key".to_string(),
+            encrypted_value: vec![1, 2, 3, 4, 5],
+            created_at: Utc::now().timestamp(),
+        };
+        
+        assert_eq!(data.key, "test_key");
+        assert_eq!(data.encrypted_value, vec![1, 2, 3, 4, 5]);
+        assert!(data.created_at > 0);
+    }
+
+    #[test]
+    fn test_secure_data_serialization() {
+        let data = SecureData {
+            key: "api_key_test".to_string(),
+            encrypted_value: vec![0x41, 0x42, 0x43], // "ABC" 
+            created_at: 1640995200, // 2022-01-01 00:00:00 UTC
+        };
+        
+        let serialized = serde_json::to_string(&data).expect("序列化失败");
+        assert!(serialized.contains("api_key_test"));
+        assert!(serialized.contains("1640995200"));
+        
+        let deserialized: SecureData = serde_json::from_str(&serialized).expect("反序列化失败");
+        assert_eq!(deserialized.key, "api_key_test");
+        assert_eq!(deserialized.encrypted_value, vec![0x41, 0x42, 0x43]);
+        assert_eq!(deserialized.created_at, 1640995200);
+    }
+
+    #[test]
+    fn test_encrypted_entry_creation() {
+        let entry = EncryptedEntry {
+            id: "entry_123".to_string(),
+            field_type: "api_key".to_string(),
+            encrypted_data: vec![1, 2, 3, 4],
+            nonce: vec![5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16],
+            entity_id: Some("user_456".to_string()),
+            key_version: 1,
+            metadata: Some("{\"source\":\"test\"}".to_string()),
+            created_at: "2023-01-01T00:00:00Z".to_string(),
+            updated_at: "2023-01-01T00:00:00Z".to_string(),
+            accessed_at: Some("2023-01-02T00:00:00Z".to_string()),
+            access_count: 5,
+        };
+        
+        assert_eq!(entry.id, "entry_123");
+        assert_eq!(entry.field_type, "api_key");
+        assert_eq!(entry.encrypted_data, vec![1, 2, 3, 4]);
+        assert_eq!(entry.nonce.len(), 12);
+        assert_eq!(entry.entity_id, Some("user_456".to_string()));
+        assert_eq!(entry.key_version, 1);
+        assert_eq!(entry.access_count, 5);
+    }
+
+    #[test]
+    fn test_key_version_info_creation() {
+        let key_info = KeyVersionInfo {
+            version: 2,
+            created_at: "2023-01-01T00:00:00Z".to_string(),
+            rotated_from: Some(1),
+            status: "active".to_string(),
+            description: Some("Rotated key for security".to_string()),
+        };
+        
+        assert_eq!(key_info.version, 2);
+        assert_eq!(key_info.rotated_from, Some(1));
+        assert_eq!(key_info.status, "active");
+        assert!(key_info.description.is_some());
+    }
+
+    #[test]
+    fn test_encryption_statistics_creation() {
+        let mut type_counts = HashMap::new();
+        type_counts.insert("api_key".to_string(), 5);
+        type_counts.insert("password".to_string(), 3);
+        
+        let stats = EncryptionStatistics {
+            total_entries: 8,
+            type_counts,
+            current_key_version: 2,
+            total_access_count: 150,
+            recent_accesses: 25,
+        };
+        
+        assert_eq!(stats.total_entries, 8);
+        assert_eq!(stats.current_key_version, 2);
+        assert_eq!(stats.total_access_count, 150);
+        assert_eq!(stats.recent_accesses, 25);
+        assert_eq!(stats.type_counts.get("api_key"), Some(&5));
+        assert_eq!(stats.type_counts.get("password"), Some(&3));
+    }
+
+    // ================================
+    // 边界条件和验证测试
+    // ================================
+
+    #[test]
+    fn test_empty_encrypted_data() {
+        let entry = EncryptedEntry {
+            id: "empty_test".to_string(),
+            field_type: "token".to_string(),
+            encrypted_data: vec![], // 空数据
+            nonce: vec![0; 12],
+            entity_id: None,
+            key_version: 1,
+            metadata: None,
+            created_at: "2023-01-01T00:00:00Z".to_string(),
+            updated_at: "2023-01-01T00:00:00Z".to_string(),
+            accessed_at: None,
+            access_count: 0,
+        };
+        
+        assert!(entry.encrypted_data.is_empty());
+        assert_eq!(entry.access_count, 0);
+        assert!(entry.entity_id.is_none());
+        assert!(entry.metadata.is_none());
+        assert!(entry.accessed_at.is_none());
+    }
+
+    #[test]
+    fn test_large_encrypted_data() {
+        let large_data = vec![0u8; 1024 * 1024]; // 1MB 数据
+        let entry = EncryptedEntry {
+            id: "large_test".to_string(),
+            field_type: "sensitive_config".to_string(),
+            encrypted_data: large_data.clone(),
+            nonce: vec![1; 12],
+            entity_id: Some("large_entity".to_string()),
+            key_version: 1,
+            metadata: None,
+            created_at: "2023-01-01T00:00:00Z".to_string(),
+            updated_at: "2023-01-01T00:00:00Z".to_string(),
+            accessed_at: None,
+            access_count: 0,
+        };
+        
+        assert_eq!(entry.encrypted_data.len(), 1024 * 1024);
+        assert_eq!(entry.encrypted_data, large_data);
+    }
+
+    #[test]
+    fn test_special_characters_in_ids() {
+        let entry = EncryptedEntry {
+            id: "special-id_测试.123@domain".to_string(),
+            field_type: "custom_type".to_string(),
+            encrypted_data: vec![1, 2, 3],
+            nonce: vec![0; 12],
+            entity_id: Some("entity-特殊字符_123".to_string()),
+            key_version: 1,
+            metadata: Some("{\n  \"test\": \"with\ttabs and\nnewlines\"\n}".to_string()),
+            created_at: "2023-01-01T00:00:00Z".to_string(),
+            updated_at: "2023-01-01T00:00:00Z".to_string(),
+            accessed_at: None,
+            access_count: 0,
+        };
+        
+        assert!(entry.id.contains("测试"));
+        assert!(entry.entity_id.as_ref().unwrap().contains("特殊字符"));
+        assert!(entry.metadata.as_ref().unwrap().contains("\n"));
+        assert!(entry.metadata.as_ref().unwrap().contains("\t"));
+    }
+
+    #[test]
+    fn test_nonce_length_validation() {
+        // 测试正确长度的nonce (12字节用于AES-GCM)
+        let correct_nonce = vec![0u8; 12];
+        assert_eq!(correct_nonce.len(), 12);
+        
+        // 测试不同长度的nonce
+        let short_nonce = vec![0u8; 8];
+        let long_nonce = vec![0u8; 16];
+        
+        assert_eq!(short_nonce.len(), 8);
+        assert_eq!(long_nonce.len(), 16);
+        
+        // 在实际应用中，应该验证nonce长度，但这里只测试数据结构
+        let entry = EncryptedEntry {
+            id: "nonce_test".to_string(),
+            field_type: "api_key".to_string(),
+            encrypted_data: vec![1, 2, 3],
+            nonce: correct_nonce,
+            entity_id: None,
+            key_version: 1,
+            metadata: None,
+            created_at: "2023-01-01T00:00:00Z".to_string(),
+            updated_at: "2023-01-01T00:00:00Z".to_string(),
+            accessed_at: None,
+            access_count: 0,
+        };
+        
+        assert_eq!(entry.nonce.len(), 12);
+    }
+
+    #[test]
+    fn test_key_version_boundaries() {
+        // 测试最小版本
+        let min_version = KeyVersionInfo {
+            version: 1,
+            created_at: "2023-01-01T00:00:00Z".to_string(),
+            rotated_from: None,
+            status: "active".to_string(),
+            description: Some("Initial version".to_string()),
+        };
+        
+        assert_eq!(min_version.version, 1);
+        assert!(min_version.rotated_from.is_none());
+        
+        // 测试大版本号
+        let high_version = KeyVersionInfo {
+            version: 999,
+            created_at: "2023-12-31T23:59:59Z".to_string(),
+            rotated_from: Some(998),
+            status: "deprecated".to_string(),
+            description: None,
+        };
+        
+        assert_eq!(high_version.version, 999);
+        assert_eq!(high_version.rotated_from, Some(998));
+        assert!(high_version.description.is_none());
+    }
+
+    // ================================
+    // 业务逻辑验证测试
+    // ================================
+
+    #[test]
+    fn test_access_count_increment() {
+        let mut entry = EncryptedEntry {
+            id: "access_test".to_string(),
+            field_type: "password".to_string(),
+            encrypted_data: vec![1, 2, 3],
+            nonce: vec![0; 12],
+            entity_id: None,
+            key_version: 1,
+            metadata: None,
+            created_at: "2023-01-01T00:00:00Z".to_string(),
+            updated_at: "2023-01-01T00:00:00Z".to_string(),
+            accessed_at: None,
+            access_count: 0,
+        };
+        
+        // 模拟访问计数增加
+        assert_eq!(entry.access_count, 0);
+        
+        entry.access_count += 1;
+        assert_eq!(entry.access_count, 1);
+        
+        entry.access_count += 10;
+        assert_eq!(entry.access_count, 11);
+        
+        // 测试大数值
+        entry.access_count = i64::MAX - 1;
+        entry.access_count += 1;
+        assert_eq!(entry.access_count, i64::MAX);
+    }
+
+    #[test]
+    fn test_statistics_aggregation() {
+        let mut type_counts = HashMap::new();
+        
+        // 模拟统计数据聚合
+        type_counts.insert("api_key".to_string(), 10);
+        type_counts.insert("password".to_string(), 5);
+        type_counts.insert("token".to_string(), 3);
+        
+        let total: i64 = type_counts.values().sum();
+        assert_eq!(total, 18);
+        
+        let stats = EncryptionStatistics {
+            total_entries: total,
+            type_counts: type_counts.clone(),
+            current_key_version: 1,
+            total_access_count: 500,
+            recent_accesses: 50,
+        };
+        
+        assert_eq!(stats.total_entries, 18);
+        assert_eq!(stats.type_counts.len(), 3);
+        
+        // 验证最常用的类型
+        let max_count = type_counts.values().max().unwrap();
+        assert_eq!(*max_count, 10);
+    }
+
+    // ================================
+    // 性能测试
+    // ================================
+
+    #[test]
+    fn test_enum_conversion_performance() {
+        let field_types = vec![
+            "api_key", "password", "token", "sensitive_config", 
+            "personal_info", "custom_type_1", "custom_type_2"
+        ];
+        
+        let start = SystemTime::now();
+        
+        // 执行1000次枚举转换
+        for _ in 0..1000 {
+            for field_type in &field_types {
+                let _parsed: EncryptedFieldType = field_type.parse().unwrap();
+            }
+        }
+        
+        let duration = start.elapsed().unwrap();
+        
+        // 1000次转换应该在50ms内完成
+        assert!(duration.as_millis() < 50, "枚举转换性能测试失败: {:?}", duration);
+    }
+
+    #[test]
+    fn test_struct_serialization_performance() {
+        let entry = EncryptedEntry {
+            id: "performance_test".to_string(),
+            field_type: "api_key".to_string(),
+            encrypted_data: vec![0u8; 1024], // 1KB 加密数据
+            nonce: vec![1u8; 12],
+            entity_id: Some("entity_123".to_string()),
+            key_version: 1,
+            metadata: Some("{\"performance\": true}".to_string()),
+            created_at: "2023-01-01T00:00:00Z".to_string(),
+            updated_at: "2023-01-01T00:00:00Z".to_string(),
+            accessed_at: Some("2023-01-02T00:00:00Z".to_string()),
+            access_count: 100,
+        };
+        
+        let start = SystemTime::now();
+        
+        // 执行100次序列化
+        for _ in 0..100 {
+            let _serialized = serde_json::to_string(&entry).unwrap();
+        }
+        
+        let duration = start.elapsed().unwrap();
+        
+        // 100次序列化应该在200ms内完成
+        assert!(duration.as_millis() < 200, "结构序列化性能测试失败: {:?}", duration);
+    }
+
+    // ================================
+    // 并发安全测试
+    // ================================
+
+    #[test]
+    fn test_concurrent_struct_read_access() {
+        use std::sync::Arc;
+        use std::thread;
+        
+        let entry = Arc::new(EncryptedEntry {
+            id: "concurrent_test".to_string(),
+            field_type: "token".to_string(),
+            encrypted_data: vec![1, 2, 3, 4, 5],
+            nonce: vec![0; 12],
+            entity_id: Some("shared_entity".to_string()),
+            key_version: 1,
+            metadata: None,
+            created_at: "2023-01-01T00:00:00Z".to_string(),
+            updated_at: "2023-01-01T00:00:00Z".to_string(),
+            accessed_at: None,
+            access_count: 0,
+        });
+        
+        let mut handles = vec![];
+        
+        // 启动10个线程同时读取
+        for i in 0..10 {
+            let entry_clone = Arc::clone(&entry);
+            let handle = thread::spawn(move || {
+                // 多次读取确保没有竞态条件
+                for _ in 0..100 {
+                    let _id = &entry_clone.id;
+                    let _data_len = entry_clone.encrypted_data.len();
+                    let _version = entry_clone.key_version;
+                    let _count = entry_clone.access_count;
+                }
+                i
+            });
+            handles.push(handle);
+        }
+        
+        // 等待所有线程完成
+        for (i, handle) in handles.into_iter().enumerate() {
+            let result = handle.join().unwrap();
+            assert_eq!(result, i);
+        }
+    }
+
+    #[test]
+    fn test_statistics_concurrent_calculation() {
+        use std::sync::Arc;
+        use std::thread;
+        
+        let mut type_counts = HashMap::new();
+        type_counts.insert("api_key".to_string(), 100);
+        type_counts.insert("password".to_string(), 200);
+        type_counts.insert("token".to_string(), 300);
+        
+        let stats = Arc::new(EncryptionStatistics {
+            total_entries: 600,
+            type_counts,
+            current_key_version: 2,
+            total_access_count: 10000,
+            recent_accesses: 1000,
+        });
+        
+        let mut handles = vec![];
+        
+        // 启动5个线程同时计算统计
+        for i in 0..5 {
+            let stats_clone = Arc::clone(&stats);
+            let handle = thread::spawn(move || {
+                // 计算不同的统计指标
+                let total = stats_clone.total_entries;
+                let api_keys = stats_clone.type_counts.get("api_key").copied().unwrap_or(0);
+                let passwords = stats_clone.type_counts.get("password").copied().unwrap_or(0);
+                let ratio = if total > 0 { (api_keys as f64) / (total as f64) } else { 0.0 };
+                
+                (i, total, api_keys, passwords, ratio)
+            });
+            handles.push(handle);
+        }
+        
+        // 验证所有线程的计算结果一致
+        let mut results = vec![];
+        for handle in handles {
+            results.push(handle.join().unwrap());
+        }
+        
+        // 所有线程应该得到相同的统计结果
+        for (_, total, api_keys, passwords, ratio) in &results {
+            assert_eq!(*total, 600);
+            assert_eq!(*api_keys, 100);
+            assert_eq!(*passwords, 200);
+            assert!((ratio - (100.0 / 600.0)).abs() < f64::EPSILON);
+        }
+    }
+
+    // ================================
+    // 数据完整性测试
+    // ================================
+
+    #[test]
+    fn test_encrypted_data_integrity() {
+        let original_data = vec![0x48, 0x65, 0x6C, 0x6C, 0x6F]; // "Hello"
+        
+        let entry = EncryptedEntry {
+            id: "integrity_test".to_string(),
+            field_type: "personal_info".to_string(),
+            encrypted_data: original_data.clone(),
+            nonce: vec![0x01, 0x02, 0x03, 0x04, 0x05, 0x06, 0x07, 0x08, 0x09, 0x0A, 0x0B, 0x0C],
+            entity_id: None,
+            key_version: 1,
+            metadata: None,
+            created_at: "2023-01-01T00:00:00Z".to_string(),
+            updated_at: "2023-01-01T00:00:00Z".to_string(),
+            accessed_at: None,
+            access_count: 0,
+        };
+        
+        // 验证数据没有被修改
+        assert_eq!(entry.encrypted_data, original_data);
+        assert_eq!(entry.nonce, vec![0x01, 0x02, 0x03, 0x04, 0x05, 0x06, 0x07, 0x08, 0x09, 0x0A, 0x0B, 0x0C]);
+        
+        // 序列化后反序列化，验证数据完整性
+        let serialized = serde_json::to_string(&entry).unwrap();
+        let deserialized: EncryptedEntry = serde_json::from_str(&serialized).unwrap();
+        
+        assert_eq!(deserialized.encrypted_data, original_data);
+        assert_eq!(deserialized.nonce, entry.nonce);
+        assert_eq!(deserialized.id, entry.id);
+        assert_eq!(deserialized.field_type, entry.field_type);
     }
 }

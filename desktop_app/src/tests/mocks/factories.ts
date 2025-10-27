@@ -4,7 +4,7 @@
  * 提供创建测试数据的工厂函数
  */
 
-import { randomString, randomNumber, randomBoolean, randomDate } from '../utils/test-utils'
+import { randomString, randomNumber, randomBoolean, randomDate } from '../utils/test-utils.tsx'
 
 // ==================== 适配器数据工厂 ====================
 

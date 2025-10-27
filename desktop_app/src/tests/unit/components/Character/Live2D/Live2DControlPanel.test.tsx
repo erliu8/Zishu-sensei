@@ -391,7 +391,8 @@ describe('Live2DControlPanel组件', () => {
       await user.click(settingsButton)
 
       // 应该显示空闲动画（默认选中）
-      expect(screen.getByText(/idle/)).toBeInTheDocument()
+      const idleAnimations = screen.getAllByText(/idle/)
+      expect(idleAnimations.length).toBeGreaterThan(0)
     })
 
     it('应该按类型分组显示动画', async () => {

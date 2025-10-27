@@ -16,9 +16,9 @@ import {
   ErrorMonitorConfig,
   RecoveryStrategy,
   RecoveryResult,
-  RecoveryAction,
-  ErrorMatcher,
-  ErrorHandler,
+  // RecoveryAction,
+  // ErrorMatcher,
+  // ErrorHandler,
   ErrorFilter,
   ErrorClassifier,
   ErrorAggregator
@@ -207,16 +207,16 @@ export class ErrorMonitoringService implements IErrorMonitoringService {
   private errorListeners: ((error: ErrorDetails) => void)[] = []
   private recoveryListeners: ((result: RecoveryResult) => void)[] = []
   private classifier: ErrorClassifier
-  private aggregator: ErrorAggregator
-  private errorHandlers: Map<string, ErrorHandler> = new Map()
-  private globalErrorHandler?: ErrorHandler
+  // private aggregator: ErrorAggregator
+  // private errorHandlers: Map<string, ErrorHandler> = new Map()
+  // private globalErrorHandler?: ErrorHandler
   private sessionId: string
   private isInitialized = false
   
   constructor() {
     this.config = this.getDefaultConfig()
     this.classifier = new DefaultErrorClassifier()
-    this.aggregator = new DefaultErrorAggregator()
+    // this.aggregator = new DefaultErrorAggregator()
     this.sessionId = this.generateSessionId()
   }
   
@@ -538,18 +538,20 @@ export class ErrorMonitoringService implements IErrorMonitoringService {
       // 监听系统事件
       await listen('system-error', (event) => {
         const error = new Error('System error: ' + event.payload)
-        this.handleError(error, {
-          source: ErrorSource.SYSTEM,
+        const errorDetails = this.transformErrorToDetails(error, {
           metadata: { systemEvent: event.payload },
         })
+        errorDetails.source = ErrorSource.SYSTEM
+        this.reportError(errorDetails)
       })
       
       await listen('tauri-error', (event) => {
         const error = new Error('Tauri error: ' + event.payload)
-        this.handleError(error, {
-          source: ErrorSource.BACKEND,
+        const errorDetails = this.transformErrorToDetails(error, {
           metadata: { tauriEvent: event.payload },
         })
+        errorDetails.source = ErrorSource.BACKEND
+        this.reportError(errorDetails)
       })
     } catch (error) {
       console.warn('Failed to setup event listeners:', error)
@@ -577,13 +579,13 @@ export class ErrorMonitoringService implements IErrorMonitoringService {
       id: '', // 将由后端生成
       errorId: '', // 将由后端生成
       type: classification.type,
-      source: context?.source || ErrorSource.FRONTEND,
+      source: ErrorSource.FRONTEND,
       severity: classification.severity,
       status: ErrorStatus.NEW,
       name: error.name,
       message: error.message,
       stack: error.stack,
-      cause: error.cause ? String(error.cause) : undefined,
+      cause: (error as any).cause ? String((error as any).cause) : undefined,
       context: errorContext,
       recoveryStrategy: this.determineRecoveryStrategy(classification.type, classification.severity),
       recoveryAttempts: 0,
@@ -680,7 +682,7 @@ export class ErrorMonitoringService implements IErrorMonitoringService {
     }
   }
   
-  private async executeFallback(error: ErrorDetails): Promise<RecoveryResult> {
+  private async executeFallback(_error: ErrorDetails): Promise<RecoveryResult> {
     // TODO: 实现降级逻辑
     return {
       success: true,

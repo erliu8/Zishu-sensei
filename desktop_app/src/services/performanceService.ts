@@ -27,10 +27,7 @@ import {
   PerformanceReport,
   TimePeriod,
   PerformanceCategory,
-  AlertSeverity,
   UserOperationType,
-  ApiResponse,
-  BatchOperationResult,
 } from '../types/performance';
 import { EventEmitter } from 'events';
 
@@ -39,7 +36,6 @@ import { EventEmitter } from 'events';
  */
 export class PerformanceService extends EventEmitter {
   private static instance: PerformanceService | null = null;
-  private isMonitoring = false;
   private metricsCache = new Map<string, number[]>();
   private autoCleanupInterval: NodeJS.Timeout | null = null;
 
@@ -508,7 +504,6 @@ export class PerformanceService extends EventEmitter {
   async startMonitoring(): Promise<void> {
     try {
       await invoke<void>('start_performance_monitoring');
-      this.isMonitoring = true;
       this.emit('monitoring_started');
     } catch (error) {
       console.error('启动性能监控失败:', error);
@@ -522,7 +517,6 @@ export class PerformanceService extends EventEmitter {
   async stopMonitoring(): Promise<void> {
     try {
       await invoke<void>('stop_performance_monitoring');
-      this.isMonitoring = false;
       this.emit('monitoring_stopped');
     } catch (error) {
       console.error('停止性能监控失败:', error);
@@ -661,8 +655,6 @@ export class PerformanceService extends EventEmitter {
     renderTime: number,
     interactiveTime: number
   ): Promise<void> {
-    const timestamp = Date.now();
-    
     await Promise.all([
       this.recordMetric(`${pageName}_load_time`, loadTime, 'ms', 'user', pageName),
       this.recordMetric(`${pageName}_render_time`, renderTime, 'ms', 'render', pageName),
@@ -689,7 +681,7 @@ export class PerformanceService extends EventEmitter {
       statusCode,
       undefined,
       undefined,
-      { wait_time: totalTime },
+      { waitTime: totalTime },
       errorMessage ? 'api_error' : undefined,
       errorMessage
     );

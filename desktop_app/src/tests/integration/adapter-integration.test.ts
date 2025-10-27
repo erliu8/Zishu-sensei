@@ -6,7 +6,7 @@
 
 import { describe, it, expect, beforeEach, afterEach, vi } from 'vitest'
 import { server } from '../setup'
-import { rest } from 'msw'
+import { http, HttpResponse } from 'msw'
 
 describe('适配器集成测试', () => {
   beforeEach(() => {
@@ -32,14 +32,11 @@ describe('适配器集成测试', () => {
     it('应该能够处理获取失败的情况', async () => {
       // 覆盖 handler 以返回错误
       server.use(
-        rest.get('/api/adapters', (req, res, ctx) => {
-          return res(
-            ctx.status(500),
-            ctx.json({
-              success: false,
-              error: '服务器错误',
-            })
-          )
+        http.get('/api/adapters', () => {
+          return HttpResponse.json({
+            success: false,
+            error: '服务器错误',
+          }, { status: 500 })
         })
       )
 
@@ -111,14 +108,11 @@ describe('适配器集成测试', () => {
 
     it('应该处理加载失败的情况', async () => {
       server.use(
-        rest.post('/api/adapters/:id/load', (req, res, ctx) => {
-          return res(
-            ctx.status(500),
-            ctx.json({
-              success: false,
-              error: '加载失败',
-            })
-          )
+        http.post('/api/adapters/:id/load', () => {
+          return HttpResponse.json({
+            success: false,
+            error: '加载失败',
+          }, { status: 500 })
         })
       )
 
@@ -233,18 +227,15 @@ describe('聊天集成测试', () => {
 
   it('应该处理空消息', async () => {
     server.use(
-      rest.post('/api/chat/send', async (req, res, ctx) => {
-        const body = await req.json()
+      http.post('/api/chat/send', async ({ request }) => {
+        const body = await request.json() as any
         if (!body.message || body.message.trim() === '') {
-          return res(
-            ctx.status(400),
-            ctx.json({
-              success: false,
-              error: '消息不能为空',
-            })
-          )
+          return HttpResponse.json({
+            success: false,
+            error: '消息不能为空',
+          }, { status: 400 })
         }
-        return res(ctx.json({ success: true, data: {} }))
+        return HttpResponse.json({ success: true, data: {} })
       })
     )
 

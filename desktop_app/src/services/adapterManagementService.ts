@@ -4,7 +4,7 @@
  * 管理本地已安装的适配器，包括版本、依赖和权限
  */
 
-import { invoke } from '@tauri-apps/api/core';
+import { invoke } from '@tauri-apps/api/tauri';
 import { CommandResponse } from './types';
 
 // ================================

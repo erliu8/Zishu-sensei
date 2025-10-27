@@ -229,6 +229,38 @@ export interface StartupPerformanceMetrics {
 }
 
 /**
+ * 启动指标（用于监控组件）
+ */
+export interface StartupMetrics {
+  /** 总启动时长（毫秒） */
+  totalDuration: number;
+  /** 各阶段耗时 */
+  phases: Record<string, number>;
+  /** 内存使用量（字节） */
+  memoryUsage?: number;
+  /** CPU 使用率（百分比） */
+  cpuUsage?: number;
+  /** 启动时间戳 */
+  startTimestamp: number;
+  /** 完成时间戳 */
+  endTimestamp?: number;
+}
+
+/**
+ * 性能指标
+ */
+export interface PerformanceMetric {
+  /** 指标名称 */
+  name: string;
+  /** 指标值 */
+  value: number;
+  /** 单位 */
+  unit: string;
+  /** 时间戳 */
+  timestamp: number;
+}
+
+/**
  * 启动优化建议
  */
 export interface OptimizationSuggestion {
@@ -501,7 +533,7 @@ export class StartupUtils {
     lines.push('');
     lines.push('## 阶段详情');
     
-    for (const [phase, result] of phaseResults.entries()) {
+    for (const [phase, result] of Array.from(phaseResults.entries())) {
       lines.push(`- **${this.getPhaseDisplayName(phase)}**: ${
         result.duration ? this.formatDuration(result.duration) : '未完成'
       } ${result.success ? '✅' : result.error ? '❌' : '⏳'}`);

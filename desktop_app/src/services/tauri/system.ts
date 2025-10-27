@@ -2,7 +2,7 @@
  * Tauri 系统服务
  */
 
-import { appName, appVersion, tauriVersion } from '@tauri-apps/api/app'
+import { getName, getVersion, getTauriVersion } from '@tauri-apps/api/app'
 import { arch, locale, platform, type, version } from '@tauri-apps/api/os'
 import { invoke } from '@tauri-apps/api/tauri'
 import type { TauriAppInfo, TauriEnvironment } from '../../types/tauri'
@@ -35,7 +35,7 @@ export const getSystemInfo = async (): Promise<TauriEnvironment> => {
             arch(),
             version(),
             type(),
-            tauriVersion(),
+            getTauriVersion(),
         ])
 
         return {
@@ -66,9 +66,9 @@ export const getAppInfo = async (): Promise<TauriAppInfo> => {
         }
 
         const [name, version, tauriVer] = await Promise.all([
-            appName(),
-            appVersion(),
-            tauriVersion(),
+            getName(),
+            getVersion(),
+            getTauriVersion(),
         ])
 
         return {

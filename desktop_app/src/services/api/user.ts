@@ -509,19 +509,3 @@ export class UserApiService {
 export function createUserApiService(apiClient: ApiClient): UserApiService {
   return new UserApiService(apiClient)
 }
-
-/**
- * 导出类型
- */
-export type {
-  User,
-  UserPreferences,
-  NotificationPreferences,
-  PrivacyPreferences,
-  AccessibilityPreferences,
-  UserStats,
-  UpdateUserParams,
-  UpdatePasswordParams,
-  SearchUsersParams,
-}
-

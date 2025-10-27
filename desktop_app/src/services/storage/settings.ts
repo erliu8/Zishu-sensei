@@ -23,6 +23,7 @@ import type {
     PartialConfigUpdate,
     ConfigPaths,
     ConfigValidationResult,
+    ConfigValidationError,
     ConfigChangeEvent
 } from '../../types/settings'
 import { DEFAULT_CONFIG, CONFIG_VALIDATION_RULES } from '../../types/settings'
@@ -251,7 +252,10 @@ export class SettingsStorageService {
 
         // 更新缓存
         if (this._config) {
-            this._config.window = response.data
+            this._config = {
+                ...this._config,
+                window: response.data
+            }
         }
 
         // 触发变更事件
@@ -283,7 +287,10 @@ export class SettingsStorageService {
 
         // 更新缓存
         if (this._config) {
-            this._config.character = response.data
+            this._config = {
+                ...this._config,
+                character: response.data
+            }
         }
 
         // 触发变更事件
@@ -315,7 +322,10 @@ export class SettingsStorageService {
 
         // 更新缓存
         if (this._config) {
-            this._config.theme = response.data
+            this._config = {
+                ...this._config,
+                theme: response.data
+            }
         }
 
         // 触发变更事件
@@ -347,7 +357,10 @@ export class SettingsStorageService {
 
         // 更新缓存
         if (this._config) {
-            this._config.system = response.data
+            this._config = {
+                ...this._config,
+                system: response.data
+            }
         }
 
         // 触发变更事件
@@ -491,33 +504,53 @@ export class SettingsStorageService {
      * 验证配置
      */
     public validateConfig(config: AppConfig): ConfigValidationResult {
-        const errors: string[] = []
+        const errors: ConfigValidationError[] = []
         const warnings: string[] = []
 
         // 验证窗口配置
         if (config.window.width < CONFIG_VALIDATION_RULES.window.width.min ||
             config.window.width > CONFIG_VALIDATION_RULES.window.width.max) {
-            errors.push(`窗口宽度必须在 ${CONFIG_VALIDATION_RULES.window.width.min}-${CONFIG_VALIDATION_RULES.window.width.max} 之间`)
+            errors.push({
+                path: 'window.width',
+                message: `窗口宽度必须在 ${CONFIG_VALIDATION_RULES.window.width.min}-${CONFIG_VALIDATION_RULES.window.width.max} 之间`,
+                value: config.window.width
+            })
         }
 
         if (config.window.height < CONFIG_VALIDATION_RULES.window.height.min ||
             config.window.height > CONFIG_VALIDATION_RULES.window.height.max) {
-            errors.push(`窗口高度必须在 ${CONFIG_VALIDATION_RULES.window.height.min}-${CONFIG_VALIDATION_RULES.window.height.max} 之间`)
+            errors.push({
+                path: 'window.height',
+                message: `窗口高度必须在 ${CONFIG_VALIDATION_RULES.window.height.min}-${CONFIG_VALIDATION_RULES.window.height.max} 之间`,
+                value: config.window.height
+            })
         }
 
         // 验证角色配置
         if (config.character.scale < CONFIG_VALIDATION_RULES.character.scale.min ||
             config.character.scale > CONFIG_VALIDATION_RULES.character.scale.max) {
-            errors.push(`角色缩放比例必须在 ${CONFIG_VALIDATION_RULES.character.scale.min}-${CONFIG_VALIDATION_RULES.character.scale.max} 之间`)
+            errors.push({
+                path: 'character.scale',
+                message: `角色缩放比例必须在 ${CONFIG_VALIDATION_RULES.character.scale.min}-${CONFIG_VALIDATION_RULES.character.scale.max} 之间`,
+                value: config.character.scale
+            })
         }
 
         if (!config.character.current_character || config.character.current_character.trim() === '') {
-            errors.push('角色名称不能为空')
+            errors.push({
+                path: 'character.current_character',
+                message: '角色名称不能为空',
+                value: config.character.current_character
+            })
         }
 
         // 验证主题配置
         if (!config.theme.current_theme || config.theme.current_theme.trim() === '') {
-            errors.push('主题名称不能为空')
+            errors.push({
+                path: 'theme.current_theme',
+                message: '主题名称不能为空',
+                value: config.theme.current_theme
+            })
         }
 
         return {

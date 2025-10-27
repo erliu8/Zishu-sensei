@@ -563,6 +563,12 @@ describe('Input 组件', () => {
 })
 
 describe('Input 组件集成测试', () => {
+  let user: ReturnType<typeof userEvent.setup>
+
+  beforeEach(() => {
+    user = userEvent.setup()
+  })
+
   describe('✅ 表单集成', () => {
     it('应该在表单中正常工作', async () => {
       const handleSubmit = vi.fn()

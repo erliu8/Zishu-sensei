@@ -623,5 +623,3 @@ export function updateReportingConfig(config: Partial<ErrorReportConfig>): void 
   const service = getErrorReportingService()
   service.updateConfig(config)
 }
-
-export { ErrorReportingService }

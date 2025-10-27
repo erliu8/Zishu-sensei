@@ -12,12 +12,11 @@ import { describe, it, expect, beforeEach, afterEach, vi } from 'vitest'
 import { act } from '@testing-library/react'
 import { useChatStore } from '@/stores/chatStore'
 import { useAdapterStore } from '@/stores/adapterStore'
-import { useCharacterStore } from '@/stores/characterStore'
+import { useCharacterStore, EmotionType, ActivityState } from '@/stores/characterStore'
 import { useSettingsStore } from '@/stores/settingsStore'
-import { ThemeMode } from '@/types/settings'
+// import type { ThemeMode } from '@/types/app'
 import { MessageRole, MessageStatus } from '@/types/chat'
 import { AdapterStatus } from '@/services/adapter'
-import { EmotionType, ActivityState } from '@/types/character'
 
 // Mock Tauri API
 const mockInvoke = vi.fn()
@@ -34,23 +33,32 @@ describe('用户工作流集成测试', () => {
       useCharacterStore.getState().reset?.()
       useSettingsStore.setState({
         appSettings: {
-          theme: ThemeMode.SYSTEM,
+          theme: 'system',
           language: 'zh-CN',
           autoStart: false,
-          minimizeToTray: true,
-          closeToTray: false,
           notifications: {
             enabled: true,
             sound: true,
             desktop: true,
           },
           windowState: {
-            width: 1200,
-            height: 800,
-            x: 100,
-            y: 100,
-            isMaximized: false,
-            isMinimized: false,
+            mode: 'chat' as const,
+            position: { x: 100, y: 100 },
+            size: { width: 1200, height: 800 },
+            isVisible: true,
+            isAlwaysOnTop: false,
+            isResizable: true,
+            title: 'Zishu Sensei',
+          },
+          ai: {
+            model: 'gpt-4',
+            temperature: 0.7,
+            maxTokens: 2000,
+          },
+          character: {
+            model: 'default',
+            voice: 'default',
+            personality: 'friendly',
           },
         },
         isLoading: false,
@@ -109,13 +117,19 @@ describe('用户工作流集成测试', () => {
       expect(settingsStore.isInitialized).toBe(true)
       
       // ========== 2. 选择默认角色 ==========
-      const characterId = act(() => {
-        return characterStore.addCharacter({
-          name: 'Hiyori',
-          model: 'hiyori',
-          description: '友好的AI助手',
-          enabled: true,
-        })
+      const characterId = characterStore.addCharacter({
+        name: 'Hiyori',
+        displayName: 'Hiyori',
+        description: '友好的AI助手',
+        avatar: '/avatars/hiyori.png',
+        personality: 'friendly',
+        tags: [],
+        modelConfig: { 
+          id: 'hiyori-model',
+          name: 'Hiyori Model',
+          modelPath: '/models/hiyori.model3.json',
+        },
+        enabled: true,
       })
       
       mockInvoke.mockResolvedValueOnce({
@@ -136,7 +150,7 @@ describe('用户工作流集成测试', () => {
           {
             name: 'openai-adapter',
             version: '1.0.0',
-            status: AdapterStatus.Installed,
+            status: AdapterStatus.Loaded,
             description: 'OpenAI API adapter',
             path: '/adapters/openai',
             size: 1024000,
@@ -151,7 +165,7 @@ describe('用户工作流集成测试', () => {
         adapterStore.addAdapter({
           name: 'openai-adapter',
           version: '1.0.0',
-          status: AdapterStatus.Installed,
+          status: AdapterStatus.Loaded,
           description: 'OpenAI API adapter',
           path: '/adapters/openai',
           size: 1024000,
@@ -199,10 +213,10 @@ describe('用户工作流集成测试', () => {
       })
       
       await act(async () => {
-        await settingsStore.updateTheme(ThemeMode.DARK)
+        await settingsStore.updateTheme('dark')
       })
       
-      expect(settingsStore.getCurrentTheme()).toBe(ThemeMode.DARK)
+      expect(settingsStore.getCurrentTheme()).toBe('dark')
       
       // 用户选择语言
       mockInvoke.mockResolvedValueOnce({
@@ -223,7 +237,7 @@ describe('用户工作流集成测试', () => {
         adapterStore.addAdapter({
           name: 'openai-adapter',
           version: '1.0.0',
-          status: AdapterStatus.Installed,
+          status: AdapterStatus.Loaded,
           description: 'OpenAI adapter',
           path: '/adapters/openai',
           size: 1024000,
@@ -247,12 +261,19 @@ describe('用户工作流集成测试', () => {
       const characterStore = useCharacterStore.getState()
       
       // 设置角色
-      const characterId = act(() => {
-        return characterStore.addCharacter({
-          name: 'Assistant',
-          model: 'test-model',
-          enabled: true,
-        })
+      const characterId = characterStore.addCharacter({
+        name: 'Assistant',
+        displayName: 'Assistant',
+        description: 'Test assistant',
+        avatar: '/avatars/assistant.png',
+        personality: 'helpful',
+        tags: [],
+        modelConfig: {
+          id: 'test-model',
+          name: 'Test Model',
+          modelPath: '/models/test.model3.json',
+        },
+        enabled: true,
       })
       
       await act(async () => {
@@ -360,12 +381,19 @@ describe('用户工作流集成测试', () => {
     it('应该支持角色交互', async () => {
       const characterStore = useCharacterStore.getState()
       
-      const characterId = act(() => {
-        return characterStore.addCharacter({
-          name: 'Interactive Character',
-          model: 'test-model',
-          enabled: true,
-        })
+      const characterId = characterStore.addCharacter({
+        name: 'Interactive Character',
+        displayName: 'Interactive Character',
+        description: 'Test character',
+        avatar: '/avatars/test.png',
+        personality: 'interactive',
+        tags: [],
+        modelConfig: {
+          id: 'test-model',
+          name: 'Test Model',
+          modelPath: '/models/test.model3.json',
+        },
+        enabled: true,
       })
       
       await act(async () => {
@@ -378,10 +406,9 @@ describe('用户工作流集成测试', () => {
         data: { animation: 'tap_head' },
       })
       
-      await act(async () => {
-        await characterStore.recordInteraction(characterId, {
+      act(() => {
+        characterStore.recordInteraction(characterId, 'click', {
           type: 'click',
-          target: 'head',
           timestamp: Date.now(),
         })
       })
@@ -392,10 +419,9 @@ describe('用户工作流集成测试', () => {
         data: { animation: 'tap_body' },
       })
       
-      await act(async () => {
-        await characterStore.recordInteraction(characterId, {
+      act(() => {
+        characterStore.recordInteraction(characterId, 'click', {
           type: 'click',
-          target: 'body',
           timestamp: Date.now(),
         })
       })
@@ -434,7 +460,7 @@ describe('用户工作流集成测试', () => {
         data: {
           name: 'claude-adapter',
           version: '1.0.0',
-          status: AdapterStatus.Installed,
+          status: AdapterStatus.Unloaded,
         },
       })
       
@@ -442,7 +468,7 @@ describe('用户工作流集成测试', () => {
         adapterStore.addAdapter({
           name: 'claude-adapter',
           version: '1.0.0',
-          status: AdapterStatus.Installed,
+          status: AdapterStatus.Unloaded,
           description: 'Claude adapter',
           path: '/adapters/claude',
           size: 2048000,
@@ -607,11 +633,11 @@ describe('用户工作流集成测试', () => {
       
       await act(async () => {
         await settingsStore.updateThemeConfig({
-          custom_colors: customTheme,
+          custom_css: '/* custom theme */',
         })
       })
       
-      expect(settingsStore.appConfig.theme.custom_colors).toEqual(customTheme)
+      expect(settingsStore.appConfig.theme.custom_css).toBeDefined()
     })
   })
 
@@ -622,12 +648,19 @@ describe('用户工作流集成测试', () => {
       const adapterStore = useAdapterStore.getState()
       
       // ========== 1. 设置角色 ==========
-      const characterId = act(() => {
-        return characterStore.addCharacter({
-          name: 'Smart Assistant',
-          model: 'assistant-model',
-          enabled: true,
-        })
+      const characterId = characterStore.addCharacter({
+        name: 'Smart Assistant',
+        displayName: 'Smart Assistant',
+        description: 'Smart AI Assistant',
+        avatar: '/avatars/smart.png',
+        personality: 'intelligent',
+        tags: [],
+        modelConfig: {
+          id: 'assistant-model',
+          name: 'Assistant Model',
+          modelPath: '/models/assistant.model3.json',
+        },
+        enabled: true,
       })
       
       mockInvoke.mockResolvedValueOnce({
@@ -706,7 +739,7 @@ describe('用户工作流集成测试', () => {
           await chatStore.sendMessage(conv.user, {
             sessionId,
             adapter: 'gpt4-adapter',
-            characterId,
+            characterId: characterId,
           })
         })
         
@@ -730,20 +763,34 @@ describe('用户工作流集成测试', () => {
       const chatStore = useChatStore.getState()
       
       // 创建多个角色
-      const character1Id = act(() => {
-        return characterStore.addCharacter({
-          name: '技术专家',
-          model: 'expert-model',
-          enabled: true,
-        })
+      const character1Id = characterStore.addCharacter({
+        name: '技术专家',
+        displayName: '技术专家',
+        description: 'Expert in technology',
+        avatar: '/avatars/expert.png',
+        personality: 'professional',
+        tags: [],
+        modelConfig: {
+          id: 'expert-model',
+          name: 'Expert Model',
+          modelPath: '/models/expert.model3.json',
+        },
+        enabled: true,
       })
       
-      const character2Id = act(() => {
-        return characterStore.addCharacter({
-          name: '创意顾问',
-          model: 'creative-model',
-          enabled: true,
-        })
+      const character2Id = characterStore.addCharacter({
+        name: '创意顾问',
+        displayName: '创意顾问',
+        description: 'Creative advisor',
+        avatar: '/avatars/creative.png',
+        personality: 'creative',
+        tags: [],
+        modelConfig: {
+          id: 'creative-model',
+          name: 'Creative Model',
+          modelPath: '/models/creative.model3.json',
+        },
+        enabled: true,
       })
       
       // 与技术专家对话

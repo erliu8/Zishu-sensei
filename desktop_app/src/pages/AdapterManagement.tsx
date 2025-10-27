@@ -5,9 +5,9 @@
  */
 
 import React, { useState } from 'react';
-import AdapterList from './AdapterList';
-import AdapterSearch from './AdapterSearch';
-import AdapterConfig from './AdapterConfig';
+import AdapterList from '../components/AdapterList';
+import AdapterSearch from '../components/AdapterSearch';
+import AdapterConfig from '../components/AdapterConfig';
 import { AdapterInfo } from '../services/adapter';
 
 type TabType = 'installed' | 'marketplace' | 'config';
@@ -109,7 +109,7 @@ export const AdapterManagement: React.FC = () => {
             <div className="w-1/3 bg-gray-50 border-r border-gray-200 p-4">
               <h3 className="font-medium mb-4">Installed Adapters</h3>
               <AdapterList 
-                onAdapterSelect={(adapter) => {
+                onAdapterSelect={(adapter: AdapterInfo) => {
                   setSelectedAdapter(adapter);
                   setActiveTab('config');
                 }}

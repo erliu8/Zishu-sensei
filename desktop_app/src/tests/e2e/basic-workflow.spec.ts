@@ -11,7 +11,6 @@ import {
   waitForElement,
   sendChatMessage,
   waitForAIResponse,
-  getLastMessage,
   getUserMessages,
   getAIMessages,
   openSettings,
@@ -575,7 +574,6 @@ test.describe('基础工作流 E2E 测试', () => {
     
     test('应该允许重试失败的消息', async () => {
       // Mock 第一次失败，第二次成功
-      let callCount = 0;
       await page.evaluate(() => {
         // @ts-ignore
         window.__RETRY_TEST__ = {

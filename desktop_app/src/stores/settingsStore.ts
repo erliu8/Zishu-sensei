@@ -24,8 +24,8 @@ import type {
     ConfigChangeEvent,
     ConfigValidationResult
 } from '@/types/settings'
-import { DEFAULT_CONFIG, CONFIG_VALIDATION_RULES } from '@/types/settings'
-import { settingsStorage, type ConfigChangeListener } from '@/services/storage/settings'
+import { DEFAULT_CONFIG } from '@/types/settings'
+import { settingsStorage } from '@/services/storage/settings'
 
 // ==================== 类型定义 ====================
 
@@ -319,8 +319,7 @@ export const useSettingsStore = create<SettingsStore>()(
                         await get().loadSettings()
 
                         // 添加配置变更监听器
-                        const unsubscribe = settingsStorage.addChangeListener((event: ConfigChangeEvent) => {
-                            const currentConfig = get().appConfig
+                        settingsStorage.addChangeListener((event: ConfigChangeEvent) => {
                             set({ appConfig: event.after as AppConfig })
 
                             get().emitEvent({
@@ -556,7 +555,7 @@ export const useSettingsStore = create<SettingsStore>()(
                     const oldConfig = get().appConfig.window
 
                     try {
-                        const updatedConfig = await settingsStorage.updateWindowConfig(updates)
+                        const updatedConfig = await settingsStorage.updateWindowConfig(updates as any)
 
                         set({
                             appConfig: {
@@ -610,7 +609,7 @@ export const useSettingsStore = create<SettingsStore>()(
                     const oldConfig = get().appConfig.theme
 
                     try {
-                        const updatedConfig = await settingsStorage.updateThemeConfig(updates)
+                        const updatedConfig = await settingsStorage.updateThemeConfig(updates as any)
 
                         set({
                             appConfig: {

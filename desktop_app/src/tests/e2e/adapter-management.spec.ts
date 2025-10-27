@@ -6,10 +6,7 @@
 import { test, expect, type Page } from '@playwright/test';
 import {
   E2E_SELECTORS,
-  E2E_TIMEOUTS,
   waitForAppReady,
-  waitForElement,
-  waitForElementHidden,
   waitForLoading,
   openAdapterPanel,
   closeAdapterPanel,
@@ -27,7 +24,6 @@ import {
   getErrorMessage,
   mockTauriCommand,
   resetMocks,
-  waitForResponse,
 } from './setup';
 
 test.describe('适配器管理 E2E 测试', () => {

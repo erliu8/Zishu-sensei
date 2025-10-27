@@ -18,27 +18,34 @@ import {
 import {
   ErrorStatus,
   ErrorSeverity,
+  ErrorType,
+  ErrorSource,
+  RecoveryStrategy,
   type ErrorDetails,
   type ErrorStatistics,
   type RecoveryResult,
+  type ErrorMonitorConfig,
 } from '@/types/error'
 import { mockConsole } from '../../utils/test-utils'
 
 // ==================== Mock 设置 ====================
 
-const mockErrorMonitoringService = {
-  initialize: vi.fn(),
-  reportError: vi.fn(),
-  getErrors: vi.fn(),
-  getStatistics: vi.fn(),
-  resolveError: vi.fn(),
-  cleanupOldErrors: vi.fn(),
-  handleError: vi.fn(),
-  updateConfig: vi.fn(),
-  getConfig: vi.fn(),
-  onError: vi.fn(),
-  onRecovery: vi.fn(),
-}
+// Mock objects need to be hoisted to work with vi.mock
+const { mockErrorMonitoringService } = vi.hoisted(() => ({
+  mockErrorMonitoringService: {
+    initialize: vi.fn(),
+    reportError: vi.fn(),
+    getErrors: vi.fn(),
+    getStatistics: vi.fn(),
+    resolveError: vi.fn(),
+    cleanupOldErrors: vi.fn(),
+    handleError: vi.fn(),
+    updateConfig: vi.fn(),
+    getConfig: vi.fn(),
+    onError: vi.fn(),
+    onRecovery: vi.fn(),
+  },
+}))
 
 vi.mock('@/services/errorMonitoringService', () => ({
   errorMonitoringService: mockErrorMonitoringService,
@@ -47,32 +54,42 @@ vi.mock('@/services/errorMonitoringService', () => ({
 // ==================== 测试数据 ====================
 
 const mockError: ErrorDetails = {
+  id: 'error-1',
   errorId: 'error-1',
-  type: 'TypeError',
+  type: ErrorType.JAVASCRIPT,
+  source: ErrorSource.FRONTEND,
+  name: 'TypeError',
   message: 'Test error message',
   severity: ErrorSeverity.MEDIUM,
   status: ErrorStatus.NEW,
-  timestamp: '2025-01-01T00:00:00Z',
   stack: 'Error stack trace',
   context: {
+    timestamp: '2025-01-01T00:00:00Z',
+    sessionId: 'test-session',
+    platform: 'linux',
+    appVersion: '1.0.0',
+    buildVersion: '1.0.0',
     component: 'TestComponent',
     operation: 'test_operation',
-    user: 'test-user',
   },
+  occurrenceCount: 1,
+  firstOccurred: '2025-01-01T00:00:00Z',
+  lastOccurred: '2025-01-01T00:00:00Z',
   resolved: false,
-  count: 1,
 }
 
 const mockErrors: ErrorDetails[] = [
   mockError,
   {
     ...mockError,
+    id: 'error-2',
     errorId: 'error-2',
     severity: ErrorSeverity.HIGH,
-    status: ErrorStatus.INVESTIGATING,
+    status: ErrorStatus.ACKNOWLEDGED,
   },
   {
     ...mockError,
+    id: 'error-3',
     errorId: 'error-3',
     severity: ErrorSeverity.LOW,
     status: ErrorStatus.RESOLVED,
@@ -91,41 +108,66 @@ const mockStatistics: ErrorStatistics = {
     [ErrorSeverity.CRITICAL]: 5,
   },
   byType: {
-    TypeError: 40,
-    NetworkError: 30,
-    ValidationError: 30,
-  },
+    [ErrorType.JAVASCRIPT]: 40,
+    [ErrorType.NETWORK]: 30,
+    [ErrorType.VALIDATION]: 30,
+  } as Record<ErrorType, number>,
   bySource: {
-    'TestComponent': 60,
-    'OtherComponent': 40,
-  },
-  hourlyTrend: [10, 15, 20, 25, 30],
+    [ErrorSource.FRONTEND]: 60,
+    [ErrorSource.BACKEND]: 40,
+  } as Record<ErrorSource, number>,
+  hourlyTrend: [
+    { hour: '00:00', count: 10 },
+    { hour: '01:00', count: 15 },
+    { hour: '02:00', count: 20 },
+    { hour: '03:00', count: 25 },
+    { hour: '04:00', count: 30 },
+  ],
   topErrors: [
     {
       errorId: 'error-1',
       message: 'Most frequent error',
       count: 50,
+      severity: ErrorSeverity.HIGH,
     },
   ],
 }
 
 const mockRecoveryResult: RecoveryResult = {
   success: true,
-  strategy: 'retry' as any,
+  strategy: RecoveryStrategy.RETRY,
   attempts: 1,
   duration: 100,
   message: 'Recovery successful',
 }
 
-const mockConfig = {
+const mockConfig: ErrorMonitorConfig = {
   enabled: true,
-  autoReport: true,
-  maxErrors: 1000,
-  retentionDays: 30,
-  severityThreshold: ErrorSeverity.MEDIUM,
+  logLevel: 'error',
+  captureJSErrors: true,
+  capturePromiseRejections: true,
+  captureReactErrors: true,
+  captureConsoleErrors: true,
+  maxStoredErrors: 1000,
+  storageRetentionDays: 30,
+  reportConfig: {
+    enabled: true,
+    minSeverity: ErrorSeverity.MEDIUM,
+    blacklistedTypes: [],
+    rateLimitEnabled: true,
+    maxReportsPerMinute: 10,
+    includeUserData: true,
+    includeSystemInfo: true,
+    maskSensitiveData: true,
+    batchEnabled: true,
+    batchSize: 10,
+    batchTimeout: 5000,
+  },
+  enableAutoRecovery: true,
+  recoveryTimeout: 5000,
   showErrorNotifications: true,
-  enableRecovery: true,
-  maxRecoveryAttempts: 3,
+  showErrorDialog: true,
+  allowUserReporting: true,
 }
 
 // ==================== 测试套件 ====================
@@ -244,8 +286,8 @@ describe('useErrorMonitor Hook', () => {
       })
 
       const newConfig = {
-        severityThreshold: ErrorSeverity.HIGH,
-        maxErrors: 500,
+        maxStoredErrors: 500,
+        enableAutoRecovery: false,
       }
 
       await act(async () => {
@@ -513,7 +555,7 @@ describe('useErrorStatistics Hook', () => {
         expect(result.current.derivedStats.errorRate).toBe(10)
         expect(result.current.derivedStats.resolutionRate).toBe(80)
         expect(result.current.derivedStats.criticalErrorCount).toBe(5)
-        expect(result.current.derivedStats.mostCommonType).toBe('TypeError')
+        expect(result.current.derivedStats.mostCommonType).toBe(ErrorType.JAVASCRIPT)
       })
     })
 
@@ -813,14 +855,12 @@ describe('Error Hooks 集成测试', () => {
     // 3. 尝试恢复错误
     const recoveryHook = renderHook(() => useErrorRecovery())
 
-    let recoveryResult: RecoveryResult | null = null
     await act(async () => {
-      recoveryResult = await recoveryHook.result.current.attemptRecovery(
+      const result = await recoveryHook.result.current.attemptRecovery(
         testError
       )
+      expect(result?.success).toBe(true)
     })
-
-    expect(recoveryResult?.success).toBe(true)
 
     // 4. 解决错误
     await act(async () => {

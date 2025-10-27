@@ -5,7 +5,9 @@
  */
 
 import { http, HttpResponse } from 'msw'
-import type { AdapterInfo, AdapterMetadata, SystemInfo } from '../../types'
+import type { AdapterInfo, AdapterMetadata } from '../../types'
+import type { MockSystemInfo } from './factories'
+import { AdapterStatus, AdapterType, CapabilityLevel } from '../../types/adapter'
 
 // 模拟数据
 const mockAdapters: AdapterInfo[] = [
@@ -15,7 +17,7 @@ const mockAdapters: AdapterInfo[] = [
     size: 1024000,
     version: '1.0.0',
     description: '测试适配器 1',
-    status: 'loaded' as const,
+    status: AdapterStatus.Loaded,
     load_time: new Date().toISOString(),
     memory_usage: 512000,
     config: {
@@ -29,7 +31,7 @@ const mockAdapters: AdapterInfo[] = [
     size: 2048000,
     version: '2.0.0',
     description: '测试适配器 2',
-    status: 'unloaded' as const,
+    status: AdapterStatus.Unloaded,
     load_time: new Date().toISOString(),
     memory_usage: 0,
     config: {
@@ -44,7 +46,7 @@ const mockAdapterMetadata: AdapterMetadata[] = [
     id: 'test-adapter-1',
     name: '测试适配器 1',
     version: '1.0.0',
-    adapter_type: 'soft' as const,
+    adapter_type: AdapterType.Soft,
     description: '这是一个测试适配器',
     author: '测试作者',
     license: 'MIT',
@@ -55,7 +57,7 @@ const mockAdapterMetadata: AdapterMetadata[] = [
       {
         name: '文本处理',
         description: '处理文本内容',
-        level: 'basic' as const,
+        level: CapabilityLevel.Basic,
         required_params: ['text'],
         optional_params: ['format'],
       },
@@ -88,7 +90,7 @@ const mockAdapterMetadata: AdapterMetadata[] = [
   },
 ]
 
-const mockSystemInfo: SystemInfo = {
+const mockSystemInfo: MockSystemInfo = {
   os_name: 'Linux',
   os_version: '6.8.0-85-generic',
   arch: 'x86_64',
@@ -189,7 +191,7 @@ export const handlers = [
     }
 
     // 模拟加载成功
-    adapter.status = 'loaded'
+    adapter.status = AdapterStatus.Loaded
     adapter.load_time = new Date().toISOString()
 
     return HttpResponse.json({
@@ -212,7 +214,7 @@ export const handlers = [
     }
 
     // 模拟卸载成功
-    adapter.status = 'unloaded'
+    adapter.status = AdapterStatus.Unloaded
     adapter.memory_usage = 0
 
     return HttpResponse.json({

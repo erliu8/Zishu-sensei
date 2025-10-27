@@ -9,10 +9,8 @@ import { basename, dirname, extname, join, resolve } from '@tauri-apps/api/path'
 import { convertFileSrc, invoke } from '@tauri-apps/api/tauri'
 import { appWindow } from '@tauri-apps/api/window'
 
-import type {
-    FileInfo,
-    WindowConfig
-} from '../types/tauri'
+import type { FileInfo } from '../types/app'
+import type { WindowConfig } from '../types/tauri'
 
 /**
  * 检查是否在 Tauri 环境中
@@ -324,12 +322,13 @@ export const fileUtils = {
         size?: number,
         modified?: number
     ): FileInfo {
+        const extension = name.split('.').pop() || '';
         return {
             name,
             path,
             size: size || 0,
             type: this.getFileType(name),
-            extension: name.split('.').pop() || '',
+            extension,
             modified: modified ? new Date(modified) : new Date(),
             isDirectory: false,
             isDir: false,
@@ -501,7 +500,7 @@ export const performanceUtils = {
                 }
 
                 const allStats: Record<string, any> = {}
-                metrics.forEach((durations, cmd) => {
+                metrics.forEach((_, cmd) => {
                     allStats[cmd] = this.getStats(cmd)
                 })
                 return allStats
@@ -545,7 +544,9 @@ export const cacheUtils = {
                 // 清理过期项
                 if (cache.size >= maxSize) {
                     const oldestKey = cache.keys().next().value
-                    cache.delete(oldestKey)
+                    if (oldestKey) {
+                        cache.delete(oldestKey)
+                    }
                 }
 
                 cache.set(key, { value, timestamp: Date.now() })

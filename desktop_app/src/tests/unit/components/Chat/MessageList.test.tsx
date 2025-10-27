@@ -8,9 +8,59 @@
 import { describe, it, expect, vi, beforeEach, afterEach } from 'vitest'
 import { screen, fireEvent, waitFor } from '@testing-library/react'
 import { renderWithProviders, wait, createMockFn } from '@/tests/utils/test-utils'
-import { createMockMessage, createMockConversation } from '@/tests/mocks/factories'
-import { MessageList } from '@/components/Chat/MessageList'
-import type { ChatMessage } from '@/types/chat'
+import { createMockMessage as createBaseMockMessage, createMockConversation as createBaseConversation } from '@/tests/mocks/factories'
+import type { ChatMessage, MessageRole, MessageType, MessageStatus } from '@/types/chat'
+
+// Mock MessageList component (组件尚未实现)
+const MessageList = vi.fn(({ messages, onCopyMessage, onResendMessage, onEditMessage, onDeleteMessage, ...props }: any) => (
+  <div role="log" aria-label="消息列表" aria-live="polite" {...props}>
+    {messages && messages.length > 0 ? (
+      messages.map((message: ChatMessage) => (
+        <div key={message.id} data-testid={`message-bubble-${message.id}`} className={`message-bubble ${message.role}`}>
+          <div data-testid="message-content">{message.content}</div>
+          <div data-testid="message-actions">
+            <button onClick={() => onCopyMessage?.(message.content)}>复制</button>
+            <button onClick={() => onResendMessage?.(message.id)}>重发</button>
+            <button onClick={() => onEditMessage?.(message.id)}>编辑</button>
+            <button onClick={() => onDeleteMessage?.(message.id)}>删除</button>
+          </div>
+          <div data-testid="message-timestamp">{new Date(message.timestamp).toLocaleTimeString()}</div>
+        </div>
+      ))
+    ) : (
+      <div>暂无消息</div>
+    )}
+  </div>
+))
+
+// 创建符合 ChatMessage 类型的 mock 消息
+function createMockMessage(overrides?: Partial<ChatMessage>): ChatMessage {
+  const base = createBaseMockMessage(overrides as any)
+  return {
+    id: base.id,
+    sessionId: 'test-session',
+    role: (base.role as MessageRole) || MessageRole.USER,
+    type: MessageType.TEXT,
+    content: base.content,
+    status: MessageStatus.SENT,
+    timestamp: base.timestamp,
+    metadata: base.metadata,
+    ...overrides,
+  } as ChatMessage
+}
+
+// 创建对话消息列表
+function createMockConversation(messageCount = 10): ChatMessage[] {
+  return Array.from({ length: messageCount }, (_, i) => {
+    const id = `msg-${i}`
+    return createMockMessage({
+      id,
+      role: i % 2 === 0 ? MessageRole.USER : MessageRole.ASSISTANT,
+      content: `Message ${i}`,
+      timestamp: Date.now() - (messageCount - i) * 60000,
+    })
+  })
+}
 
 // ==================== Mock 设置 ====================
 

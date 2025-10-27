@@ -8,8 +8,6 @@
  * - 主题导入/导出
  */
 
-import type { ThemeName } from './settings'
-
 /**
  * 主题类别
  */

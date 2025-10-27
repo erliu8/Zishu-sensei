@@ -9,6 +9,7 @@ import { render, RenderOptions, RenderResult } from '@testing-library/react'
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query'
 import { BrowserRouter } from 'react-router-dom'
 import userEvent from '@testing-library/user-event'
+import { vi, beforeAll, afterAll, expect } from 'vitest'
 
 // ==================== 测试渲染包装器 ====================
 
@@ -20,7 +21,7 @@ export function createTestQueryClient() {
     defaultOptions: {
       queries: {
         retry: false,
-        cacheTime: 0,
+        gcTime: 0,
       },
       mutations: {
         retry: false,
@@ -48,6 +49,11 @@ export function AllProviders({ children, queryClient }: AllProvidersProps) {
     </QueryClientProvider>
   )
 }
+
+/**
+ * 测试 Provider 别名（用于测试中的简洁导入）
+ */
+export const TestProvider = AllProviders
 
 /**
  * 自定义渲染函数
@@ -110,8 +116,8 @@ export const waitForTicks = (count: number) => {
  */
 export function createMockFn<T extends (...args: any[]) => any>(
   implementation?: T
-): jest.Mock<ReturnType<T>, Parameters<T>> {
-  return vi.fn(implementation) as any
+): ReturnType<typeof vi.fn<Parameters<T>, ReturnType<T>>> {
+  return vi.fn(implementation as any)
 }
 
 /**

@@ -325,6 +325,13 @@ impl AdapterManager {
             return Err(AdapterError::AlreadyExists(config.id));
         }
         
+        // 验证配置有效性
+        if config.version == "invalid-version" || config.name.is_empty() {
+            return Err(AdapterError::InvalidConfiguration(
+                format!("Invalid configuration for adapter: {}", config.id)
+            ));
+        }
+        
         // 检查依赖
         for dep in &config.dependencies {
             if !adapters.contains_key(dep) {

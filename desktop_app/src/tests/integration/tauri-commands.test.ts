@@ -127,7 +127,7 @@ describe('Tauri 命令集成测试', () => {
 
       const result = await invoke('delete_session', {
         sessionId: 'session-1',
-      })
+      }) as any
 
       expect(result.success).toBe(true)
     })
@@ -158,7 +158,7 @@ describe('Tauri 命令集成测试', () => {
       const result = await invoke('list_adapters')
 
       expect(result).toEqual(mockAdapters)
-      expect(result.data).toHaveLength(2)
+      expect((result as any).data).toHaveLength(2)
     })
 
     it('install_adapter - 应该安装适配器', async () => {
@@ -176,8 +176,8 @@ describe('Tauri 命令集成测试', () => {
         source: 'market',
       })
 
-      expect(result.success).toBe(true)
-      expect(result.data.status).toBe('installed')
+      expect((result as any).success).toBe(true)
+      expect((result as any).data.status).toBe('installed')
     })
 
     it('uninstall_adapter - 应该卸载适配器', async () => {
@@ -188,7 +188,7 @@ describe('Tauri 命令集成测试', () => {
 
       const result = await invoke('uninstall_adapter', {
         adapterName: 'old-adapter',
-      })
+      }) as any
 
       expect(result.success).toBe(true)
     })
@@ -207,7 +207,7 @@ describe('Tauri 命令集成测试', () => {
         adapterName: 'test-adapter',
       })
 
-      expect(result.data.status).toBe('loaded')
+      expect((result as any).data.status).toBe('loaded')
     })
 
     it('unload_adapter - 应该卸载适配器', async () => {
@@ -224,7 +224,7 @@ describe('Tauri 命令集成测试', () => {
         adapterName: 'test-adapter',
       })
 
-      expect(result.data.status).toBe('installed')
+      expect((result as any).data.status).toBe('installed')
     })
 
     it('get_adapter_config - 应该获取适配器配置', async () => {
@@ -244,7 +244,7 @@ describe('Tauri 命令集成测试', () => {
         adapterName: 'test-adapter',
       })
 
-      expect(result).toEqual(mockConfig)
+      expect((result as any)).toEqual(mockConfig)
     })
 
     it('update_adapter_config - 应该更新适配器配置', async () => {
@@ -263,7 +263,7 @@ describe('Tauri 命令集成测试', () => {
         config: newConfig,
       })
 
-      expect(result.data).toEqual(newConfig)
+      expect((result as any).data).toEqual(newConfig)
     })
 
     it('search_adapters - 应该搜索适配器市场', async () => {
@@ -327,7 +327,7 @@ describe('Tauri 命令集成测试', () => {
 
       const result = await invoke('update_app_settings', { updates })
 
-      expect(result.data).toEqual(updates)
+      expect((result as any).data).toEqual(updates)
     })
 
     it('get_window_config - 应该获取窗口配置', async () => {
@@ -345,7 +345,7 @@ describe('Tauri 命令集成测试', () => {
 
       const result = await invoke('get_window_config')
 
-      expect(result).toEqual(mockConfig)
+      expect((result as any)).toEqual(mockConfig)
     })
 
     it('update_window_config - 应该更新窗口配置', async () => {
@@ -359,7 +359,7 @@ describe('Tauri 命令集成测试', () => {
         data: config,
       })
 
-      const result = await invoke('update_window_config', { updates: config })
+      const result = await invoke('update_window_config', { updates: config }) as any
 
       expect(result.data).toEqual(config)
     })
@@ -377,7 +377,7 @@ describe('Tauri 命令集成测试', () => {
 
       const result = await invoke('get_theme_config')
 
-      expect(result.data.mode).toBe('dark')
+      expect((result as any).data.mode).toBe('dark')
     })
 
     it('update_theme_config - 应该更新主题配置', async () => {
@@ -393,7 +393,7 @@ describe('Tauri 命令集成测试', () => {
         data: themeConfig,
       })
 
-      const result = await invoke('update_theme_config', { updates: themeConfig })
+      const result = await invoke('update_theme_config', { updates: themeConfig }) as any
 
       expect(result.data).toEqual(themeConfig)
     })
@@ -410,7 +410,7 @@ describe('Tauri 命令集成测试', () => {
 
       const result = await invoke('get_character_config')
 
-      expect(result.data.current_character).toBe('hiyori')
+      expect((result as any).data.current_character).toBe('hiyori')
     })
 
     it('update_character_config - 应该更新角色配置', async () => {
@@ -426,7 +426,7 @@ describe('Tauri 命令集成测试', () => {
 
       const result = await invoke('update_character_config', { updates: config })
 
-      expect(result.data.scale).toBe(1.5)
+      expect((result as any).data.scale).toBe(1.5)
     })
   })
 
@@ -461,7 +461,7 @@ describe('Tauri 命令集成测试', () => {
 
       const result = await invoke('get_app_version')
 
-      expect(result.data.version).toBe('1.0.0')
+      expect((result as any).data.version).toBe('1.0.0')
     })
 
     it('check_for_updates - 应该检查更新', async () => {
@@ -476,7 +476,7 @@ describe('Tauri 命令集成测试', () => {
 
       const result = await invoke('check_for_updates')
 
-      expect(result.data.has_update).toBe(true)
+      expect((result as any).data.has_update).toBe(true)
     })
 
     it('open_external_link - 应该打开外部链接', async () => {
@@ -486,7 +486,7 @@ describe('Tauri 命令集成测试', () => {
 
       const result = await invoke('open_external_link', {
         url: 'https://example.com',
-      })
+      }) as any
 
       expect(result.success).toBe(true)
     })
@@ -498,7 +498,7 @@ describe('Tauri 命令集成测试', () => {
 
       const result = await invoke('show_in_folder', {
         path: '/path/to/file',
-      })
+      }) as any
 
       expect(result.success).toBe(true)
     })
@@ -513,7 +513,7 @@ describe('Tauri 命令集成测试', () => {
 
       const result = await invoke('get_log_path')
 
-      expect(result.data.path).toBeTruthy()
+      expect((result as any).data.path).toBeTruthy()
     })
   })
 
@@ -531,7 +531,7 @@ describe('Tauri 命令集成测试', () => {
         path: '/path/to/file.txt',
       })
 
-      expect(result.data.content).toBe('File content')
+      expect((result as any).data.content).toBe('File content')
     })
 
     it('write_file - 应该写入文件', async () => {
@@ -543,7 +543,7 @@ describe('Tauri 命令集成测试', () => {
       const result = await invoke('write_file', {
         path: '/path/to/file.txt',
         content: 'New content',
-      })
+      }) as any
 
       expect(result.success).toBe(true)
     })
@@ -556,7 +556,7 @@ describe('Tauri 命令集成测试', () => {
 
       const result = await invoke('delete_file', {
         path: '/path/to/file.txt',
-      })
+      }) as any
 
       expect(result.success).toBe(true)
     })
@@ -576,7 +576,7 @@ describe('Tauri 命令集成测试', () => {
         path: '/path/to/directory',
       })
 
-      expect(result.data.files).toHaveLength(2)
+      expect((result as any).data.files).toHaveLength(2)
     })
   })
 
@@ -598,7 +598,7 @@ describe('Tauri 命令集成测试', () => {
         params: [],
       })
 
-      expect(result.data.rows).toHaveLength(2)
+      expect((result as any).data.rows).toHaveLength(2)
     })
 
     it('execute_update - 应该执行更新操作', async () => {
@@ -614,7 +614,7 @@ describe('Tauri 命令集成测试', () => {
         params: ['New Name', 1],
       })
 
-      expect(result.data.affected_rows).toBe(1)
+      expect((result as any).data.affected_rows).toBe(1)
     })
   })
 
@@ -633,7 +633,7 @@ describe('Tauri 命令集成测试', () => {
         key: 'encryption_key',
       })
 
-      expect(result.data.encrypted).toBeTruthy()
+      expect((result as any).data.encrypted).toBeTruthy()
     })
 
     it('decrypt_data - 应该解密数据', async () => {
@@ -650,7 +650,7 @@ describe('Tauri 命令集成测试', () => {
         iv: 'iv_base64',
       })
 
-      expect(result.data.decrypted).toBe('sensitive data')
+      expect((result as any).data.decrypted).toBe('sensitive data')
     })
   })
 
@@ -673,8 +673,8 @@ describe('Tauri 命令集成测试', () => {
         message: '', // 空消息
       })
 
-      expect(result.success).toBe(false)
-      expect(result.error).toBe('Invalid parameters')
+      expect((result as any).success).toBe(false)
+      expect((result as any).error).toBe('Invalid parameters')
     })
 
     it('应该处理超时错误', async () => {
@@ -697,8 +697,8 @@ describe('Tauri 命令集成测试', () => {
 
       const result = await invoke('protected_command')
 
-      expect(result.success).toBe(false)
-      expect(result.error).toBe('Permission denied')
+      expect((result as any).success).toBe(false)
+      expect((result as any).error).toBe('Permission denied')
     })
   })
 
@@ -714,7 +714,7 @@ describe('Tauri 命令集成测试', () => {
 
       const result = await invoke('batch_install_adapters', {
         adapter_ids: ['adapter-1', 'adapter-2', 'adapter-3'],
-      })
+      }) as any
 
       expect(result.data.installed).toHaveLength(3)
       expect(result.data.failed).toHaveLength(0)
@@ -731,7 +731,7 @@ describe('Tauri 命令集成测试', () => {
 
       const result = await invoke('batch_uninstall_adapters', {
         adapter_names: ['adapter-1', 'adapter-2'],
-      })
+      }) as any
 
       expect(result.data.uninstalled).toHaveLength(2)
     })
@@ -748,7 +748,7 @@ describe('Tauri 命令集成测试', () => {
       const result = await invoke('batch_delete_messages', {
         sessionId: 'session-1',
         messageIds: ['msg-1', 'msg-2', 'msg-3', 'msg-4', 'msg-5'],
-      })
+      }) as any
 
       expect(result.data.deleted).toBe(5)
     })
@@ -766,7 +766,7 @@ describe('Tauri 命令集成测试', () => {
         },
       })
 
-      const result = await invoke('get_performance_metrics')
+      const result = await invoke('get_performance_metrics') as any
 
       expect(result.data.cpu_usage).toBeLessThan(100)
       expect(result.data.fps).toBeGreaterThan(0)
@@ -783,7 +783,7 @@ describe('Tauri 命令集成测试', () => {
         },
       })
 
-      const result = await invoke('get_memory_stats')
+      const result = await invoke('get_memory_stats') as any
 
       expect(result.data.percentage).toBe(50.0)
     })
@@ -798,7 +798,7 @@ describe('Tauri 命令集成测试', () => {
       const result = await invoke('emit_event', {
         event: 'custom_event',
         payload: { data: 'test' },
-      })
+      }) as any
 
       expect(result.success).toBe(true)
     })
@@ -813,7 +813,7 @@ describe('Tauri 命令集成测试', () => {
 
       const result = await invoke('subscribe_to_event', {
         event: 'chat_message',
-      })
+      }) as any
 
       expect(result.data.subscription_id).toBeTruthy()
     })

@@ -175,7 +175,7 @@ export { default as validators } from './validators'
 export { default as constants } from './constants'
 export { default as helpers } from './helpers'
 export { default as debounceUtils } from './debounce'
-export { default as logger } from './logger'
+// logger already exported above as named export
 
 // ==================== 工具类型 ====================
 

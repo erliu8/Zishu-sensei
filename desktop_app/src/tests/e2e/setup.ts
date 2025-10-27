@@ -3,7 +3,7 @@
  * 提供 Tauri 应用的端到端测试支持
  */
 
-import { type Page, type ElectronApplication } from '@playwright/test';
+import { type Page } from '@playwright/test';
 
 /**
  * E2E 测试超时配置
@@ -83,7 +83,7 @@ export const E2E_SELECTORS = {
 export async function waitForElement(
   page: Page,
   selector: string,
-  timeout = E2E_TIMEOUTS.DEFAULT
+  timeout: number = E2E_TIMEOUTS.DEFAULT
 ): Promise<void> {
   await page.waitForSelector(selector, { timeout, state: 'visible' });
 }
@@ -94,7 +94,7 @@ export async function waitForElement(
 export async function waitForElementHidden(
   page: Page,
   selector: string,
-  timeout = E2E_TIMEOUTS.DEFAULT
+  timeout: number = E2E_TIMEOUTS.DEFAULT
 ): Promise<void> {
   await page.waitForSelector(selector, { timeout, state: 'hidden' });
 }
@@ -154,7 +154,7 @@ export async function sendChatMessage(
  */
 export async function waitForAIResponse(
   page: Page,
-  timeout = E2E_TIMEOUTS.API_REQUEST
+  timeout: number = E2E_TIMEOUTS.API_REQUEST
 ): Promise<void> {
   // 等待输入指示器出现
   await waitForElement(page, E2E_SELECTORS.TYPING_INDICATOR, 2000);
@@ -452,7 +452,7 @@ export async function pressShortcut(
 export async function waitForRequest(
   page: Page,
   urlPattern: string | RegExp,
-  timeout = E2E_TIMEOUTS.API_REQUEST
+  timeout: number = E2E_TIMEOUTS.API_REQUEST
 ): Promise<void> {
   await page.waitForRequest(urlPattern, { timeout });
 }
@@ -463,7 +463,7 @@ export async function waitForRequest(
 export async function waitForResponse(
   page: Page,
   urlPattern: string | RegExp,
-  timeout = E2E_TIMEOUTS.API_REQUEST
+  timeout: number = E2E_TIMEOUTS.API_REQUEST
 ): Promise<void> {
   await page.waitForResponse(urlPattern, { timeout });
 }

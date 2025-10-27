@@ -4,40 +4,35 @@
  * 测试聊天功能的所有方面，包括消息发送、流式响应、历史管理等
  */
 
-import React from 'react'
 import { describe, it, expect, beforeEach, afterEach, vi, beforeAll, afterAll } from 'vitest'
 import { renderHook, act, waitFor } from '@testing-library/react'
-import { useChat, useSimpleChat, type Message, type UseChatOptions } from '@/hooks/useChat'
+import { useChat, useSimpleChat, type UseChatOptions } from '@/hooks/useChat'
 import { 
   createMockMessage,
   createMockConversation,
-  createMockApiResponse,
-  createMockErrorResponse
 } from '../../mocks/factories'
-import { waitForNextTick, mockConsole } from '../../utils/test-utils'
+import { mockConsole } from '../../utils/test-utils'
 
 // ==================== Mock 设置 ====================
 
-// Mock ChatService
-const mockChatService = {
-  generateSessionId: vi.fn(() => 'test-session-123'),
-  sendMessage: vi.fn(),
-  getChatHistory: vi.fn(),
-  clearChatHistory: vi.fn(),
-  setChatModel: vi.fn(),
-}
-
-// Mock ChatAPI
-const mockChatAPI = {
-  validateMessage: vi.fn(() => ({ valid: true })),
-  sendMessageStream: vi.fn(),
-}
-
-// Mock StreamManager
-const mockStreamManager = {
-  abort: vi.fn(),
-  stop: vi.fn(),
-}
+// Mock objects need to be hoisted to work with vi.mock
+const { mockChatService, mockChatAPI, mockStreamManager } = vi.hoisted(() => ({
+  mockChatService: {
+    generateSessionId: vi.fn(() => 'test-session-123'),
+    sendMessage: vi.fn(),
+    getChatHistory: vi.fn(),
+    clearChatHistory: vi.fn(),
+    setChatModel: vi.fn(),
+  },
+  mockChatAPI: {
+    validateMessage: vi.fn(() => ({ valid: true })),
+    sendMessageStream: vi.fn(),
+  },
+  mockStreamManager: {
+    abort: vi.fn(),
+    stop: vi.fn(),
+  },
+}))
 
 vi.mock('@/services/chat/index', () => ({
   default: mockChatService,
@@ -185,7 +180,6 @@ describe('useChat Hook', () => {
     it('应该验证消息内容', async () => {
       mockChatAPI.validateMessage.mockReturnValue({
         valid: false,
-        error: '消息不能为空',
       })
 
       const { result } = renderHook(() => useChat())
@@ -270,7 +264,6 @@ describe('useChat Hook', () => {
 
   describe('流式响应', () => {
     it('应该支持流式响应', async () => {
-      const mockStreamOptions = { onChunk: vi.fn(), onComplete: vi.fn(), onError: vi.fn() }
       mockChatAPI.sendMessageStream.mockResolvedValue(mockStreamManager)
 
       const { result } = renderHook(() => useChat({ enableStreaming: true }))

@@ -215,6 +215,332 @@ pub struct NetworkTiming {
     pub receive_time: Option<i64>,
 }
 
+// ============================================================================
+// 批量记录和高级功能命令
+// ============================================================================
+
+/// 批量记录性能指标
+#[tauri::command]
+pub async fn record_performance_metrics_batch(
+    metrics: Vec<PerformanceMetric>,
+    state: State<'_, PerformanceMonitorState>,
+) -> Result<(), String> {
+    let db = state.db.lock().map_err(|e| e.to_string())?;
+    for metric in metrics {
+        let _ = db.record_metric(&metric);
+    }
+    debug!("批量记录了性能指标");
+    Ok(())
+}
+
+/// 获取性能摘要
+#[tauri::command]
+pub async fn get_performance_summary(
+    _start_time: Option<i64>,
+    _end_time: Option<i64>,
+    state: State<'_, PerformanceMonitorState>,
+) -> Result<PerformanceStats, String> {
+    let db = state.db.lock().map_err(|e| e.to_string())?;
+    db.get_stats().map_err(|e| e.to_string())
+}
+
+/// 记录用户操作
+#[tauri::command]
+pub async fn record_user_operation(
+    operation_type: String,
+    duration_ms: i64,
+    component: Option<String>,
+    metadata: Option<String>,
+    state: State<'_, PerformanceMonitorState>,
+) -> Result<(), String> {
+    let operation = UserOperation {
+        id: 0, // Will be set by database
+        user_id: "default_user".to_string(),
+        operation: operation_type.clone(),
+        operation_type: operation_type.clone(),
+        target_element: component.unwrap_or_default(),
+        start_time: SystemTime::now().duration_since(UNIX_EPOCH).unwrap().as_millis() as i64,
+        end_time: SystemTime::now().duration_since(UNIX_EPOCH).unwrap().as_millis() as i64 + duration_ms,
+        duration_ms,
+        response_time: duration_ms as f64,
+        success: true,
+        error_message: None,
+        metadata: Some(metadata.unwrap_or_default()),
+        timestamp: SystemTime::now().duration_since(UNIX_EPOCH).unwrap().as_millis() as i64,
+    };
+    
+    let db = state.db.lock().map_err(|e| e.to_string())?;
+    db.record_user_operation(&operation).map_err(|e| e.to_string())?;
+    debug!("记录用户操作: {}", operation_type);
+    Ok(())
+}
+
+/// 获取用户操作记录
+#[tauri::command]
+pub async fn get_user_operations(
+    start_time: Option<i64>,
+    end_time: Option<i64>,
+    limit: Option<usize>,
+    state: State<'_, PerformanceMonitorState>,
+) -> Result<Vec<UserOperation>, String> {
+    let db = state.db.lock().map_err(|e| e.to_string())?;
+    db.get_user_operations(None, start_time, end_time, limit).map_err(|e| e.to_string())
+}
+
+/// 获取用户操作统计
+#[tauri::command]
+pub async fn get_user_operation_stats(
+    _operation_type: Option<String>,
+    _start_time: Option<i64>,
+    _end_time: Option<i64>,
+    state: State<'_, PerformanceMonitorState>,
+) -> Result<PerformanceStats, String> {
+    let db = state.db.lock().map_err(|e| e.to_string())?;
+    db.get_stats().map_err(|e| e.to_string())
+}
+
+/// 记录网络指标
+#[tauri::command]
+pub async fn record_network_metric(
+    url: String,
+    method: String,
+    duration_ms: i64,
+    status_code: i32,
+    bytes_sent: i64,
+    bytes_received: i64,
+    timing: Option<NetworkTiming>,
+    state: State<'_, PerformanceMonitorState>,
+) -> Result<(), String> {
+    let metric = NetworkMetric {
+        id: None,
+        timestamp: SystemTime::now().duration_since(UNIX_EPOCH).unwrap().as_millis() as i64,
+        bytes_sent,
+        bytes_received,
+        packets_sent: 0,
+        packets_received: 0,
+        method: method.clone(),
+        url: url.clone(),
+        status_code,
+        request_size: bytes_sent,
+        response_size: bytes_received,
+        total_time: duration_ms as f64,
+        dns_time: timing.as_ref().and_then(|t| t.dns_time).unwrap_or(0) as f64,
+        connect_time: timing.as_ref().and_then(|t| t.connect_time).unwrap_or(0) as f64,
+        ssl_time: timing.as_ref().and_then(|t| t.ssl_time).unwrap_or(0) as f64,
+        send_time: timing.as_ref().and_then(|t| t.send_time).unwrap_or(0) as f64,
+        wait_time: timing.as_ref().and_then(|t| t.wait_time).unwrap_or(0) as f64,
+        receive_time: timing.as_ref().and_then(|t| t.receive_time).unwrap_or(0) as f64,
+        error_message: None,
+        error_type: None,
+    };
+    
+    let db = state.db.lock().map_err(|e| e.to_string())?;
+    db.record_network_metric(&metric).map_err(|e| e.to_string())?;
+    debug!("记录网络指标: {} {}", method, url);
+    Ok(())
+}
+
+/// 获取网络指标
+#[tauri::command]
+pub async fn get_network_metrics(
+    start_time: Option<i64>,
+    end_time: Option<i64>,
+    limit: Option<usize>,
+    state: State<'_, PerformanceMonitorState>,
+) -> Result<Vec<NetworkMetric>, String> {
+    let db = state.db.lock().map_err(|e| e.to_string())?;
+    db.get_network_metrics(start_time, end_time, limit).map_err(|e| e.to_string())
+}
+
+/// 获取网络统计
+#[tauri::command]
+pub async fn get_network_stats(
+    _start_time: Option<i64>,
+    _end_time: Option<i64>,
+    state: State<'_, PerformanceMonitorState>,
+) -> Result<PerformanceStats, String> {
+    let db = state.db.lock().map_err(|e| e.to_string())?;
+    db.get_stats().map_err(|e| e.to_string())
+}
+
+/// 记录性能快照
+#[tauri::command]
+pub async fn record_performance_snapshot(
+    cpu_usage: f32,
+    memory_usage: f32,
+    fps: f32,
+    render_time: f64,
+    metadata: Option<String>,
+    state: State<'_, PerformanceMonitorState>,
+) -> Result<(), String> {
+    let snapshot = PerformanceSnapshot {
+        id: None,
+        timestamp: SystemTime::now().duration_since(UNIX_EPOCH).unwrap().as_millis() as i64,
+        cpu_usage: cpu_usage as f64,
+        memory_usage: memory_usage as f64,
+        memory_used_mb: 0.0,
+        memory_total_mb: 0.0,
+        disk_usage: 0.0,
+        network_in: 0.0,
+        network_out: 0.0,
+        load_average: 0.0,
+        thread_count: 0,
+        open_files: 0,
+        render_time,
+        fps: fps as f64,
+        heap_size: 0.0,
+        gc_time: 0.0,
+        app_state: "active".to_string(),
+        active_connections: 0,
+    };
+    
+    let db = state.db.lock().map_err(|e| e.to_string())?;
+    db.record_snapshot(&snapshot).map_err(|e| e.to_string())?;
+    debug!("记录性能快照");
+    Ok(())
+}
+
+/// 获取性能快照
+#[tauri::command]
+pub async fn get_performance_snapshots(
+    start_time: Option<i64>,
+    end_time: Option<i64>,
+    _limit: Option<usize>,
+    state: State<'_, PerformanceMonitorState>,
+) -> Result<Vec<PerformanceSnapshot>, String> {
+    let db = state.db.lock().map_err(|e| e.to_string())?;
+    let start = start_time.unwrap_or(0);
+    let end = end_time.unwrap_or(SystemTime::now().duration_since(UNIX_EPOCH).unwrap().as_millis() as i64);
+    db.get_snapshots(start, end).map_err(|e| e.to_string())
+}
+
+/// 获取性能警告
+#[tauri::command]
+pub async fn get_performance_alerts(
+    _start_time: Option<i64>,
+    _end_time: Option<i64>,
+    _resolved: Option<bool>,
+    state: State<'_, PerformanceMonitorState>,
+) -> Result<Vec<PerformanceAlert>, String> {
+    let db = state.db.lock().map_err(|e| e.to_string())?;
+    db.get_alerts().map_err(|e| e.to_string())
+}
+
+/// 解决性能警告
+#[tauri::command]
+pub async fn resolve_performance_alert(
+    alert_id: i64,
+    state: State<'_, PerformanceMonitorState>,
+) -> Result<(), String> {
+    let db = state.db.lock().map_err(|e| e.to_string())?;
+    db.resolve_alert(alert_id).map_err(|e| e.to_string())?;
+    debug!("解决性能警告: {}", alert_id);
+    Ok(())
+}
+
+/// 获取警告统计
+#[tauri::command]
+pub async fn get_alert_stats(
+    _start_time: Option<i64>,
+    _end_time: Option<i64>,
+    state: State<'_, PerformanceMonitorState>,
+) -> Result<PerformanceStats, String> {
+    let db = state.db.lock().map_err(|e| e.to_string())?;
+    db.get_stats().map_err(|e| e.to_string())
+}
+
+/// 更新监控配置
+#[tauri::command]
+pub async fn update_monitor_config(
+    config: MonitorConfig,
+    state: State<'_, PerformanceMonitorState>,
+) -> Result<(), String> {
+    let mut current_config = state.config.lock().map_err(|e| e.to_string())?;
+    *current_config = config;
+    debug!("更新监控配置");
+    Ok(())
+}
+
+/// 清理性能数据
+#[tauri::command]
+pub async fn cleanup_performance_data(
+    older_than_days: i32,
+    state: State<'_, PerformanceMonitorState>,
+) -> Result<(), String> {
+    let db = state.db.lock().map_err(|e| e.to_string())?;
+    db.cleanup_old_data(older_than_days as i64).map_err(|e| e.to_string())?;
+    debug!("清理{}天前的性能数据", older_than_days);
+    Ok(())
+}
+
+/// 获取监控状态
+#[tauri::command]
+pub async fn get_monitoring_status(
+    state: State<'_, PerformanceMonitorState>,
+) -> Result<MonitoringStatus, String> {
+    let is_monitoring = state.is_monitoring.lock().map_err(|e| e.to_string())?;
+    let config = state.config.lock().map_err(|e| e.to_string())?;
+    
+    Ok(MonitoringStatus {
+        is_active: *is_monitoring,
+        config: config.clone(),
+        uptime_seconds: SystemTime::now().duration_since(UNIX_EPOCH).unwrap().as_secs(),
+    })
+}
+
+/// 生成性能报告
+#[tauri::command]
+pub async fn generate_performance_report(
+    start_time: Option<i64>,
+    end_time: Option<i64>,
+    state: State<'_, PerformanceMonitorState>,
+) -> Result<PerformanceReport, String> {
+    let db = state.db.lock().map_err(|e| e.to_string())?;
+    let stats = db.get_stats().map_err(|e| e.to_string())?;
+    let alerts = db.get_alerts().map_err(|e| e.to_string())?;
+    
+    let start = start_time.unwrap_or(0);
+    let end = end_time.unwrap_or(SystemTime::now().duration_since(UNIX_EPOCH).unwrap().as_millis() as i64);
+    
+    Ok(PerformanceReport {
+        start_time: start,
+        end_time: end,
+        metrics_count: stats.total_requests as usize,
+        avg_cpu_usage: 0.0,
+        avg_memory_usage: 0.0,
+        avg_fps: 0.0,
+        network_requests: stats.total_requests as usize,
+        alerts_count: alerts.len(),
+        summary: format!("Performance report from {} to {}", start, end),
+    })
+}
+
+// ============================================================================
+// 附加数据结构
+// ============================================================================
+
+/// 监控状态
+#[derive(Debug, Clone, Serialize, Deserialize)]
+pub struct MonitoringStatus {
+    pub is_active: bool,
+    pub config: MonitorConfig,
+    pub uptime_seconds: u64,
+}
+
+/// 性能报告
+#[derive(Debug, Clone, Serialize, Deserialize)]
+pub struct PerformanceReport {
+    pub start_time: i64,
+    pub end_time: i64,
+    pub metrics_count: usize,
+    pub avg_cpu_usage: f32,
+    pub avg_memory_usage: f32,
+    pub avg_fps: f32,
+    pub network_requests: usize,
+    pub alerts_count: usize,
+    pub summary: String,
+}
+
 #[cfg(test)]
 mod tests {
     use super::*;

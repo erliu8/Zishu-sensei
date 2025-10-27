@@ -8,7 +8,7 @@ import type { TauriShortcut } from '../../types/tauri'
 /**
  * 注册全局快捷键
  */
-export const registerShortcut = async (shortcut: TauriShortcut): Promise<void> => {
+export const registerShortcut = async (shortcut: TauriShortcut): Promise<void | (() => void)> => {
     try {
         if (!window.__TAURI__) {
             console.warn('快捷键功能仅在桌面环境下可用')

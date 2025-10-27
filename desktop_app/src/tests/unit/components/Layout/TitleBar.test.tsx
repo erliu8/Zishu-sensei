@@ -15,22 +15,16 @@
 import React from 'react'
 import { describe, it, expect, vi, beforeEach, afterEach } from 'vitest'
 import { screen, waitFor, fireEvent } from '@testing-library/react'
-import userEvent from '@testing-library/user-event'
 import {
   renderWithProviders,
   mockTauriAPI,
   expectVisible,
-  expectHidden,
   expectHasClass,
-  expectNotHasClass,
   expectDisabled,
   expectEnabled,
   clickElement,
   doubleClickElement,
-  hoverElement,
-  wait,
   randomString,
-  createMockFn,
 } from '../../../utils/test-utils'
 import { createMockSettings } from '../../../mocks/factories'
 
@@ -68,7 +62,7 @@ vi.mock('@tauri-apps/api/os', () => ({
 // 菜单项类型
 interface MenuItem {
   id: string
-  label: string
+  label?: string
   shortcut?: string
   disabled?: boolean
   separator?: boolean
@@ -124,7 +118,6 @@ const TitleBar: React.FC<TitleBarProps> = ({
   style = {},
 }) => {
   const [activeMenu, setActiveMenu] = React.useState<string | null>(null)
-  const [isHovering, setIsHovering] = React.useState(false)
   
   // 默认菜单项
   const defaultMenuItems: MenuItem[] = [
@@ -185,7 +178,7 @@ const TitleBar: React.FC<TitleBarProps> = ({
   }
   
   // 处理双击
-  const handleDoubleClick = (event: React.MouseEvent) => {
+  const handleDoubleClick = () => {
     if (!isDraggable) return
     onDoubleClick?.()
     // 默认行为：双击切换最大化
@@ -272,8 +265,6 @@ const TitleBar: React.FC<TitleBarProps> = ({
       style={style}
       onMouseDown={handleMouseDown}
       onDoubleClick={handleDoubleClick}
-      onMouseEnter={() => setIsHovering(true)}
-      onMouseLeave={() => setIsHovering(false)}
     >
       {/* macOS 红绿灯按钮 */}
       {platform === 'macos' && showWindowControls && (

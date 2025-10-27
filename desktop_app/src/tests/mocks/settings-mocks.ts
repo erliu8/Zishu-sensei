@@ -7,20 +7,15 @@
 
 import { vi } from 'vitest'
 import { 
-  createMockSettings,
-  createMockApiResponse,
   createMockErrorResponse,
-  randomString,
-  randomNumber,
-  randomBoolean
 } from './factories'
+import { randomString, randomNumber, randomBoolean } from '../utils/test-utils.tsx'
 import type { 
   AppSettings, 
-  AppConfig, 
   ThemeMode,
-  WindowState 
 } from '@/types/app'
 import type {
+  AppConfig,
   WindowConfig,
   CharacterConfig,
   ThemeConfig,
@@ -32,8 +27,8 @@ import type {
   ConfigValidationResult,
   ConfigChangeEvent,
   ConfigHistoryEntry,
-  DEFAULT_CONFIG
 } from '@/types/settings'
+import { SyncStatus } from '@/stores/settingsStore'
 
 // ==================== Settings Mock Factories ====================
 
@@ -146,7 +141,7 @@ export function createMockThemeConfig(overrides?: Partial<ThemeConfig>): ThemeCo
   const themes: ThemeName[] = ['anime', 'modern', 'classic', 'dark', 'light', 'custom']
   return {
     current_theme: themes[randomNumber(0, themes.length - 1)],
-    custom_css: randomBoolean() ? `/* Custom CSS */\n.app { color: #${randomString(6, 'hex')}; }` : null,
+    custom_css: randomBoolean() ? `/* Custom CSS */\n.app { color: #${randomString(6)}; }` : null,
     ...overrides
   }
 }
@@ -291,7 +286,7 @@ export function createMockUseSettings() {
     config: createMockAppConfig(),
     isLoading: false,
     isInitialized: true,
-    syncStatus: 'synced' as const,
+    syncStatus: SyncStatus.SUCCESS,
     error: null,
     needsSync: false,
     
@@ -371,7 +366,42 @@ export function createMockUseTauri() {
       uninstall_adapter: vi.fn(() => Promise.resolve()),
       enable_adapter: vi.fn(() => Promise.resolve()),
       disable_adapter: vi.fn(() => Promise.resolve()),
-    }
+      test_adapter_connection: vi.fn(() => Promise.resolve({ success: true })),
+      cancel_adapter_installation: vi.fn(() => Promise.resolve()),
+      export_adapter_settings: vi.fn(() => Promise.resolve('/path/to/adapter-settings.json')),
+      import_adapter_settings: vi.fn(() => Promise.resolve()),
+      backup_adapter_settings: vi.fn(() => Promise.resolve()),
+      
+      // 角色模型相关命令
+      reset_character_position: vi.fn(() => Promise.resolve()),
+      play_character_animation: vi.fn(() => Promise.resolve()),
+      set_character_expression: vi.fn(() => Promise.resolve()),
+      import_character_model: vi.fn(() => Promise.resolve()),
+      export_character_model: vi.fn(() => Promise.resolve('/path/to/model.zip')),
+      delete_character_model: vi.fn(() => Promise.resolve()),
+      save_character_screenshot: vi.fn(() => Promise.resolve('/path/to/screenshot.png')),
+      
+      // 通知相关命令
+      test_notification: vi.fn(() => Promise.resolve()),
+    },
+    // 添加缺失的 UseTauriReturn 属性
+    isTauriEnv: true,
+    tauriVersion: '1.0.0',
+    checkUpdate: vi.fn(() => Promise.resolve(null)),
+    installUpdate: vi.fn(() => Promise.resolve()),
+    relaunch: vi.fn(() => Promise.resolve()),
+    restart: vi.fn(() => Promise.resolve()),
+    exit: vi.fn(() => Promise.resolve()),
+    addEventListener: vi.fn(),
+    environment: {
+      platform: 'linux',
+      arch: 'x86_64',
+      os: 'Linux',
+      version: '1.0.0',
+      tauriVersion: '1.0.0',
+      webviewVersion: '2.0.0',
+    },
+    error: null,
   }
 }
 
@@ -390,9 +420,9 @@ export const mockToast = {
  * Mock Framer Motion
  */
 export const mockMotion = {
-  div: vi.fn(({ children, ...props }) => children),
-  span: vi.fn(({ children, ...props }) => children),
-  button: vi.fn(({ children, ...props }) => children),
+  div: vi.fn(({ children }) => children),
+  span: vi.fn(({ children }) => children),
+  button: vi.fn(({ children }) => children),
   AnimatePresence: vi.fn(({ children }) => children)
 }
 
@@ -415,8 +445,21 @@ export const SETTINGS_TEST_PRESETS = {
       notifications: { enabled: false, sound: false, desktop: false }
     }),
     config: createMockAppConfig({
-      window: { width: 300, height: 400, decorations: true },
-      character: { scale: 0.8 as ScaleValue, auto_idle: false }
+      window: { 
+        width: 300, 
+        height: 400, 
+        decorations: true,
+        always_on_top: false,
+        transparent: false,
+        resizable: true,
+        position: null
+      },
+      character: { 
+        scale: 0.8 as ScaleValue, 
+        auto_idle: false,
+        current_character: 'shizuku' as CharacterId,
+        interaction_enabled: true
+      }
     })
   },
   
@@ -427,8 +470,21 @@ export const SETTINGS_TEST_PRESETS = {
       ai: { model: 'gpt-4', temperature: 0.9, maxTokens: 4000 }
     }),
     config: createMockAppConfig({
-      window: { width: 1200, height: 800, always_on_top: false },
-      character: { scale: 2.0 as ScaleValue, interaction_enabled: true },
+      window: { 
+        width: 1200, 
+        height: 800, 
+        always_on_top: false,
+        transparent: true,
+        decorations: false,
+        resizable: true,
+        position: null
+      },
+      character: { 
+        scale: 2.0 as ScaleValue, 
+        interaction_enabled: true,
+        current_character: 'shizuku' as CharacterId,
+        auto_idle: true
+      },
       theme: { current_theme: 'custom', custom_css: '/* Advanced CSS */' }
     })
   }
@@ -445,9 +501,9 @@ export const SETTINGS_ERROR_PRESETS = {
     ]
   }),
   
-  networkError: createMockErrorResponse('Failed to save settings', 'NETWORK_ERROR'),
+  networkError: createMockErrorResponse('NETWORK_ERROR: Failed to save settings'),
   
-  permissionError: createMockErrorResponse('Permission denied', 'PERMISSION_DENIED'),
+  permissionError: createMockErrorResponse('PERMISSION_DENIED: Permission denied'),
   
-  configCorrupted: createMockErrorResponse('Config file corrupted', 'INVALID_CONFIG')
+  configCorrupted: createMockErrorResponse('INVALID_CONFIG: Config file corrupted')
 } as const

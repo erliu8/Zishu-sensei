@@ -9,9 +9,10 @@
  * - 降级处理
  */
 
-import { invoke } from '@tauri-apps/api/core'
-import { listen } from '@tauri-apps/api/event'
-import type { ApiResponse } from '@/types/app'
+// 导入保留以供将来使用
+// import { invoke } from '@tauri-apps/api/tauri'
+// import { listen } from '@tauri-apps/api/event'
+// import type { ApiResponse } from '../types/app'
 
 /**
  * 错误类型
@@ -108,8 +109,8 @@ export interface ErrorHandleResult {
 export class ErrorHandler {
     private config: ErrorHandlerConfig
     private errorHistory: ErrorInfo[] = []
-    private retryQueues: Map<string, ErrorInfo[]> = new Map()
-    private isProcessing: boolean = false
+    // private retryQueues: Map<string, ErrorInfo[]> = new Map()
+    // private isProcessing: boolean = false
 
     constructor(config: Partial<ErrorHandlerConfig> = {}) {
         this.config = {
@@ -480,7 +481,7 @@ export class ErrorHandler {
      * 执行跳过策略
      */
     private async executeSkipStrategy(
-        errorInfo: ErrorInfo,
+        _errorInfo: ErrorInfo,
         strategy: RecoveryStrategy
     ): Promise<ErrorHandleResult> {
         return {
@@ -511,7 +512,7 @@ export class ErrorHandler {
     /**
      * 获取系统降级处理
      */
-    private async getSystemFallback(errorInfo: ErrorInfo): Promise<any> {
+    private async getSystemFallback(_errorInfo: ErrorInfo): Promise<any> {
         // 系统错误的降级处理
         return { fallback: 'system', message: '使用系统默认设置' }
     }
@@ -519,7 +520,7 @@ export class ErrorHandler {
     /**
      * 获取文件降级处理
      */
-    private async getFileFallback(errorInfo: ErrorInfo): Promise<any> {
+    private async getFileFallback(_errorInfo: ErrorInfo): Promise<any> {
         // 文件错误的降级处理
         return { fallback: 'file', message: '使用临时文件' }
     }
@@ -527,7 +528,7 @@ export class ErrorHandler {
     /**
      * 获取配置降级处理
      */
-    private async getConfigFallback(errorInfo: ErrorInfo): Promise<any> {
+    private async getConfigFallback(_errorInfo: ErrorInfo): Promise<any> {
         // 配置错误的降级处理
         return { fallback: 'config', message: '使用默认配置' }
     }
@@ -770,7 +771,7 @@ export function withErrorHandling(
     errorType: ErrorType = ErrorType.UNKNOWN,
     severity: ErrorSeverity = ErrorSeverity.MEDIUM
 ) {
-    return function (target: any, propertyName: string, descriptor: PropertyDescriptor) {
+    return function (_target: any, propertyName: string, descriptor: PropertyDescriptor) {
         const method = descriptor.value
         
         descriptor.value = async function (...args: any[]) {

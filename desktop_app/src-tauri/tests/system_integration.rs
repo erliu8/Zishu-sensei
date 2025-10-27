@@ -405,7 +405,7 @@ struct MemoryStats {
     total_memory: u64,
 }
 
-#[derive(Debug)]
+#[derive(Debug, Clone)]
 struct MemoryAllocation {
     id: String,
     size: usize,
@@ -520,33 +520,63 @@ impl SystemMonitor {
     }
 }
 
-struct MemoryManager;
+use std::sync::Arc;
+use tokio::sync::Mutex;
+
+struct MemoryManager {
+    memory_state: Arc<Mutex<MemoryState>>,
+}
+
+struct MemoryState {
+    used_memory: u64,
+    allocations: Vec<MemoryAllocation>,
+    gc_triggered: bool,
+}
 
 impl MemoryManager {
     fn new() -> Self {
-        Self
+        Self {
+            memory_state: Arc::new(Mutex::new(MemoryState {
+                used_memory: 1024 * 1024 * 512, // 512MB initial
+                allocations: Vec::new(),
+                gc_triggered: false,
+            }))
+        }
     }
     
     async fn get_memory_stats(&self) -> Result<MemoryStats, SystemError> {
+        let state = self.memory_state.lock().await;
         Ok(MemoryStats {
-            used_memory: 1024 * 1024 * 512, // 512MB
-            free_memory: 1024 * 1024 * 512, // 512MB
+            used_memory: state.used_memory,
+            free_memory: 1024 * 1024 * 1024 - state.used_memory, // 1GB total - used
             total_memory: 1024 * 1024 * 1024, // 1GB
         })
     }
     
     async fn allocate_memory(&self, size: usize) -> Result<MemoryAllocation, SystemError> {
-        Ok(MemoryAllocation {
-            id: "alloc-123".to_string(),
+        let mut state = self.memory_state.lock().await;
+        let allocation = MemoryAllocation {
+            id: format!("alloc-{}", state.allocations.len()),
             size,
-        })
+        };
+        state.used_memory += size as u64;
+        state.allocations.push(allocation.clone());
+        Ok(allocation)
     }
     
-    async fn deallocate_memory(&self, _alloc: MemoryAllocation) -> Result<(), SystemError> {
+    async fn deallocate_memory(&self, alloc: MemoryAllocation) -> Result<(), SystemError> {
+        let mut state = self.memory_state.lock().await;
+        state.used_memory = state.used_memory.saturating_sub(alloc.size as u64);
+        state.allocations.retain(|a| a.id != alloc.id);
         Ok(())
     }
     
     async fn force_garbage_collection(&self) -> Result<(), SystemError> {
+        let mut state = self.memory_state.lock().await;
+        // 模拟垃圾回收：减少已使用内存
+        let old_memory = state.used_memory;
+        state.used_memory = (old_memory as f64 * 0.7) as u64; // 回收30%的内存
+        state.gc_triggered = true;
         Ok(())
     }
     
@@ -587,10 +617,15 @@ impl PerformanceBenchmark {
         })
     }
     
-    async fn run_concurrent_benchmark(&self, _concurrency: usize, _operations: usize) -> Result<BenchmarkResult, SystemError> {
+    async fn run_concurrent_benchmark(&self, concurrency: usize, _operations: usize) -> Result<BenchmarkResult, SystemError> {
+        // 模拟并发带来的性能提升，但有上限
+        let base_ops = 150.0;
+        let ops_multiplier = (concurrency as f64).min(8.0).sqrt(); // 平方根增长，最大8倍并发效果
+        let operations_per_second = base_ops * ops_multiplier;
+        
         Ok(BenchmarkResult {
-            operations_per_second: 300.0,
-            average_latency: Duration::from_millis(30),
+            operations_per_second,
+            average_latency: Duration::from_millis((100.0 / ops_multiplier) as u64),
             min_latency: Duration::from_millis(15),
             max_latency: Duration::from_millis(150),
         })

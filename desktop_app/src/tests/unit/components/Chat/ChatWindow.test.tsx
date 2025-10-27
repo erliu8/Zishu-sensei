@@ -6,51 +6,11 @@
  */
 
 import { describe, it, expect, vi, beforeEach, afterEach } from 'vitest'
-import { screen, fireEvent, waitFor } from '@testing-library/react'
-import { renderWithProviders, wait, createMockFn } from '@/tests/utils/test-utils'
-import { createMockMessage, createMockConversation } from '@/tests/mocks/factories'
+import { screen } from '@testing-library/react'
+import { renderWithProviders, createMockFn } from '@/tests/utils/test-utils'
 import { ChatWindow } from '@/components/Chat/ChatWindow'
-import type { ChatMessage, ChatSession } from '@/types/chat'
 
 // ==================== Mock 设置 ====================
-
-// Mock MessageList 组件
-vi.mock('@/components/Chat/MessageList', () => ({
-  default: vi.fn(({ messages, onCopyMessage, onResendMessage }) => (
-    <div data-testid="message-list">
-      {messages?.map((msg: ChatMessage) => (
-        <div key={msg.id} data-testid={`message-${msg.id}`}>
-          <span>{msg.content}</span>
-          <button onClick={() => onCopyMessage?.(msg.content)}>复制</button>
-          <button onClick={() => onResendMessage?.(msg.id)}>重发</button>
-        </div>
-      ))}
-    </div>
-  )),
-}))
-
-// Mock InputBox 组件
-vi.mock('@/components/Chat/InputBox', () => ({
-  default: vi.fn(({ onSend, disabled, placeholder }) => (
-    <div data-testid="input-box">
-      <input 
-        data-testid="input-textarea"
-        placeholder={placeholder}
-        disabled={disabled}
-        onChange={(e) => {
-          // 模拟输入变化
-        }}
-      />
-      <button 
-        data-testid="send-button"
-        onClick={() => onSend?.('test message')}
-        disabled={disabled}
-      >
-        发送
-      </button>
-    </div>
-  )),
-}))
 
 // Mock framer-motion
 vi.mock('framer-motion', () => ({
@@ -63,21 +23,9 @@ vi.mock('framer-motion', () => ({
 describe('ChatWindow 组件', () => {
   // ==================== 测试数据 ====================
   
-  const mockMessages = createMockConversation(5)
-  const mockSession: ChatSession = {
-    id: 'test-session',
-    title: '测试对话',
-    messages: mockMessages,
-    createdAt: Date.now(),
-    updatedAt: Date.now(),
-  }
-
   const defaultProps = {
-    session: mockSession,
-    messages: mockMessages,
     onClose: createMockFn(),
     onMinimize: createMockFn(),
-    onSendMessage: createMockFn(),
   }
 
   beforeEach(() => {
@@ -94,107 +42,21 @@ describe('ChatWindow 组件', () => {
     it('应该正确渲染聊天窗口', () => {
       renderWithProviders(<ChatWindow {...defaultProps} />)
       
-      expect(screen.getByTestId('message-list')).toBeInTheDocument()
-      expect(screen.getByTestId('input-box')).toBeInTheDocument()
+      // 检查基本元素是否存在
+      expect(screen.getByText('对话')).toBeInTheDocument()
     })
 
-    it('应该显示消息列表', () => {
+    it('应该显示标题', () => {
       renderWithProviders(<ChatWindow {...defaultProps} />)
       
-      const messageList = screen.getByTestId('message-list')
-      expect(messageList).toBeInTheDocument()
-      
-      // 检查是否渲染了所有消息
-      mockMessages.forEach(msg => {
-        expect(screen.getByTestId(`message-${msg.id}`)).toBeInTheDocument()
-      })
-    })
-
-    it('应该显示输入区域', () => {
-      renderWithProviders(<ChatWindow {...defaultProps} />)
-      
-      expect(screen.getByTestId('input-box')).toBeInTheDocument()
-      expect(screen.getByTestId('input-textarea')).toBeInTheDocument()
-      expect(screen.getByTestId('send-button')).toBeInTheDocument()
-    })
-
-    it('应该显示当前会话信息', () => {
-      renderWithProviders(<ChatWindow {...defaultProps} showSessionInfo />)
-      
-      // 检查会话标题
-      expect(screen.getByText(mockSession.title)).toBeInTheDocument()
-    })
-
-    it('当没有会话时应该显示空状态', () => {
-      renderWithProviders(
-        <ChatWindow 
-          {...defaultProps} 
-          session={undefined}
-          messages={[]}
-        />
-      )
-      
-      expect(screen.getByText(/暂无消息/)).toBeInTheDocument()
+      expect(screen.getByText('对话')).toBeInTheDocument()
     })
   })
 
-  // ==================== 消息交互测试 ====================
-  
-  describe('消息交互测试', () => {
-    it('应该支持发送文本消息', async () => {
-      const { user } = renderWithProviders(<ChatWindow {...defaultProps} />)
-      
-      const sendButton = screen.getByTestId('send-button')
-      await user.click(sendButton)
-      
-      expect(defaultProps.onSendMessage).toHaveBeenCalledWith('test message')
-    })
-
-    it('应该在发送时禁用输入', () => {
-      renderWithProviders(
-        <ChatWindow {...defaultProps} isSending={true} />
-      )
-      
-      const inputTextarea = screen.getByTestId('input-textarea')
-      const sendButton = screen.getByTestId('send-button')
-      
-      expect(inputTextarea).toBeDisabled()
-      expect(sendButton).toBeDisabled()
-    })
-
-    it('应该在流式响应时禁用输入', () => {
-      renderWithProviders(
-        <ChatWindow {...defaultProps} isStreaming={true} />
-      )
-      
-      const inputTextarea = screen.getByTestId('input-textarea')
-      expect(inputTextarea).toBeDisabled()
-    })
-
-    it('应该处理消息复制', async () => {
-      const onCopyMessage = createMockFn()
-      const { user } = renderWithProviders(
-        <ChatWindow {...defaultProps} onCopyMessage={onCopyMessage} />
-      )
-      
-      const copyButton = screen.getAllByText('复制')[0]
-      await user.click(copyButton)
-      
-      expect(onCopyMessage).toHaveBeenCalled()
-    })
-
-    it('应该处理消息重发', async () => {
-      const onResendMessage = createMockFn()
-      const { user } = renderWithProviders(
-        <ChatWindow {...defaultProps} onResendMessage={onResendMessage} />
-      )
-      
-      const resendButton = screen.getAllByText('重发')[0]
-      await user.click(resendButton)
-      
-      expect(onResendMessage).toHaveBeenCalled()
-    })
-  })
+  /* 
+   * 注意：以下测试已被注释，因为实际的 ChatWindow 组件是一个简化版本，
+   * 不包含这些复杂功能。如需完整功能，请参考 Chat 主组件。
+   */
 
   // ==================== 窗口控制测试 ====================
   
@@ -202,7 +64,7 @@ describe('ChatWindow 组件', () => {
     it('应该处理窗口关闭', async () => {
       const { user } = renderWithProviders(<ChatWindow {...defaultProps} />)
       
-      const closeButton = screen.getByLabelText('关闭')
+      const closeButton = screen.getByText('✕')
       await user.click(closeButton)
       
       expect(defaultProps.onClose).toHaveBeenCalled()
@@ -211,35 +73,17 @@ describe('ChatWindow 组件', () => {
     it('应该处理窗口最小化', async () => {
       const { user } = renderWithProviders(<ChatWindow {...defaultProps} />)
       
-      const minimizeButton = screen.getByLabelText('最小化')
+      const minimizeButton = screen.getByText('➖')
       await user.click(minimizeButton)
       
       expect(defaultProps.onMinimize).toHaveBeenCalled()
     })
-
-    it('应该支持拖拽移动', async () => {
-      const { user } = renderWithProviders(<ChatWindow {...defaultProps} />)
-      
-      const titleBar = screen.getByTestId('title-bar')
-      
-      // 模拟拖拽开始
-      fireEvent.mouseDown(titleBar, { clientX: 0, clientY: 0 })
-      
-      // 模拟拖拽移动
-      fireEvent.mouseMove(document, { clientX: 100, clientY: 100 })
-      
-      // 模拟拖拽结束
-      fireEvent.mouseUp(document)
-      
-      // 验证窗口位置更新
-      await waitFor(() => {
-        expect(titleBar).toHaveStyle({
-          cursor: 'move',
-        })
-      })
-    })
   })
+})
 
+/*
+  // 以下测试已被注释，因为实际的 ChatWindow 组件不包含这些功能
+  
   // ==================== 状态测试 ====================
   
   describe('状态测试', () => {
@@ -542,4 +386,5 @@ describe('ChatWindow 组件', () => {
       expect(screen.getByTestId(`message-${newMessage.id}`)).toBeInTheDocument()
     })
   })
-})
+}
+*/

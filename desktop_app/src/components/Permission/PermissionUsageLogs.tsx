@@ -130,11 +130,11 @@ export const PermissionUsageLogs: React.FC<PermissionUsageLogsProps> = ({
                             </span>
                           </div>
                           <div className="usage-log-permission">
-                            {metadata.display_name} ({PERMISSION_LEVEL_NAMES[log.level]})
+                            {metadata.user_friendly_description} ({PERMISSION_LEVEL_NAMES[log.level]})
                           </div>
-                          {log.scope && <div className="usage-log-scope">范围: {log.scope}</div>}
-                          {!log.success && log.error_message && (
-                            <div className="usage-log-error">{log.error_message}</div>
+                          {log.resource && <div className="usage-log-scope">资源: {log.resource}</div>}
+                          {!log.success && log.failure_reason && (
+                            <div className="usage-log-error">{log.failure_reason}</div>
                           )}
                         </div>
                       </div>
@@ -184,7 +184,7 @@ export const PermissionUsageLogs: React.FC<PermissionUsageLogsProps> = ({
               <div className="usage-log-detail-row">
                 <span className="usage-log-detail-label">权限类型:</span>
                 <span className="usage-log-detail-value">
-                  {PERMISSION_METADATA[selectedLog.permission_type].display_name}
+                  {PERMISSION_METADATA[selectedLog.permission_type].user_friendly_description}
                 </span>
               </div>
               <div className="usage-log-detail-row">
@@ -193,11 +193,11 @@ export const PermissionUsageLogs: React.FC<PermissionUsageLogsProps> = ({
                   {PERMISSION_LEVEL_NAMES[selectedLog.level]}
                 </span>
               </div>
-              {selectedLog.scope && (
+              {selectedLog.resource && (
                 <div className="usage-log-detail-row">
-                  <span className="usage-log-detail-label">访问范围:</span>
+                  <span className="usage-log-detail-label">访问资源:</span>
                   <span className="usage-log-detail-value usage-log-scope-value">
-                    {selectedLog.scope}
+                    {selectedLog.resource}
                   </span>
                 </div>
               )}
@@ -217,11 +217,11 @@ export const PermissionUsageLogs: React.FC<PermissionUsageLogsProps> = ({
                   {selectedLog.success ? '成功' : '失败'}
                 </span>
               </div>
-              {!selectedLog.success && selectedLog.error_message && (
+              {!selectedLog.success && selectedLog.failure_reason && (
                 <div className="usage-log-detail-row error">
-                  <span className="usage-log-detail-label">错误信息:</span>
+                  <span className="usage-log-detail-label">失败原因:</span>
                   <span className="usage-log-detail-value usage-log-error-message">
-                    {selectedLog.error_message}
+                    {selectedLog.failure_reason}
                   </span>
                 </div>
               )}

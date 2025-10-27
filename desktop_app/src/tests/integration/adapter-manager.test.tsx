@@ -4,11 +4,12 @@
  * 测试多个组件或服务之间的交互
  */
 
-import { describe, it, expect, beforeEach, afterEach } from 'vitest'
+import React from 'react'
+import { describe, it, expect, beforeEach } from 'vitest'
 import { render, screen, waitFor } from '@testing-library/react'
 import userEvent from '@testing-library/user-event'
-import { rest } from 'msw'
-import { server } from '../mocks/handlers'
+import { http, HttpResponse } from 'msw'
+import { server } from '../setup'
 
 // 模拟的适配器服务
 const AdapterService = {
@@ -37,7 +38,7 @@ const AdapterService = {
 
 // 模拟的适配器管理组件
 const AdapterManager = () => {
-  const [adapters, setAdapters] = React.useState([])
+  const [adapters, setAdapters] = React.useState<any[]>([])
   const [loading, setLoading] = React.useState(false)
   
   React.useEffect(() => {
@@ -168,8 +169,8 @@ describe('适配器管理集成测试', () => {
   it('应该处理 API 错误', async () => {
     // 模拟 API 错误
     server.use(
-      rest.get('/api/adapters', (req, res, ctx) => {
-        return res(ctx.status(500), ctx.json({ error: '服务器错误' }))
+      http.get('/api/adapters', () => {
+        return HttpResponse.json({ error: '服务器错误' }, { status: 500 })
       })
     )
     
@@ -188,7 +189,7 @@ describe('适配器管理集成测试', () => {
 describe('聊天功能集成测试', () => {
   it('应该能够发送和接收消息', async () => {
     const ChatComponent = () => {
-      const [messages, setMessages] = React.useState([])
+      const [messages, setMessages] = React.useState<any[]>([])
       const [input, setInput] = React.useState('')
       
       const sendMessage = async () => {
@@ -254,7 +255,7 @@ describe('聊天功能集成测试', () => {
 describe('系统信息集成测试', () => {
   it('应该能够获取和显示系统信息', async () => {
     const SystemInfoComponent = () => {
-      const [systemInfo, setSystemInfo] = React.useState(null)
+      const [systemInfo, setSystemInfo] = React.useState<any>(null)
       
       React.useEffect(() => {
         const fetchSystemInfo = async () => {

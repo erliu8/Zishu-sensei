@@ -40,7 +40,7 @@ class ThemeService implements ThemeRepository {
      */
     async searchThemes(options: ThemeSearchOptions = {}): Promise<ThemeSearchResult> {
         const cacheKey = `search:${JSON.stringify(options)}`
-        const cached = this.getCache(cacheKey)
+        const cached = this.getCache<ThemeSearchResult>(cacheKey)
         if (cached) return cached
         
         try {
@@ -58,7 +58,7 @@ class ThemeService implements ThemeRepository {
      */
     async getTheme(themeId: string): Promise<ThemeDetail> {
         const cacheKey = `theme:${themeId}`
-        const cached = this.getCache(cacheKey)
+        const cached = this.getCache<ThemeDetail>(cacheKey)
         if (cached) return cached
         
         try {
@@ -85,11 +85,21 @@ class ThemeService implements ThemeRepository {
         pageSize: number
     }> {
         const cacheKey = `reviews:${themeId}:${page}:${pageSize}`
-        const cached = this.getCache(cacheKey)
+        const cached = this.getCache<{
+            reviews: ThemeReview[]
+            total: number
+            page: number
+            pageSize: number
+        }>(cacheKey)
         if (cached) return cached
         
         try {
-            const result = await invoke('get_theme_reviews', {
+            const result = await invoke<{
+                reviews: ThemeReview[]
+                total: number
+                page: number
+                pageSize: number
+            }>('get_theme_reviews', {
                 themeId,
                 page,
                 pageSize
@@ -277,7 +287,7 @@ class ThemeService implements ThemeRepository {
      */
     async getStatistics(): Promise<ThemeStatistics> {
         const cacheKey = 'statistics'
-        const cached = this.getCache(cacheKey)
+        const cached = this.getCache<ThemeStatistics>(cacheKey)
         if (cached) return cached
         
         try {
@@ -314,7 +324,7 @@ class ThemeService implements ThemeRepository {
      */
     async getInstalledThemes(): Promise<ThemeCard[]> {
         const cacheKey = 'installed'
-        const cached = this.getCache(cacheKey)
+        const cached = this.getCache<ThemeCard[]>(cacheKey)
         if (cached) return cached
         
         try {
@@ -332,7 +342,7 @@ class ThemeService implements ThemeRepository {
      */
     async getFavoritedThemes(): Promise<ThemeCard[]> {
         const cacheKey = 'favorited'
-        const cached = this.getCache(cacheKey)
+        const cached = this.getCache<ThemeCard[]>(cacheKey)
         if (cached) return cached
         
         try {

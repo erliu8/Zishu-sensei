@@ -4,7 +4,7 @@
  */
 import React, { useEffect, useState, useCallback } from 'react';
 import { useStartupOptimization } from '../../hooks/useStartupOptimization';
-import { StartupPhase, StartupStage } from '../../types/startup';
+import { StartupPhase, PhaseResult } from '../../types/startup';
 import './StartupProgress.css';
 
 interface StartupProgressProps {
@@ -31,83 +31,76 @@ export const StartupProgress: React.FC<StartupProgressProps> = ({
   className = '',
 }) => {
   const {
-    startupState,
-    currentStage,
-    getOverallProgress,
-    getPhaseProgress,
-    getStageProgress,
-    isStartupComplete,
+    progress: progressState,
+    stats: statsState,
+    phaseExecution,
   } = useStartupOptimization();
 
   const [animation, setAnimation] = useState<ProgressAnimation>({
-    phase: 'initializing',
+    phase: StartupPhase.AppInitialization,
     progress: 0,
     message: '正在初始化...',
     isAnimating: false,
   });
 
-  const [visibleStages, setVisibleStages] = useState<StartupStage[]>([]);
+  const [visibleStages, setVisibleStages] = useState<PhaseResult[]>([]);
   const [showCompleteAnimation, setShowCompleteAnimation] = useState(false);
 
   // 阶段名称映射
-  const stageNameMap: Record<string, string> = {
-    'initialize-core': '初始化核心系统',
-    'setup-database': '设置数据库连接',
-    'load-config': '加载配置文件',
-    'initialize-services': '初始化服务',
-    'setup-adapters': '设置适配器',
-    'initialize-ui': '初始化用户界面',
-    'load-themes': '加载主题配置',
-    'setup-shortcuts': '设置快捷键',
-    'load-characters': '加载角色数据',
-    'initialize-workflows': '初始化工作流',
-    'setup-performance': '配置性能监控',
-    'finalize-startup': '完成启动',
+  const stageNameMap: Record<StartupPhase, string> = {
+    [StartupPhase.AppInitialization]: '应用初始化',
+    [StartupPhase.DatabaseConnection]: '数据库连接',
+    [StartupPhase.ConfigLoading]: '配置加载',
+    [StartupPhase.ThemeLoading]: '主题加载',
+    [StartupPhase.AdapterLoading]: '适配器加载',
+    [StartupPhase.Live2DModelLoading]: 'Live2D模型加载',
+    [StartupPhase.WindowCreation]: '窗口创建',
+    [StartupPhase.FrontendInitialization]: '前端初始化',
+    [StartupPhase.SystemServices]: '系统服务启动',
+    [StartupPhase.NetworkConnection]: '网络连接检查',
+    [StartupPhase.Completed]: '启动完成',
   };
 
   // 阶段图标映射
-  const stageIconMap: Record<string, string> = {
-    'initialize-core': '⚙️',
-    'setup-database': '🗄️',
-    'load-config': '📋',
-    'initialize-services': '🔧',
-    'setup-adapters': '🔌',
-    'initialize-ui': '🎨',
-    'load-themes': '🌈',
-    'setup-shortcuts': '⌨️',
-    'load-characters': '👤',
-    'initialize-workflows': '📊',
-    'setup-performance': '📈',
-    'finalize-startup': '✅',
+  const stageIconMap: Record<StartupPhase, string> = {
+    [StartupPhase.AppInitialization]: '⚙️',
+    [StartupPhase.DatabaseConnection]: '🗄️',
+    [StartupPhase.ConfigLoading]: '📋',
+    [StartupPhase.ThemeLoading]: '🌈',
+    [StartupPhase.AdapterLoading]: '🔌',
+    [StartupPhase.Live2DModelLoading]: '👤',
+    [StartupPhase.WindowCreation]: '🪟',
+    [StartupPhase.FrontendInitialization]: '🎨',
+    [StartupPhase.SystemServices]: '🔧',
+    [StartupPhase.NetworkConnection]: '🌐',
+    [StartupPhase.Completed]: '✅',
   };
 
   // 获取阶段显示名称
-  const getStageDisplayName = useCallback((stageId: string): string => {
-    return stageNameMap[stageId] || stageId;
+  const getStageDisplayName = useCallback((phase: StartupPhase): string => {
+    return stageNameMap[phase] || phase;
   }, []);
 
   // 获取阶段图标
-  const getStageIcon = useCallback((stageId: string): string => {
-    return stageIconMap[stageId] || '•';
+  const getStageIcon = useCallback((phase: StartupPhase): string => {
+    return stageIconMap[phase] || '•';
   }, []);
 
   // 获取阶段状态文本
-  const getStageStatusText = useCallback((stage: StartupStage): string => {
-    switch (stage.status) {
-      case 'pending':
-        return '等待中';
-      case 'running':
-        return '进行中';
-      case 'completed':
-        return '已完成';
-      case 'failed':
-        return '失败';
-      case 'skipped':
-        return '跳过';
-      default:
-        return '未知';
+  const getStageStatusText = useCallback((result: PhaseResult): string => {
+    if (!result.end_time) {
+      return '进行中';
     }
+    if (result.success) {
+      return '已完成';
+    }
+    return '失败';
   }, []);
+
+  // 检查启动是否完成
+  const isStartupComplete = useCallback((): boolean => {
+    return progressState.currentPhase === StartupPhase.Completed || progressState.progress >= 1;
+  }, [progressState]);
 
   // 获取当前阶段消息
   const getCurrentMessage = useCallback((): string => {
@@ -115,44 +108,39 @@ export const StartupProgress: React.FC<StartupProgressProps> = ({
       return '启动完成！';
     }
 
-    if (currentStage) {
-      const displayName = getStageDisplayName(currentStage.id);
-      switch (currentStage.status) {
-        case 'running':
+    if (phaseExecution.currentPhase) {
+      const displayName = getStageDisplayName(phaseExecution.currentPhase);
+      const result = phaseExecution.phaseResults.get(phaseExecution.currentPhase);
+      
+      if (result) {
+        if (!result.end_time) {
           return `正在${displayName}...`;
-        case 'completed':
+        }
+        if (result.success) {
           return `${displayName}完成`;
-        case 'failed':
-          return `${displayName}失败`;
-        default:
-          return displayName;
+        }
+        return `${displayName}失败`;
       }
+      return `正在${displayName}...`;
     }
 
-    switch (startupState.phase) {
-      case 'initializing':
-        return '正在初始化应用...';
-      case 'loading':
-        return '正在加载资源...';
-      case 'configuring':
-        return '正在配置系统...';
-      case 'ready':
-        return '系统准备就绪';
-      case 'error':
-        return '启动过程中出现错误';
-      default:
-        return '启动中...';
+    if (progressState.currentPhase) {
+      const displayName = getStageDisplayName(progressState.currentPhase);
+      return `正在${displayName}...`;
     }
-  }, [isStartupComplete, currentStage, startupState.phase, getStageDisplayName]);
+
+    return '正在启动应用...';
+  }, [isStartupComplete, phaseExecution.currentPhase, phaseExecution.phaseResults, progressState.currentPhase, getStageDisplayName]);
 
   // 更新动画状态
   const updateAnimation = useCallback(() => {
-    const progress = getOverallProgress();
+    const progress = progressState.progress * 100;
     const message = getCurrentMessage();
+    const currentPhase = progressState.currentPhase || phaseExecution.currentPhase || StartupPhase.AppInitialization;
 
     setAnimation(prev => ({
       ...prev,
-      phase: startupState.phase,
+      phase: currentPhase,
       progress,
       message,
       isAnimating: progress !== prev.progress,
@@ -165,28 +153,24 @@ export const StartupProgress: React.FC<StartupProgressProps> = ({
         isAnimating: false,
       }));
     }, 300);
-  }, [getOverallProgress, getCurrentMessage, startupState.phase]);
+  }, [progressState, phaseExecution.currentPhase, getCurrentMessage]);
 
   // 更新可见阶段
   const updateVisibleStages = useCallback(() => {
     if (!showDetails) return;
 
-    const stages = startupState.stages || [];
-    const currentPhaseStages = stages.filter(stage => {
-      // 显示当前阶段和已完成的阶段
-      return stage.status === 'completed' || 
-             stage.status === 'running' || 
-             stage.status === 'failed';
-    });
+    const results = Array.from(phaseExecution.phaseResults.values());
+    // 只显示已开始的阶段（有开始时间的）
+    const visibleResults = results.filter(result => result.start_time > 0);
 
-    setVisibleStages(currentPhaseStages);
-  }, [startupState.stages, showDetails]);
+    setVisibleStages(visibleResults);
+  }, [phaseExecution.phaseResults, showDetails]);
 
   // 监听启动状态变化
   useEffect(() => {
     updateAnimation();
     updateVisibleStages();
-  }, [startupState, currentStage, updateAnimation, updateVisibleStages]);
+  }, [progressState, phaseExecution.currentPhase, phaseExecution.phaseResults, updateAnimation, updateVisibleStages]);
 
   // 处理启动完成
   useEffect(() => {
@@ -243,39 +227,38 @@ export const StartupProgress: React.FC<StartupProgressProps> = ({
           <div className="startup-stages">
             <h3 className="stages-title">启动详情</h3>
             <div className="stages-list">
-              {visibleStages.map((stage) => (
-                <div 
-                  key={stage.id}
-                  className={`stage-item ${stage.status} ${
-                    currentStage?.id === stage.id ? 'current' : ''
-                  }`}
-                >
-                  <div className="stage-icon">
-                    <span className="stage-emoji">{getStageIcon(stage.id)}</span>
-                    <div className={`stage-status-indicator ${stage.status}`} />
+              {visibleStages.map((result) => {
+                const isRunning = !result.end_time;
+                const isCurrent = phaseExecution.currentPhase === result.phase;
+                const status = result.success ? 'completed' : (isRunning ? 'running' : 'failed');
+                
+                return (
+                  <div 
+                    key={result.phase}
+                    className={`stage-item ${status} ${isCurrent ? 'current' : ''}`}
+                  >
+                    <div className="stage-icon">
+                      <span className="stage-emoji">{getStageIcon(result.phase)}</span>
+                      <div className={`stage-status-indicator ${status}`} />
+                    </div>
+                    
+                    <div className="stage-content">
+                      <div className="stage-name">
+                        {getStageDisplayName(result.phase)}
+                      </div>
+                      <div className="stage-status">
+                        {getStageStatusText(result)}
+                      </div>
+                    </div>
+                    
+                    {result.duration && (
+                      <div className="stage-duration">
+                        {result.duration}ms
+                      </div>
+                    )}
                   </div>
-                  
-                  <div className="stage-content">
-                    <div className="stage-name">
-                      {getStageDisplayName(stage.id)}
-                    </div>
-                    <div className="stage-status">
-                      {getStageStatusText(stage)}
-                      {stage.status === 'running' && (
-                        <span className="stage-progress">
-                          ({Math.round(getStageProgress(stage.id))}%)
-                        </span>
-                      )}
-                    </div>
-                  </div>
-                  
-                  {stage.duration && (
-                    <div className="stage-duration">
-                      {stage.duration}ms
-                    </div>
-                  )}
-                </div>
-              ))}
+                );
+              })}
             </div>
           </div>
         )}
@@ -286,14 +269,16 @@ export const StartupProgress: React.FC<StartupProgressProps> = ({
             <div className="tip-item">
               💡 首次启动需要初始化，请稍候...
             </div>
-            {startupState.phase === 'loading' && (
+            {(progressState.currentPhase === StartupPhase.ConfigLoading || 
+              progressState.currentPhase === StartupPhase.ThemeLoading) && (
               <div className="tip-item">
-                📦 正在加载必要的资源文件
+                📦 正在加载配置和主题文件
               </div>
             )}
-            {startupState.phase === 'configuring' && (
+            {(progressState.currentPhase === StartupPhase.AdapterLoading || 
+              progressState.currentPhase === StartupPhase.Live2DModelLoading) && (
               <div className="tip-item">
-                ⚙️ 正在配置应用设置和服务
+                ⚙️ 正在加载适配器和模型资源
               </div>
             )}
           </div>
@@ -307,18 +292,18 @@ export const StartupProgress: React.FC<StartupProgressProps> = ({
               启动完成，欢迎使用紫舒！
             </p>
             <div className="complete-stats">
-              <span>总耗时: {startupState.totalDuration || 0}ms</span>
-              <span>阶段数: {startupState.stages?.length || 0}</span>
+              <span>总耗时: {statsState.stats?.total_duration || 0}ms</span>
+              <span>阶段数: {phaseExecution.phaseResults.size || 0}</span>
             </div>
           </div>
         )}
 
         {/* 错误状态 */}
-        {startupState.phase === 'error' && (
+        {progressState.error && (
           <div className="startup-error">
             <div className="error-icon">❌</div>
             <p className="error-message">
-              启动过程中出现错误，请重试或检查日志
+              {progressState.error}
             </p>
             <button 
               className="retry-button"

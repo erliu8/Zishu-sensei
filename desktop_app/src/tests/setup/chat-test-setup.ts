@@ -5,7 +5,7 @@
  * @module Tests/Setup/Chat
  */
 
-import { beforeAll, beforeEach, afterAll, afterEach, vi } from 'vitest'
+import { beforeAll, beforeEach, afterAll, afterEach, vi, expect } from 'vitest'
 import { cleanup } from '@testing-library/react'
 import { setupChatMocks, cleanupChatMocks } from '@/tests/mocks/chat-mocks'
 import { chatTestHelpers } from '@/tests/utils/chat-test-helpers'
@@ -96,7 +96,7 @@ beforeAll(() => {
   })
   
   // 模拟 scrollTo
-  window.scrollTo = vi.fn()
+  window.scrollTo = vi.fn() as any
   
   // 模拟 requestAnimationFrame
   global.requestAnimationFrame = vi.fn((cb) => setTimeout(cb, 16))
@@ -271,7 +271,7 @@ expect.extend({
   toHaveMessage: chatTestHelpers.toHaveMessage,
   toHaveActiveSession: chatTestHelpers.toHaveActiveSession,
   
-  toBeConnected(received) {
+  toBeConnected(received: any) {
     const connectionStatus = received.querySelector('[data-testid="connection-status"]')
     const isConnected = connectionStatus?.textContent?.includes('已连接') || 
                        connectionStatus?.classList.contains('connected')
@@ -284,7 +284,7 @@ expect.extend({
     }
   },
   
-  toBeLoading(received) {
+  toBeLoading(received: any) {
     const loadingIndicator = received.querySelector('[data-testid="loading-indicator"]') ||
                             received.querySelector('.loading')
     
@@ -296,7 +296,7 @@ expect.extend({
     }
   },
   
-  toHaveError(received, expectedMessage?: string) {
+  toHaveError(received: any, expectedMessage?: string) {
     const errorElement = received.querySelector('[data-testid="error-indicator"]') ||
                         received.querySelector('[role="alert"]')
     

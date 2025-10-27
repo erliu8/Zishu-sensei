@@ -8,7 +8,7 @@
  */
 
 import '@testing-library/jest-dom'
-import { beforeAll, afterEach, afterAll } from 'vitest'
+import { beforeAll, afterEach, afterAll, vi } from 'vitest'
 import { cleanup } from '@testing-library/react'
 import { setupServer } from 'msw/node'
 import { handlers } from './mocks/handlers'

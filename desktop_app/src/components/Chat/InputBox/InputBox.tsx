@@ -16,10 +16,10 @@
 
 import React, { useCallback, useRef, useEffect } from 'react'
 import type { InputBoxProps, Attachment, Suggestion } from './InputBox.types'
+import { AttachmentStatus } from './InputBox.types'
 import {
   useInputBox,
   useValidation,
-  useDebouncedCallback,
 } from './hooks'
 import {
   formatFileSize,
@@ -65,7 +65,8 @@ const InputBox: React.FC<InputBoxProps> = ({
   enableSuggestions = true,
   enableDragDrop = true,
   enablePaste = true,
-  enableFormatting = false,
+  // enableFormatting 暂未实现
+  // enableFormatting = false,
   
   // 快捷键
   sendShortcut = DEFAULT_CONFIG.SEND_SHORTCUT,
@@ -100,10 +101,10 @@ const InputBox: React.FC<InputBoxProps> = ({
   
   // 其他
   'aria-label': ariaLabel = ARIA_LABELS.inputBox,
-  ...restProps
+  onPaste: onPasteCallback,
 }) => {
   // 文件输入引用
-  const fileInputRef = useRef<HTMLInputleElement>(null)
+  const fileInputRef = useRef<HTMLInputElement>(null)
   
   // 处理附件添加
   const handleAttachmentAdd = useCallback(async (file: File): Promise<Attachment> => {
@@ -115,31 +116,33 @@ const InputBox: React.FC<InputBoxProps> = ({
       id,
       name: file.name,
       size: file.size,
+      mimeType: file.type,
       type,
-      status: 'uploading',
+      status: AttachmentStatus.UPLOADING,
       progress: 0,
+      url: '',
     }
     
     try {
       // 如果是图片，创建缩略图
       if (type === 'image') {
-        const thumbnail = await createImageThumbnail(file)
-        attachment.thumbnail = thumbnail
+        const previewUrl = await createImageThumbnail(file)
+        attachment.previewUrl = previewUrl
       }
       
       // 转换为 Data URL
       const url = await fileToDataURL(file)
       attachment.url = url
-      attachment.status = 'uploaded'
+      attachment.status = AttachmentStatus.SUCCESS
       attachment.progress = 100
       
       // 调用外部回调
-      onAttachmentAdd?.(file, attachment)
+      onAttachmentAdd?.(file)
       
       return attachment
     } catch (error) {
       console.error('Failed to process attachment:', error)
-      attachment.status = 'error'
+      attachment.status = AttachmentStatus.FAILED
       attachment.error = error instanceof Error ? error.message : '处理文件失败'
       return attachment
     }
@@ -191,18 +194,19 @@ const InputBox: React.FC<InputBoxProps> = ({
     if (enablePaste) {
       inputBox.handlePaste(e)
     }
-  }, [enablePaste, inputBox.handlePaste])
+    onPasteCallback?.(e)
+  }, [enablePaste, inputBox.handlePaste, onPasteCallback])
   
   // 处理焦点
   const handleFocus = useCallback((e: React.FocusEvent<HTMLTextAreaElement>) => {
-    inputBox.focusHandlers.onFocus()
+    inputBox.onFocus()
     onFocus?.(e)
-  }, [inputBox.focusHandlers, onFocus])
+  }, [inputBox.onFocus, onFocus])
   
   const handleBlur = useCallback((e: React.FocusEvent<HTMLTextAreaElement>) => {
-    inputBox.focusHandlers.onBlur()
+    inputBox.onBlur()
     onBlur?.(e)
-  }, [inputBox.focusHandlers, onBlur])
+  }, [inputBox.onBlur, onBlur])
   
   // 处理文件选择
   const handleFileSelect = useCallback(() => {
@@ -223,7 +227,7 @@ const InputBox: React.FC<InputBoxProps> = ({
     const attachment = inputBox.attachments.find(att => att.id === id)
     inputBox.removeAttachment(id)
     if (attachment) {
-      onAttachmentRemove?.(attachment)
+      onAttachmentRemove?.(id)
     }
   }, [inputBox.attachments, inputBox.removeAttachment, onAttachmentRemove])
   
@@ -239,7 +243,7 @@ const InputBox: React.FC<InputBoxProps> = ({
     
     // 验证
     if (!validation.valid) {
-      onValidationError?.(validation.errors)
+      onValidationError?.(validation.errors || [])
       return
     }
     
@@ -278,8 +282,12 @@ const InputBox: React.FC<InputBoxProps> = ({
     <div
       className={containerClassName}
       style={style}
-      {...(enableDragDrop ? inputBox.dragHandlers : {})}
-      {...restProps}
+      {...(enableDragDrop ? {
+        onDragEnter: inputBox.onDragEnter,
+        onDragLeave: inputBox.onDragLeave,
+        onDragOver: inputBox.onDragOver,
+        onDrop: inputBox.onDrop,
+      } : {})}
     >
       {/* 建议列表 */}
       {shouldShowSuggestions && (
@@ -309,9 +317,9 @@ const InputBox: React.FC<InputBoxProps> = ({
               data-status={attachment.status}
             >
               {/* 缩略图或图标 */}
-              {attachment.thumbnail ? (
+              {attachment.previewUrl ? (
                 <img
-                  src={attachment.thumbnail}
+                  src={attachment.previewUrl}
                   alt={attachment.name}
                   className={styles.attachmentThumbnail}
                 />
@@ -334,7 +342,7 @@ const InputBox: React.FC<InputBoxProps> = ({
               </div>
               
               {/* 进度条 */}
-              {attachment.status === 'uploading' && (
+              {attachment.status === AttachmentStatus.UPLOADING && (
                 <div className={styles.attachmentProgress}>
                   <div
                     className={styles.attachmentProgressBar}
@@ -344,7 +352,7 @@ const InputBox: React.FC<InputBoxProps> = ({
               )}
               
               {/* 错误提示 */}
-              {attachment.status === 'error' && attachment.error && (
+              {attachment.status === AttachmentStatus.FAILED && attachment.error && (
                 <div className={styles.attachmentError}>{attachment.error}</div>
               )}
               
@@ -476,7 +484,7 @@ const InputBox: React.FC<InputBoxProps> = ({
       </div>
       
       {/* 验证错误提示 */}
-      {!validation.valid && validation.errors.length > 0 && (
+      {!validation.valid && validation.errors && validation.errors.length > 0 && (
         <div id="input-error" className={styles.errorMessage} role="alert">
           {validation.errors[0]}
         </div>

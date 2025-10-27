@@ -16,9 +16,10 @@ import axios, {
   AxiosRequestConfig, 
   AxiosResponse, 
   AxiosError,
-  InternalAxiosRequestConfig 
+  InternalAxiosRequestConfig,
+  AxiosProgressEvent
 } from 'axios'
-import { invoke } from '@tauri-apps/api/core'
+import { invoke } from '@tauri-apps/api/tauri'
 
 // ================================
 // 类型定义
@@ -68,7 +69,7 @@ export interface ApiConfig {
 /**
  * 请求配置扩展
  */
-export interface RequestConfig extends AxiosRequestConfig {
+export interface RequestConfig extends Omit<AxiosRequestConfig, 'onUploadProgress' | 'onDownloadProgress'> {
   /** 是否缓存响应 */
   cache?: boolean
   /** 缓存时间（秒） */
@@ -317,7 +318,7 @@ export class ApiClient {
     try {
       // 检查缓存
       if (this.config.enableCache && config.cache && config.method?.toUpperCase() === 'GET') {
-        const cached = this.getCachedResponse(config)
+        const cached = this.getCachedResponse<T>(config)
         if (cached) {
           this.log('Cache hit:', config.url)
           return cached
@@ -339,25 +340,24 @@ export class ApiClient {
       this.requestCancellers.set(requestKey, controller)
 
       // 设置进度回调
-      if (config.onUploadProgress) {
-        config.onUploadProgress = (progressEvent: any) => {
-          const progress = Math.round((progressEvent.loaded * 100) / progressEvent.total)
-          config.onUploadProgress!(progress)
-        }
-      }
-
-      if (config.onDownloadProgress) {
-        config.onDownloadProgress = (progressEvent: any) => {
-          const progress = Math.round((progressEvent.loaded * 100) / progressEvent.total)
-          config.onDownloadProgress!(progress)
-        }
+      const customUploadProgress = config.onUploadProgress
+      const customDownloadProgress = config.onDownloadProgress
+      
+      const axiosConfig: AxiosRequestConfig = {
+        ...config,
+        signal: controller.signal,
+        onUploadProgress: customUploadProgress ? (progressEvent: AxiosProgressEvent) => {
+          const progress = Math.round((progressEvent.loaded * 100) / (progressEvent.total || progressEvent.loaded))
+          customUploadProgress(progress)
+        } : undefined,
+        onDownloadProgress: customDownloadProgress ? (progressEvent: AxiosProgressEvent) => {
+          const progress = Math.round((progressEvent.loaded * 100) / (progressEvent.total || progressEvent.loaded))
+          customDownloadProgress(progress)
+        } : undefined,
       }
 
       // 发起请求
-      const response = await this.client.request<ApiResponse<T>>({
-        ...config,
-        signal: controller.signal,
-      })
+      const response = await this.client.request<ApiResponse<T>>(axiosConfig)
 
       // 清理取消器
       this.requestCancellers.delete(requestKey)
@@ -444,7 +444,7 @@ export class ApiClient {
       return null
     }
 
-    return cached.data
+    return cached.data as ApiResponse<T>
   }
 
   /**
@@ -564,20 +564,6 @@ export class ApiClient {
     }
   }
 
-  /**
-   * 加载离线队列
-   */
-  private async loadOfflineQueue(): Promise<void> {
-    try {
-      const queueStr = await invoke<string>('load_offline_queue')
-      if (queueStr) {
-        this.offlineQueue = JSON.parse(queueStr)
-        this.log(`Loaded offline queue (${this.offlineQueue.length} items)`)
-      }
-    } catch (error) {
-      this.log('Failed to load offline queue:', error)
-    }
-  }
 
   // ================================
   // 请求取消
@@ -966,16 +952,4 @@ export const apiClient = new ApiClient({
   enableLogging: import.meta.env.DEV,
 })
 
-/**
- * 导出类型
- */
-export type {
-  ApiConfig,
-  ApiResponse,
-  ApiError,
-  RequestConfig,
-  RequestInterceptor,
-  ResponseInterceptor,
-  ErrorInterceptor,
-}
 

@@ -152,13 +152,13 @@ export const useMessageHeight = (
   config: UseMessageHeightConfig = {}
 ): UseMessageHeightReturn => {
   // 合并配置
-  const fullConfig = useMemo(() => ({
+  const fullConfig = useMemo((): Required<UseMessageHeightConfig> => ({
     ...DEFAULT_CONFIG,
     ...config,
     estimateConfig: {
       ...DEFAULT_CONFIG.estimateConfig,
       ...config.estimateConfig,
-    },
+    } as Required<HeightEstimateConfig>,
   }), [config])
 
   // 高度缓存
@@ -233,20 +233,20 @@ export const useMessageHeight = (
    */
   const estimateHeight = useCallback(
     (message: ChatMessage): number => {
-      const { estimateConfig: ec } = fullConfig
+      const ec = fullConfig.estimateConfig
       const content = extractContent(message)
       
       // 根据角色选择基础高度
-      let baseHeight = ec.defaultHeight
+      let baseHeight = ec.defaultHeight!
       switch (message.role) {
         case 'user':
-          baseHeight = ec.userMessageHeight
+          baseHeight = ec.userMessageHeight!
           break
         case 'assistant':
-          baseHeight = ec.assistantMessageHeight
+          baseHeight = ec.assistantMessageHeight!
           break
         case 'system':
-          baseHeight = ec.systemMessageHeight
+          baseHeight = ec.systemMessageHeight!
           break
       }
       
@@ -255,8 +255,8 @@ export const useMessageHeight = (
       
       // 限制在最小和最大值之间
       return Math.min(
-        Math.max(estimatedHeight, ec.minHeight),
-        ec.maxHeight
+        Math.max(estimatedHeight, ec.minHeight!),
+        ec.maxHeight!
       )
     },
     [fullConfig]
@@ -376,7 +376,7 @@ export const useMessageHeight = (
   const getAverageHeight = useCallback((): number => {
     const heights = Array.from(cacheRef.current.values()).map((item) => item.height)
     if (heights.length === 0) {
-      return fullConfig.estimateConfig.defaultHeight
+      return fullConfig.estimateConfig.defaultHeight!
     }
     
     const sum = heights.reduce((acc, h) => acc + h, 0)

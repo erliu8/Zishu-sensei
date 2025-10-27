@@ -153,7 +153,7 @@ impl std::str::FromStr for UpdateStatus {
 }
 
 /// 更新类型
-#[derive(Debug, Clone, Serialize, Deserialize, Default)]
+#[derive(Debug, Clone, Serialize, Deserialize, Default, PartialEq)]
 #[serde(rename_all = "snake_case")]
 pub enum UpdateType {
     #[default]
@@ -791,5 +791,389 @@ impl UpdateDatabase {
 
     pub fn get_update_stats(&self) -> Result<HashMap<String, i64>, Box<dyn std::error::Error + Send + Sync>> {
         self.registry.get_update_stats()
+    }
+}
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+    use tokio_test;
+    use std::time::SystemTime;
+    use chrono::Utc;
+
+    // ================================
+    // 数据结构测试
+    // ================================
+
+    #[test]
+    fn test_update_info_default() {
+        let info = UpdateInfo::default();
+        assert_eq!(info.version, "");
+        assert_eq!(info.title, "");
+        assert_eq!(info.description, "");
+        assert_eq!(info.is_mandatory, false);
+        assert_eq!(info.is_prerelease, false);
+        assert_eq!(info.status, UpdateStatus::Pending);
+        assert_eq!(info.download_progress, 0.0);
+        assert_eq!(info.install_progress, 0.0);
+        assert_eq!(info.retry_count, 0);
+    }
+
+    #[test]
+    fn test_update_info_serialization() {
+        let mut info = UpdateInfo::default();
+        info.version = "1.2.3".to_string();
+        info.title = "Test Update".to_string();
+        info.is_mandatory = true;
+        info.status = UpdateStatus::Available;
+        
+        // 测试序列化
+        let serialized = serde_json::to_string(&info).expect("序列化失败");
+        assert!(serialized.contains("1.2.3"));
+        assert!(serialized.contains("Test Update"));
+        
+        // 测试反序列化
+        let deserialized: UpdateInfo = serde_json::from_str(&serialized).expect("反序列化失败");
+        assert_eq!(deserialized.version, "1.2.3");
+        assert_eq!(deserialized.title, "Test Update");
+        assert_eq!(deserialized.is_mandatory, true);
+        assert_eq!(deserialized.status, UpdateStatus::Available);
+    }
+
+    #[test]
+    fn test_update_config_default() {
+        let config = UpdateConfig::default();
+        assert_eq!(config.auto_check, true);
+        assert_eq!(config.auto_check_enabled, true);
+        assert_eq!(config.check_interval, 86400);
+        assert_eq!(config.check_interval_hours, 24);
+        assert_eq!(config.auto_download, false);
+        assert_eq!(config.auto_install, false);
+        assert_eq!(config.backup_before_update, true);
+        assert_eq!(config.include_prerelease, false);
+        assert_eq!(config.max_backup_count, 5);
+    }
+
+    #[test]
+    fn test_version_history_creation() {
+        let history = VersionHistory {
+            id: Some(1),
+            version: "1.0.0".to_string(),
+            installed_at: Utc::now().timestamp(),
+            release_notes: "Initial release".to_string(),
+            notes: "Manual install".to_string(),
+            is_rollback: false,
+            install_source: "manual".to_string(),
+        };
+        
+        assert_eq!(history.version, "1.0.0");
+        assert_eq!(history.is_rollback, false);
+        assert_eq!(history.install_source, "manual");
+    }
+
+    // ================================
+    // 枚举测试
+    // ================================
+
+    #[test]
+    fn test_update_status_display() {
+        assert_eq!(UpdateStatus::Pending.to_string(), "pending");
+        assert_eq!(UpdateStatus::Available.to_string(), "available");
+        assert_eq!(UpdateStatus::Downloading.to_string(), "downloading");
+        assert_eq!(UpdateStatus::Downloaded.to_string(), "downloaded");
+        assert_eq!(UpdateStatus::Installing.to_string(), "installing");
+        assert_eq!(UpdateStatus::Installed.to_string(), "installed");
+        assert_eq!(UpdateStatus::Failed.to_string(), "failed");
+        assert_eq!(UpdateStatus::Cancelled.to_string(), "cancelled");
+    }
+
+    #[test]
+    fn test_update_status_from_str() {
+        assert_eq!("pending".parse::<UpdateStatus>().unwrap(), UpdateStatus::Pending);
+        assert_eq!("available".parse::<UpdateStatus>().unwrap(), UpdateStatus::Available);
+        assert_eq!("downloading".parse::<UpdateStatus>().unwrap(), UpdateStatus::Downloading);
+        assert_eq!("downloaded".parse::<UpdateStatus>().unwrap(), UpdateStatus::Downloaded);
+        assert_eq!("installing".parse::<UpdateStatus>().unwrap(), UpdateStatus::Installing);
+        assert_eq!("installed".parse::<UpdateStatus>().unwrap(), UpdateStatus::Installed);
+        assert_eq!("failed".parse::<UpdateStatus>().unwrap(), UpdateStatus::Failed);
+        assert_eq!("cancelled".parse::<UpdateStatus>().unwrap(), UpdateStatus::Cancelled);
+        
+        // 测试无效值
+        let result = "invalid".parse::<UpdateStatus>();
+        assert!(result.is_err());
+        assert!(result.unwrap_err().contains("无效的更新状态"));
+    }
+
+    #[test]
+    fn test_update_type_display() {
+        assert_eq!(UpdateType::Major.to_string(), "major");
+        assert_eq!(UpdateType::Minor.to_string(), "minor");
+        assert_eq!(UpdateType::Patch.to_string(), "patch");
+        assert_eq!(UpdateType::Hotfix.to_string(), "hotfix");
+    }
+
+    #[test]
+    fn test_update_type_from_str() {
+        assert_eq!("major".parse::<UpdateType>().unwrap(), UpdateType::Major);
+        assert_eq!("minor".parse::<UpdateType>().unwrap(), UpdateType::Minor);
+        assert_eq!("patch".parse::<UpdateType>().unwrap(), UpdateType::Patch);
+        assert_eq!("hotfix".parse::<UpdateType>().unwrap(), UpdateType::Hotfix);
+        
+        // 测试无效值
+        let result = "invalid".parse::<UpdateType>();
+        assert!(result.is_err());
+        assert!(result.unwrap_err().contains("无效的更新类型"));
+    }
+
+    #[test]
+    fn test_update_status_default() {
+        assert_eq!(UpdateStatus::default(), UpdateStatus::Pending);
+    }
+
+    #[test]
+    fn test_update_type_default() {
+        assert_eq!(UpdateType::default(), UpdateType::Major);
+    }
+
+    // ================================
+    // 业务逻辑测试 (无数据库依赖)
+    // ================================
+
+    #[test]
+    fn test_update_info_validation() {
+        let mut info = UpdateInfo::default();
+        
+        // 测试版本号设置
+        info.version = "1.2.3-beta.1".to_string();
+        assert_eq!(info.version, "1.2.3-beta.1");
+        
+        // 测试进度值边界
+        info.download_progress = 0.0;
+        assert_eq!(info.download_progress, 0.0);
+        
+        info.download_progress = 100.0;
+        assert_eq!(info.download_progress, 100.0);
+        
+        info.install_progress = 50.5;
+        assert_eq!(info.install_progress, 50.5);
+        
+        // 测试重试计数
+        info.retry_count = 0;
+        assert_eq!(info.retry_count, 0);
+        
+        info.retry_count = 5;
+        assert_eq!(info.retry_count, 5);
+    }
+
+    #[test]
+    fn test_update_config_validation() {
+        let mut config = UpdateConfig::default();
+        
+        // 测试检查间隔设置
+        config.check_interval = 3600; // 1 hour
+        config.check_interval_hours = 1;
+        assert_eq!(config.check_interval, 3600);
+        assert_eq!(config.check_interval_hours, 1);
+        
+        // 测试备份数量限制
+        config.max_backup_count = 10;
+        assert_eq!(config.max_backup_count, 10);
+        
+        config.max_backup_count = 0;
+        assert_eq!(config.max_backup_count, 0);
+        
+        // 测试布尔值设置
+        config.auto_check = false;
+        config.auto_download = true;
+        config.auto_install = true;
+        config.include_prerelease = true;
+        
+        assert_eq!(config.auto_check, false);
+        assert_eq!(config.auto_download, true);
+        assert_eq!(config.auto_install, true);
+        assert_eq!(config.include_prerelease, true);
+    }
+
+    // ================================
+    // 边界条件和错误处理测试
+    // ================================
+
+    #[test]
+    fn test_empty_version_handling() {
+        let mut info = UpdateInfo::default();
+        info.version = "".to_string();
+        
+        // 空版本号应该能正常处理
+        assert_eq!(info.version, "");
+        
+        // 序列化应该正常工作
+        let serialized = serde_json::to_string(&info);
+        assert!(serialized.is_ok());
+    }
+
+    #[test]
+    fn test_large_file_size_handling() {
+        let mut info = UpdateInfo::default();
+        info.file_size = Some(i64::MAX);
+        
+        assert_eq!(info.file_size, Some(i64::MAX));
+        
+        // 序列化大数值应该正常工作
+        let serialized = serde_json::to_string(&info);
+        assert!(serialized.is_ok());
+    }
+
+    #[test]
+    fn test_special_characters_in_strings() {
+        let mut info = UpdateInfo::default();
+        info.title = "Test with 特殊字符 & émojis 🚀".to_string();
+        info.description = "Multi\nline\ndescription with\ttabs".to_string();
+        
+        // 特殊字符应该能正常处理
+        assert!(info.title.contains("特殊字符"));
+        assert!(info.title.contains("🚀"));
+        assert!(info.description.contains("\n"));
+        assert!(info.description.contains("\t"));
+        
+        // 序列化应该正常工作
+        let serialized = serde_json::to_string(&info);
+        assert!(serialized.is_ok());
+        
+        // 反序列化应该保持原始内容
+        if let Ok(json) = serialized {
+            let deserialized: UpdateInfo = serde_json::from_str(&json).unwrap();
+            assert_eq!(deserialized.title, info.title);
+            assert_eq!(deserialized.description, info.description);
+        }
+    }
+
+    #[test] 
+    fn test_timestamp_handling() {
+        let now = Utc::now().timestamp();
+        let mut info = UpdateInfo::default();
+        info.created_at = now;
+        
+        assert_eq!(info.created_at, now);
+        
+        // 测试未来时间戳
+        let future = now + 86400; // 明天
+        info.created_at = future;
+        assert_eq!(info.created_at, future);
+        
+        // 测试过去时间戳
+        let past = now - 86400; // 昨天
+        info.created_at = past;
+        assert_eq!(info.created_at, past);
+    }
+
+    #[test]
+    fn test_optional_fields_handling() {
+        let mut info = UpdateInfo::default();
+        
+        // 测试 None 值
+        assert_eq!(info.update_type, None);
+        assert_eq!(info.release_date, None);
+        assert_eq!(info.download_url, None);
+        assert_eq!(info.file_size, None);
+        assert_eq!(info.file_hash, None);
+        assert_eq!(info.min_version, None);
+        assert_eq!(info.target_platform, None);
+        assert_eq!(info.target_arch, None);
+        assert_eq!(info.error_message, None);
+        
+        // 测试设置 Some 值
+        info.update_type = Some(UpdateType::Minor);
+        info.download_url = Some("https://example.com/download".to_string());
+        info.file_size = Some(1024);
+        info.error_message = Some("Test error".to_string());
+        
+        assert_eq!(info.update_type, Some(UpdateType::Minor));
+        assert_eq!(info.download_url, Some("https://example.com/download".to_string()));
+        assert_eq!(info.file_size, Some(1024));
+        assert_eq!(info.error_message, Some("Test error".to_string()));
+        
+        // 序列化包含 None 和 Some 的结构
+        let serialized = serde_json::to_string(&info);
+        assert!(serialized.is_ok());
+    }
+
+    // ================================
+    // 性能测试 (轻量级)
+    // ================================
+
+    #[test]
+    fn test_serialization_performance() {
+        let mut info = UpdateInfo::default();
+        info.version = "1.0.0".to_string();
+        info.title = "Performance Test Update".to_string();
+        info.description = "A".repeat(1000); // 1KB描述
+        
+        let start = SystemTime::now();
+        
+        // 执行100次序列化
+        for _ in 0..100 {
+            let _serialized = serde_json::to_string(&info).unwrap();
+        }
+        
+        let duration = start.elapsed().unwrap();
+        
+        // 100次序列化应该在100ms内完成
+        assert!(duration.as_millis() < 100, "序列化性能测试失败: {:?}", duration);
+    }
+
+    #[test] 
+    fn test_enum_conversion_performance() {
+        let statuses = vec![
+            "pending", "available", "downloading", "downloaded",
+            "installing", "installed", "failed", "cancelled"
+        ];
+        
+        let start = SystemTime::now();
+        
+        // 执行1000次枚举转换
+        for _ in 0..1000 {
+            for status in &statuses {
+                let _parsed: UpdateStatus = status.parse().unwrap();
+            }
+        }
+        
+        let duration = start.elapsed().unwrap();
+        
+        // 1000次转换应该在10ms内完成
+        assert!(duration.as_millis() < 10, "枚举转换性能测试失败: {:?}", duration);
+    }
+
+    // ================================
+    // 并发安全测试
+    // ================================
+
+    #[test]
+    fn test_concurrent_struct_access() {
+        use std::sync::Arc;
+        use std::thread;
+        
+        let info = Arc::new(UpdateInfo::default());
+        let mut handles = vec![];
+        
+        // 启动10个线程同时读取结构体
+        for i in 0..10 {
+            let info_clone = Arc::clone(&info);
+            let handle = thread::spawn(move || {
+                // 读取操作应该是安全的
+                let _version = &info_clone.version;
+                let _status = &info_clone.status;
+                let _progress = info_clone.download_progress;
+                
+                // 简单计算确保线程实际工作
+                i * 2
+            });
+            handles.push(handle);
+        }
+        
+        // 等待所有线程完成
+        for handle in handles {
+            let result = handle.join().unwrap();
+            assert!(result < 20);
+        }
     }
 }

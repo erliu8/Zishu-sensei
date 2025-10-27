@@ -199,6 +199,10 @@ export interface InputBoxProps {
   style?: CSSProperties
   /** 是否必填 */
   required?: boolean
+  /** 输入框变体样式 */
+  variant?: 'default' | 'outlined' | 'filled' | 'borderless'
+  /** 输入框尺寸 */
+  size?: 'small' | 'medium' | 'large'
   
   // -------- 状态属性 --------
   
@@ -206,6 +210,8 @@ export interface InputBoxProps {
   isSending?: boolean
   /** 是否正在流式响应 */
   isStreaming?: boolean
+  /** 是否正在流式响应（别名） */
+  streaming?: boolean
   /** 是否处于错误状态 */
   hasError?: boolean
   /** 错误消息 */
@@ -232,20 +238,32 @@ export interface InputBoxProps {
   showCharCount?: boolean
   /** 是否显示附件按钮 */
   showAttachmentButton?: boolean
+  /** 是否启用附件功能 */
+  enableAttachments?: boolean
   /** 是否显示表情选择器按钮 */
   showEmojiButton?: boolean
+  /** 是否启用表情功能 */
+  enableEmoji?: boolean
   /** 是否显示语音输入按钮 */
   showVoiceButton?: boolean
+  /** 是否启用语音功能 */
+  enableVoice?: boolean
   /** 是否显示格式化工具栏 */
   showFormatToolbar?: boolean
+  /** 是否启用格式化功能 */
+  enableFormatting?: boolean
   /** 是否显示建议提示 */
   showSuggestions?: boolean
+  /** 是否启用建议功能 */
+  enableSuggestions?: boolean
   /** 是否显示快捷键提示 */
   showShortcutHint?: boolean
   /** 是否启用拖拽上传 */
   enableDragDrop?: boolean
   /** 是否启用粘贴上传 */
   enablePasteUpload?: boolean
+  /** 是否启用粘贴功能 */
+  enablePaste?: boolean
   /** 是否启用自动补全 */
   enableAutocomplete?: boolean
   

@@ -40,6 +40,70 @@ export interface TauriWindowConfig {
 }
 
 /**
+ * 窗口配置（简化版，用于窗口服务）
+ */
+export interface WindowConfig {
+    label: string
+    url?: string
+    title?: string
+    width?: number
+    height?: number
+    x?: number
+    y?: number
+    minWidth?: number
+    minHeight?: number
+    maxWidth?: number
+    maxHeight?: number
+    center?: boolean
+    resizable?: boolean
+    maximizable?: boolean
+    minimizable?: boolean
+    closable?: boolean
+    decorations?: boolean
+    alwaysOnTop?: boolean
+    fullscreen?: boolean
+    transparent?: boolean
+    visible?: boolean
+    focus?: boolean
+    skipTaskbar?: boolean
+    theme?: 'light' | 'dark' | null
+}
+
+/**
+ * 窗口状态
+ */
+export interface WindowState {
+    label: string
+    title?: string
+    isVisible?: boolean
+    isMaximized?: boolean
+    isMinimized?: boolean
+    isFullscreen?: boolean
+    isFocused?: boolean
+    isResizable?: boolean
+    isDecorated?: boolean
+    isAlwaysOnTop?: boolean
+    position?: { x: number; y: number }
+    size?: { width: number; height: number }
+    scaleFactor?: number
+}
+
+/**
+ * 窗口事件类型
+ */
+export type WindowEventType =
+    | 'tauri://created'
+    | 'tauri://close-requested'
+    | 'tauri://destroyed'
+    | 'tauri://focus'
+    | 'tauri://blur'
+    | 'tauri://move'
+    | 'tauri://resize'
+    | 'tauri://scale-change'
+    | 'tauri://error'
+    | string
+
+/**
  * Tauri 文件对话框选项
  */
 export interface TauriFileDialogOptions {
@@ -192,6 +256,11 @@ export interface TauriLogConfig {
 }
 
 /**
+ * Tauri 命令载荷类型（通用）
+ */
+export type TauriCommandPayload = Record<string, any>
+
+/**
  * Tauri 应用命令类型
  */
 export type AppCommand =
@@ -203,14 +272,47 @@ export type AppCommand =
     | 'minimize_window'
     | 'maximize_window'
     | 'close_window'
+    | 'show_window'
+    | 'hide_window'
+    | 'focus_window'
     | 'set_window_title'
     | 'set_window_size'
     | 'set_window_position'
+    | 'set_always_on_top'
+    | 'create_window'
     | 'show_notification'
     | 'read_file'
     | 'write_file'
+    | 'read_dir'
+    | 'create_dir'
+    | 'remove_file'
+    | 'remove_dir'
+    | 'copy_file'
+    | 'move_file'
+    | 'file_exists'
+    | 'show_message'
+    | 'show_confirm'
+    | 'show_open_dialog'
+    | 'show_save_dialog'
+    | 'set_tray_menu'
+    | 'set_tray_icon'
+    | 'set_tray_tooltip'
+    | 'send_notification'
+    | 'read_clipboard'
+    | 'write_clipboard'
+    | 'register_shortcut'
+    | 'unregister_shortcut'
+    | 'get_character_list'
+    | 'load_character'
+    | 'save_settings'
+    | 'load_settings'
+    | 'install_adapter'
+    | 'uninstall_adapter'
+    | 'execute_adapter'
+    | 'get_adapter_list'
     | 'copy_to_clipboard'
     | 'read_from_clipboard'
+    | string
 
 /**
  * 命令状态
@@ -250,4 +352,92 @@ export interface TauriResponse<T = any> {
     success: boolean
     data?: T
     error?: string
+}
+
+/**
+ * 应用事件类型定义
+ */
+export type AppEventType =
+    // 窗口事件
+    | 'window-created'
+    | 'window-destroyed'
+    | 'window-focused'
+    | 'window-blurred'
+    | 'window-moved'
+    | 'window-resized'
+    | 'window-minimized'
+    | 'window-maximized'
+    | 'window-restored'
+    // 应用事件
+    | 'app-ready'
+    | 'app-before-quit'
+    | 'app-will-quit'
+    // 系统事件
+    | 'system-theme-changed'
+    | 'system-locale-changed'
+    // 文件事件
+    | 'file-dropped'
+    | 'file-drop-hover'
+    | 'file-drop-cancelled'
+    // 应用特定事件
+    | 'character-changed'
+    | 'settings-changed'
+    | 'adapter-installed'
+    | 'adapter-uninstalled'
+    | 'adapter-executed'
+    | 'chat-message'
+    | 'live2d-loaded'
+    | 'live2d-error'
+    | string
+
+/**
+ * 事件载荷类型映射
+ */
+export interface AppEventPayloadMap {
+    'window-created': { label: string }
+    'window-destroyed': { label: string }
+    'window-focused': { label: string }
+    'window-blurred': { label: string }
+    'window-moved': { label: string; x: number; y: number }
+    'window-resized': { label: string; width: number; height: number }
+    'window-minimized': { label: string }
+    'window-maximized': { label: string }
+    'window-restored': { label: string }
+    'app-ready': void
+    'app-before-quit': void
+    'app-will-quit': void
+    'system-theme-changed': { theme: 'light' | 'dark' }
+    'system-locale-changed': { locale: string }
+    'file-dropped': { paths: string[] }
+    'file-drop-hover': { paths: string[] }
+    'file-drop-cancelled': void
+    'character-changed': { characterId: string }
+    'settings-changed': { key: string; value: any }
+    'adapter-installed': { adapterId: string; name: string }
+    'adapter-uninstalled': { adapterId: string }
+    'adapter-executed': { adapterId: string; result: any }
+    'chat-message': { message: string; sender: string }
+    'live2d-loaded': { modelName: string }
+    'live2d-error': { error: string }
+}
+
+/**
+ * 提取事件载荷类型
+ */
+export type ExtractEventPayload<T extends AppEventType> =
+    T extends keyof AppEventPayloadMap ? AppEventPayloadMap[T] : any
+
+/**
+ * 事件监听器状态
+ */
+export interface EventListenerState<T = any> {
+    data: T[]
+    loading: boolean
+    error: string | null
+    isReady: boolean
+    events: T[]
+    lastEvent: T | null
+    subscribe: () => Promise<() => void>
+    unsubscribe: () => void
+    clear: () => void
 }

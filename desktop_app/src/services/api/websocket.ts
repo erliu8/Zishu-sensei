@@ -10,7 +10,7 @@
  * - 消息确认机制
  */
 
-import { invoke } from '@tauri-apps/api/core'
+import { invoke } from '@tauri-apps/api/tauri'
 import { EventEmitter } from 'events'
 
 // ================================
@@ -102,7 +102,7 @@ export enum WebSocketEvent {
 
 export class WebSocketManager extends EventEmitter {
   private ws: WebSocket | null = null
-  private config: Required<WebSocketConfig>
+  private config: Required<Omit<WebSocketConfig, 'protocols'>> & Pick<WebSocketConfig, 'protocols'>
   private state: ConnectionState = ConnectionState.DISCONNECTED
   private reconnectAttempts: number = 0
   private reconnectTimer: ReturnType<typeof setTimeout> | null = null
@@ -125,7 +125,7 @@ export class WebSocketManager extends EventEmitter {
     // 合并默认配置
     this.config = {
       url: config.url,
-      protocols: config.protocols,
+      protocols: config.protocols || undefined,
       reconnect: config.reconnect !== undefined ? config.reconnect : true,
       reconnectInterval: config.reconnectInterval || 1000,
       reconnectDecay: config.reconnectDecay || 1.5,
@@ -141,7 +141,9 @@ export class WebSocketManager extends EventEmitter {
 
     // 自动连接
     if (this.config.autoConnect) {
-      this.connect()
+      this.connect().catch(error => {
+        this.log('Auto-connect failed:', error)
+      })
     }
 
     this.log('WebSocket Manager initialized', this.config)
@@ -154,7 +156,7 @@ export class WebSocketManager extends EventEmitter {
   /**
    * 连接到服务器
    */
-  connect(): void {
+  async connect(): Promise<void> {
     if (this.ws && (this.state === ConnectionState.CONNECTED || this.state === ConnectionState.CONNECTING)) {
       this.log('Already connected or connecting')
       return
@@ -165,7 +167,7 @@ export class WebSocketManager extends EventEmitter {
 
     try {
       // 获取完整的 WebSocket URL（添加认证令牌）
-      const url = this.getWebSocketUrl()
+      const url = await this.getWebSocketUrl()
 
       this.log(`Connecting to ${url}`)
 
@@ -242,7 +244,9 @@ export class WebSocketManager extends EventEmitter {
     this.emit(WebSocketEvent.RECONNECTING, { attempt: this.reconnectAttempts, delay })
 
     this.reconnectTimer = setTimeout(() => {
-      this.connect()
+      this.connect().catch(error => {
+        this.log('Reconnect failed:', error)
+      })
     }, delay)
   }
 
@@ -354,15 +358,16 @@ export class WebSocketManager extends EventEmitter {
 
       // 如果需要确认，返回 Promise
       if (message.requiresAck && message.id) {
+        const messageId = message.id
         return new Promise((resolve, reject) => {
           // 设置超时
           const timeout = setTimeout(() => {
-            this.pendingAcks.delete(message.id!)
+            this.pendingAcks.delete(messageId)
             reject(new Error('Message acknowledgment timeout'))
           }, 10000) // 10秒超时
 
           // 保存确认回调
-          this.pendingAcks.set(message.id, (ack: MessageAck) => {
+          this.pendingAcks.set(messageId, (ack: MessageAck) => {
             clearTimeout(timeout)
             if (ack.error) {
               reject(new Error(ack.error))
@@ -736,23 +741,16 @@ let defaultWebSocketManager: WebSocketManager | null = null
  */
 export function getDefaultWebSocketManager(): WebSocketManager {
   if (!defaultWebSocketManager) {
-    const wsUrl = import.meta.env.VITE_WS_URL || 'ws://127.0.0.1:8000/ws'
+    // 使用环境变量或默认值
+    const wsUrl = (typeof window !== 'undefined' && (window as any).__VITE_WS_URL__) || 'ws://127.0.0.1:8000/ws'
+    const isDev = process.env.NODE_ENV === 'development'
+    
     defaultWebSocketManager = new WebSocketManager({
       url: wsUrl,
       autoConnect: true,
-      enableLogging: import.meta.env.DEV,
+      enableLogging: isDev,
     })
   }
   return defaultWebSocketManager
-}
-
-/**
- * 导出类型
- */
-export type {
-  WebSocketConfig,
-  WebSocketMessage,
-  MessageAck,
-  ConnectionStats,
 }
 

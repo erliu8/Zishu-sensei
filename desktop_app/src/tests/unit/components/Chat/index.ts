@@ -5,25 +5,5 @@
  * @module Tests/Components/Chat
  */
 
-// 导出所有测试文件
-export * from './Chat.test'
-export * from './ChatWindow.test'
-export * from './MessageList.test'
-export * from './MessageBubble.test'
-export * from './InputBox.test'
-export * from './VoiceInput.test'
-export * from './TypingIndicator.test'
-
-// 导出测试工具
-export { chatTestHelpers } from '@/tests/utils/chat-test-helpers'
-export { chatMocks, setupChatMocks, cleanupChatMocks } from '@/tests/mocks/chat-mocks'
-export { chatTestUtils, testDataGenerator, chatTestConfig } from '@/tests/setup/chat-test-setup'
-
-// 导出测试数据工厂
-export {
-  createMockMessage,
-  createMockConversation,
-  createMockSettings,
-  MockMessage,
-  MockCharacter,
-} from '@/tests/mocks/factories'
+// 注意：测试文件不需要导出，它们会被测试运行器自动发现
+// 此文件保留用于未来可能的测试工具导出

@@ -27,6 +27,5 @@ export type {
   Live2DAnimationConfig,
   Live2DRenderConfig,
   Live2DModelConfig,
-  Live2DTheme,
   UseLive2DViewerReturn
 } from '../../../types/live2d'

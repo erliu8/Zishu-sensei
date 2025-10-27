@@ -10,10 +10,8 @@ import {
   StartupEvent,
   StartupOptimization,
   StartupPerformanceMetrics,
-  StartupMonitoringConfig,
   OptimizationSuggestion,
   DEFAULT_STARTUP_CONFIG,
-  DEFAULT_OPTIMIZATION_CONFIG,
 } from '../types/startup';
 
 /**
@@ -375,18 +373,9 @@ export class StartupService {
    * 预加载路由组件
    */
   private async preloadRouteComponent(route: string): Promise<void> {
-    const routeMap: Record<string, () => Promise<any>> = {
-      '/chat': () => import('../pages/Chat'),
-      '/settings': () => import('../pages/Settings'),
-      '/character': () => import('../pages/Character'),
-      '/workflow': () => import('../pages/Workflow'),
-      '/adapter': () => import('../pages/AdapterManagement'),
-    };
-
-    const loader = routeMap[route];
-    if (loader) {
-      await loader();
-    }
+    // TODO: 实现路由组件预加载
+    // 当页面组件创建后，在这里添加路由映射
+    console.log(`Preloading route: ${route}`);
   }
 
   /**
@@ -543,7 +532,7 @@ export class StartupService {
   /**
    * 设置内存缓存
    */
-  private setupMemoryCache(config: any): void {
+  private setupMemoryCache(_config: any): void {
     // 创建内存缓存
     const cache = new Map<string, { data: any; timestamp: number; ttl: number }>();
     
@@ -575,7 +564,7 @@ export class StartupService {
   /**
    * 设置 IndexedDB 缓存
    */
-  private async setupIndexedDBCache(config: any): Promise<void> {
+  private async setupIndexedDBCache(_config: any): Promise<void> {
     try {
       // 这里可以实现 IndexedDB 缓存逻辑
       console.log('IndexedDB cache setup completed');
@@ -587,7 +576,7 @@ export class StartupService {
   /**
    * 设置 Service Worker 缓存
    */
-  private async setupServiceWorkerCache(config: any): Promise<void> {
+  private async setupServiceWorkerCache(_config: any): Promise<void> {
     if ('serviceWorker' in navigator) {
       try {
         await navigator.serviceWorker.register('/sw.js');
@@ -622,7 +611,7 @@ export class StartupService {
       largestContentfulPaint: lcp?.startTime || 0,
       firstInputDelay: (fid as any)?.processingStart - (fid as any)?.startTime || 0,
       cumulativeLayoutShift,
-      timeToInteractive: navigation?.domInteractive - navigation?.navigationStart || 0,
+      timeToInteractive: navigation?.domInteractive || 0,
       totalBlockingTime: 0, // 需要额外计算
       pageLoadTime: Date.now() - this.startTime,
       resourceLoadTimes: this.collectResourceLoadTimes(),

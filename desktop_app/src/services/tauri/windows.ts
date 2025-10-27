@@ -245,7 +245,7 @@ export class TauriWindowService {
                 visible: config.visible,
                 focus: config.focus,
                 skipTaskbar: config.skipTaskbar,
-                theme: config.theme
+                theme: config.theme as any
             })
 
             // 等待窗口创建完成

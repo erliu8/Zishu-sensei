@@ -12,13 +12,12 @@
  * - 🛡️ 错误边界和状态处理
  */
 
-import React, { useCallback, useEffect, useMemo, useState, useRef } from 'react'
+import React, { useCallback, useEffect, useState, useRef } from 'react'
 import { motion, AnimatePresence } from 'framer-motion'
 import clsx from 'clsx'
 import toast, { Toaster } from 'react-hot-toast'
 
 // 类型
-import type { AppConfig } from '@/types/settings'
 import type { SettingsTab } from '@/components/Settings'
 
 // Hooks
@@ -100,24 +99,21 @@ export const SettingsWindow: React.FC<SettingsWindowProps> = ({
 
     // ==================== Hooks ====================
     const {
-        config,
-        updateConfig,
-        isLoading,
         error,
         clearError,
     } = useSettings()
 
     const { isAvailable, invoke } = useTauri()
-    const { centerWindow, focusWindow, closeWindow } = useWindowManager()
+    const { center, closeWindow } = useWindowManager()
 
     // ==================== 生命周期 ====================
 
     // 居中窗口
     useEffect(() => {
         if (isOpen && isAvailable) {
-            centerWindow().catch(console.error)
+            center().catch(console.error)
         }
-    }, [isOpen, isAvailable, centerWindow])
+    }, [isOpen, isAvailable, center])
 
     // 监听窗口大小变化
     useEffect(() => {

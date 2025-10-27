@@ -1,5 +1,19 @@
 import { getCurrentLanguage, SupportedLanguage } from '../locales';
 
+// Type declaration for Intl.ListFormat (may not be available in all environments)
+declare namespace Intl {
+  interface ListFormat {
+    format(items: string[]): string;
+  }
+  interface ListFormatConstructor {
+    new (locale?: string | string[], options?: {
+      style?: 'long' | 'short' | 'narrow';
+      type?: 'conjunction' | 'disjunction' | 'unit';
+    }): ListFormat;
+  }
+  var ListFormat: ListFormatConstructor | undefined;
+}
+
 // 数字格式化选项
 interface NumberFormatOptions extends Intl.NumberFormatOptions {
   locale?: SupportedLanguage;
@@ -230,8 +244,18 @@ export const formatList = (
   if (items.length === 1) return items[0];
   
   try {
-    const listFormatter = new Intl.ListFormat(locale, { style, type });
-    return listFormatter.format(items);
+    // Check if Intl.ListFormat is available
+    if (typeof Intl.ListFormat !== 'undefined') {
+      const listFormatter = new Intl.ListFormat(locale, { style, type });
+      return listFormatter.format(items);
+    } else {
+      // Fallback for environments without Intl.ListFormat support
+      if (type === 'disjunction') {
+        return items.join(' or ');
+      } else {
+        return items.join(', ');
+      }
+    }
   } catch (error) {
     console.warn('List formatting failed:', error);
     return items.join(', ');

@@ -11,20 +11,23 @@ import {
   useFileStats,
   useFileDetail,
 } from '@/hooks/useFileManager'
-import type { FileInfo, FileStats, FileUploadProgress } from '@/types/file'
+import type { FileInfo, FileStats } from '@/types/file'
 import { mockConsole } from '../../utils/test-utils'
 
 // ==================== Mock 设置 ====================
 
-const mockFileService = {
-  listFiles: vi.fn(),
-  getFile: vi.fn(),
-  uploadFileObject: vi.fn(),
-  deleteFile: vi.fn(),
-  batchDelete: vi.fn(),
-  searchFiles: vi.fn(),
-  getFileStats: vi.fn(),
-}
+// Mock objects need to be hoisted to work with vi.mock
+const { mockFileService } = vi.hoisted(() => ({
+  mockFileService: {
+    listFiles: vi.fn(),
+    getFile: vi.fn(),
+    uploadFileObject: vi.fn(),
+    deleteFile: vi.fn(),
+    batchDelete: vi.fn(),
+    searchFiles: vi.fn(),
+    getFileStats: vi.fn(),
+  },
+}))
 
 vi.mock('@/services/fileService', () => ({
   fileService: mockFileService,
@@ -36,42 +39,46 @@ const mockFiles: FileInfo[] = [
   {
     id: 'file-1',
     name: 'test1.txt',
+    original_name: 'test1.txt',
+    file_path: '/path/to/file1',
+    file_size: 1024,
+    file_type: 'text',
     mime_type: 'text/plain',
-    size: 1024,
-    path: '/path/to/file1',
+    hash: 'hash1',
     created_at: '2025-01-01T00:00:00Z',
     updated_at: '2025-01-01T00:00:00Z',
+    accessed_at: '2025-01-01T00:00:00Z',
+    is_deleted: false,
     conversation_id: 'conv-1',
     message_id: 'msg-1',
-    tags: ['test', 'document'],
+    tags: 'test,document',
   },
   {
     id: 'file-2',
     name: 'image.png',
+    original_name: 'image.png',
+    file_path: '/path/to/image.png',
+    file_size: 2048,
+    file_type: 'image',
     mime_type: 'image/png',
-    size: 2048,
-    path: '/path/to/image.png',
+    hash: 'hash2',
     created_at: '2025-01-02T00:00:00Z',
     updated_at: '2025-01-02T00:00:00Z',
-    tags: ['test', 'image'],
+    accessed_at: '2025-01-02T00:00:00Z',
+    is_deleted: false,
+    tags: 'test,image',
   },
 ]
 
 const mockFileStats: FileStats = {
   total_files: 100,
   total_size: 1024 * 1024 * 10, // 10MB
-  by_type: {
-    'text/plain': 50,
-    'image/png': 30,
-    'application/pdf': 20,
-  },
-  by_tag: {
-    'test': 60,
-    'document': 40,
-  },
-  recent_uploads: 10,
-  storage_used: 80,
-  storage_limit: 100,
+  total_deleted: 5,
+  by_type: [
+    { file_type: 'text', count: 50, total_size: 1024 * 1024 * 5 },
+    { file_type: 'image', count: 30, total_size: 1024 * 1024 * 3 },
+    { file_type: 'pdf', count: 20, total_size: 1024 * 1024 * 2 },
+  ],
 }
 
 // ==================== 测试套件 ====================
@@ -122,8 +129,7 @@ describe('useFileManager Hook', () => {
 
     it('应该支持过滤选项', async () => {
       const filterOptions = {
-        mime_type: 'text/plain',
-        tags: ['test'],
+        file_type: 'text',
       }
 
       const { result } = renderHook(() => useFileManager(filterOptions))
@@ -271,7 +277,7 @@ describe('useFileManager Hook', () => {
           upload_url: 'https://example.com/upload2',
         })
 
-      let results: any[]
+      let results: any[] = []
       await act(async () => {
         results = await result.current.uploadFiles(files)
       })
@@ -373,8 +379,8 @@ describe('useFileManager Hook', () => {
       })
 
       const searchOptions = {
-        query: 'test',
-        mime_type: 'text/plain',
+        keyword: 'test',
+        file_type: 'text',
       }
 
       await act(async () => {
@@ -395,7 +401,7 @@ describe('useFileManager Hook', () => {
       })
 
       await act(async () => {
-        await result.current.searchFiles({ query: 'test' })
+        await result.current.searchFiles({ keyword: 'test' })
       })
 
       expect(result.current.error).toBe('搜索失败')
@@ -475,13 +481,13 @@ describe('useFileStats Hook', () => {
       expect(mockFileService.getFileStats).toHaveBeenCalledTimes(1)
     })
 
-    it('应该计算存储使用率', async () => {
+    it('应该获取统计信息', async () => {
       const { result } = renderHook(() => useFileStats())
 
       await waitFor(() => {
         const stats = result.current.stats
-        expect(stats?.storage_used).toBe(80)
-        expect(stats?.storage_limit).toBe(100)
+        expect(stats?.total_files).toBe(100)
+        expect(stats?.total_size).toBe(1024 * 1024 * 10)
       })
     })
   })
@@ -513,13 +519,10 @@ describe('useFileDetail Hook', () => {
     })
 
     it('应该在文件ID变化时重新加载', async () => {
-      const { result, rerender } = renderHook<
-        { fileId: string | null },
-        ReturnType<typeof useFileDetail>
-      >(
-        ({ fileId }) => useFileDetail(fileId),
+      const { result, rerender } = renderHook(
+        (fileId: string | null) => useFileDetail(fileId),
         {
-          initialProps: { fileId: 'file-1' },
+          initialProps: 'file-1',
         }
       )
 
@@ -530,7 +533,7 @@ describe('useFileDetail Hook', () => {
       mockFileService.getFile.mockClear()
       mockFileService.getFile.mockResolvedValue(mockFiles[1])
 
-      rerender({ fileId: 'file-2' })
+      rerender('file-2')
 
       await waitFor(() => {
         expect(result.current.file).toEqual(mockFiles[1])

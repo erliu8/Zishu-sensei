@@ -3,7 +3,7 @@
  * 提供错误列表、统计信息、配置管理等功能
  */
 
-import React, { useState, useEffect, useCallback } from 'react'
+import React, { useState, useCallback } from 'react'
 import { 
   AlertTriangle, 
   Bug, 
@@ -12,7 +12,6 @@ import {
   RefreshCw, 
   Trash2,
   Download,
-  Filter,
   Search,
   AlertCircle,
   CheckCircle,
@@ -23,7 +22,6 @@ import {
 } from 'lucide-react'
 import { 
   ErrorDetails, 
-  ErrorStatistics, 
   ErrorSeverity, 
   ErrorType, 
   ErrorSource,
@@ -31,8 +29,6 @@ import {
 } from '../../types/error'
 import { useErrorMonitor } from '../../hooks/useErrorMonitor'
 import ErrorDetailsModal from './ErrorDetailsModal'
-import ErrorConfigPanel from './ErrorConfigPanel'
-import ErrorStatsChart from './ErrorStatsChart'
 import './ErrorMonitorPanel.css'
 
 // ================================
@@ -67,7 +63,6 @@ export const ErrorMonitorPanel: React.FC<ErrorMonitorPanelProps> = ({
     errors,
     statistics,
     isMonitoring,
-    reportError,
     clearErrors,
     resolveError,
     retryError,
@@ -79,7 +74,6 @@ export const ErrorMonitorPanel: React.FC<ErrorMonitorPanelProps> = ({
   const [filter, setFilter] = useState<ErrorFilter>({})
   const [selectedError, setSelectedError] = useState<ErrorDetails | null>(null)
   const [showDetailsModal, setShowDetailsModal] = useState(false)
-  const [showConfigPanel, setShowConfigPanel] = useState(false)
   const [isLoading, setIsLoading] = useState(false)
 
   // ================================
@@ -244,7 +238,7 @@ export const ErrorMonitorPanel: React.FC<ErrorMonitorPanelProps> = ({
     )
   }
 
-  const renderErrorRow = (error: ErrorDetails, index: number) => (
+  const renderErrorRow = (error: ErrorDetails) => (
     <div
       key={error.id}
       className={`error-row ${error.severity}`}
@@ -411,24 +405,59 @@ export const ErrorMonitorPanel: React.FC<ErrorMonitorPanelProps> = ({
             <p>系统运行良好，或者当前筛选条件下没有错误。</p>
           </div>
         ) : (
-          filteredErrors.map((error, index) => renderErrorRow(error, index))
+          filteredErrors.map((error) => renderErrorRow(error))
         )}
       </div>
     </div>
   )
 
-  const renderStatsPanel = () => (
-    <div className="stats-panel">
-      <ErrorStatsChart statistics={statistics} />
-    </div>
-  )
+  const renderStatsPanel = () => {
+    const criticalCount = statistics?.bySeverity?.[ErrorSeverity.CRITICAL] || 0
+    const newErrorsCount = statistics?.newErrors || 0
+    
+    return (
+      <div className="stats-panel">
+        <div className="stats-content">
+          <h3>统计分析</h3>
+          <div className="stats-grid">
+            <div className="stat-card">
+              <div className="stat-label">总错误数</div>
+              <div className="stat-value">{statistics?.totalErrors || 0}</div>
+            </div>
+            <div className="stat-card">
+              <div className="stat-label">严重错误</div>
+              <div className="stat-value critical">{criticalCount}</div>
+            </div>
+            <div className="stat-card">
+              <div className="stat-label">已解决</div>
+              <div className="stat-value resolved">{statistics?.resolvedErrors || 0}</div>
+            </div>
+            <div className="stat-card">
+              <div className="stat-label">新错误</div>
+              <div className="stat-value pending">{newErrorsCount}</div>
+            </div>
+          </div>
+        </div>
+      </div>
+    )
+  }
 
-  const renderConfigPanel = () => (
-    <ErrorConfigPanel
-      config={getConfig()}
-      onConfigChange={updateConfig}
-    />
-  )
+  const renderConfigPanel = () => {
+    const config = getConfig()
+    
+    return (
+      <div className="config-panel">
+        <h3>配置</h3>
+        <div className="config-content">
+          <p>配置功能开发中...</p>
+          <pre>{JSON.stringify(config, null, 2)}</pre>
+          <button onClick={() => updateConfig(config)}>
+            保存配置
+          </button>
+        </div>
+      </div>
+    )
+  }
 
   return (
     <div className={`error-monitor-panel ${className || ''}`} style={style}>
@@ -453,7 +482,7 @@ export const ErrorMonitorPanel: React.FC<ErrorMonitorPanelProps> = ({
           
           <button
             className="control-button"
-            onClick={() => setShowConfigPanel(true)}
+            onClick={() => setActiveTab('config')}
             title="配置"
           >
             <Settings size={16} />

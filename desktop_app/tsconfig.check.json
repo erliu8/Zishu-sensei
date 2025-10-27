@@ -1,0 +1,12 @@
+{
+    "extends": "./tsconfig.json",
+    "include": [
+        "src/config/**/*",
+        "src/constants/**/*",
+        "src/contexts/**/*",
+        "src/examples/**/*"
+    ],
+    "compilerOptions": {
+        "skipLibCheck": true
+    }
+}
