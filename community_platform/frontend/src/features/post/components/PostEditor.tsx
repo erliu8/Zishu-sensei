@@ -5,7 +5,7 @@
 
 'use client';
 
-import { FC, useState, useCallback, useEffect } from 'react';
+import { FC, useState } from 'react';
 import dynamic from 'next/dynamic';
 import { useForm } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
@@ -51,6 +51,7 @@ const MarkdownViewer = dynamic(
 
 // 表单验证 Schema
 const postFormSchema = z.object({
+  status: z.nativeEnum(PostStatus).default(PostStatus.DRAFT),
   title: z.string()
     .min(5, '标题至少需要 5 个字符')
     .max(200, '标题不能超过 200 个字符'),
@@ -63,7 +64,6 @@ const postFormSchema = z.object({
   coverImage: z.string().url('请输入有效的图片链接').optional().or(z.literal('')),
   categoryId: z.string().optional(),
   tagIds: z.array(z.string()).optional(),
-  status: z.nativeEnum(PostStatus).default(PostStatus.DRAFT),
 });
 
 type PostFormValues = z.infer<typeof postFormSchema>;
@@ -91,16 +91,17 @@ export const PostEditor: FC<PostEditorProps> = ({
   const [selectedTags, setSelectedTags] = useState<string[]>(initialData?.tagIds || []);
   const [activeTab, setActiveTab] = useState<'edit' | 'preview'>('edit');
 
-  const form = useForm<PostFormValues>({
+  const form = useForm({
     resolver: zodResolver(postFormSchema),
+    mode: 'onChange' as const,
     defaultValues: {
+      status: initialData?.status || PostStatus.DRAFT,
       title: initialData?.title || '',
       content: initialData?.content || '',
       summary: initialData?.summary || '',
       coverImage: initialData?.coverImage || '',
       categoryId: initialData?.categoryId || '',
       tagIds: initialData?.tagIds || [],
-      status: initialData?.status || PostStatus.DRAFT,
     },
   });
 

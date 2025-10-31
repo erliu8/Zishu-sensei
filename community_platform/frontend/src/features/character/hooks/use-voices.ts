@@ -3,7 +3,7 @@
  */
 
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
-import { voiceApi, type AvailableVoice } from '../api';
+import { voiceApi } from '../api';
 import type { Voice, CreateVoiceInput, UpdateVoiceInput } from '../domain';
 import { characterKeys } from './use-characters';
 
@@ -198,7 +198,7 @@ export function useUploadVoiceSample() {
   return useMutation({
     mutationFn: ({ id, file }: { id: string; file: File }) =>
       voiceApi.uploadSample(id, file),
-    onSuccess: (result, { id }) => {
+    onSuccess: (_, { id }) => {
       // 刷新语音详情
       queryClient.invalidateQueries({ queryKey: voiceKeys.detail(id) });
 

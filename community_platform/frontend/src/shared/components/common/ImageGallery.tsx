@@ -241,3 +241,5 @@ export const ImageGallery = React.forwardRef<HTMLDivElement, ImageGalleryProps>(
 
 ImageGallery.displayName = 'ImageGallery'
 
+export default ImageGallery
+

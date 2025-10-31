@@ -4,7 +4,6 @@
  */
 
 import { NextRequest, NextResponse } from 'next/server';
-import { getToken } from 'next-auth/jwt';
 
 /**
  * 受保护的路径配置
@@ -36,20 +35,6 @@ const ADMIN_PATHS = ['/admin'];
  */
 const MODERATOR_PATHS = ['/moderate'];
 
-/**
- * 公开路径（不需要认证）
- */
-const PUBLIC_PATHS = [
-  '/',
-  '/posts',
-  '/characters',
-  '/adapters',
-  '/search',
-  '/about',
-  '/help',
-  '/terms',
-  '/privacy',
-];
 
 /**
  * 检查路径是否匹配模式
@@ -63,6 +48,52 @@ function matchPath(path: string, patterns: string[]): boolean {
     const regex = new RegExp(`^${regexPattern}$`);
     return regex.test(path);
   });
+}
+
+/**
+ * 从请求中获取认证状态
+ * 中间件在服务器端运行，从 cookies 获取 token
+ */
+function getAuthFromRequest(request: NextRequest) {
+  try {
+    // 从 cookie 获取 access_token
+    const accessTokenCookie = request.cookies.get('access_token');
+    const userDataCookie = request.cookies.get('user_data');
+    
+    if (accessTokenCookie && accessTokenCookie.value) {
+      // 如果有用户数据，解析并返回
+      if (userDataCookie && userDataCookie.value) {
+        try {
+          const userData = JSON.parse(userDataCookie.value);
+          return {
+            isAuthenticated: true,
+            token: accessTokenCookie.value,
+            user: userData,
+            role: userData.role || 'user',
+          };
+        } catch (e) {
+          // 用户数据解析失败，仍然返回已认证状态
+          return {
+            isAuthenticated: true,
+            token: accessTokenCookie.value,
+            role: 'user',
+          };
+        }
+      }
+      
+      // 只有 token，没有用户数据
+      return {
+        isAuthenticated: true,
+        token: accessTokenCookie.value,
+        role: 'user',
+      };
+    }
+
+    return { isAuthenticated: false };
+  } catch (error) {
+    console.error('[Auth Middleware] Error getting auth:', error);
+    return { isAuthenticated: false };
+  }
 }
 
 /**
@@ -85,14 +116,24 @@ export async function authMiddleware(request: NextRequest) {
     return NextResponse.next();
   }
 
-  // 获取用户 token
-  const token = await getToken({
-    req: request,
-    secret: process.env.NEXTAUTH_SECRET,
-  });
-
-  const isAuthenticated = !!token;
-  const userRole = token?.role || 'guest';
+  // 获取认证状态
+  const auth = getAuthFromRequest(request);
+  const isAuthenticated = auth.isAuthenticated;
+  const userRole = auth.role || 'guest';
+  
+  // 调试日志
+  if (process.env.NODE_ENV === 'development') {
+    console.log('[Auth Middleware]', {
+      pathname,
+      isAuthenticated,
+      userRole,
+      hasToken: !!auth.token,
+      cookies: {
+        hasAuthStorage: !!request.cookies.get('auth-storage'),
+        hasAccessToken: !!request.cookies.get('access_token'),
+      },
+    });
+  }
 
   // 如果用户已登录且访问认证页面，重定向到首页
   if (isAuthenticated && matchPath(pathname, AUTH_PATHS)) {
@@ -157,4 +198,3 @@ export const authMiddlewareConfig = {
     '/((?!api|_next/static|_next/image|favicon.ico|.*\\..*|public).*)',
   ],
 };
-

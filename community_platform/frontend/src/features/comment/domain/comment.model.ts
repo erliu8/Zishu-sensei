@@ -3,7 +3,7 @@
  * 评论领域模型
  */
 
-import { Comment, CommentAuthor } from './comment.types';
+import { Comment } from './comment.types';
 
 /**
  * 构建评论树形结构

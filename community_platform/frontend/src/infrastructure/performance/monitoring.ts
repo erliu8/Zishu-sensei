@@ -76,10 +76,10 @@ export class PerformanceMonitor {
    */
   private observeWebVitals(): void {
     // 使用 web-vitals 库
-    import('web-vitals').then(({ onFCP, onLCP, onFID, onCLS, onTTFB, onINP }) => {
+    import('web-vitals').then(({ onFCP, onLCP, onCLS, onTTFB, onINP }) => {
       onFCP((metric) => this.handleMetric(metric));
       onLCP((metric) => this.handleMetric(metric));
-      onFID((metric) => this.handleMetric(metric));
+      onINP((metric) => this.handleMetric(metric));
       onCLS((metric) => this.handleMetric(metric));
       onTTFB((metric) => this.handleMetric(metric));
       onINP((metric) => this.handleMetric(metric));
@@ -115,9 +115,11 @@ export class PerformanceMonitor {
       if (navigationEntries.length > 0) {
         const entry = navigationEntries[0];
         
-        this.metrics.loadTime = entry.loadEventEnd - entry.fetchStart;
-        this.metrics.domContentLoaded = entry.domContentLoadedEventEnd - entry.fetchStart;
-        this.metrics.ttfb = entry.responseStart - entry.requestStart;
+        if (entry) {
+          this.metrics.loadTime = entry.loadEventEnd - entry.fetchStart;
+          this.metrics.domContentLoaded = entry.domContentLoadedEventEnd - entry.fetchStart;
+          this.metrics.ttfb = entry.responseStart - entry.requestStart;
+        }
       }
     }
   }
@@ -192,7 +194,7 @@ export class PerformanceMonitor {
   private sendMetric(metric: WebVitalsMetric): void {
     // 发送到 Google Analytics
     if (typeof window !== 'undefined' && 'gtag' in window) {
-      (window as never)['gtag']('event', metric.name, {
+      (window as any).gtag('event', metric.name, {
         event_category: 'Web Vitals',
         value: Math.round(metric.name === 'CLS' ? metric.value * 1000 : metric.value),
         event_label: metric.id,

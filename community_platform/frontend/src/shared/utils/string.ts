@@ -103,7 +103,7 @@ export function escapeHtml(str: string): string {
     '"': '&quot;',
     "'": '&#39;',
   };
-  return str.replace(/[&<>"']/g, (char) => htmlEscapes[char]);
+  return str.replace(/[&<>"']/g, (char) => htmlEscapes[char] || char);
 }
 
 /**
@@ -119,7 +119,7 @@ export function unescapeHtml(str: string): string {
     '&quot;': '"',
     '&#39;': "'",
   };
-  return str.replace(/&(?:amp|lt|gt|quot|#39);/g, (entity) => htmlUnescapes[entity]);
+  return str.replace(/&(?:amp|lt|gt|quot|#39);/g, (entity) => htmlUnescapes[entity] || entity);
 }
 
 /**

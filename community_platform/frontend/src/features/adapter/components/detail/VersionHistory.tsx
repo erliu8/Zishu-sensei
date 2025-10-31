@@ -55,7 +55,7 @@ export function VersionHistory({
   onDownload,
   className,
 }: VersionHistoryProps) {
-  const [expandedVersions, setExpandedVersions] = useState<Set<string>>(new Set([versions[0]?.id]));
+  const [expandedVersions, setExpandedVersions] = useState<Set<string>>(new Set(versions[0]?.id ? [versions[0].id] : []));
 
   const toggleVersion = (versionId: string) => {
     setExpandedVersions((prev) => {
@@ -87,7 +87,7 @@ export function VersionHistory({
       </div>
 
       <div className="space-y-3">
-        {versions.map((version, index) => {
+        {versions.map((version) => {
           const isExpanded = expandedVersions.has(version.id);
           const isCurrent = version.version === currentVersion;
           const isLatest = version.isLatest;

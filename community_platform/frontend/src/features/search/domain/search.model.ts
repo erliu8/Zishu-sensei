@@ -12,7 +12,6 @@ import {
   type SearchResultItem,
   type SearchHistoryItem,
   type SearchSuggestion,
-  type TrendingSearchItem,
 } from './search.types';
 
 /**
@@ -199,7 +198,9 @@ export class SearchResultHelper {
     };
 
     for (const item of items) {
-      stats[item.type]++;
+      if (item?.type && item.type in stats) {
+        stats[item.type] = (stats[item.type] || 0) + 1;
+      }
     }
 
     return stats as Record<SearchType, number>;

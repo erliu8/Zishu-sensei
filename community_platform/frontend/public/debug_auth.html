@@ -1,0 +1,188 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>认证状态调试</title>
+    <style>
+        body {
+            font-family: system-ui, -apple-system, sans-serif;
+            max-width: 800px;
+            margin: 50px auto;
+            padding: 20px;
+            background: #f5f5f5;
+        }
+        .card {
+            background: white;
+            padding: 20px;
+            border-radius: 8px;
+            box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+            margin-bottom: 20px;
+        }
+        h1 { color: #333; }
+        h2 { color: #666; font-size: 18px; margin-top: 0; }
+        .status { 
+            padding: 10px;
+            border-radius: 4px;
+            margin: 10px 0;
+        }
+        .success { background: #d4edda; color: #155724; }
+        .error { background: #f8d7da; color: #721c24; }
+        .warning { background: #fff3cd; color: #856404; }
+        pre {
+            background: #f8f9fa;
+            padding: 10px;
+            border-radius: 4px;
+            overflow-x: auto;
+        }
+        button {
+            background: #007bff;
+            color: white;
+            border: none;
+            padding: 10px 20px;
+            border-radius: 4px;
+            cursor: pointer;
+            font-size: 14px;
+        }
+        button:hover { background: #0056b3; }
+    </style>
+</head>
+<body>
+    <h1>🔍 认证状态调试工具</h1>
+    
+    <div class="card">
+        <h2>Token 状态</h2>
+        <div id="tokenStatus"></div>
+    </div>
+    
+    <div class="card">
+        <h2>LocalStorage 内容</h2>
+        <div id="storageContent"></div>
+    </div>
+    
+    <div class="card">
+        <h2>操作</h2>
+        <button onclick="testAuthApi()">测试 API 认证</button>
+        <button onclick="location.href='/zh-CN/login'">前往登录</button>
+        <button onclick="clearAllAuth()">清除认证信息</button>
+    </div>
+    
+    <div class="card">
+        <h2>API 测试结果</h2>
+        <div id="apiResult"></div>
+    </div>
+
+    <script>
+        // 检查 token 状态
+        function checkTokenStatus() {
+            const statusDiv = document.getElementById('tokenStatus');
+            const accessToken = localStorage.getItem('auth_access_token');
+            const refreshToken = localStorage.getItem('auth_refresh_token');
+            const expiresAt = localStorage.getItem('auth_expires_at');
+            
+            let html = '';
+            
+            if (accessToken) {
+                html += '<div class="status success">✓ Access Token 存在</div>';
+                html += `<pre>${accessToken.substring(0, 50)}...</pre>`;
+                
+                // 检查是否过期
+                if (expiresAt) {
+                    const expireTime = parseInt(expiresAt);
+                    const now = Date.now();
+                    if (expireTime < now) {
+                        html += '<div class="status error">✗ Token 已过期</div>';
+                    } else {
+                        const remainingMinutes = Math.floor((expireTime - now) / 60000);
+                        html += `<div class="status success">✓ Token 有效，剩余 ${remainingMinutes} 分钟</div>`;
+                    }
+                }
+            } else {
+                html += '<div class="status error">✗ 未找到 Access Token - 需要登录</div>';
+            }
+            
+            if (refreshToken) {
+                html += '<div class="status success">✓ Refresh Token 存在</div>';
+            } else {
+                html += '<div class="status warning">⚠ 未找到 Refresh Token</div>';
+            }
+            
+            statusDiv.innerHTML = html;
+        }
+        
+        // 显示 localStorage 内容
+        function showStorageContent() {
+            const storageDiv = document.getElementById('storageContent');
+            const authKeys = ['auth_access_token', 'auth_refresh_token', 'auth_expires_at'];
+            
+            let html = '<pre>';
+            for (const key of authKeys) {
+                const value = localStorage.getItem(key);
+                html += `${key}: ${value ? (key.includes('token') ? value.substring(0, 30) + '...' : value) : 'null'}\n`;
+            }
+            html += '\n所有 localStorage 键:\n';
+            html += Object.keys(localStorage).filter(k => k.includes('auth')).join(', ') || '(无认证相关键)';
+            html += '</pre>';
+            
+            storageDiv.innerHTML = html;
+        }
+        
+        // 测试 API 认证
+        async function testAuthApi() {
+            const resultDiv = document.getElementById('apiResult');
+            resultDiv.innerHTML = '<div class="status warning">⏳ 测试中...</div>';
+            
+            try {
+                const token = localStorage.getItem('auth_access_token');
+                const response = await fetch('/api/characters/?creatorId=me', {
+                    headers: {
+                        'Authorization': token ? `Bearer ${token}` : ''
+                    }
+                });
+                
+                if (response.ok) {
+                    const data = await response.json();
+                    resultDiv.innerHTML = `
+                        <div class="status success">✓ API 认证成功</div>
+                        <pre>${JSON.stringify(data, null, 2).substring(0, 500)}...</pre>
+                    `;
+                } else {
+                    const error = await response.text();
+                    resultDiv.innerHTML = `
+                        <div class="status error">✗ API 认证失败 (${response.status})</div>
+                        <pre>${error}</pre>
+                    `;
+                }
+            } catch (error) {
+                resultDiv.innerHTML = `
+                    <div class="status error">✗ 请求失败</div>
+                    <pre>${error.message}</pre>
+                `;
+            }
+        }
+        
+        // 清除认证信息
+        function clearAllAuth() {
+            if (confirm('确定要清除所有认证信息吗？')) {
+                localStorage.removeItem('auth_access_token');
+                localStorage.removeItem('auth_refresh_token');
+                localStorage.removeItem('auth_expires_at');
+                localStorage.removeItem('auth-storage');
+                alert('已清除认证信息，请重新加载页面');
+                location.reload();
+            }
+        }
+        
+        // 页面加载时执行
+        checkTokenStatus();
+        showStorageContent();
+        
+        // 每 5 秒刷新一次状态
+        setInterval(() => {
+            checkTokenStatus();
+            showStorageContent();
+        }, 5000);
+    </script>
+</body>
+</html>
+

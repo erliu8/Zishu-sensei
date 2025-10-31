@@ -25,11 +25,14 @@ class QdrantManager:
     
     async def connect(self):
         """连接 Qdrant"""
+        # 使用 HTTP REST API，完全禁用 gRPC 以避免 SSL 问题
         self.client = QdrantClient(
             host=settings.QDRANT_HOST,
             port=settings.QDRANT_PORT,
+            grpc_port=None,  # 完全禁用 gRPC
             api_key=settings.QDRANT_API_KEY,
-            prefer_grpc=False,  # 使用 HTTP 而不是 gRPC，避免 SSL 问题
+            prefer_grpc=False,
+            https=False,
         )
         
         # 初始化集合

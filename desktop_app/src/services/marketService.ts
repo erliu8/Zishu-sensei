@@ -285,6 +285,38 @@ export class MarketService {
   // ================================
 
   /**
+   * 检查产品更新
+   */
+  static async checkProductUpdates(): Promise<Array<{
+    product_id: string;
+    product_name: string;
+    current_version: string;
+    latest_version: string;
+    has_update: boolean;
+    changelog?: string;
+  }>> {
+    try {
+      const response = await invoke<CommandResponse<Array<{
+        product_id: string;
+        product_name: string;
+        current_version: string;
+        latest_version: string;
+        has_update: boolean;
+        changelog?: string;
+      }>>>('check_product_updates');
+      
+      if (!response.success) {
+        throw new Error(response.error || '检查更新失败');
+      }
+      
+      return response.data || [];
+    } catch (error) {
+      console.error('Failed to check product updates:', error);
+      throw error;
+    }
+  }
+
+  /**
    * 创建默认搜索请求
    */
   static createDefaultSearchRequest(query: string = ''): MarketSearchRequest {
@@ -295,6 +327,36 @@ export class MarketService {
       sort_by: 'download_count',
       sort_order: 'desc',
     };
+  }
+
+  /**
+   * 格式化产品类型
+   */
+  static formatProductType(type: MarketProductType): string {
+    const typeMap: Record<MarketProductType, string> = {
+      [MarketProductType.Adapter]: '适配器',
+      [MarketProductType.Theme]: '主题',
+      [MarketProductType.Workflow]: '工作流',
+    };
+    return typeMap[type] || '未知';
+  }
+
+  /**
+   * 检查版本是否需要更新
+   */
+  static needsUpdate(currentVersion: string, latestVersion: string): boolean {
+    const parseCurrent = currentVersion.split('.').map(Number);
+    const parseLatest = latestVersion.split('.').map(Number);
+    
+    for (let i = 0; i < Math.max(parseCurrent.length, parseLatest.length); i++) {
+      const current = parseCurrent[i] || 0;
+      const latest = parseLatest[i] || 0;
+      
+      if (latest > current) return true;
+      if (latest < current) return false;
+    }
+    
+    return false;
   }
 
   /**

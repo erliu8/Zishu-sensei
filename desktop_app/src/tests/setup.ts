@@ -49,6 +49,15 @@ Object.defineProperty(window, 'matchMedia', {
   })),
 })
 
+// Mock AbortSignal.timeout if not available
+if (!AbortSignal.timeout) {
+  AbortSignal.timeout = function(ms: number): AbortSignal {
+    const controller = new AbortController();
+    setTimeout(() => controller.abort(), ms);
+    return controller.signal;
+  };
+}
+
 // 模拟 ResizeObserver
 global.ResizeObserver = vi.fn().mockImplementation(() => ({
   observe: vi.fn(),
@@ -63,10 +72,126 @@ global.IntersectionObserver = vi.fn().mockImplementation(() => ({
   disconnect: vi.fn(),
 }))
 
+// 模拟 Tauri API 的默认响应
+const mockTauriInvoke = vi.fn().mockImplementation(async (command: string, args?: any) => {
+  switch (command) {
+    case 'send_message':
+      return {
+        success: true,
+        data: {
+          message_id: 'test_msg_123',
+          message: 'Test response from mock',
+          session_id: args?.input?.session_id || 'test-session',
+          model: 'mock-model',
+          usage: {
+            prompt_tokens: 50,
+            completion_tokens: 50,
+            total_tokens: 100,
+          },
+          processing_time: 100,
+        }
+      };
+
+    case 'get_chat_history':
+      return {
+        success: true,
+        data: {
+          session_id: args?.input?.session_id,
+          messages: [],
+          total_count: 0,
+        }
+      };
+
+    case 'clear_chat_history':
+      return {
+        success: true,
+        data: {
+          message: 'History cleared',
+          session_id: args?.input?.session_id,
+        }
+      };
+
+    case 'set_chat_model':
+      return {
+        success: true,
+        data: {
+          success: true,
+          model_id: args?.input?.model_id,
+          adapter_id: args?.input?.adapter_id,
+        }
+      };
+
+    // File management APIs
+    case 'upload_file':
+      return {
+        file_info: {
+          id: 'mock-file-id',
+          name: 'test-file.txt',
+          original_name: 'test-file.txt',
+          file_path: '/mock/path',
+          file_size: 1024,
+          file_type: 'text',
+          mime_type: 'text/plain',
+          hash: 'mock-hash',
+          created_at: new Date().toISOString(),
+          updated_at: new Date().toISOString(),
+          accessed_at: new Date().toISOString(),
+          is_deleted: false,
+        },
+        upload_url: 'https://example.com/upload',
+        is_duplicate: false,
+      };
+
+    case 'get_file':
+      return {
+        id: args?.fileId || 'mock-file-id',
+        name: 'test-file.txt',
+        original_name: 'test-file.txt',
+        file_path: '/mock/path',
+        file_size: 1024,
+        file_type: 'text',
+        mime_type: 'text/plain',
+        hash: 'mock-hash',
+        created_at: new Date().toISOString(),
+        updated_at: new Date().toISOString(),
+        accessed_at: new Date().toISOString(),
+        is_deleted: false,
+      };
+
+    case 'list_files_by_filter':
+      return [];
+
+    case 'delete_file':
+      return undefined;
+
+    case 'batch_delete':
+      return 0;
+
+    case 'search_files_by_keyword':
+      return [];
+
+    case 'get_file_statistics':
+      return {
+        total_files: 0,
+        total_size: 0,
+        total_deleted: 0,
+        by_type: [],
+      };
+
+    default:
+      return {
+        success: true,
+        data: null,
+      };
+  }
+});
+
 // 模拟 Tauri API
 Object.defineProperty(window, '__TAURI__', {
+  writable: true,
+  configurable: true,
   value: {
-    invoke: vi.fn(),
+    invoke: mockTauriInvoke,
     event: {
       listen: vi.fn(),
       emit: vi.fn(),
@@ -126,13 +251,34 @@ Object.defineProperty(window, '__TAURI__', {
       },
     },
     tauri: {
-      invoke: vi.fn(),
+      invoke: mockTauriInvoke,
     },
   },
 })
 
+// 模拟 Tauri IPC (Tauri v2 需要)
+Object.defineProperty(window, '__TAURI_IPC__', {
+  writable: true,
+  configurable: true,
+  value: vi.fn((message) => {
+    // 模拟 IPC 响应
+    const { cmd, callback, error: errorCallback } = message
+    
+    // 默认成功响应
+    setTimeout(() => {
+      if (typeof window[`_${callback}`] === 'function') {
+        window[`_${callback}`]({ status: 'ok', data: {} })
+      }
+    }, 0)
+    
+    return Promise.resolve()
+  }),
+})
+
 // 模拟 PixiJS
 Object.defineProperty(window, 'PIXI', {
+  writable: true,
+  configurable: true,
   value: {
     Application: vi.fn().mockImplementation(() => ({
       stage: { addChild: vi.fn(), removeChild: vi.fn() },

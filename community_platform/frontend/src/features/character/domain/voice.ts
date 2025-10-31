@@ -2,7 +2,7 @@
  * 语音领域模型
  */
 
-import type { VoiceGender, TTSEngine } from '../types';
+import { VoiceGender, TTSEngine } from '../types';
 
 /**
  * 语音模型接口

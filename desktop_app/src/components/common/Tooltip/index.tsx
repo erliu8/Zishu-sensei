@@ -10,7 +10,7 @@
  * - 自动定位调整
  */
 
-import React, { useState, useRef, useEffect, useCallback } from 'react'
+import React, { useState, useRef, useEffect, useCallback, useMemo, useLayoutEffect } from 'react'
 import { createPortal } from 'react-dom'
 import './styles.css'
 
@@ -111,103 +111,124 @@ export const Tooltip: React.FC<TooltipProps> = ({
   const tooltipRef = useRef<HTMLDivElement>(null)
   const showTimeoutRef = useRef<NodeJS.Timeout>()
   const hideTimeoutRef = useRef<NodeJS.Timeout>()
+  const updatePositionTimeoutRef = useRef<NodeJS.Timeout>()
 
   // 受控模式
   const visible = controlledOpen !== undefined ? controlledOpen : isOpen
 
-  // 计算位置
+  // 稳定化 offset 引用，避免无限循环
+  const stableOffset = useMemo(() => offset, [offset[0], offset[1]])
+
+  // 计算位置 - 使用防抖和优化的依赖
   const updatePosition = useCallback(() => {
-    if (!triggerRef.current || !tooltipRef.current) return
+    if (!triggerRef.current || !tooltipRef.current || !visible) return
 
-    const triggerRect = triggerRef.current.getBoundingClientRect()
-    const tooltipRect = tooltipRef.current.getBoundingClientRect()
-    const [offsetX, offsetY] = offset
+    // 清除之前的防抖定时器
+    if (updatePositionTimeoutRef.current) {
+      clearTimeout(updatePositionTimeoutRef.current)
+    }
 
-    let top = 0
-    let left = 0
-    let finalPlacement = placement
+    // 防抖执行位置更新
+    updatePositionTimeoutRef.current = setTimeout(() => {
+      if (!triggerRef.current || !tooltipRef.current) return
 
-    // 自动选择位置
-    if (placement === 'auto') {
-      const spaceTop = triggerRect.top
-      const spaceBottom = window.innerHeight - triggerRect.bottom
-      const spaceLeft = triggerRect.left
-      const spaceRight = window.innerWidth - triggerRect.right
+      const triggerRect = triggerRef.current.getBoundingClientRect()
+      const tooltipRect = tooltipRef.current.getBoundingClientRect()
+      const [offsetX, offsetY] = stableOffset
 
-      if (spaceTop >= tooltipRect.height + offsetY) {
-        finalPlacement = 'top'
-      } else if (spaceBottom >= tooltipRect.height + offsetY) {
-        finalPlacement = 'bottom'
-      } else if (spaceRight >= tooltipRect.width + offsetX) {
-        finalPlacement = 'right'
-      } else if (spaceLeft >= tooltipRect.width + offsetX) {
-        finalPlacement = 'left'
-      } else {
-        finalPlacement = 'bottom'
+      let top = 0
+      let left = 0
+      let finalPlacement = placement
+
+      // 自动选择位置
+      if (placement === 'auto') {
+        const spaceTop = triggerRect.top
+        const spaceBottom = window.innerHeight - triggerRect.bottom
+        const spaceLeft = triggerRect.left
+        const spaceRight = window.innerWidth - triggerRect.right
+
+        if (spaceTop >= tooltipRect.height + offsetY) {
+          finalPlacement = 'top'
+        } else if (spaceBottom >= tooltipRect.height + offsetY) {
+          finalPlacement = 'bottom'
+        } else if (spaceRight >= tooltipRect.width + offsetX) {
+          finalPlacement = 'right'
+        } else if (spaceLeft >= tooltipRect.width + offsetX) {
+          finalPlacement = 'left'
+        } else {
+          finalPlacement = 'bottom'
+        }
       }
-    }
 
-    // 计算位置
-    switch (finalPlacement) {
-      case 'top':
-      case 'top-start':
-      case 'top-end':
-        top = triggerRect.top - tooltipRect.height - offsetY
-        left = finalPlacement === 'top-start'
-          ? triggerRect.left
-          : finalPlacement === 'top-end'
-          ? triggerRect.right - tooltipRect.width
-          : triggerRect.left + triggerRect.width / 2 - tooltipRect.width / 2
-        break
+      // 计算位置
+      switch (finalPlacement) {
+        case 'top':
+        case 'top-start':
+        case 'top-end':
+          top = triggerRect.top - tooltipRect.height - offsetY
+          left = finalPlacement === 'top-start'
+            ? triggerRect.left
+            : finalPlacement === 'top-end'
+            ? triggerRect.right - tooltipRect.width
+            : triggerRect.left + triggerRect.width / 2 - tooltipRect.width / 2
+          break
 
-      case 'bottom':
-      case 'bottom-start':
-      case 'bottom-end':
-        top = triggerRect.bottom + offsetY
-        left = finalPlacement === 'bottom-start'
-          ? triggerRect.left
-          : finalPlacement === 'bottom-end'
-          ? triggerRect.right - tooltipRect.width
-          : triggerRect.left + triggerRect.width / 2 - tooltipRect.width / 2
-        break
+        case 'bottom':
+        case 'bottom-start':
+        case 'bottom-end':
+          top = triggerRect.bottom + offsetY
+          left = finalPlacement === 'bottom-start'
+            ? triggerRect.left
+            : finalPlacement === 'bottom-end'
+            ? triggerRect.right - tooltipRect.width
+            : triggerRect.left + triggerRect.width / 2 - tooltipRect.width / 2
+          break
 
-      case 'left':
-      case 'left-start':
-      case 'left-end':
-        top = finalPlacement === 'left-start'
-          ? triggerRect.top
-          : finalPlacement === 'left-end'
-          ? triggerRect.bottom - tooltipRect.height
-          : triggerRect.top + triggerRect.height / 2 - tooltipRect.height / 2
-        left = triggerRect.left - tooltipRect.width - offsetX
-        break
+        case 'left':
+        case 'left-start':
+        case 'left-end':
+          top = finalPlacement === 'left-start'
+            ? triggerRect.top
+            : finalPlacement === 'left-end'
+            ? triggerRect.bottom - tooltipRect.height
+            : triggerRect.top + triggerRect.height / 2 - tooltipRect.height / 2
+          left = triggerRect.left - tooltipRect.width - offsetX
+          break
 
-      case 'right':
-      case 'right-start':
-      case 'right-end':
-        top = finalPlacement === 'right-start'
-          ? triggerRect.top
-          : finalPlacement === 'right-end'
-          ? triggerRect.bottom - tooltipRect.height
-          : triggerRect.top + triggerRect.height / 2 - tooltipRect.height / 2
-        left = triggerRect.right + offsetX
-        break
-    }
+        case 'right':
+        case 'right-start':
+        case 'right-end':
+          top = finalPlacement === 'right-start'
+            ? triggerRect.top
+            : finalPlacement === 'right-end'
+            ? triggerRect.bottom - tooltipRect.height
+            : triggerRect.top + triggerRect.height / 2 - tooltipRect.height / 2
+          left = triggerRect.right + offsetX
+          break
+      }
 
-    // 边界检测
-    const margin = 8
-    if (left < margin) left = margin
-    if (left + tooltipRect.width > window.innerWidth - margin) {
-      left = window.innerWidth - tooltipRect.width - margin
-    }
-    if (top < margin) top = margin
-    if (top + tooltipRect.height > window.innerHeight - margin) {
-      top = window.innerHeight - tooltipRect.height - margin
-    }
+      // 边界检测
+      const margin = 8
+      if (left < margin) left = margin
+      if (left + tooltipRect.width > window.innerWidth - margin) {
+        left = window.innerWidth - tooltipRect.width - margin
+      }
+      if (top < margin) top = margin
+      if (top + tooltipRect.height > window.innerHeight - margin) {
+        top = window.innerHeight - tooltipRect.height - margin
+      }
 
-    setPosition({ top, left })
-    setActualPlacement(finalPlacement)
-  }, [placement, offset])
+      // 只在位置真正变化时才更新状态
+      setPosition(prev => {
+        if (Math.abs(prev.top - top) > 1 || Math.abs(prev.left - left) > 1) {
+          return { top, left }
+        }
+        return prev
+      })
+
+      setActualPlacement(prev => prev !== finalPlacement ? finalPlacement : prev)
+    }, 0)
+  }, [placement, stableOffset, visible])
 
   // 显示 tooltip
   const show = useCallback(() => {
@@ -235,40 +256,54 @@ export const Tooltip: React.FC<TooltipProps> = ({
     }, hideDelay)
   }, [hideDelay, onOpenChange])
 
-  // 更新位置
-  useEffect(() => {
+  // 初始位置更新 - 使用 useLayoutEffect 确保同步更新
+  useLayoutEffect(() => {
     if (visible) {
       updatePosition()
-      
-      // 监听滚动和窗口大小变化
-      window.addEventListener('scroll', updatePosition, true)
-      window.addEventListener('resize', updatePosition)
-      
-      return () => {
-        window.removeEventListener('scroll', updatePosition, true)
-        window.removeEventListener('resize', updatePosition)
-      }
     }
   }, [visible, updatePosition])
 
-  // 清理定时器
+  // 保存 updatePosition 的最新引用，避免闭包问题
+  const updatePositionRef = useRef(updatePosition)
+  updatePositionRef.current = updatePosition
+
+  // 事件监听器管理 - 分离出来避免循环依赖
+  useEffect(() => {
+    if (!visible) return
+
+    // 使用 ref 引用最新的 updatePosition 函数
+    const handleScroll = () => updatePositionRef.current()
+    const handleResize = () => updatePositionRef.current()
+
+    // 添加事件监听器
+    window.addEventListener('scroll', handleScroll, true)
+    window.addEventListener('resize', handleResize)
+
+    return () => {
+      window.removeEventListener('scroll', handleScroll, true)
+      window.removeEventListener('resize', handleResize)
+    }
+  }, [visible])
+
+  // 清理所有定时器
   useEffect(() => {
     return () => {
       if (showTimeoutRef.current) clearTimeout(showTimeoutRef.current)
       if (hideTimeoutRef.current) clearTimeout(hideTimeoutRef.current)
+      if (updatePositionTimeoutRef.current) clearTimeout(updatePositionTimeoutRef.current)
     }
   }, [])
 
-  // 事件处理
-  const handleMouseEnter = () => {
+  // 事件处理 - 使用 useCallback 优化性能
+  const handleMouseEnter = useCallback(() => {
     if (trigger === 'hover') show()
-  }
+  }, [trigger, show])
 
-  const handleMouseLeave = () => {
+  const handleMouseLeave = useCallback(() => {
     if (trigger === 'hover') hide()
-  }
+  }, [trigger, hide])
 
-  const handleClick = () => {
+  const handleClick = useCallback(() => {
     if (trigger === 'click') {
       if (visible) {
         hide()
@@ -276,34 +311,37 @@ export const Tooltip: React.FC<TooltipProps> = ({
         show()
       }
     }
-  }
+  }, [trigger, visible, show, hide])
 
-  const handleFocus = () => {
+  const handleFocus = useCallback(() => {
     if (trigger === 'focus') show()
-  }
+  }, [trigger, show])
 
-  const handleBlur = () => {
+  const handleBlur = useCallback(() => {
     if (trigger === 'focus') hide()
-  }
+  }, [trigger, hide])
 
-  // 克隆子元素并添加事件
-  const triggerElement = React.cloneElement(children, {
-    ref: triggerRef,
-    onMouseEnter: handleMouseEnter,
-    onMouseLeave: handleMouseLeave,
-    onClick: handleClick,
-    onFocus: handleFocus,
-    onBlur: handleBlur,
-  })
+  // 克隆子元素并添加事件 - 使用 useMemo 优化性能
+  const triggerElement = useMemo(() => {
+    return React.cloneElement(children, {
+      ref: triggerRef,
+      onMouseEnter: handleMouseEnter,
+      onMouseLeave: handleMouseLeave,
+      onClick: handleClick,
+      onFocus: handleFocus,
+      onBlur: handleBlur,
+    })
+  }, [children, handleMouseEnter, handleMouseLeave, handleClick, handleFocus, handleBlur])
 
   return (
     <>
       {triggerElement}
-      {visible && content && createPortal(
+      {visible && content && !disabled && createPortal(
         <div
           ref={tooltipRef}
           className={`tooltip ${className}`}
           style={{
+            position: 'fixed',
             top: `${position.top}px`,
             left: `${position.left}px`,
             zIndex,

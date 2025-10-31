@@ -47,7 +47,7 @@ const EmptyState = React.forwardRef<HTMLDivElement, EmptyStateProps>(
       <div
         ref={ref}
         className={cn(
-          'flex flex-col items-center justify-center gap-4 rounded-lg border border-dashed bg-muted/30 p-8 text-center',
+          'flex flex-col items-center justify-center gap-4 rounded-lg border-2 border-dashed border-border bg-muted/20 p-12 text-center min-h-[300px]',
           className
         )}
         {...props}

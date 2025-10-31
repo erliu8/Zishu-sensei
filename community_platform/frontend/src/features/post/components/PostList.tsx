@@ -72,7 +72,7 @@ export const PostList: FC<PostListProps> = ({
         description="还没有发布任何帖子，快去创建第一篇吧！"
         action={{
           label: '创建帖子',
-          href: '/posts/create',
+          onClick: () => window.location.href = '/posts/create',
         }}
       />
     );
@@ -120,6 +120,8 @@ export const PostList: FC<PostListProps> = ({
         >
           {virtualizer.getVirtualItems().map((virtualItem) => {
             const post = posts[virtualItem.index];
+            if (!post) return null;
+            
             return (
               <div
                 key={virtualItem.key}

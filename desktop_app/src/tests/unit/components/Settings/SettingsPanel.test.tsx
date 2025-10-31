@@ -39,6 +39,51 @@ vi.mock('framer-motion', () => ({
   AnimatePresence: vi.fn(({ children }) => <>{children}</>)
 }))
 
+// Mock clsx
+vi.mock('clsx', () => ({
+  default: vi.fn((...classes) => classes.filter(Boolean).join(' '))
+}))
+
+// Mock types/settings with all necessary exports
+vi.mock('@/types/settings', () => ({
+  CONFIG_VALIDATION_RULES: {
+    window: {
+      width: { min: 200, max: 4000 },
+      height: { min: 200, max: 4000 }
+    },
+    character: {
+      scale: { min: 0.1, max: 5.0 }
+    }
+  },
+  DEFAULT_CONFIG: {
+    window: {
+      width: 800,
+      height: 600,
+      always_on_top: false,
+      transparent: false,
+      decorations: true,
+      resizable: true,
+      position: null
+    },
+    character: {
+      current_id: 'default',
+      scale: 1.0,
+      auto_idle: true,
+      interaction_enabled: true
+    },
+    theme: {
+      current_theme: 'anime',
+      custom_css: null
+    },
+    system: {
+      auto_start: false,
+      minimize_to_tray: true,
+      close_to_tray: true,
+      show_notifications: true
+    }
+  }
+}))
+
 // 模拟子组件
 vi.mock('@/components/Settings/GeneralSettings', () => ({
   GeneralSettings: vi.fn(() => <div data-testid="general-settings">General Settings Component</div>)

@@ -127,7 +127,7 @@ export const Loading: React.FC<LoadingProps> = ({
           <div className={`loading-progress ${sizeClass}`} style={style}>
             <div
               className="loading-progress-bar"
-              style={{ width: `${progress || 0}%` }}
+              style={{ width: `${progress !== undefined ? Math.max(0, Math.min(100, progress)) : 0}%` }}
             />
           </div>
         )
@@ -138,7 +138,7 @@ export const Loading: React.FC<LoadingProps> = ({
   }
 
   const content = (
-    <div className={`loading-container ${className}`}>
+    <div className={`loading-container ${className}`} role="status" aria-live="polite">
       {renderLoadingIcon()}
       
       {text && (

@@ -188,6 +188,8 @@ export function VirtualScrollList<T>({
         {virtualItems.map((virtualItem) => {
           const item = items[virtualItem.index]
           
+          if (!item) return null
+          
           return (
             <div
               key={virtualItem.key}

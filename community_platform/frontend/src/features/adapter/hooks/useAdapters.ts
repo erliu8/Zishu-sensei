@@ -250,7 +250,7 @@ export function useInstallAdapter(
   return useMutation({
     mutationFn: ({ id, version }: { id: string; version?: string }) =>
       adapterApiClient.installAdapter(id, version),
-    onSuccess: (data, { id }) => {
+    onSuccess: (_data, { id }) => {
       queryClient.invalidateQueries({ queryKey: adapterKeys.installStatus(id) });
       queryClient.invalidateQueries({ queryKey: adapterKeys.installed() });
     },

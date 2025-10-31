@@ -27,12 +27,6 @@ function formatDateTime(date: Date): string {
   }).format(date);
 }
 
-const deviceIcons = {
-  Desktop: Monitor,
-  Mobile: Smartphone,
-  Tablet: Tablet,
-};
-
 function getDeviceIcon(deviceName: string) {
   if (deviceName.includes('Mobile') || deviceName.includes('iPhone') || deviceName.includes('Android')) {
     return Smartphone;

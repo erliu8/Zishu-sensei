@@ -11,7 +11,7 @@ import type {
   CreateExpressionDto,
   UpdateExpressionDto,
 } from '../domain/expression';
-import { toast } from 'sonner';
+import { toast } from '@/shared/components/ui/use-toast';
 
 /**
  * Query Keys
@@ -74,10 +74,17 @@ export function useCreateExpression() {
       queryClient.invalidateQueries({ queryKey: expressionKeys.lists() });
       queryClient.invalidateQueries({ queryKey: expressionKeys.byCharacter(data.characterId) });
       
-      toast.success('表情创建成功');
+      toast({
+        title: '表情创建成功',
+        variant: 'default',
+      });
     },
     onError: (error: Error) => {
-      toast.error(`创建失败: ${error.message}`);
+      toast({
+        title: '创建失败',
+        description: error.message,
+        variant: 'destructive',
+      });
     },
   });
 }
@@ -97,10 +104,17 @@ export function useUpdateExpression() {
       queryClient.invalidateQueries({ queryKey: expressionKeys.lists() });
       queryClient.invalidateQueries({ queryKey: expressionKeys.byCharacter(data.characterId) });
       
-      toast.success('表情更新成功');
+      toast({
+        title: '表情更新成功',
+        variant: 'default',
+      });
     },
     onError: (error: Error) => {
-      toast.error(`更新失败: ${error.message}`);
+      toast({
+        title: '更新失败',
+        description: error.message,
+        variant: 'destructive',
+      });
     },
   });
 }
@@ -119,10 +133,17 @@ export function useDeleteExpression() {
       queryClient.invalidateQueries({ queryKey: expressionKeys.all });
       queryClient.removeQueries({ queryKey: expressionKeys.detail(id) });
       
-      toast.success('表情删除成功');
+      toast({
+        title: '表情删除成功',
+        variant: 'default',
+      });
     },
     onError: (error: Error) => {
-      toast.error(`删除失败: ${error.message}`);
+      toast({
+        title: '删除失败',
+        description: error.message,
+        variant: 'destructive',
+      });
     },
   });
 }
@@ -143,10 +164,17 @@ export function useDeleteExpressions() {
         queryClient.removeQueries({ queryKey: expressionKeys.detail(id) });
       });
       
-      toast.success('批量删除成功');
+      toast({
+        title: '批量删除成功',
+        variant: 'default',
+      });
     },
     onError: (error: Error) => {
-      toast.error(`批量删除失败: ${error.message}`);
+      toast({
+        title: '批量删除失败',
+        description: error.message,
+        variant: 'destructive',
+      });
     },
   });
 }
@@ -165,10 +193,17 @@ export function useToggleExpressionStatus() {
       queryClient.invalidateQueries({ queryKey: expressionKeys.lists() });
       queryClient.invalidateQueries({ queryKey: expressionKeys.byCharacter(data.characterId) });
       
-      toast.success(`表情已${variables.isActive ? '启用' : '禁用'}`);
+      toast({
+        title: `表情已${variables.isActive ? '启用' : '禁用'}`,
+        variant: 'default',
+      });
     },
     onError: (error: Error) => {
-      toast.error(`操作失败: ${error.message}`);
+      toast({
+        title: '操作失败',
+        description: error.message,
+        variant: 'destructive',
+      });
     },
   });
 }
@@ -186,10 +221,17 @@ export function useSetDefaultExpression() {
       queryClient.invalidateQueries({ queryKey: expressionKeys.byCharacter(variables.characterId) });
       queryClient.invalidateQueries({ queryKey: expressionKeys.lists() });
       
-      toast.success('默认表情设置成功');
+      toast({
+        title: '默认表情设置成功',
+        variant: 'default',
+      });
     },
     onError: (error: Error) => {
-      toast.error(`设置失败: ${error.message}`);
+      toast({
+        title: '设置失败',
+        description: error.message,
+        variant: 'destructive',
+      });
     },
   });
 }
@@ -206,10 +248,17 @@ export function useDuplicateExpression() {
       queryClient.invalidateQueries({ queryKey: expressionKeys.lists() });
       queryClient.invalidateQueries({ queryKey: expressionKeys.byCharacter(data.characterId) });
       
-      toast.success('表情复制成功');
+      toast({
+        title: '表情复制成功',
+        variant: 'default',
+      });
     },
     onError: (error: Error) => {
-      toast.error(`复制失败: ${error.message}`);
+      toast({
+        title: '复制失败',
+        description: error.message,
+        variant: 'destructive',
+      });
     },
   });
 }
@@ -227,10 +276,17 @@ export function useReorderExpressions() {
       queryClient.invalidateQueries({ queryKey: expressionKeys.byCharacter(variables.characterId) });
       queryClient.invalidateQueries({ queryKey: expressionKeys.lists() });
       
-      toast.success('排序更新成功');
+      toast({
+        title: '排序更新成功',
+        variant: 'default',
+      });
     },
     onError: (error: Error) => {
-      toast.error(`排序失败: ${error.message}`);
+      toast({
+        title: '排序失败',
+        description: error.message,
+        variant: 'destructive',
+      });
     },
   });
 }
@@ -242,7 +298,11 @@ export function useUploadExpressionFile() {
   return useMutation({
     mutationFn: (file: File) => expressionApi.uploadExpressionFile(file),
     onError: (error: Error) => {
-      toast.error(`上传失败: ${error.message}`);
+      toast({
+        title: '上传失败',
+        description: error.message,
+        variant: 'destructive',
+      });
     },
   });
 }

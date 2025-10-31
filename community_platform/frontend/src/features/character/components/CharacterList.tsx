@@ -89,9 +89,9 @@ export const CharacterList: React.FC<CharacterListProps> = ({
   // 处理排序变更
   const handleSortChange = (value: string) => {
     const [newSortBy, newSortOrder] = value.split('-');
-    setSortBy(newSortBy);
-    setSortOrder(newSortOrder as 'asc' | 'desc');
-    onSortChange?.(newSortBy, newSortOrder as 'asc' | 'desc');
+    setSortBy(newSortBy || 'createdAt');
+    setSortOrder((newSortOrder as 'asc' | 'desc') || 'desc');
+    onSortChange?.(newSortBy || 'createdAt', (newSortOrder as 'asc' | 'desc') || 'desc');
   };
 
   // 处理角色点击
@@ -175,11 +175,10 @@ export const CharacterList: React.FC<CharacterListProps> = ({
     <EmptyState
       title="加载失败"
       description={error?.message || '无法加载角色列表，请稍后重试'}
-      action={
-        <Button onClick={() => window.location.reload()}>
-          重新加载
-        </Button>
-      }
+      action={{
+        label: '重新加载',
+        onClick: () => window.location.reload()
+      }}
     />
   );
 
@@ -193,11 +192,10 @@ export const CharacterList: React.FC<CharacterListProps> = ({
           : '还没有任何角色，创建第一个角色吧！'
       }
       action={
-        !filters?.search && (
-          <Button onClick={() => router.push('/characters/create')}>
-            创建角色
-          </Button>
-        )
+        !filters?.search ? {
+          label: '创建角色',
+          onClick: () => router.push('/characters/create')
+        } : undefined
       }
     />
   );

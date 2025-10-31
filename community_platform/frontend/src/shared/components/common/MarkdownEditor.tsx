@@ -20,8 +20,7 @@ import { MarkdownToolbar, MarkdownAction } from './MarkdownToolbar'
 import { MarkdownViewer } from './MarkdownViewer'
 import { useAutoSave } from '@/shared/hooks/useAutoSave'
 import { useImageUpload } from '@/shared/hooks/useImageUpload'
-import { Loader2, Upload } from 'lucide-react'
-import { Button } from '@/shared/components/ui/button'
+import { Loader2 } from 'lucide-react'
 
 export interface MarkdownEditorProps extends Omit<React.TextareaHTMLAttributes<HTMLTextAreaElement>, 'onChange'> {
   value?: string
@@ -85,7 +84,7 @@ export const MarkdownEditor = React.forwardRef<HTMLTextAreaElement, MarkdownEdit
     })
 
     // 图片上传
-    const { isUploading, uploadImage, uploadFromClipboard } = useImageUpload({
+    const { isUploading, uploadImage } = useImageUpload({
       onUpload: async (file) => {
         if (onImageUpload) {
           return await onImageUpload(file)
@@ -148,7 +147,8 @@ export const MarkdownEditor = React.forwardRef<HTMLTextAreaElement, MarkdownEdit
 
         // 找到当前行
         for (let i = 0; i < lines.length; i++) {
-          charCount += lines[i].length + 1
+          const lineLength = lines[i]?.length || 0
+          charCount += lineLength + 1
           if (charCount > start) {
             currentLine = i
             break
@@ -156,22 +156,24 @@ export const MarkdownEditor = React.forwardRef<HTMLTextAreaElement, MarkdownEdit
         }
 
         // 在当前行末尾插入
-        const lineStart = charCount - lines[currentLine].length - 1
-        const lineEnd = charCount - 1
-        const newText =
-          content.substring(0, lineEnd) +
-          '\n' +
-          text +
-          content.substring(lineEnd)
+        const currentLineText = lines[currentLine]
+        if (currentLineText !== undefined) {
+          const lineEnd = charCount - 1
+          const newText =
+            content.substring(0, lineEnd) +
+            '\n' +
+            text +
+            content.substring(lineEnd)
 
-        setContent(newText)
-        onChange?.(newText)
+          setContent(newText)
+          onChange?.(newText)
 
-        setTimeout(() => {
-          textarea.focus()
-          const newCursorPos = lineEnd + text.length + 1
-          textarea.setSelectionRange(newCursorPos, newCursorPos)
-        }, 0)
+          setTimeout(() => {
+            textarea.focus()
+            const newCursorPos = lineEnd + text.length + 1
+            textarea.setSelectionRange(newCursorPos, newCursorPos)
+          }, 0)
+        }
       },
       [content, onChange]
     )
@@ -294,7 +296,7 @@ export const MarkdownEditor = React.forwardRef<HTMLTextAreaElement, MarkdownEdit
 
     // 粘贴处理（图片）
     const handlePaste = useCallback(
-      async (e: React.ClipboardEvent<HTMLTextAreaElement>): void => {
+      async (e: React.ClipboardEvent<HTMLTextAreaElement>): Promise<void> => {
         if (!enableImageUpload || !onImageUpload) return
 
         const items = e.clipboardData?.items
@@ -302,7 +304,7 @@ export const MarkdownEditor = React.forwardRef<HTMLTextAreaElement, MarkdownEdit
 
         for (let i = 0; i < items.length; i++) {
           const item = items[i]
-          if (item.type.indexOf('image') !== -1) {
+          if (item && item.type.indexOf('image') !== -1) {
             e.preventDefault()
             const file = item.getAsFile()
             if (file) {
@@ -355,7 +357,7 @@ export const MarkdownEditor = React.forwardRef<HTMLTextAreaElement, MarkdownEdit
 
         for (let i = 0; i < files.length; i++) {
           const file = files[i]
-          if (file.type.indexOf('image') !== -1) {
+          if (file && file.type.indexOf('image') !== -1) {
             try {
               const url = await uploadImage(file)
               if (url) {
@@ -466,3 +468,5 @@ export const MarkdownEditor = React.forwardRef<HTMLTextAreaElement, MarkdownEdit
 )
 
 MarkdownEditor.displayName = 'MarkdownEditor'
+
+export default MarkdownEditor

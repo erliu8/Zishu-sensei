@@ -149,7 +149,7 @@ export class LikeDomain {
     }
     return {
       targetType: parts[1] as LikeTargetType,
-      targetId: parts[2],
+      targetId: parts[2] || '',
       userId: parts[3],
     };
   }

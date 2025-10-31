@@ -72,7 +72,7 @@ export const AppNavbar: FC<AppNavbarProps> = ({ className }) => {
   return (
     <header 
       className={cn(
-        'sticky top-0 z-50 w-full border-b border-gray-200 dark:border-gray-800 bg-white/95 dark:bg-gray-900/95 backdrop-blur supports-[backdrop-filter]:bg-white/80 dark:supports-[backdrop-filter]:bg-gray-900/80',
+        'sticky top-0 z-50 w-full border-b bg-background/95 backdrop-blur supports-[backdrop-filter]:bg-background/80',
         className
       )}
     >

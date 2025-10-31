@@ -1,6 +1,19 @@
 /**
  * NextAuth 配置
  * @module infrastructure/config/auth
+ * 
+ * ⚠️ DEPRECATED - 此配置当前未被使用 ⚠️
+ * 
+ * 项目目前使用自定义 JWT 认证系统：
+ * - 后端：FastAPI JWT 认证
+ * - 前端：localStorage + httpOnly Cookie
+ * - 工具：/app/api/lib/auth.utils.ts
+ * 
+ * NextAuth 配置保留用于未来可能的 OAuth 集成（GitHub/Google）
+ * 如需使用 NextAuth，需要：
+ * 1. 配置环境变量（GITHUB_CLIENT_ID, GOOGLE_CLIENT_ID 等）
+ * 2. 更新所有 API 路由使用 getServerSession
+ * 3. 更新前端使用 next-auth/react
  */
 
 import type { NextAuthOptions } from 'next-auth';
@@ -8,10 +21,10 @@ import CredentialsProvider from 'next-auth/providers/credentials';
 import GitHubProvider from 'next-auth/providers/github';
 import GoogleProvider from 'next-auth/providers/google';
 import { AuthApiClient } from '@/features/auth/api';
-import type { User } from '@/features/auth/types';
 
 /**
  * NextAuth 配置选项
+ * @deprecated 当前未使用，项目使用自定义 JWT 认证
  */
 export const authOptions: NextAuthOptions = {
   // 配置认证提供者
@@ -39,6 +52,7 @@ export const authOptions: NextAuthOptions = {
             return {
               id: session.user.id,
               email: session.user.email,
+              username: session.user.username,
               name: session.user.name,
               image: session.user.avatar,
               accessToken: session.accessToken,
@@ -56,8 +70,8 @@ export const authOptions: NextAuthOptions = {
 
     // GitHub OAuth
     GitHubProvider({
-      clientId: process.env.GITHUB_CLIENT_ID || '',
-      clientSecret: process.env.GITHUB_CLIENT_SECRET || '',
+      clientId: process.env['GITHUB_CLIENT_ID'] || '',
+      clientSecret: process.env['GITHUB_CLIENT_SECRET'] || '',
       authorization: {
         params: {
           scope: 'read:user user:email',
@@ -67,8 +81,8 @@ export const authOptions: NextAuthOptions = {
 
     // Google OAuth
     GoogleProvider({
-      clientId: process.env.GOOGLE_CLIENT_ID || '',
-      clientSecret: process.env.GOOGLE_CLIENT_SECRET || '',
+      clientId: process.env['GOOGLE_CLIENT_ID'] || '',
+      clientSecret: process.env['GOOGLE_CLIENT_SECRET'] || '',
       authorization: {
         params: {
           prompt: 'consent',
@@ -87,7 +101,7 @@ export const authOptions: NextAuthOptions = {
 
   // JWT 配置
   jwt: {
-    secret: process.env.NEXTAUTH_SECRET,
+    secret: process.env['NEXTAUTH_SECRET'],
     maxAge: 7 * 24 * 60 * 60, // 7 天
   },
 
@@ -108,6 +122,7 @@ export const authOptions: NextAuthOptions = {
       if (user) {
         token.id = user.id;
         token.email = user.email;
+        token.username = (user as any).username;
         token.name = user.name;
         token.picture = user.image;
         token.accessToken = (user as any).accessToken;
@@ -128,6 +143,7 @@ export const authOptions: NextAuthOptions = {
       if (session.user) {
         session.user.id = token.id as string;
         session.user.email = token.email as string;
+        session.user.username = token.username as string;
         session.user.name = token.name as string;
         session.user.image = token.picture as string;
         (session as any).accessToken = token.accessToken;
@@ -138,7 +154,7 @@ export const authOptions: NextAuthOptions = {
     },
 
     // 登录回调
-    async signIn({ user, account, profile }) {
+    async signIn({ user: _user, account, profile: _profile }) {
       // OAuth 登录时，可以在这里处理用户信息
       if (account?.provider === 'github' || account?.provider === 'google') {
         // 可以调用后端API创建或更新用户
@@ -174,7 +190,7 @@ export const authOptions: NextAuthOptions = {
     async signIn(message) {
       console.log('User signed in:', message.user?.email);
     },
-    async signOut(message) {
+    async signOut(_message) {
       console.log('User signed out');
     },
     async createUser(message) {
@@ -186,12 +202,12 @@ export const authOptions: NextAuthOptions = {
     async linkAccount(message) {
       console.log('Account linked:', message.user?.email);
     },
-    async session(message) {
+    async session(_message) {
       // console.log('Session active:', message.session);
     },
   },
 
   // 调试模式（仅开发环境）
-  debug: process.env.NODE_ENV === 'development',
+  debug: process.env['NODE_ENV'] === 'development',
 };
 

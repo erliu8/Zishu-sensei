@@ -8,15 +8,16 @@ import React from 'react';
 import { Badge } from '@/shared/components/ui/badge';
 import { AdapterType, CompatibilityLevel, CapabilityLevel } from '../../domain';
 import { 
-  Brain, 
-  Code2, 
   Sparkles, 
   CheckCircle2, 
   AlertCircle, 
   XCircle,
   Star,
   TrendingUp,
-  Zap
+  Zap,
+  Plug,
+  MessageSquare,
+  Bot,
 } from 'lucide-react';
 import { cn } from '@/shared/utils';
 
@@ -34,6 +35,7 @@ export interface AdapterTypeBadgeProps {
 
 /**
  * 适配器类型徽章
+ * 显示名称已更新：硬适配器→插件，软适配器→提示词工程，智能硬适配器→微调模型
  */
 export const AdapterTypeBadge: React.FC<AdapterTypeBadgeProps> = ({ 
   type, 
@@ -42,20 +44,20 @@ export const AdapterTypeBadge: React.FC<AdapterTypeBadgeProps> = ({
 }) => {
   const config = {
     [AdapterType.SOFT]: {
-      label: '软适配器',
-      icon: Brain,
+      label: '角色提示词',
+      icon: MessageSquare,
       variant: 'default' as const,
       className: 'bg-blue-100 text-blue-800 dark:bg-blue-900 dark:text-blue-200',
     },
     [AdapterType.HARD]: {
-      label: '硬适配器',
-      icon: Code2,
+      label: '插件',
+      icon: Plug,
       variant: 'secondary' as const,
       className: 'bg-gray-100 text-gray-800 dark:bg-gray-800 dark:text-gray-200',
     },
     [AdapterType.INTELLIGENT]: {
-      label: '智能硬适配器',
-      icon: Sparkles,
+      label: '微调模型',
+      icon: Bot,
       variant: 'default' as const,
       className: 'bg-gradient-to-r from-purple-100 to-pink-100 text-purple-800 dark:from-purple-900 dark:to-pink-900 dark:text-purple-200',
     },

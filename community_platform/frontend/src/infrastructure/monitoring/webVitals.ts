@@ -85,7 +85,7 @@ export async function initWebVitals(config: WebVitalsConfig): Promise<void> {
 
   try {
     // 动态导入 web-vitals 以避免增加初始包大小
-    const { onCLS, onFID, onFCP, onLCP, onTTFB, onINP } = await import('web-vitals');
+    const { onCLS, onINP, onFCP, onLCP, onTTFB } = await import('web-vitals');
 
     const handleMetric = (metric: Metric) => {
       const formattedMetric = formatMetric(metric);
@@ -128,11 +128,10 @@ export async function initWebVitals(config: WebVitalsConfig): Promise<void> {
 
     // 监听各项指标
     onCLS(handleMetric);
-    onFID(handleMetric);
+    onINP(handleMetric);
     onFCP(handleMetric);
     onLCP(handleMetric);
     onTTFB(handleMetric);
-    onINP(handleMetric);
   } catch (error) {
     console.error('Failed to initialize Web Vitals:', error);
   }
@@ -145,7 +144,7 @@ export async function getWebVitals(): Promise<Record<WebVitalMetricName, number>
   const vitals: Partial<Record<WebVitalMetricName, number>> = {};
 
   try {
-    const { onCLS, onFID, onFCP, onLCP, onTTFB, onINP } = await import('web-vitals');
+    const { onCLS, onINP, onFCP, onLCP, onTTFB } = await import('web-vitals');
 
     await Promise.all([
       new Promise<void>((resolve) => {
@@ -155,8 +154,8 @@ export async function getWebVitals(): Promise<Record<WebVitalMetricName, number>
         });
       }),
       new Promise<void>((resolve) => {
-        onFID((metric) => {
-          vitals.FID = metric.value;
+        onINP((metric) => {
+          vitals.INP = metric.value;
           resolve();
         });
       }),

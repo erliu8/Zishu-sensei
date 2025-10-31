@@ -31,7 +31,7 @@ const featuredItems = [
     id: '3',
     title: '小艾 - 智能助手角色',
     description: '温柔贴心的AI助手，随时为你提供帮助',
-    image: '/images/featured/character.jpg',
+    image: '/images/default-avatar.png',
     type: 'character' as const,
     link: '/characters/3',
   },

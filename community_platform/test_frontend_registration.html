@@ -1,0 +1,208 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>测试前端注册功能</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            max-width: 800px;
+            margin: 50px auto;
+            padding: 20px;
+            background-color: #f5f5f5;
+        }
+        .container {
+            background: white;
+            padding: 30px;
+            border-radius: 8px;
+            box-shadow: 0 2px 10px rgba(0,0,0,0.1);
+        }
+        h1 {
+            color: #333;
+            margin-bottom: 30px;
+        }
+        .form-group {
+            margin-bottom: 15px;
+        }
+        label {
+            display: block;
+            margin-bottom: 5px;
+            font-weight: bold;
+        }
+        input {
+            width: 100%;
+            padding: 10px;
+            border: 1px solid #ddd;
+            border-radius: 4px;
+            box-sizing: border-box;
+        }
+        button {
+            width: 100%;
+            padding: 12px;
+            background-color: #007bff;
+            color: white;
+            border: none;
+            border-radius: 4px;
+            cursor: pointer;
+            font-size: 16px;
+            margin-top: 10px;
+        }
+        button:hover {
+            background-color: #0056b3;
+        }
+        button:disabled {
+            background-color: #ccc;
+            cursor: not-allowed;
+        }
+        .result {
+            margin-top: 20px;
+            padding: 15px;
+            border-radius: 4px;
+            display: none;
+        }
+        .result.success {
+            background-color: #d4edda;
+            border: 1px solid #c3e6cb;
+            color: #155724;
+        }
+        .result.error {
+            background-color: #f8d7da;
+            border: 1px solid #f5c6cb;
+            color: #721c24;
+        }
+        pre {
+            background: #f4f4f4;
+            padding: 10px;
+            border-radius: 4px;
+            overflow-x: auto;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>测试前端注册功能</h1>
+        
+        <div id="config">
+            <h3>当前配置:</h3>
+            <pre id="configDisplay"></pre>
+        </div>
+
+        <form id="registerForm">
+            <div class="form-group">
+                <label for="username">用户名:</label>
+                <input type="text" id="username" name="username" required>
+            </div>
+            
+            <div class="form-group">
+                <label for="email">邮箱:</label>
+                <input type="email" id="email" name="email" required>
+            </div>
+            
+            <div class="form-group">
+                <label for="password">密码:</label>
+                <input type="password" id="password" name="password" required>
+            </div>
+            
+            <div class="form-group">
+                <label for="full_name">姓名 (可选):</label>
+                <input type="text" id="full_name" name="full_name">
+            </div>
+            
+            <button type="submit" id="submitBtn">注册</button>
+            <button type="button" id="generateBtn">生成测试数据</button>
+        </form>
+        
+        <div id="result" class="result"></div>
+    </div>
+
+    <script>
+        // 显示配置
+        const apiUrl = '/api';  // 前端应该使用 /api
+        document.getElementById('configDisplay').textContent = JSON.stringify({
+            apiBaseUrl: apiUrl,
+            registerEndpoint: `${apiUrl}/auth/register`
+        }, null, 2);
+
+        // 生成测试数据
+        document.getElementById('generateBtn').addEventListener('click', () => {
+            const timestamp = Date.now();
+            document.getElementById('username').value = `testuser${timestamp}`;
+            document.getElementById('email').value = `testuser${timestamp}@example.com`;
+            document.getElementById('password').value = 'Test123456!';
+            document.getElementById('full_name').value = `Test User ${timestamp}`;
+        });
+
+        // 处理表单提交
+        document.getElementById('registerForm').addEventListener('submit', async (e) => {
+            e.preventDefault();
+            
+            const submitBtn = document.getElementById('submitBtn');
+            const resultDiv = document.getElementById('result');
+            
+            // 禁用提交按钮
+            submitBtn.disabled = true;
+            submitBtn.textContent = '注册中...';
+            
+            // 获取表单数据
+            const formData = {
+                username: document.getElementById('username').value,
+                email: document.getElementById('email').value,
+                password: document.getElementById('password').value,
+                full_name: document.getElementById('full_name').value || undefined
+            };
+            
+            try {
+                // 发送注册请求
+                const response = await fetch('/api/auth/register', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                    },
+                    body: JSON.stringify(formData),
+                    credentials: 'include'
+                });
+                
+                const data = await response.json();
+                
+                // 显示结果
+                resultDiv.style.display = 'block';
+                
+                if (response.ok) {
+                    resultDiv.className = 'result success';
+                    resultDiv.innerHTML = `
+                        <h3>✓ 注册成功!</h3>
+                        <pre>${JSON.stringify(data, null, 2)}</pre>
+                    `;
+                    // 清空表单
+                    document.getElementById('registerForm').reset();
+                } else {
+                    resultDiv.className = 'result error';
+                    resultDiv.innerHTML = `
+                        <h3>✗ 注册失败</h3>
+                        <p>状态码: ${response.status}</p>
+                        <pre>${JSON.stringify(data, null, 2)}</pre>
+                    `;
+                }
+            } catch (error) {
+                resultDiv.style.display = 'block';
+                resultDiv.className = 'result error';
+                resultDiv.innerHTML = `
+                    <h3>✗ 请求失败</h3>
+                    <p>${error.message}</p>
+                `;
+            } finally {
+                // 恢复提交按钮
+                submitBtn.disabled = false;
+                submitBtn.textContent = '注册';
+            }
+        });
+
+        // 页面加载时生成测试数据
+        window.addEventListener('load', () => {
+            document.getElementById('generateBtn').click();
+        });
+    </script>
+</body>
+</html>
+

@@ -15,18 +15,18 @@ export function createAuthenticatedApiClient(
 ): ApiClient {
   const client = createApiClient({
     ...config,
-    interceptors: {
+    ...(config?.interceptors && { interceptors: {
       request: [
-        ...(config?.interceptors?.request || []),
+        ...(config.interceptors.request || []),
         authRequestInterceptor as any,
       ],
       response: [
-        ...(config?.interceptors?.response || []),
-        (response) => response,
+        ...(config.interceptors.response || []),
+        (response: any) => response,
         authResponseInterceptor as any,
       ],
-    },
-  });
+    }}),
+  } as any);
 
   return client;
 }

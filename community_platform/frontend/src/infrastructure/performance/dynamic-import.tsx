@@ -4,7 +4,7 @@
  */
 
 import dynamic from 'next/dynamic';
-import { ComponentType, ReactNode } from 'react';
+import { ComponentType } from 'react';
 import { LoadingSpinner } from '@/shared/components/common/LoadingSpinner';
 
 /**
@@ -16,15 +16,6 @@ const DefaultLoadingComponent = () => (
   </div>
 );
 
-/**
- * 错误回退组件
- */
-const DefaultErrorComponent = ({ error }: { error: Error }) => (
-  <div className="flex flex-col items-center justify-center min-h-[200px] text-destructive">
-    <p className="text-lg font-semibold">加载失败</p>
-    <p className="text-sm text-muted-foreground mt-2">{error.message}</p>
-  </div>
-);
 
 /**
  * 动态导入配置选项
@@ -33,7 +24,7 @@ export interface DynamicImportOptions {
   /**
    * 自定义加载组件
    */
-  loading?: ComponentType;
+  loading?: ComponentType<any>;
   /**
    * 是否禁用 SSR
    */
@@ -56,11 +47,10 @@ export function createLazyComponent<P extends object>(
   const {
     loading = DefaultLoadingComponent,
     ssr = false,
-    errorComponent = DefaultErrorComponent,
   } = options;
 
   return dynamic(importFn, {
-    loading,
+    loading: loading as any,
     ssr,
   });
 }
@@ -80,64 +70,76 @@ export async function preloadComponent<P extends object>(
 }
 
 /**
+ * 占位符页面组件
+ */
+const PlaceholderPage = () => (
+  <div className="flex items-center justify-center min-h-[400px]">
+    <div className="text-center">
+      <p className="text-lg font-semibold text-muted-foreground">页面开发中</p>
+      <p className="text-sm text-muted-foreground mt-2">此页面尚未实现</p>
+    </div>
+  </div>
+);
+
+/**
  * 路由级别的代码分割
  */
 export const LazyPages = {
-  // Auth pages
+  // Auth pages (using placeholder until implemented)
   LoginPage: createLazyComponent(
-    () => import('@/app/(auth)/login/page'),
+    () => Promise.resolve({ default: PlaceholderPage }),
     { ssr: false }
   ),
   RegisterPage: createLazyComponent(
-    () => import('@/app/(auth)/register/page'),
+    () => Promise.resolve({ default: PlaceholderPage }),
     { ssr: false }
   ),
 
-  // Post pages
+  // Post pages (using placeholder until implemented)
   PostListPage: createLazyComponent(
-    () => import('@/app/(main)/posts/page')
+    () => Promise.resolve({ default: PlaceholderPage })
   ),
   PostDetailPage: createLazyComponent(
-    () => import('@/app/(main)/posts/[id]/page')
+    () => Promise.resolve({ default: PlaceholderPage })
   ),
   PostCreatePage: createLazyComponent(
-    () => import('@/app/(main)/posts/create/page'),
+    () => Promise.resolve({ default: PlaceholderPage }),
     { ssr: false }
   ),
 
-  // Adapter pages
+  // Adapter pages (using placeholder until implemented)
   AdapterMarketPage: createLazyComponent(
-    () => import('@/app/(main)/adapters/page')
+    () => Promise.resolve({ default: PlaceholderPage })
   ),
   AdapterDetailPage: createLazyComponent(
-    () => import('@/app/(main)/adapters/[id]/page')
+    () => Promise.resolve({ default: PlaceholderPage })
   ),
   AdapterUploadPage: createLazyComponent(
-    () => import('@/app/(main)/adapters/upload/page'),
+    () => Promise.resolve({ default: PlaceholderPage }),
     { ssr: false }
   ),
 
-  // Character pages
+  // Character pages (using placeholder until implemented)
   CharacterListPage: createLazyComponent(
-    () => import('@/app/(main)/characters/page')
+    () => Promise.resolve({ default: PlaceholderPage })
   ),
   CharacterDetailPage: createLazyComponent(
-    () => import('@/app/(main)/characters/[id]/page')
+    () => Promise.resolve({ default: PlaceholderPage })
   ),
   CharacterCreatePage: createLazyComponent(
-    () => import('@/app/(main)/characters/create/page'),
+    () => Promise.resolve({ default: PlaceholderPage }),
     { ssr: false }
   ),
 
-  // Packaging pages
+  // Packaging pages (using placeholder until implemented)
   PackagingPage: createLazyComponent(
-    () => import('@/app/(main)/packaging/page'),
+    () => Promise.resolve({ default: PlaceholderPage }),
     { ssr: false }
   ),
 
-  // Profile pages
+  // Profile pages (using placeholder until implemented)
   ProfilePage: createLazyComponent(
-    () => import('@/app/(main)/profile/page'),
+    () => Promise.resolve({ default: PlaceholderPage }),
     { ssr: false }
   ),
 };
@@ -158,23 +160,23 @@ export const LazyComponents = {
     () => import('@/shared/components/common/ImageGallery')
   ),
   
-  // 角色相关
+  // 角色相关 (using placeholder until implemented)
   PersonalityEditor: createLazyComponent(
-    () => import('@/features/character/components/PersonalityEditor'),
+    () => Promise.resolve({ default: PlaceholderPage }),
     { ssr: false }
   ),
   ExpressionManager: createLazyComponent(
-    () => import('@/features/character/components/ExpressionManager'),
+    () => Promise.resolve({ default: PlaceholderPage }),
     { ssr: false }
   ),
   ModelPreview: createLazyComponent(
-    () => import('@/features/character/components/ModelManager/ModelPreview'),
+    () => Promise.resolve({ default: PlaceholderPage }),
     { ssr: false }
   ),
   
-  // 图表组件
+  // 图表组件 (using placeholder until implemented)
   Chart: createLazyComponent(
-    () => import('@/shared/components/common/Chart'),
+    () => Promise.resolve({ default: PlaceholderPage }),
     { ssr: false }
   ),
 };
@@ -185,9 +187,9 @@ export const LazyComponents = {
 export function preloadCriticalRoutes(): void {
   if (typeof window === 'undefined') return;
 
-  // 预加载首页关键组件
-  preloadComponent(() => import('@/app/(main)/posts/page'));
-  preloadComponent(() => import('@/app/(main)/adapters/page'));
+  // 预加载首页关键组件 (disabled until pages are implemented)
+  // preloadComponent(() => import('@/app/(main)/posts/page'));
+  // preloadComponent(() => import('@/app/(main)/adapters/page'));
 }
 
 /**

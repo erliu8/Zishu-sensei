@@ -44,9 +44,7 @@ export function CommentItem({
 
   const updateComment = useUpdateComment();
 
-  const isAuthor = currentUserId === comment.authorId;
   const hasReplies = comment.replies && comment.replies.length > 0;
-  const canNestReplies = depth < maxDepth;
 
   const handleReplyClick = () => {
     setIsReplying(true);

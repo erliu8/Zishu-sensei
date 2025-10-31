@@ -7,7 +7,8 @@ from sqlalchemy.ext.asyncio import AsyncSession
 from sqlalchemy.orm import selectinload
 from sqlalchemy import select, desc, func, or_
 
-from app.core.deps import get_db, get_current_user
+from app.core.deps import get_db, get_current_user, get_optional_current_user
+from app.core.response import create_success_response
 from app.schemas.post import PostCreate, PostUpdate, PostPublic, PostDetail
 from app.schemas.comment import CommentCreate, CommentCreateForPost, CommentPublic
 from app.schemas.common import PaginatedResponse
@@ -51,14 +52,14 @@ async def build_post_public(
     )
 
 
-@router.get("", response_model=PaginatedResponse[PostPublic])
+@router.get("")
 async def get_posts(
     page: int = Query(1, ge=1, description="页码"),
     page_size: int = Query(20, ge=1, le=100, description="每页数量"),
     category: Optional[str] = Query(None, description="分类筛选"),
     user_id: Optional[int] = Query(None, description="用户ID筛选"),
     sort: str = Query("latest", description="排序方式: latest, popular"),
-    current_user: Optional[User] = Depends(get_current_user),
+    current_user: Optional[User] = Depends(get_optional_current_user),
     db: AsyncSession = Depends(get_db),
 ):
     """
@@ -111,12 +112,14 @@ async def get_posts(
         post_public = await build_post_public(post, current_user, db)
         post_list.append(post_public)
     
-    return PaginatedResponse.create(
+    paginated = PaginatedResponse.create(
         items=post_list,
         total=total,
         page=page,
         page_size=page_size,
     )
+    
+    return create_success_response(data=paginated)
 
 
 @router.post("", response_model=PostPublic, status_code=status.HTTP_201_CREATED)
@@ -169,14 +172,14 @@ async def create_post(
     return await build_post_public(post, current_user, db)
 
 
-@router.get("/search", response_model=PaginatedResponse[PostPublic])
+@router.get("/search")
 async def search_posts(
     q: str = Query(..., min_length=1, description="搜索关键词"),
     category: Optional[str] = Query(None, description="分类筛选"),
     tags: Optional[str] = Query(None, description="标签筛选（逗号分隔）"),
     page: int = Query(1, ge=1, description="页码"),
     page_size: int = Query(20, ge=1, le=100, description="每页数量"),
-    current_user: Optional[User] = Depends(get_current_user),
+    current_user: Optional[User] = Depends(get_optional_current_user),
     db: AsyncSession = Depends(get_db),
 ):
     """
@@ -234,19 +237,21 @@ async def search_posts(
         post_public = await build_post_public(post, current_user, db)
         post_publics.append(post_public)
     
-    return PaginatedResponse(
+    paginated = PaginatedResponse(
         items=post_publics,
         total=total,
         page=page,
         page_size=page_size,
         pages=(total + page_size - 1) // page_size if total > 0 else 0,
     )
+    
+    return create_success_response(data=paginated)
 
 
 @router.get("/{post_id}", response_model=PostDetail)
 async def get_post(
     post_id: int,
-    current_user: Optional[User] = Depends(get_current_user),
+    current_user: Optional[User] = Depends(get_optional_current_user),
     db: AsyncSession = Depends(get_db),
 ):
     """
@@ -483,7 +488,7 @@ async def unlike_post(
 @router.get("/{post_id}/comments", response_model=List[CommentPublic])
 async def get_post_comments(
     post_id: int,
-    current_user: Optional[User] = Depends(get_current_user),
+    current_user: Optional[User] = Depends(get_optional_current_user),
     db: AsyncSession = Depends(get_db),
 ):
     """

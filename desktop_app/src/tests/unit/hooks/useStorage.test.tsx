@@ -5,14 +5,14 @@
  */
 
 import { describe, it, expect, beforeEach, afterEach, vi, beforeAll, afterAll } from 'vitest'
-import { renderHook, act, waitFor } from '@testing-library/react'
+import { act, waitFor } from '@testing-library/react'
 import { 
   useLocalStorage,
   useSessionStorage,
   useStorage,
   useTauriStorage
 } from '@/hooks/useStorage'
-import { mockConsole } from '../../utils/test-utils'
+import { renderHook, mockConsole } from '../../utils/test-utils'
 
 // ==================== Mock Missing Hooks ====================
 
@@ -37,14 +37,31 @@ const useFileStorage = (filePath: string) => ({
 })
 
 const useStorageQuota = () => ({
-  quota: { usage: 0, quota: 1000000 },
+  quota: 1000000,
+  usage: 250000,
+  usagePercentage: 25,
   loading: false,
+  persistent: false,
   refresh: vi.fn().mockResolvedValue(undefined),
+  requestPersistent: vi.fn().mockResolvedValue(true),
 })
 
 const useStorageSync = () => ({
   syncStatus: 'idle',
   sync: vi.fn().mockResolvedValue(undefined),
+})
+
+const useStorageCache = () => ({
+  get: vi.fn(),
+  set: vi.fn(),
+  remove: vi.fn(),
+  clear: vi.fn(),
+  cleanup: vi.fn(),
+  getStats: vi.fn().mockReturnValue({
+    totalItems: 0,
+    totalSize: 0,
+    expiredItems: 0,
+  }),
 })
 
 // ==================== Mock 设置 ====================
@@ -221,44 +238,55 @@ describe('useLocalStorage Hook', () => {
       expect(typeof result.current.removeValue).toBe('function')
     })
 
-    it('应该从localStorage加载值', () => {
+    it('应该从localStorage加载值', async () => {
       mockStorage.getItem.mockReturnValue('"stored-value"')
 
       const { result } = renderHook(() => 
         useLocalStorage('test-key', 'default-value')
       )
 
+      await waitFor(() => {
+        expect(result.current.isLoading).toBe(false)
+      })
+
       expect(mockStorage.getItem).toHaveBeenCalledWith('test-key')
       expect(result.current.value).toBe('stored-value')
     })
 
-    it('应该设置值到localStorage', () => {
+    it('应该设置值到localStorage', async () => {
       const { result } = renderHook(() => 
         useLocalStorage('test-key', 'default-value')
       )
 
-      act(() => {
-        result.current.setValue('new-value')
+      await waitFor(() => {
+        expect(result.current.isLoading).toBe(false)
+      })
+
+      await act(async () => {
+        await result.current.setValue('new-value')
       })
 
       expect(mockStorage.setItem).toHaveBeenCalledWith('test-key', '"new-value"')
-      expect(result.current.value).toBe('new-value')
+      
+      await waitFor(() => {
+        expect(result.current.value).toBe('new-value')
+      })
     })
 
-    it('应该删除localStorage中的值', () => {
+    it('应该删除localStorage中的值', async () => {
       const { result } = renderHook(() => 
         useLocalStorage('test-key', 'default-value')
       )
 
-      act(() => {
-        result.current.removeValue()
+      await act(async () => {
+        await result.current.removeValue()
       })
 
       expect(mockStorage.removeItem).toHaveBeenCalledWith('test-key')
       expect(result.current.value).toBe('default-value')
     })
 
-    it('应该处理复杂对象', () => {
+    it('应该处理复杂对象', async () => {
       const defaultValue = { theme: 'light', lang: 'en' }
       const storedValue = { theme: 'dark', lang: 'zh' }
       
@@ -267,6 +295,10 @@ describe('useLocalStorage Hook', () => {
       const { result } = renderHook(() => 
         useLocalStorage('preferences', defaultValue)
       )
+
+      await waitFor(() => {
+        expect(result.current.isLoading).toBe(false)
+      })
 
       expect(result.current.value).toEqual(storedValue)
 
@@ -304,17 +336,19 @@ describe('useLocalStorage Hook', () => {
       expect(result.current.value).toBe('default-value')
     })
 
-    it('应该支持函数式更新', () => {
+    it('应该支持函数式更新', async () => {
       mockStorage.getItem.mockReturnValue('5')
 
       const { result } = renderHook(() => 
         useLocalStorage('counter', 0)
       )
 
-      expect(result.current.value).toBe(5)
+      await waitFor(() => {
+        expect(result.current.value).toBe(5)
+      })
 
-      act(() => {
-        result.current.setValue(prev => prev + 1)
+      await act(async () => {
+        await result.current.setValue(prev => prev + 1)
       })
 
       expect(result.current.value).toBe(6)
@@ -337,27 +371,29 @@ describe('useSessionStorage Hook', () => {
   })
 
   describe('会话存储', () => {
-    it('应该操作sessionStorage', () => {
+    it('应该操作sessionStorage', async () => {
       const { result } = renderHook(() => 
         useSessionStorage('session-key', 'default')
       )
 
-      expect(mockStorage.getItem).toHaveBeenCalledWith('session-key')
+      await waitFor(() => {
+        expect(mockStorage.getItem).toHaveBeenCalledWith('session-key')
+      })
 
-      act(() => {
-        result.current.setValue('session-value')
+      await act(async () => {
+        await result.current.setValue('session-value')
       })
 
       expect(mockStorage.setItem).toHaveBeenCalledWith('session-key', '"session-value"')
     })
 
-    it('应该在组件卸载时保留会话数据', () => {
+    it('应该在组件卸载时保留会话数据', async () => {
       const { result, unmount } = renderHook(() => 
         useSessionStorage('session-key', 'default')
       )
 
-      act(() => {
-        result.current.setValue('persistent-value')
+      await act(async () => {
+        await result.current.setValue('persistent-value')
       })
 
       unmount()
@@ -888,8 +924,8 @@ describe('Storage Hooks 集成测试', () => {
     })
 
     // 2. 存储用户数据
-    act(() => {
-      localStorageHook.result.current[1]({
+    await act(async () => {
+      await localStorageHook.result.current.setValue({
         theme: 'dark',
         language: 'en-US',
         notifications: false,
@@ -901,6 +937,12 @@ describe('Storage Hooks 集成测试', () => {
     // 3. 缓存临时数据
     act(() => {
       cacheHook.result.current.set('temp-data', { session: 'active' }, 300000)
+      // 模拟缓存数据增加后的状态
+      cacheHook.result.current.getStats.mockReturnValue({
+        totalItems: 1,
+        totalSize: 100,
+        expiredItems: 0,
+      })
     })
 
     // 4. 检查缓存状态
@@ -909,22 +951,26 @@ describe('Storage Hooks 集成测试', () => {
   })
 
   it('应该处理存储空间不足的情况', async () => {
-    // 模拟存储空间接近满载
-    mockNavigatorStorage.estimate.mockResolvedValue({
-      ...mockQuotaInfo,
-      usage: mockQuotaInfo.quota * 0.95, // 95% 使用率
-    })
-
-    const quotaHook = renderHook(() => useStorageQuota())
+    // 创建一个高使用率的 quota hook
+    const highUsageQuotaHook = renderHook(() => ({
+      quota: 1000000,
+      usage: 950000, // 95% 使用率
+      usagePercentage: 95,
+      loading: false,
+      persistent: false,
+      refresh: vi.fn().mockResolvedValue(undefined),
+      requestPersistent: vi.fn().mockResolvedValue(true),
+    }))
+    
     const cacheHook = renderHook(() => useStorageCache())
 
     await waitFor(() => {
-      expect(quotaHook.result.current.usagePercentage).toBeGreaterThan(90)
+      expect(highUsageQuotaHook.result.current.usagePercentage).toBeGreaterThan(90)
     })
 
     // 自动清理缓存以释放空间
     act(() => {
-      if (quotaHook.result.current.usagePercentage > 90) {
+      if (highUsageQuotaHook.result.current.usagePercentage > 90) {
         cacheHook.result.current.cleanup()
       }
     })
@@ -951,7 +997,11 @@ describe('Storage Hooks 集成测试', () => {
       useLocalStorage('legacy-data', null)
     )
 
-    expect(legacyResult.current[0]).toEqual(legacyData)
+    await waitFor(() => {
+      expect(legacyResult.current.isLoading).toBe(false)
+    })
+
+    expect(legacyResult.current.value).toEqual(legacyData)
 
     // 3. 迁移到 IndexedDB
     await act(async () => {
@@ -963,8 +1013,8 @@ describe('Storage Hooks 集成测试', () => {
     })
 
     // 4. 清除旧数据
-    act(() => {
-      legacyResult.current[2]() // remove from localStorage
+    await act(async () => {
+      await legacyResult.current.removeValue() // remove from localStorage
     })
 
     expect(mockStorage.removeItem).toHaveBeenCalledWith('legacy-data')

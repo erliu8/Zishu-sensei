@@ -3,6 +3,7 @@ import { useQueryClient } from '@tanstack/react-query';
 import { notificationWebSocket } from '../services/notificationWebSocket';
 import { useNotificationStore } from '../store/notificationStore';
 import { notificationKeys } from './useNotifications';
+import { NotificationStatus } from '../domain/notification';
 import type { WebSocketNotificationMessage } from '../domain/notification';
 
 /**
@@ -65,7 +66,7 @@ export function useNotificationWebSocket(token?: string) {
         case 'mark_read':
           // 标记已读
           if (message.notificationId) {
-            updateNotification(message.notificationId, { status: 'read' });
+            updateNotification(message.notificationId, { status: NotificationStatus.READ });
           }
           break;
 

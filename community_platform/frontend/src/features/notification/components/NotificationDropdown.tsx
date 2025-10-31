@@ -1,7 +1,7 @@
 'use client';
 
 import React, { useState } from 'react';
-import { Bell, Settings, Trash2, CheckCheck } from 'lucide-react';
+import { Bell, Settings, CheckCheck } from 'lucide-react';
 import { Button } from '@/shared/components/ui/button';
 import {
   DropdownMenu,
@@ -14,6 +14,7 @@ import { ScrollArea } from '@/shared/components/ui/scroll-area';
 import { cn } from '@/shared/utils';
 import { NotificationBadge } from './NotificationBadge';
 import { NotificationList } from './NotificationList';
+import { NotificationStatus } from '../domain/notification';
 import {
   useNotifications,
   useUnreadCount,
@@ -53,7 +54,7 @@ export function NotificationDropdown({
   const { data: unreadNotifications } = useNotifications({
     page: 1,
     pageSize: maxItems,
-    status: 'unread',
+    status: NotificationStatus.UNREAD,
   });
 
   // Mutations

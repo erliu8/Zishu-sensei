@@ -5,184 +5,132 @@
  */
 
 import { describe, it, expect, beforeEach, afterEach, vi, beforeAll, afterAll } from 'vitest'
-import { renderHook, act, waitFor } from '@testing-library/react'
+import { act, waitFor } from '@testing-library/react'
 import { 
   useSettings,
   useSimpleSettings,
   useThemeSettings,
   useLanguageSettings
 } from '@/hooks/useSettings'
-import { mockConsole } from '../../utils/test-utils'
+import { renderHook, mockConsole } from '../../utils/test-utils'
 
-// ==================== Mock Missing Hooks ====================
+// ==================== Mock Store and Services ====================
 
-// Mock hooks that don't exist in the actual implementation but are used in tests
-const useAdvancedSettings = () => ({
-  settings: {},
-  loading: false,
-  updateAdvancedSettings: vi.fn().mockResolvedValue(undefined),
-})
-
-const useSettingsImportExport = () => ({
+// Mock useSettingsStore
+const mockSettingsStore = {
+  appSettings: {
+    theme: 'system' as const,
+    language: 'zh-CN',
+    autoStart: false,
+    windowState: {
+      mode: 'pet' as const,
+      position: { x: 0, y: 0 },
+      size: { width: 400, height: 600 },
+      isVisible: true,
+      isAlwaysOnTop: true,
+      isResizable: true,
+      title: '紫舒老师桌面版',
+    },
+    notifications: {
+      enabled: true,
+      sound: true,
+      desktop: true,
+    },
+    ai: {
+      model: 'gpt-3.5-turbo',
+      temperature: 0.7,
+      maxTokens: 2000,
+    },
+    character: {
+      model: 'shizuku',
+      voice: 'female',
+      personality: 'friendly',
+    },
+  },
+  appConfig: {},
+  isLoading: false,
+  isInitialized: true,
+  syncStatus: 'idle' as const,
+  error: null,
+  needsSync: vi.fn().mockReturnValue(false),
+  initialize: vi.fn().mockImplementation(() => Promise.resolve()),
+  updateAppSettings: vi.fn().mockResolvedValue(undefined),
+  resetAppSettings: vi.fn().mockResolvedValue(undefined),
+  updateTheme: vi.fn().mockResolvedValue(undefined),
+  updateLanguage: vi.fn().mockResolvedValue(undefined),
+  toggleAutoStart: vi.fn().mockResolvedValue(undefined),
+  updateNotifications: vi.fn().mockResolvedValue(undefined),
+  updateAISettings: vi.fn().mockResolvedValue(undefined),
+  updateConfig: vi.fn().mockResolvedValue(undefined),
+  updatePartialConfig: vi.fn().mockResolvedValue(undefined),
+  resetAppConfig: vi.fn().mockResolvedValue(undefined),
   exportSettings: vi.fn().mockResolvedValue('{}'),
   importSettings: vi.fn().mockResolvedValue(undefined),
-  exportToFile: vi.fn().mockResolvedValue(undefined),
-  importFromFile: vi.fn().mockResolvedValue(undefined),
-})
-
-const useHotkeysSettings = () => ({
-  hotkeys: {},
-  updateHotkey: vi.fn().mockResolvedValue(undefined),
-  resetHotkeys: vi.fn().mockResolvedValue(undefined),
-})
-
-const usePrivacySettings = () => ({
-  privacy: {},
-  updatePrivacy: vi.fn().mockResolvedValue(undefined),
-})
-
-const useBackupSettings = () => ({
-  backups: [],
-  createBackup: vi.fn().mockResolvedValue(undefined),
-  restoreBackup: vi.fn().mockResolvedValue(undefined),
-})
-
-const useSettingsSync = () => ({
-  syncStatus: 'idle',
-  sync: vi.fn().mockResolvedValue(undefined),
-})
-
-// ==================== Mock 设置 ====================
-
-// Mock SettingsService
-const mockSettingsService = {
-  getSettings: vi.fn(),
-  updateSettings: vi.fn(),
-  resetSettings: vi.fn(),
-  getAdvancedSettings: vi.fn(),
-  updateAdvancedSettings: vi.fn(),
-  validateSettings: vi.fn(),
-  exportSettings: vi.fn(),
-  importSettings: vi.fn(),
-  syncSettings: vi.fn(),
-  getSettingsBackups: vi.fn(),
-  createSettingsBackup: vi.fn(),
-  restoreSettingsBackup: vi.fn(),
+  syncToBackend: vi.fn().mockResolvedValue(undefined),
+  syncFromBackend: vi.fn().mockResolvedValue(undefined),
+  forceSync: vi.fn().mockResolvedValue(undefined),
+  refreshConfig: vi.fn().mockResolvedValue(undefined),
+  clearError: vi.fn(),
+  resetAllSettings: vi.fn().mockResolvedValue(undefined),
+  addEventListener: vi.fn().mockReturnValue(() => {}),
 }
 
-// Mock Tauri API
-const mockTauri = {
+// Mock useTauri
+const mockUseTauri = {
+  isAvailable: true,
   invoke: vi.fn(),
   listen: vi.fn(),
   emit: vi.fn(),
 }
 
-vi.mock('@/services/settingsService', () => ({
-  default: mockSettingsService,
+vi.mock('@/stores/settingsStore', () => ({
+  useSettingsStore: () => mockSettingsStore,
+  SyncStatus: {
+    IDLE: 'idle',
+    SYNCING: 'syncing', 
+    SUCCESS: 'success',
+    FAILED: 'failed'
+  }
 }))
 
-vi.mock('@tauri-apps/api', () => mockTauri)
+vi.mock('@/hooks/useTauri', () => ({
+  useTauri: () => mockUseTauri,
+}))
 
-// ==================== 测试数据 ====================
+// ==================== Test Data ====================
 
-const mockBaseSettings = {
-  language: 'zh-CN' as const,
-  theme: 'auto' as const,
-  auto_start: false,
-  minimize_to_tray: true,
-  enable_notifications: true,
-  check_updates: true,
-  analytics_enabled: false,
-  crash_reporting: false,
-  font_family: 'system',
-  font_size: 14,
-  ui_scale: 1.0,
+// Expected default settings (matching mockSettingsStore.appSettings)
+const expectedSettings = {
+  theme: 'system',
+  language: 'zh-CN',
+  autoStart: false,
+  windowState: {
+    mode: 'pet',
+    position: { x: 0, y: 0 },
+    size: { width: 400, height: 600 },
+    isVisible: true,
+    isAlwaysOnTop: true,
+    isResizable: true,
+    title: '紫舒老师桌面版',
+  },
+  notifications: {
+    enabled: true,
+    sound: true,
+    desktop: true,
+  },
+  ai: {
+    model: 'gpt-3.5-turbo',
+    temperature: 0.7,
+    maxTokens: 2000,
+  },
   character: {
-    model_path: '/models/default.vrm',
-    voice_enabled: true,
-    animation_speed: 1.0,
-    expression_intensity: 0.8,
-  },
-  desktop: {
-    always_on_top: false,
-    click_through: false,
-    position: { x: 100, y: 100 },
-    size: { width: 300, height: 400 },
+    model: 'shizuku',
+    voice: 'female',
+    personality: 'friendly',
   },
 }
 
-const mockAdvancedSettings = {
-  performance: {
-    hardware_acceleration: true,
-    memory_limit_mb: 1024,
-    cache_size_mb: 256,
-    max_concurrent_requests: 10,
-    request_timeout_ms: 30000,
-  },
-  debug: {
-    enable_debug_mode: false,
-    log_level: 'info' as const,
-    save_debug_logs: false,
-    max_log_files: 10,
-    verbose_logging: false,
-  },
-  security: {
-    encryption_enabled: true,
-    auto_lock_minutes: 30,
-    require_password: false,
-    secure_memory: true,
-    clear_clipboard: true,
-  },
-  network: {
-    proxy_enabled: false,
-    proxy_type: 'http' as const,
-    proxy_host: '',
-    proxy_port: 8080,
-    timeout_seconds: 30,
-    retry_attempts: 3,
-  },
-}
 
-const mockHotkeysSettings = {
-  global: {
-    toggle_visibility: 'Ctrl+Shift+Z',
-    quick_chat: 'Ctrl+Shift+C',
-    screenshot: 'F12',
-  },
-  local: {
-    send_message: 'Enter',
-    new_chat: 'Ctrl+N',
-    clear_chat: 'Ctrl+L',
-    settings: 'Ctrl+,',
-  },
-}
-
-const mockPrivacySettings = {
-  data_collection: {
-    usage_analytics: false,
-    error_reporting: false,
-    performance_metrics: false,
-  },
-  storage: {
-    local_storage_only: true,
-    auto_clear_history: false,
-    history_retention_days: 30,
-  },
-  sharing: {
-    allow_screenshots: false,
-    allow_model_sharing: false,
-    telemetry_enabled: false,
-  },
-}
-
-const mockSettingsBackup = {
-  id: 'backup-123',
-  name: 'Auto Backup',
-  created_at: '2025-01-01T12:00:00Z',
-  size_bytes: 2048,
-  settings_version: '1.0.0',
-  checksum: 'abc123def456',
-}
 
 // ==================== 测试套件 ====================
 
@@ -200,9 +148,25 @@ describe('useSettings Hook', () => {
   beforeEach(() => {
     vi.clearAllMocks()
     
-    mockSettingsService.getSettings.mockResolvedValue(mockBaseSettings)
-    mockSettingsService.updateSettings.mockResolvedValue(undefined)
-    mockSettingsService.resetSettings.mockResolvedValue(undefined)
+    // Reset mock store state
+    mockSettingsStore.isLoading = false
+    mockSettingsStore.isInitialized = true
+    mockSettingsStore.error = null
+    mockSettingsStore.appSettings = { 
+      ...expectedSettings,
+      theme: 'system' as const,
+      windowState: {
+        ...expectedSettings.windowState,
+        mode: 'pet' as const
+      }
+    }
+    
+    // Properly reset mock functions
+    mockSettingsStore.initialize = vi.fn().mockResolvedValue(undefined)
+    mockSettingsStore.updateAppSettings = vi.fn().mockResolvedValue(undefined)
+    mockSettingsStore.resetAppSettings = vi.fn().mockResolvedValue(undefined)
+    mockSettingsStore.updateTheme = vi.fn().mockResolvedValue(undefined)
+    mockSettingsStore.updateLanguage = vi.fn().mockResolvedValue(undefined)
   })
 
   afterEach(() => {
@@ -214,37 +178,41 @@ describe('useSettings Hook', () => {
       const { result } = renderHook(() => useSettings())
 
       expect(result.current.settings).toBeDefined()
-      expect(result.current.isLoading).toBe(true)
+      expect(result.current.isLoading).toBe(false) // Mock starts as not loading
       expect(result.current.error).toBe(null)
       expect(typeof result.current.updateSettings).toBe('function')
       expect(typeof result.current.resetSettings).toBe('function')
+      expect(typeof result.current.updateTheme).toBe('function')
+      expect(typeof result.current.updateLanguage).toBe('function')
     })
 
     it('应该获取初始设置', async () => {
+      // Set up to test initialization
+      mockSettingsStore.isInitialized = false
+
       const { result } = renderHook(() => useSettings())
 
       await waitFor(() => {
-        expect(result.current.settings).toBeDefined()
-        expect(result.current.isLoading).toBe(false)
+        expect(result.current.settings).toEqual(expectedSettings)
       })
 
-      expect(mockSettingsService.getSettings).toHaveBeenCalled()
+      expect(mockSettingsStore.initialize).toHaveBeenCalled()
     })
 
     it('应该更新设置', async () => {
       const { result } = renderHook(() => useSettings())
 
       await waitFor(() => {
-        expect(result.current.settings).toEqual(mockBaseSettings)
+        expect(result.current.settings).toEqual(expectedSettings)
       })
 
-      const updates = { language: 'en-US' as const, theme: 'dark' as const }
+      const updates = { language: 'en-US', theme: 'dark' as const }
 
       await act(async () => {
         await result.current.updateSettings(updates)
       })
 
-      // Settings will be updated through the store
+      expect(mockSettingsStore.updateAppSettings).toHaveBeenCalledWith(updates)
     })
 
     it('应该处理部分设置更新', async () => {
@@ -256,9 +224,9 @@ describe('useSettings Hook', () => {
 
       const characterUpdates = {
         character: {
-          model: 'default-model',
-          voice: 'default-voice',
-          personality: 'friendly',
+          model: 'sakura',
+          voice: 'female',
+          personality: 'cheerful',
         },
       }
 
@@ -266,7 +234,7 @@ describe('useSettings Hook', () => {
         await result.current.updateSettings(characterUpdates)
       })
 
-      expect(result.current.settings.character).toBeDefined()
+      expect(mockSettingsStore.updateAppSettings).toHaveBeenCalledWith(characterUpdates)
     })
 
     it('应该重置设置', async () => {
@@ -276,23 +244,16 @@ describe('useSettings Hook', () => {
         expect(result.current.settings).toBeTruthy()
       })
 
-      // 先更新一些设置
-      await act(async () => {
-        await result.current.updateSettings({ language: 'en-US' })
-      })
-
-      // 然后重置
       await act(async () => {
         await result.current.resetSettings()
       })
 
-      expect(mockSettingsService.resetSettings).toHaveBeenCalled()
-      expect(mockSettingsService.getSettings).toHaveBeenCalledTimes(2) // 初始 + 重置后重新获取
+      expect(mockSettingsStore.resetAppSettings).toHaveBeenCalled()
     })
 
     it('应该处理更新错误', async () => {
       const testError = new Error('Update failed')
-      mockSettingsService.updateSettings.mockRejectedValue(testError)
+      mockSettingsStore.updateAppSettings.mockRejectedValue(testError)
 
       const { result } = renderHook(() => useSettings())
 
@@ -300,340 +261,144 @@ describe('useSettings Hook', () => {
         expect(result.current.settings).toBeTruthy()
       })
 
+      // Expect the updateSettings call to throw an error
       await expect(
         act(async () => {
           await result.current.updateSettings({ theme: 'dark' })
         })
       ).rejects.toThrow('Update failed')
 
-      expect(result.current.error).toBe('更新设置失败')
+      expect(mockSettingsStore.updateAppSettings).toHaveBeenCalledWith({ theme: 'dark' })
     })
 
-    it('应该处理获取设置错误', async () => {
-      const testError = new Error('Load failed')
-      mockSettingsService.getSettings.mockRejectedValue(testError)
+    it('应该处理初始化错误', async () => {
+      const testError = new Error('Init failed')
+      mockSettingsStore.error = testError
+      mockSettingsStore.isLoading = false
 
       const { result } = renderHook(() => useSettings())
 
       await waitFor(() => {
-        expect(result.current.error).toBeTruthy()
+        expect(result.current.error).toBe(testError)
         expect(result.current.isLoading).toBe(false)
       })
     })
   })
 })
 
-// Skipping tests for non-existent hooks
-describe.skip('useAdvancedSettings Hook', () => {
+// ==================== Simple Settings Hook Tests ====================
+
+describe('useSimpleSettings Hook', () => {
   beforeEach(() => {
     vi.clearAllMocks()
-    mockSettingsService.getAdvancedSettings.mockResolvedValue(mockAdvancedSettings)
-    mockSettingsService.updateAdvancedSettings.mockResolvedValue(undefined)
-  })
-
-  describe('高级设置', () => {
-    it('应该获取高级设置', async () => {
-      const { result } = renderHook(() => useAdvancedSettings())
-
-      await waitFor(() => {
-        expect(result.current.settings).toEqual(mockAdvancedSettings)
-        expect(result.current.loading).toBe(false)
-      })
-
-      expect(mockSettingsService.getAdvancedSettings).toHaveBeenCalled()
-    })
-
-    it('应该更新高级设置', async () => {
-      const { result } = renderHook(() => useAdvancedSettings())
-
-      await waitFor(() => {
-        expect(result.current.settings).toBeTruthy()
-      })
-
-      const updates = {
-        performance: {
-          ...mockAdvancedSettings.performance,
-          hardware_acceleration: false,
-          memory_limit_mb: 2048,
-        },
+    
+    // Reset mock store state for this hook test
+    mockSettingsStore.isLoading = false
+    mockSettingsStore.isInitialized = true
+    mockSettingsStore.error = null
+    mockSettingsStore.appSettings = { 
+      ...expectedSettings,
+      theme: 'system' as const,
+      windowState: {
+        ...expectedSettings.windowState,
+        mode: 'pet' as const
       }
+    }
+  })
 
-      await act(async () => {
-        await result.current.updateAdvancedSettings(updates)
-      })
+  it('应该返回简化的设置接口', () => {
+    const { result } = renderHook(() => useSimpleSettings())
 
-      expect(mockSettingsService.updateAdvancedSettings).toHaveBeenCalledWith(updates)
+    expect(result.current.settings).toEqual(expectedSettings)
+    expect(result.current.isLoading).toBe(false)
+    expect(result.current.error).toBe(null)
+    expect(typeof result.current.updateSettings).toBe('function')
+  })
+
+  it('应该调用基础的更新设置方法', async () => {
+    const { result } = renderHook(() => useSimpleSettings())
+
+    await act(async () => {
+      await result.current.updateSettings({ theme: 'dark' })
     })
 
-    it('应该支持单个分类更新', async () => {
-      const { result } = renderHook(() => useAdvancedSettings())
+    expect(mockSettingsStore.updateAppSettings).toHaveBeenCalledWith({ theme: 'dark' })
+  })
+})
 
-      await waitFor(() => {
-        expect(result.current.settings).toBeTruthy()
-      })
+// ==================== Theme Settings Hook Tests ====================
 
-      const debugUpdates = {
-        enable_debug_mode: true,
-        log_level: 'debug' as const,
+describe('useThemeSettings Hook', () => {
+  beforeEach(() => {
+    vi.clearAllMocks()
+    
+    // Reset mock store state for this hook test
+    mockSettingsStore.isLoading = false
+    mockSettingsStore.isInitialized = true
+    mockSettingsStore.error = null
+    mockSettingsStore.appSettings = { 
+      ...expectedSettings,
+      theme: 'system' as const,
+      windowState: {
+        ...expectedSettings.windowState,
+        mode: 'pet' as const
       }
+    }
+  })
 
-      await act(async () => {
-        await result.current.updateCategory('debug', debugUpdates)
-      })
+  it('应该返回主题相关的接口', () => {
+    const { result } = renderHook(() => useThemeSettings())
 
-      expect(mockSettingsService.updateAdvancedSettings).toHaveBeenCalledWith({
-        debug: {
-          ...mockAdvancedSettings.debug,
-          ...debugUpdates,
-        },
-      })
+    expect(result.current.theme).toBe('system')
+    expect(typeof result.current.updateTheme).toBe('function')
+  })
+
+  it('应该更新主题', async () => {
+    const { result } = renderHook(() => useThemeSettings())
+
+    await act(async () => {
+      await result.current.updateTheme('light')
     })
 
-    it('应该验证高级设置', async () => {
-      mockSettingsService.validateSettings.mockResolvedValue({
-        valid: false,
-        errors: [
-          { field: 'performance.memory_limit_mb', message: '内存限制必须大于 256MB' },
-        ],
-      })
-
-      const { result } = renderHook(() => useAdvancedSettings())
-
-      await waitFor(() => {
-        expect(result.current.settings).toBeTruthy()
-      })
-
-      let validationResult: any
-      await act(async () => {
-        validationResult = await result.current.validateSettings({
-          performance: { memory_limit_mb: 128 },
-        })
-      })
-
-      expect(validationResult.valid).toBe(false)
-      expect(validationResult.errors).toHaveLength(1)
-    })
+    expect(mockSettingsStore.updateTheme).toHaveBeenCalledWith('light')
   })
 })
 
-describe.skip('useSettingsImportExport Hook', () => {
+// ==================== Language Settings Hook Tests ====================
+
+describe('useLanguageSettings Hook', () => {
   beforeEach(() => {
     vi.clearAllMocks()
-    mockSettingsService.exportSettings.mockResolvedValue('{"version":"1.0","settings":{}}')
-    mockSettingsService.importSettings.mockResolvedValue(undefined)
-  })
-
-  describe('设置导入导出', () => {
-    it('应该导出设置', async () => {
-      const { result } = renderHook(() => useSettingsImportExport())
-
-      let exportData: string
-      await act(async () => {
-        exportData = await result.current.exportSettings()
-      })
-
-      expect(mockSettingsService.exportSettings).toHaveBeenCalled()
-      expect(exportData!).toBe('{"version":"1.0","settings":{}}')
-    })
-
-    it('应该导入设置', async () => {
-      const { result } = renderHook(() => useSettingsImportExport())
-
-      const importData = '{"version":"1.0","settings":{"language":"en-US"}}'
-
-      await act(async () => {
-        await result.current.importSettings(importData)
-      })
-
-      expect(mockSettingsService.importSettings).toHaveBeenCalledWith(importData)
-    })
-
-    it('应该处理导入错误', async () => {
-      const testError = new Error('Invalid format')
-      mockSettingsService.importSettings.mockRejectedValue(testError)
-
-      const { result } = renderHook(() => useSettingsImportExport())
-
-      await expect(
-        act(async () => {
-          await result.current.importSettings('invalid json')
-        })
-      ).rejects.toThrow('Invalid format')
-
-      expect(result.current.error).toBe('导入设置失败')
-    })
-
-    it('应该管理导入导出状态', async () => {
-      let resolveExport: (value: any) => void
-      const exportPromise = new Promise(resolve => {
-        resolveExport = resolve
-      })
-
-      mockSettingsService.exportSettings.mockReturnValue(exportPromise)
-
-      const { result } = renderHook(() => useSettingsImportExport())
-
-      act(() => {
-        result.current.exportSettings()
-      })
-
-      expect(result.current.exporting).toBe(true)
-
-      await act(async () => {
-        resolveExport!('exported data')
-      })
-
-      expect(result.current.exporting).toBe(false)
-    })
-  })
-})
-
-describe.skip('useHotkeysSettings Hook', () => {
-  beforeEach(() => {
-    vi.clearAllMocks()
-    mockTauri.invoke.mockResolvedValue(mockHotkeysSettings)
-  })
-
-  describe('快捷键设置', () => {
-    it('应该获取快捷键设置', async () => {
-      const { result } = renderHook(() => useHotkeysSettings())
-
-      await waitFor(() => {
-        expect(result.current.hotkeys).toEqual(mockHotkeysSettings)
-        expect(result.current.loading).toBe(false)
-      })
-
-      expect(mockTauri.invoke).toHaveBeenCalledWith('get_hotkeys_settings')
-    })
-
-    it('应该更新快捷键', async () => {
-      const { result } = renderHook(() => useHotkeysSettings())
-
-      await waitFor(() => {
-        expect(result.current.hotkeys).toBeTruthy()
-      })
-
-      await act(async () => {
-        await result.current.updateHotkey('global', 'toggle_visibility', 'Ctrl+Alt+Z')
-      })
-
-      expect(mockTauri.invoke).toHaveBeenCalledWith('update_hotkey', {
-        category: 'global',
-        key: 'toggle_visibility',
-        shortcut: 'Ctrl+Alt+Z',
-      })
-    })
-
-    it('应该重置快捷键', async () => {
-      const { result } = renderHook(() => useHotkeysSettings())
-
-      await act(async () => {
-        await result.current.resetHotkeys()
-      })
-
-      expect(mockTauri.invoke).toHaveBeenCalledWith('reset_hotkeys')
-    })
-
-    it('应该检测快捷键冲突', async () => {
-      mockTauri.invoke.mockResolvedValue({
-        conflict: true,
-        existing_key: 'quick_chat',
-        existing_shortcut: 'Ctrl+Shift+Z',
-      })
-
-      const { result } = renderHook(() => useHotkeysSettings())
-
-      let conflictResult: any
-      await act(async () => {
-        conflictResult = await result.current.checkConflict('Ctrl+Shift+Z')
-      })
-
-      expect(conflictResult.conflict).toBe(true)
-      expect(mockTauri.invoke).toHaveBeenCalledWith('check_hotkey_conflict', {
-        shortcut: 'Ctrl+Shift+Z',
-      })
-    })
-  })
-})
-
-describe.skip('usePrivacySettings Hook', () => {
-  beforeEach(() => {
-    vi.clearAllMocks()
-    mockTauri.invoke.mockResolvedValue(mockPrivacySettings)
-  })
-
-  describe('隐私设置', () => {
-    it('应该获取隐私设置', async () => {
-      const { result } = renderHook(() => usePrivacySettings())
-
-      await waitFor(() => {
-        expect(result.current.settings).toEqual(mockPrivacySettings)
-        expect(result.current.loading).toBe(false)
-      })
-    })
-
-    it('应该更新隐私设置', async () => {
-      const { result } = renderHook(() => usePrivacySettings())
-
-      await waitFor(() => {
-        expect(result.current.settings).toBeTruthy()
-      })
-
-      const updates = {
-        data_collection: {
-          ...mockPrivacySettings.data_collection,
-          usage_analytics: true,
-        },
+    
+    // Reset mock store state for this hook test
+    mockSettingsStore.isLoading = false
+    mockSettingsStore.isInitialized = true
+    mockSettingsStore.error = null
+    mockSettingsStore.appSettings = { 
+      ...expectedSettings,
+      theme: 'system' as const,
+      windowState: {
+        ...expectedSettings.windowState,
+        mode: 'pet' as const
       }
-
-      await act(async () => {
-        await result.current.updatePrivacySettings(updates)
-      })
-
-      expect(mockTauri.invoke).toHaveBeenCalledWith('update_privacy_settings', updates)
-    })
-  })
-})
-
-describe.skip('useBackupSettings Hook', () => {
-  beforeEach(() => {
-    vi.clearAllMocks()
-    mockSettingsService.getSettingsBackups.mockResolvedValue([mockSettingsBackup])
-    mockSettingsService.createSettingsBackup.mockResolvedValue(mockSettingsBackup)
-    mockSettingsService.restoreSettingsBackup.mockResolvedValue(undefined)
+    }
   })
 
-  describe('设置备份', () => {
-    it('应该获取备份列表', async () => {
-      const { result } = renderHook(() => useBackupSettings())
+  it('应该返回语言相关的接口', () => {
+    const { result } = renderHook(() => useLanguageSettings())
 
-      await waitFor(() => {
-        expect(result.current.backups).toEqual([mockSettingsBackup])
-        expect(result.current.loading).toBe(false)
-      })
+    expect(result.current.language).toBe('zh-CN')
+    expect(typeof result.current.updateLanguage).toBe('function')
+  })
+
+  it('应该更新语言', async () => {
+    const { result } = renderHook(() => useLanguageSettings())
+
+    await act(async () => {
+      await result.current.updateLanguage('ja-JP')
     })
 
-    it('应该创建备份', async () => {
-      const { result } = renderHook(() => useBackupSettings())
-
-      let backup: any
-      await act(async () => {
-        backup = await result.current.createBackup('Manual Backup')
-      })
-
-      expect(mockSettingsService.createSettingsBackup).toHaveBeenCalledWith('Manual Backup')
-      expect(backup).toEqual(mockSettingsBackup)
-    })
-
-    it('应该恢复备份', async () => {
-      const { result } = renderHook(() => useBackupSettings())
-
-      await act(async () => {
-        await result.current.restoreBackup('backup-123')
-      })
-
-      expect(mockSettingsService.restoreSettingsBackup).toHaveBeenCalledWith('backup-123')
-    })
+    expect(mockSettingsStore.updateLanguage).toHaveBeenCalledWith('ja-JP')
   })
 })
 
@@ -643,60 +408,107 @@ describe('Settings Hooks 集成测试', () => {
   beforeEach(() => {
     vi.clearAllMocks()
     
-    mockSettingsService.getSettings.mockResolvedValue(mockBaseSettings)
-    mockSettingsService.updateSettings.mockResolvedValue(undefined)
-    mockSettingsService.exportSettings.mockResolvedValue('exported_data')
-    mockSettingsService.createSettingsBackup.mockResolvedValue(mockSettingsBackup)
+    // Reset mocks for integration tests
+    mockSettingsStore.appSettings = { 
+      ...expectedSettings,
+      theme: 'system' as const,
+      windowState: {
+        ...expectedSettings.windowState,
+        mode: 'pet' as const
+      }
+    }
+    mockSettingsStore.updateAppSettings.mockResolvedValue(undefined)
+    mockSettingsStore.exportSettings.mockResolvedValue('{"settings": "exported"}')
   })
 
   it('应该完成设置管理完整流程', async () => {
-    const settingsHook = renderHook(() => useSettings())
-    const exportHook = renderHook(() => useSettingsImportExport())
-    const backupHook = renderHook(() => useBackupSettings())
+    const { result } = renderHook(() => useSettings())
 
     // 1. 加载设置
     await waitFor(() => {
-      expect(settingsHook.result.current.settings).toEqual(mockBaseSettings)
+      expect(result.current.settings).toEqual(expectedSettings)
+      expect(result.current.isInitialized).toBe(true)
     })
 
     // 2. 更新设置
     await act(async () => {
-      await settingsHook.result.current.updateSettings({ language: 'en-US' })
+      await result.current.updateSettings({ language: 'en-US' })
     })
+
+    expect(mockSettingsStore.updateAppSettings).toHaveBeenCalledWith({ language: 'en-US' })
 
     // 3. 导出设置
     let exportData: string
     await act(async () => {
-      exportData = await exportHook.result.current.exportSettings()
+      exportData = await result.current.exportSettings()
     })
 
-    expect(exportData!).toBe('exported_data')
+    expect(exportData!).toBe('{"settings": "exported"}')
+    expect(mockSettingsStore.exportSettings).toHaveBeenCalled()
 
-    // 4. 创建备份
-    let backup: any
+    // 4. 重置设置
     await act(async () => {
-      backup = await backupHook.result.current.createBackup('Integration Test')
+      await result.current.resetSettings()
     })
 
-    expect(backup).toEqual(mockSettingsBackup)
+    expect(mockSettingsStore.resetAppSettings).toHaveBeenCalled()
   })
 
   it('应该处理设置同步', async () => {
-    const { result } = renderHook(() => useSettingsSync())
+    const { result } = renderHook(() => useSettings())
 
-    mockSettingsService.syncSettings.mockResolvedValue({
-      success: true,
-      conflicts: [],
-      merged_settings: mockBaseSettings,
+    await waitFor(() => {
+      expect(result.current.settings).toBeTruthy()
     })
 
-    let syncResult: any
+    // 测试同步到后端
     await act(async () => {
-      syncResult = await result.current.syncWithCloud()
+      await result.current.syncToBackend()
     })
 
-    expect(syncResult.success).toBe(true)
-    expect(mockSettingsService.syncSettings).toHaveBeenCalled()
+    expect(mockSettingsStore.syncToBackend).toHaveBeenCalled()
+
+    // 测试从后端同步
+    await act(async () => {
+      await result.current.syncFromBackend()
+    })
+
+    expect(mockSettingsStore.syncFromBackend).toHaveBeenCalled()
+
+    // 测试强制同步
+    await act(async () => {
+      await result.current.forceSync()
+    })
+
+    expect(mockSettingsStore.forceSync).toHaveBeenCalled()
+  })
+
+  it('应该处理主题更新', async () => {
+    const { result } = renderHook(() => useSettings())
+
+    await waitFor(() => {
+      expect(result.current.settings).toBeTruthy()
+    })
+
+    await act(async () => {
+      await result.current.updateTheme('dark')
+    })
+
+    expect(mockSettingsStore.updateTheme).toHaveBeenCalledWith('dark')
+  })
+
+  it('应该处理语言更新', async () => {
+    const { result } = renderHook(() => useSettings())
+
+    await waitFor(() => {
+      expect(result.current.settings).toBeTruthy()
+    })
+
+    await act(async () => {
+      await result.current.updateLanguage('en-US')
+    })
+
+    expect(mockSettingsStore.updateLanguage).toHaveBeenCalledWith('en-US')
   })
 })
 

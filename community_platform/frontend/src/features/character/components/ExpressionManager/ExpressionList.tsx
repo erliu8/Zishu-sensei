@@ -12,7 +12,6 @@ import {
   Copy,
   Edit,
   Star,
-  StarOff,
   Eye,
   EyeOff,
   GripVertical,
@@ -94,13 +93,6 @@ export function ExpressionList({
     return matchesSearch && matchesEmotion;
   });
 
-  const handleSelectAll = (checked: boolean) => {
-    if (checked) {
-      onSelect?.(filteredExpressions.map((exp) => exp.id));
-    } else {
-      onSelect?.([]);
-    }
-  };
 
   const handleSelectOne = (id: string, checked: boolean) => {
     if (checked) {

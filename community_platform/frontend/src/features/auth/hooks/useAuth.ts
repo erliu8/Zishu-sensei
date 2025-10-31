@@ -40,31 +40,43 @@ export function useAuth() {
         setLoading(true);
         setError(null);
 
-        // 使用 NextAuth 登录
-        const result = await signIn('credentials', {
+        // 直接调用后端API登录
+        const session = await AuthApiClient.login(credentials);
+        setSession(session);
+
+        // 同时使用NextAuth登录（用于SSR和OAuth场景）
+        await signIn('credentials', {
           email: credentials.email,
           password: credentials.password,
           redirect: false,
         });
 
-        if (result?.error) {
-          setError(result.error);
-          return { success: false, error: result.error };
-        }
-
-        if (result?.ok) {
-          // 登录成功，获取用户信息并更新 store
-          const session = await AuthApiClient.login(credentials);
-          setSession(session);
-
-          // 重定向
-          router.push(redirectTo || '/');
-          return { success: true };
-        }
-
-        return { success: false, error: '登录失败' };
+        // 重定向
+        router.push(redirectTo || '/');
+        return { success: true };
       } catch (err: any) {
-        const errorMessage = err.message || '登录失败';
+        // 改进错误消息提取逻辑
+        let errorMessage = '登录失败';
+        
+        if (err.response?.data) {
+          const data = err.response.data;
+          
+          // FastAPI 标准错误格式: { "detail": "错误消息" }
+          if (typeof data.detail === 'string') {
+            errorMessage = data.detail;
+          } 
+          // 自定义错误格式: { "error": { "message": "错误消息" } }
+          else if (data.error?.message) {
+            errorMessage = data.error.message;
+          }
+          // 其他格式: { "message": "错误消息" }
+          else if (data.message) {
+            errorMessage = data.message;
+          }
+        } else if (err.message) {
+          errorMessage = err.message;
+        }
+        
         setError(errorMessage);
         return { success: false, error: errorMessage };
       } finally {
@@ -83,10 +95,11 @@ export function useAuth() {
         setLoading(true);
         setError(null);
 
+        // 调用后端API注册
         const session = await AuthApiClient.register(input);
         setSession(session);
 
-        // 注册成功后自动登录
+        // 注册成功后自动使用NextAuth登录（用于SSR和OAuth场景）
         await signIn('credentials', {
           email: input.email,
           password: input.password,
@@ -97,7 +110,29 @@ export function useAuth() {
         router.push(redirectTo || '/');
         return { success: true };
       } catch (err: any) {
-        const errorMessage = err.message || '注册失败';
+        // 改进错误消息提取逻辑
+        let errorMessage = '注册失败';
+        
+        if (err.response?.data) {
+          // 处理不同的错误响应格式
+          const data = err.response.data;
+          
+          // FastAPI 标准错误格式: { "detail": "错误消息" }
+          if (typeof data.detail === 'string') {
+            errorMessage = data.detail;
+          } 
+          // 自定义错误格式: { "error": { "message": "错误消息" } }
+          else if (data.error?.message) {
+            errorMessage = data.error.message;
+          }
+          // 其他格式: { "message": "错误消息" }
+          else if (data.message) {
+            errorMessage = data.message;
+          }
+        } else if (err.message) {
+          errorMessage = err.message;
+        }
+        
         setError(errorMessage);
         return { success: false, error: errorMessage };
       } finally {
@@ -193,8 +228,8 @@ export function usePermission(requiredRole?: string) {
         admin: 3,
       };
 
-      const userLevel = roleHierarchy[user.role] || 0;
-      const requiredLevel = roleHierarchy[role] || 0;
+      const userLevel = roleHierarchy[user.role as keyof typeof roleHierarchy] || 0;
+      const requiredLevel = roleHierarchy[role as keyof typeof roleHierarchy] || 0;
 
       return userLevel >= requiredLevel;
     },

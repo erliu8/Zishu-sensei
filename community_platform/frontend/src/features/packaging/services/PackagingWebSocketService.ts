@@ -299,8 +299,8 @@ export class PackagingWebSocketService {
    */
   private getWebSocketUrl(): string {
     const protocol = window.location.protocol === 'https:' ? 'wss:' : 'ws:';
-    const host = process.env.NEXT_PUBLIC_WS_HOST || window.location.host;
-    const path = process.env.NEXT_PUBLIC_WS_PATH || '/ws/packaging';
+    const host = process.env['NEXT_PUBLIC_WS_HOST'] || window.location.host;
+    const path = process.env['NEXT_PUBLIC_WS_PATH'] || '/ws/packaging';
 
     return `${protocol}//${host}${path}`;
   }

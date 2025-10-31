@@ -4,7 +4,7 @@
  */
 
 import { jwtVerify, SignJWT } from 'jose';
-import type { TokenPayload, AuthSession } from '../types';
+import type { TokenPayload } from '../types';
 
 /**
  * Token 存储键名
@@ -19,7 +19,7 @@ const TOKEN_KEYS = {
  * JWT 密钥
  */
 const getJWTSecret = (): Uint8Array => {
-  const secret = process.env.NEXTAUTH_SECRET || process.env.JWT_SECRET || 'default-secret-key';
+  const secret = process.env['NEXTAUTH_SECRET'] || process.env['JWT_SECRET'] || 'default-secret-key';
   return new TextEncoder().encode(secret);
 };
 
@@ -37,8 +37,8 @@ export class TokenService {
       
       return {
         sub: payload.sub as string,
-        email: payload.email as string,
-        role: payload.role as any,
+        email: payload['email'] as string,
+        role: payload['role'] as any,
         iat: payload.iat,
         exp: payload.exp,
       };
@@ -78,7 +78,7 @@ export class TokenService {
         return null;
       }
 
-      const payload = JSON.parse(atob(parts[1]));
+      const payload = JSON.parse(atob(parts[1]!));
       return {
         sub: payload.sub,
         email: payload.email,
@@ -144,10 +144,19 @@ export class TokenService {
    * 从本地存储获取访问令牌
    */
   static getAccessToken(): string | null {
-    if (typeof window === 'undefined') return null;
+    if (typeof window === 'undefined') {
+      return null;
+    }
 
     try {
-      return localStorage.getItem(TOKEN_KEYS.ACCESS_TOKEN);
+      const token = localStorage.getItem(TOKEN_KEYS.ACCESS_TOKEN);
+      
+      // 如果 token 是字符串 "undefined"，返回 null
+      if (token === 'undefined' || token === 'null') {
+        return null;
+      }
+      
+      return token;
     } catch (error) {
       console.error('Failed to get access token:', error);
       return null;

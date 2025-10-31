@@ -15,9 +15,7 @@ import {
   Download, 
   Heart, 
   Star, 
-  Eye,
-  ExternalLink,
-  ArrowRight
+  Eye
 } from 'lucide-react';
 import { cn } from '@/shared/utils';
 import { Adapter } from '../../domain';
@@ -183,7 +181,7 @@ export const AdapterCard: React.FC<AdapterCardProps> = ({
           {/* 统计信息 */}
           <div className="mb-3 flex items-center gap-3 text-xs text-muted-foreground">
             <div className="flex items-center gap-1">
-              <RatingStars rating={adapter.stats.rating} size="sm" />
+              <RatingStars value={adapter.stats.rating} size="sm" />
               <span className="font-medium">{adapter.stats.rating.toFixed(1)}</span>
               <span>({adapter.stats.ratingCount})</span>
             </div>

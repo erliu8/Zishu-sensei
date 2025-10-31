@@ -270,7 +270,7 @@ export const TrayMenu: React.FC<TrayMenuProps> = ({
      * 初始化托盘菜单
      */
     useEffect(() => {
-        if (!isAvailable || isInitialized) return
+        if (isInitialized) return
 
         initializeTrayMenu().catch(err => {
             console.error('初始化托盘菜单失败:', err)
@@ -583,7 +583,7 @@ export const TrayMenu: React.FC<TrayMenuProps> = ({
      * 转换菜单项为后端格式
      */
     const convertMenuItems = useCallback((items: MenuItem[]): any[] => {
-        return items.map(item => ({
+        return items.filter(item => item && item.id).map(item => ({
             id: item.id,
             label: item.label,
             type: item.type || 'normal',
@@ -658,7 +658,7 @@ export const TrayMenu: React.FC<TrayMenuProps> = ({
     // 这个组件主要用于管理托盘菜单的状态和事件
 
     return (
-        <div className={clsx(styles.trayMenu, className)} data-initialized={isInitialized}>
+        <div className={clsx(styles.trayMenu, className)} data-initialized={isInitialized} data-testid="tray-menu">
             {/* 仅用于调试和状态显示 */}
             {process.env.NODE_ENV === 'development' && (
                 <div className={styles.debug}>

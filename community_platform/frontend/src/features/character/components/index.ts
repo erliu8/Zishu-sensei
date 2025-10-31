@@ -10,14 +10,14 @@ export { CharacterDetail, CharacterDetailSkeleton } from './CharacterDetail';
 export { CharacterCreator } from './CharacterCreator';
 
 // PersonalityEditor 组件
-export { PersonalityEditor } from './PersonalityEditor';
+// export { PersonalityEditor } from './PersonalityEditor'; // 文件为空，暂时注释
 export { MBTISelector } from './PersonalityEditor/MBTISelector';
 export { BigFiveTraits } from './PersonalityEditor/BigFiveTraits';
 export { BehaviorSettings } from './PersonalityEditor/BehaviorSettings';
 export { PersonalityRadarChart } from './PersonalityEditor/PersonalityRadarChart';
 
 // ExpressionManager 组件
-export { ExpressionManager } from './ExpressionManager';
+// export { ExpressionManager } from './ExpressionManager'; // 文件为空，暂时注释
 export { ExpressionList } from './ExpressionManager/ExpressionList';
 export { ExpressionEditor } from './ExpressionManager/ExpressionEditor';
 export { TriggerConfig } from './ExpressionManager/TriggerConfig';

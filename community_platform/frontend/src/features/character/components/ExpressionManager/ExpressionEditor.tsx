@@ -6,7 +6,7 @@
 'use client';
 
 import React, { useState, useEffect } from 'react';
-import { Upload, X, Image as ImageIcon, FileVideo, Loader2 } from 'lucide-react';
+import { Upload, X, FileVideo, Loader2 } from 'lucide-react';
 import { Button } from '@/shared/components/ui/button';
 import { Input } from '@/shared/components/ui/input';
 import { Label } from '@/shared/components/ui/label';
@@ -39,7 +39,7 @@ import {
 } from '../../domain/expression';
 import { useUploadExpressionFile } from '../../hooks/useExpressions';
 import { cn } from '@/shared/utils/cn';
-import { toast } from 'sonner';
+import { toast } from '@/shared/components/ui/use-toast';
 
 interface ExpressionEditorProps {
   expression?: Expression;
@@ -147,9 +147,16 @@ export function ExpressionEditor({
         updateField('expressionFile', result.url);
       }
 
-      toast.success('文件上传成功');
+      toast({
+        title: '文件上传成功',
+        variant: 'default',
+        description: '文件上传成功',
+      });
     } catch (error) {
-      toast.error('文件上传失败');
+      toast({
+        title: '文件上传失败',
+        variant: 'destructive',
+      });
     }
   };
 
@@ -178,7 +185,10 @@ export function ExpressionEditor({
 
   const handleSave = () => {
     if (!validateForm()) {
-      toast.error('请修正表单错误');
+      toast({
+        title: '请修正表单错误',
+        variant: 'destructive',
+      });
       return;
     }
 

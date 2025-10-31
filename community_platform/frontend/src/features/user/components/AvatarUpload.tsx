@@ -14,7 +14,7 @@ import { Label } from '@/shared/components/ui/label';
 import { Slider } from '@/shared/components/ui/slider';
 import { toast } from '@/shared/components/ui/use-toast';
 import { Camera, Upload, X, ZoomIn, ZoomOut } from 'lucide-react';
-import { cn } from '@/shared/lib/utils';
+import { cn } from '@/shared/utils';
 
 interface AvatarUploadProps {
   currentAvatar?: string;
@@ -273,7 +273,7 @@ export function AvatarUpload({
               </div>
               <Slider
                 value={[zoom]}
-                onValueChange={(values) => setZoom(values[0])}
+                onValueChange={(values) => setZoom(values[0] ?? 1)}
                 min={0.5}
                 max={3}
                 step={0.1}

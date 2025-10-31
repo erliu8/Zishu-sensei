@@ -138,3 +138,5 @@ export const InlineCode = React.forwardRef<HTMLElement, InlineCodeProps>(
 
 InlineCode.displayName = 'InlineCode'
 
+export default CodeBlock
+

@@ -5,7 +5,7 @@
 
 'use client'
 
-import { onCLS, onFCP, onFID, onINP, onLCP, onTTFB } from 'web-vitals'
+import { onCLS, onFCP, onINP, onLCP, onTTFB } from 'web-vitals'
 import type { Metric } from 'web-vitals'
 
 /**
@@ -204,7 +204,6 @@ class PerformanceMonitor {
     // 监控所有核心指标
     onCLS(handleMetric)
     onFCP(handleMetric)
-    onFID(handleMetric)
     onINP(handleMetric)
     onLCP(handleMetric)
     onTTFB(handleMetric)

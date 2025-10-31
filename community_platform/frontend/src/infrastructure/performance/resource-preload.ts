@@ -437,7 +437,7 @@ export const deferExecution = {
 /**
  * 组件代码分割助手
  */
-export const codeSpli tHelper = {
+export const codeSplitHelper = {
   /**
    * 创建路由级别的代码分割
    */

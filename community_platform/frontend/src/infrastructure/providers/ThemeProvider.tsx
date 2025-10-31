@@ -130,6 +130,8 @@ export function ThemeProvider({
 
       return () => clearTimeout(timer)
     }
+    
+    return undefined
   }, [resolvedTheme, theme, config.enableTransitions, onThemeChange])
 
   /**

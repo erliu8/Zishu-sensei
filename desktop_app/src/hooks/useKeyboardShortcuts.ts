@@ -416,4 +416,217 @@ export const useKeyboardShortcuts = (): UseKeyboardShortcutsReturn => {
     }
 }
 
+/**
+ * 全局快捷键管理 Hook
+ */
+export function useGlobalShortcuts() {
+    const shortcuts = useKeyboardShortcuts()
+    const [globalShortcuts, setGlobalShortcuts] = useState<ShortcutConfig[]>([])
+
+    useEffect(() => {
+        const registered = shortcuts.getRegisteredShortcuts().filter(s => s.scope === 'global')
+        setGlobalShortcuts(registered)
+    }, [shortcuts])
+
+    return {
+        shortcuts: globalShortcuts,
+        register: (config: Omit<ShortcutConfig, 'scope'>) => shortcuts.register({ ...config, scope: 'global' } as ShortcutConfig),
+        unregister: shortcuts.unregister,
+        loading: shortcuts.isInitializing,
+        error: shortcuts.error,
+    }
+}
+
+/**
+ * 本地快捷键管理 Hook
+ */
+export function useLocalShortcuts() {
+    const shortcuts = useKeyboardShortcuts()
+    const [localShortcuts, setLocalShortcuts] = useState<ShortcutConfig[]>([])
+
+    useEffect(() => {
+        const registered = shortcuts.getRegisteredShortcuts().filter(s => s.scope !== 'global')
+        setLocalShortcuts(registered)
+    }, [shortcuts])
+
+    return {
+        shortcuts: localShortcuts,
+        register: (config: Omit<ShortcutConfig, 'scope'>) => shortcuts.register({ ...config, scope: 'local' } as ShortcutConfig),
+        unregister: shortcuts.unregister,
+        loading: shortcuts.isInitializing,
+        error: shortcuts.error,
+    }
+}
+
+/**
+ * 快捷键录制器 Hook
+ */
+export function useShortcutRecorder() {
+    const [isRecording, setIsRecording] = useState(false)
+    const [recordedKeys, setRecordedKeys] = useState<string[]>([])
+    const [error, setError] = useState<Error | null>(null)
+
+    const startRecording = useCallback(() => {
+        setIsRecording(true)
+        setRecordedKeys([])
+        setError(null)
+    }, [])
+
+    const stopRecording = useCallback(() => {
+        setIsRecording(false)
+    }, [])
+
+    const clearRecording = useCallback(() => {
+        setRecordedKeys([])
+        setError(null)
+    }, [])
+
+    useEffect(() => {
+        if (!isRecording) return
+
+        const handleKeyDown = (event: KeyboardEvent) => {
+            event.preventDefault()
+            const keys: string[] = []
+            
+            if (event.ctrlKey) keys.push('Ctrl')
+            if (event.altKey) keys.push('Alt')
+            if (event.shiftKey) keys.push('Shift')
+            if (event.metaKey) keys.push('Meta')
+            
+            if (event.key && !['Control', 'Alt', 'Shift', 'Meta'].includes(event.key)) {
+                keys.push(event.key)
+            }
+
+            if (keys.length > 0) {
+                setRecordedKeys(keys)
+            }
+        }
+
+        document.addEventListener('keydown', handleKeyDown)
+        return () => document.removeEventListener('keydown', handleKeyDown)
+    }, [isRecording])
+
+    return {
+        isRecording,
+        recordedKeys,
+        startRecording,
+        stopRecording,
+        clearRecording,
+        error,
+    }
+}
+
+/**
+ * 快捷键冲突检测 Hook
+ */
+export function useShortcutConflicts(config?: ShortcutConfig) {
+    const shortcuts = useKeyboardShortcuts()
+    const [conflicts, setConflicts] = useState<string[]>([])
+    const [loading, setLoading] = useState(false)
+
+    const checkConflicts = useCallback(async (configToCheck: ShortcutConfig) => {
+        setLoading(true)
+        try {
+            const result = await shortcuts.checkConflict(configToCheck)
+            setConflicts(result)
+            return result
+        } finally {
+            setLoading(false)
+        }
+    }, [shortcuts])
+
+    useEffect(() => {
+        if (config) {
+            checkConflicts(config)
+        }
+    }, [config, checkConflicts])
+
+    return {
+        conflicts,
+        checkConflicts,
+        hasConflicts: conflicts.length > 0,
+        loading,
+    }
+}
+
+/**
+ * 快捷键分类 Hook
+ */
+export function useShortcutCategories() {
+    const shortcuts = useKeyboardShortcuts()
+    const [categories, setCategories] = useState<Record<string, ShortcutConfig[]>>({})
+
+    useEffect(() => {
+        const registered = shortcuts.getRegisteredShortcuts()
+        const categorized = registered.reduce((acc, shortcut) => {
+            const category = shortcut.category || 'other'
+            if (!acc[category]) {
+                acc[category] = []
+            }
+            acc[category].push(shortcut)
+            return acc
+        }, {} as Record<string, ShortcutConfig[]>)
+
+        setCategories(categorized)
+    }, [shortcuts])
+
+    return {
+        categories,
+        getCategoryShortcuts: (category: string) => categories[category] || [],
+    }
+}
+
+/**
+ * 快捷键预设 Hook
+ */
+export function useShortcutPresets() {
+    const shortcuts = useKeyboardShortcuts()
+    const [presets, setPresets] = useState<Record<string, ShortcutConfig[]>>({})
+    const [loading, setLoading] = useState(false)
+
+    const loadPreset = useCallback(async (presetName: string) => {
+        setLoading(true)
+        try {
+            const adjustedShortcuts = getAdjustedShortcuts()
+            const filtered = adjustedShortcuts.filter(s => s.category === presetName)
+            return filtered
+        } finally {
+            setLoading(false)
+        }
+    }, [])
+
+    const applyPreset = useCallback(async (presetName: string) => {
+        setLoading(true)
+        try {
+            const presetShortcuts = await loadPreset(presetName)
+            for (const shortcut of presetShortcuts) {
+                shortcuts.register(shortcut)
+            }
+        } finally {
+            setLoading(false)
+        }
+    }, [shortcuts, loadPreset])
+
+    useEffect(() => {
+        const allShortcuts = getAdjustedShortcuts()
+        const groupedByCategory = allShortcuts.reduce((acc, shortcut) => {
+            const category = shortcut.category || 'default'
+            if (!acc[category]) {
+                acc[category] = []
+            }
+            acc[category].push(shortcut)
+            return acc
+        }, {} as Record<string, ShortcutConfig[]>)
+
+        setPresets(groupedByCategory)
+    }, [])
+
+    return {
+        presets,
+        loadPreset,
+        applyPreset,
+        loading,
+    }
+}
+
 export default useKeyboardShortcuts

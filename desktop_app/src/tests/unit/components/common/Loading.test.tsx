@@ -4,6 +4,7 @@
  * 测试各种加载样式、尺寸和配置选项
  */
 
+import React from 'react'
 import { describe, it, expect, vi, beforeEach } from 'vitest'
 import { render, screen } from '@testing-library/react'
 import userEvent from '@testing-library/user-event'
@@ -188,11 +189,11 @@ describe('Loading 组件', () => {
       
       rerender(<Loading variant="progress" progress={-10} />)
       progressBar = document.querySelector('.loading-progress-bar') as HTMLElement
-      expect(progressBar).toHaveStyle({ width: '-10%' })
+      expect(progressBar).toHaveStyle({ width: '0%' }) // 负数应该被限制为0
       
       rerender(<Loading variant="progress" progress={150} />)
       progressBar = document.querySelector('.loading-progress-bar') as HTMLElement
-      expect(progressBar).toHaveStyle({ width: '150%' })
+      expect(progressBar).toHaveStyle({ width: '100%' }) // 超过100应该被限制为100
     })
 
     it('应该格式化进度百分比', () => {

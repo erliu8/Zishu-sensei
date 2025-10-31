@@ -9,13 +9,15 @@ export interface Post {
   summary?: string;
   coverImage?: string;
   author: Author;
-  category?: Category;
+  category?: CategoryInfo;
   tags?: Tag[];
   stats: PostStats;
   status: PostStatus;
   createdAt: string;
   updatedAt: string;
   publishedAt?: string;
+  isLikedByCurrentUser?: boolean;
+  isFavoritedByCurrentUser?: boolean;
 }
 
 export interface Author {
@@ -26,12 +28,6 @@ export interface Author {
   bio?: string;
 }
 
-export interface Category {
-  id: string;
-  name: string;
-  slug: string;
-  color?: string;
-}
 
 export interface Tag {
   id: string;
@@ -129,7 +125,18 @@ export interface ApiResponse<T> {
   message?: string;
 }
 
-export interface PostCategory {
+export enum PostCategory {
+  GENERAL = 'general',
+  TECH = 'tech',
+  TUTORIAL = 'tutorial',
+  DISCUSSION = 'discussion',
+  NEWS = 'news',
+  SHOWCASE = 'showcase',
+  QUESTION = 'question',
+  RESOURCE = 'resource',
+}
+
+export interface CategoryInfo {
   id: string;
   name: string;
   slug: string;

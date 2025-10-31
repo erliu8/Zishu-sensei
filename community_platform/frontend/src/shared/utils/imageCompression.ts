@@ -195,8 +195,11 @@ export async function compressImages(
   const results: File[] = []
   
   for (let i = 0; i < files.length; i++) {
-    const compressed = await compressImageToFile(files[i], options)
-    results.push(compressed)
+    const file = files[i]
+    if (file) {
+      const compressed = await compressImageToFile(file, options)
+      results.push(compressed)
+    }
     onProgress?.(i + 1, files.length)
   }
   
@@ -270,7 +273,8 @@ export function fileToBase64(file: File | Blob): Promise<string> {
  * Base64 转 Blob
  */
 export function base64ToBlob(base64: string, mimeType = 'image/jpeg'): Blob {
-  const byteString = atob(base64.split(',')[1])
+  const base64Data = base64.includes(',') ? base64.split(',')[1] : base64
+  const byteString = atob(base64Data || '')
   const ab = new ArrayBuffer(byteString.length)
   const ia = new Uint8Array(ab)
   

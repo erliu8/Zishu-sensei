@@ -110,7 +110,6 @@ interface RatingDistribution {
  * 评分区组件
  */
 export function RatingSection({
-  adapterId,
   currentRating,
   ratingCount,
   userRating,

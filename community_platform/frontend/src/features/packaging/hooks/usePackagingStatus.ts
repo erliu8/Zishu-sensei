@@ -27,8 +27,9 @@ export function usePackagingStatus(taskId: string, enableWebSocket: boolean = tr
       return response.data;
     },
     enabled: !!taskId,
-    refetchInterval: (data) => {
+    refetchInterval: (query) => {
       // 如果任务正在进行中且未启用 WebSocket，则每 2 秒轮询一次
+      const data = query?.state?.data;
       if (!enableWebSocket && data && (data.status === 'packaging' || data.status === 'queued')) {
         return 2000;
       }

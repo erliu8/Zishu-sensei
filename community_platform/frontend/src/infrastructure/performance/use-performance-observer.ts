@@ -174,7 +174,7 @@ export function useNavigationTiming() {
       // 内容下载时间
       download: timing.responseEnd - timing.responseStart,
       // DOM 处理时间
-      domProcessing: timing.domComplete - timing.domLoading,
+      domProcessing: timing.domComplete - timing.domInteractive,
       // DOM 内容加载完成
       domContentLoaded: timing.domContentLoadedEventEnd - timing.domContentLoadedEventStart,
       // 页面加载完成
@@ -199,10 +199,11 @@ export function usePaintTiming() {
 
     // First Contentful Paint
     const fcpEntries = performance.getEntriesByName('first-contentful-paint')
-    if (fcpEntries.length > 0) {
+    const fcpEntry = fcpEntries[0]
+    if (fcpEntry) {
       setPaintMetrics((prev) => ({
         ...prev,
-        fcp: fcpEntries[0].startTime,
+        fcp: fcpEntry.startTime,
       }))
     }
   }, [])

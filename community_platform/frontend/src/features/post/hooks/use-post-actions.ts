@@ -4,7 +4,7 @@
  */
 
 import { useMutation, useQueryClient, type UseMutationResult } from '@tanstack/react-query';
-import { toast } from 'sonner';
+import { toast } from '@/shared/components/ui/use-toast';
 import { postApiClient } from '../api';
 import type { Post } from '../domain';
 import { POST_QUERY_KEYS } from './query-keys';
@@ -29,18 +29,21 @@ export function useLikePost(): UseMutationResult<Post, Error, string> {
           isLikedByCurrentUser: true,
           stats: {
             ...previousPost.stats,
-            likeCount: previousPost.stats.likeCount + 1,
+            likes: previousPost.stats.likes + 1,
           },
         });
       }
       
       return { previousPost };
     },
-    onError: (error, id, context) => {
+    onError: (_, id, context) => {
       if (context?.previousPost) {
         queryClient.setQueryData(POST_QUERY_KEYS.detail(id), context.previousPost);
       }
-      toast.error('点赞失败');
+      toast({
+        title: '点赞失败',
+        variant: 'destructive',
+      });
     },
     onSettled: (_, __, id) => {
       queryClient.invalidateQueries({ queryKey: POST_QUERY_KEYS.detail(id) });
@@ -68,18 +71,21 @@ export function useUnlikePost(): UseMutationResult<Post, Error, string> {
           isLikedByCurrentUser: false,
           stats: {
             ...previousPost.stats,
-            likeCount: Math.max(0, previousPost.stats.likeCount - 1),
+            likes: Math.max(0, previousPost.stats.likes - 1),
           },
         });
       }
       
       return { previousPost };
     },
-    onError: (error, id, context) => {
+    onError: (_, id, context) => {
       if (context?.previousPost) {
         queryClient.setQueryData(POST_QUERY_KEYS.detail(id), context.previousPost);
       }
-      toast.error('取消点赞失败');
+      toast({
+        title: '取消点赞失败',
+        variant: 'destructive',
+      });
     },
     onSettled: (_, __, id) => {
       queryClient.invalidateQueries({ queryKey: POST_QUERY_KEYS.detail(id) });
@@ -107,7 +113,7 @@ export function useFavoritePost(): UseMutationResult<Post, Error, string> {
           isFavoritedByCurrentUser: true,
           stats: {
             ...previousPost.stats,
-            favoriteCount: previousPost.stats.favoriteCount + 1,
+            favorites: previousPost.stats.favorites + 1,
           },
         });
       }
@@ -115,13 +121,19 @@ export function useFavoritePost(): UseMutationResult<Post, Error, string> {
       return { previousPost };
     },
     onSuccess: () => {
-      toast.success('收藏成功');
+      toast({
+        title: '收藏成功',
+        variant: 'default',
+      });
     },
-    onError: (error, id, context) => {
+    onError: (_, id, context) => {
       if (context?.previousPost) {
         queryClient.setQueryData(POST_QUERY_KEYS.detail(id), context.previousPost);
       }
-      toast.error('收藏失败');
+      toast({
+        title: '收藏失败',
+        variant: 'destructive',
+      });
     },
     onSettled: (_, __, id) => {
       queryClient.invalidateQueries({ queryKey: POST_QUERY_KEYS.detail(id) });
@@ -149,7 +161,7 @@ export function useUnfavoritePost(): UseMutationResult<Post, Error, string> {
           isFavoritedByCurrentUser: false,
           stats: {
             ...previousPost.stats,
-            favoriteCount: Math.max(0, previousPost.stats.favoriteCount - 1),
+            favorites: Math.max(0, previousPost.stats.favorites - 1),
           },
         });
       }
@@ -157,13 +169,19 @@ export function useUnfavoritePost(): UseMutationResult<Post, Error, string> {
       return { previousPost };
     },
     onSuccess: () => {
-      toast.success('取消收藏成功');
+      toast({
+        title: '取消收藏成功',
+        variant: 'default',
+      });
     },
-    onError: (error, id, context) => {
+    onError: (_, id, context) => {
       if (context?.previousPost) {
         queryClient.setQueryData(POST_QUERY_KEYS.detail(id), context.previousPost);
       }
-      toast.error('取消收藏失败');
+      toast({
+        title: '取消收藏失败',
+        variant: 'destructive',
+      });
     },
     onSettled: (_, __, id) => {
       queryClient.invalidateQueries({ queryKey: POST_QUERY_KEYS.detail(id) });

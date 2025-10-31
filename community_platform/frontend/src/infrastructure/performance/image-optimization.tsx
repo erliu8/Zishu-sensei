@@ -10,7 +10,7 @@ import { cn } from '@/shared/utils/cn';
 /**
  * 优化的图片组件
  */
-interface OptimizedImageProps extends Omit<ImageProps, 'src'> {
+interface OptimizedImageProps extends Omit<ImageProps, 'src' | 'alt' | 'placeholder' | 'blurDataURL' | 'quality' | 'priority'> {
   src: string;
   alt: string;
   /**

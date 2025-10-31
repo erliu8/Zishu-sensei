@@ -12,6 +12,9 @@ import {
   Badge,
   Button,
   Tooltip,
+  TooltipContent,
+  TooltipProvider,
+  TooltipTrigger,
   EmptyState,
 } from '@/shared/components';
 import type { AdapterDependency } from '../../domain';
@@ -52,7 +55,7 @@ const DependencyTypeMap: Record<string, { label: string; variant: 'default' | 's
  */
 function DependencyNode({ dependency, level = 0 }: DependencyNodeProps) {
   const [isExpanded, setIsExpanded] = useState(level === 0);
-  const typeInfo = DependencyTypeMap[dependency.type] || DependencyTypeMap.runtime;
+  const typeInfo = DependencyTypeMap[dependency.type] || DependencyTypeMap['runtime'];
 
   return (
     <div className={cn('border-l-2 border-muted', level > 0 && 'ml-6')}>
@@ -82,22 +85,32 @@ function DependencyNode({ dependency, level = 0 }: DependencyNodeProps) {
             <Badge variant="outline" className="text-xs font-mono">
               {dependency.versionRequirement}
             </Badge>
-            <Badge variant={typeInfo.variant} className="text-xs">
-              {typeInfo.label}
+            <Badge variant={typeInfo?.variant || 'default'} className="text-xs">
+              {typeInfo?.label || '运行时'}
             </Badge>
             {dependency.required ? (
-              <Tooltip content="此依赖项是必需的">
-                <Badge variant="destructive" className="text-xs gap-1">
-                  <AlertTriangle className="h-3 w-3" />
-                  必需
-                </Badge>
+              <Tooltip>
+                <TooltipTrigger asChild>
+                  <Badge variant="destructive" className="text-xs gap-1">
+                    <AlertTriangle className="h-3 w-3" />
+                    必需
+                  </Badge>
+                </TooltipTrigger>
+                <TooltipContent>
+                  此依赖项是必需的
+                </TooltipContent>
               </Tooltip>
             ) : (
-              <Tooltip content="此依赖项是可选的">
-                <Badge variant="outline" className="text-xs gap-1">
-                  <Info className="h-3 w-3" />
-                  可选
-                </Badge>
+              <Tooltip>
+                <TooltipTrigger asChild>
+                  <Badge variant="outline" className="text-xs gap-1">
+                    <Info className="h-3 w-3" />
+                    可选
+                  </Badge>
+                </TooltipTrigger>
+                <TooltipContent>
+                  此依赖项是可选的
+                </TooltipContent>
               </Tooltip>
             )}
           </div>
@@ -142,7 +155,8 @@ export function DependencyTree({ dependencies, className }: DependencyTreeProps)
   const optionalCount = dependencies.filter((d) => !d.required).length;
 
   return (
-    <div className={cn('space-y-6', className)}>
+    <TooltipProvider>
+      <div className={cn('space-y-6', className)}>
       {/* 统计信息卡片 */}
       <Card className="p-4">
         <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
@@ -181,7 +195,7 @@ export function DependencyTree({ dependencies, className }: DependencyTreeProps)
       {/* 依赖树 */}
       <div className="space-y-6">
         {Object.entries(groupedDependencies).map(([type, deps]) => {
-          const typeInfo = DependencyTypeMap[type] || DependencyTypeMap.runtime;
+          const typeInfo = DependencyTypeMap[type] || DependencyTypeMap['runtime'];
           const isOptional = type === 'optional';
 
           // 如果是可选依赖且未展开，跳过
@@ -193,8 +207,8 @@ export function DependencyTree({ dependencies, className }: DependencyTreeProps)
             <div key={type}>
               <div className="flex items-center justify-between mb-4">
                 <div className="flex items-center gap-2">
-                  <h3 className="text-lg font-semibold">{typeInfo.label}依赖</h3>
-                  <Badge variant={typeInfo.variant}>{deps.length}</Badge>
+                  <h3 className="text-lg font-semibold">{typeInfo?.label || '运行时'}依赖</h3>
+                  <Badge variant={typeInfo?.variant || 'default'}>{deps.length}</Badge>
                 </div>
                 {type === 'runtime' && (
                   <Badge variant="outline" className="gap-1">
@@ -264,7 +278,8 @@ export function DependencyTree({ dependencies, className }: DependencyTreeProps)
           </div>
         </div>
       </Card>
-    </div>
+      </div>
+    </TooltipProvider>
   );
 }
 

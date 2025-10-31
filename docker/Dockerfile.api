@@ -1,13 +1,15 @@
-FROM python:3.11-slim
+# ============================================
+# 构建阶段：安装依赖
+# ============================================
+FROM python:3.11-slim AS builder
 
-# 設置工作目錄
 WORKDIR /app
 
 # 配置 APT 使用阿里云镜像源
 RUN sed -i 's/deb.debian.org/mirrors.aliyun.com/g' /etc/apt/sources.list.d/debian.sources && \
     sed -i 's/security.debian.org/mirrors.aliyun.com/g' /etc/apt/sources.list.d/debian.sources
 
-# 安裝系統依賴
+# 安装构建依赖
 RUN apt-get update && apt-get install -y \
     build-essential \
     curl \
@@ -19,28 +21,46 @@ RUN apt-get update && apt-get install -y \
     libssl-dev \
     && rm -rf /var/lib/apt/lists/*
 
-# 设置环境参数
-ENV DEBIAN_FRONTEND=noninteractive
-
-# 複製依賴文件
-COPY requirements.txt .
-
-# 配置 pip 并安装依赖
+# 配置 pip 并升级基础工具
 RUN pip config set global.index-url https://pypi.tuna.tsinghua.edu.cn/simple && \
     pip config set global.trusted-host pypi.tuna.tsinghua.edu.cn && \
     pip install --no-cache-dir --upgrade pip setuptools wheel
 
-# 先从PyTorch官方源安装CPU版本 (约200MB，而GPU版本约2GB+)
+# 复制依赖文件（优化缓存：只在依赖变化时重新构建）
+COPY requirements.txt .
+
+# 先安装 PyTorch CPU 版本（约200MB，GPU版本约2GB+）
 RUN pip install --no-cache-dir \
     torch==2.2.0 \
     torchvision==0.17.0 \
     torchaudio==2.2.0 \
     --index-url https://download.pytorch.org/whl/cpu
 
-# 安装其他Python依赖（从清华镜像）
+# 安装其他 Python 依赖
 RUN pip install --no-cache-dir -r requirements.txt
 
-# 複製項目源代碼
+# ============================================
+# 运行阶段：精简镜像
+# ============================================
+FROM python:3.11-slim
+
+WORKDIR /app
+
+# 配置 APT 镜像源
+RUN sed -i 's/deb.debian.org/mirrors.aliyun.com/g' /etc/apt/sources.list.d/debian.sources && \
+    sed -i 's/security.debian.org/mirrors.aliyun.com/g' /etc/apt/sources.list.d/debian.sources
+
+# 只安装运行时依赖
+RUN apt-get update && apt-get install -y \
+    curl \
+    libhdf5-dev \
+    && rm -rf /var/lib/apt/lists/*
+
+# 从构建阶段复制已安装的 Python 包
+COPY --from=builder /usr/local/lib/python3.11/site-packages /usr/local/lib/python3.11/site-packages
+COPY --from=builder /usr/local/bin /usr/local/bin
+
+# 复制项目源代码（开发时会被卷挂载覆盖）
 COPY . .
 
 # 創建必要的目錄

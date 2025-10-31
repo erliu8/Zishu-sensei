@@ -29,7 +29,7 @@ const adapterTypeConfig = {
 };
 
 export const LatestAdapters: FC<LatestAdaptersProps> = ({ className }) => {
-  const { data, isLoading } = useAdapters({
+  const { data, isLoading, isError, error } = useAdapters({
     page: 1,
     pageSize: 6,
     sortBy: 'createdAt',
@@ -43,16 +43,21 @@ export const LatestAdapters: FC<LatestAdaptersProps> = ({ className }) => {
           <Package className="h-5 w-5 text-primary" />
           <h2 className="text-2xl font-bold">最新适配器</h2>
         </div>
-        <Link href="/adapters">
-          <Button variant="ghost">浏览市场</Button>
-        </Link>
+        <Button variant="ghost" asChild>
+          <Link href="/adapters">浏览市场</Link>
+        </Button>
       </div>
 
       {isLoading ? (
         <div className="flex items-center justify-center py-12">
           <LoadingSpinner size="lg" />
         </div>
-      ) : data && data.data.length > 0 ? (
+      ) : isError ? (
+        <EmptyState
+          title="加载失败"
+          description={error?.message || '无法加载适配器列表，请稍后重试'}
+        />
+      ) : data?.data && data.data.length > 0 ? (
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
           {data.data.map((adapter) => (
             <Link key={adapter.id} href={`/adapters/${adapter.id}`} className="block">
@@ -65,7 +70,7 @@ export const LatestAdapters: FC<LatestAdaptersProps> = ({ className }) => {
                           {adapterTypeConfig[adapter.type].label}
                         </Badge>
                         <Badge variant="outline" className="text-xs">
-                          v{adapter.currentVersion?.version || '1.0.0'}
+                          v{adapter.version || '1.0.0'}
                         </Badge>
                       </div>
                       <h3 className="font-bold text-lg group-hover:text-primary transition-colors line-clamp-1">
@@ -84,11 +89,11 @@ export const LatestAdapters: FC<LatestAdaptersProps> = ({ className }) => {
                   {/* 作者信息 */}
                   <div className="flex items-center gap-2">
                     <Avatar className="h-6 w-6">
-                      <AvatarImage src={adapter.author?.avatar} alt={adapter.author?.name} />
-                      <AvatarFallback>{adapter.author?.name?.[0]}</AvatarFallback>
+                      <AvatarImage src={adapter.author?.avatar} alt={adapter.author?.displayName} />
+                      <AvatarFallback>{adapter.author?.displayName?.[0]}</AvatarFallback>
                     </Avatar>
                     <span className="text-xs text-muted-foreground">
-                      {adapter.author?.name}
+                      {adapter.author?.displayName}
                     </span>
                   </div>
                 </CardContent>
@@ -116,11 +121,10 @@ export const LatestAdapters: FC<LatestAdaptersProps> = ({ className }) => {
         <EmptyState
           title="暂无适配器"
           description="还没有适配器发布，快来上传第一个吧！"
-          action={
-            <Link href="/adapters/upload">
-              <Button>上传适配器</Button>
-            </Link>
-          }
+          action={{
+            label: '上传适配器',
+            onClick: () => window.location.href = '/adapters/upload'
+          }}
         />
       )}
     </div>

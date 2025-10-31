@@ -53,8 +53,6 @@ export function useSearch(params: SearchParams, options: UseSearchOptions = {}) 
   const {
     enabled = true,
     saveToHistory = true,
-    onSuccess,
-    onError,
   } = options;
 
   const isValidQuery = SearchQueryOptimizer.isValidQuery(params.query);
@@ -75,8 +73,6 @@ export function useSearch(params: SearchParams, options: UseSearchOptions = {}) 
     staleTime: 5 * 60 * 1000, // 5 分钟
     gcTime: 10 * 60 * 1000, // 10 分钟
     retry: 1,
-    onSuccess,
-    onError,
   });
 }
 

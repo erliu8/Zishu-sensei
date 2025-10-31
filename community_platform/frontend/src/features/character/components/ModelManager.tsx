@@ -19,7 +19,6 @@ import {
   Plus,
   Trash2,
   Star,
-  Upload,
   Eye,
   Settings,
 } from 'lucide-react';
@@ -34,7 +33,6 @@ import {
   useDeleteModel,
 } from '../hooks';
 import type { Model, UpdateModelInput, PhysicsConfig as PhysicsConfigType } from '../domain';
-import { ModelType } from '../types';
 
 export interface ModelManagerProps {
   /** 角色ID */
@@ -117,7 +115,9 @@ export const ModelManager: React.FC<ModelManagerProps> = ({
   useEffect(() => {
     if (!isLoading && models.length > 0 && !selectedModelId) {
       const defaultModel = models.find((m) => m.isDefault) || models[0];
-      setSelectedModelId(defaultModel.id);
+      if (defaultModel) {
+        setSelectedModelId(defaultModel.id);
+      }
     }
   }, [models, isLoading, selectedModelId]);
 
@@ -229,7 +229,7 @@ export const ModelManager: React.FC<ModelManagerProps> = ({
   };
 
   // 处理上传成功
-  const handleUploadSuccess = (modelId: string, modelUrl: string) => {
+  const handleUploadSuccess = (modelId: string) => {
     setShowUploadView(false);
     setSelectedModelId(modelId);
 
@@ -244,7 +244,7 @@ export const ModelManager: React.FC<ModelManagerProps> = ({
     return (
       <Card className={className}>
         <CardContent className="p-12 flex items-center justify-center">
-          <LoadingSpinner size="lg" text="加载模型配置中..." />
+          <LoadingSpinner size="lg" label="加载模型配置中..." />
         </CardContent>
       </Card>
     );

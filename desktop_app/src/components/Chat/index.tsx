@@ -33,12 +33,14 @@ import {
   Trash2,
   Download,
 } from 'lucide-react'
-import type {
-  ChatMessage,
-  ChatSession,
+import {
   MessageRole,
   MessageStatus,
   MessageType,
+} from '@/types/chat'
+import type {
+  ChatMessage,
+  ChatSession,
   SessionConfig,
   StreamChunk,
 } from '@/types/chat'

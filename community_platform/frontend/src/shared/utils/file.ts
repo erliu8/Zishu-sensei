@@ -12,7 +12,8 @@
  */
 export function getFileExtension(filename: string): string {
   const parts = filename.split('.');
-  return parts.length > 1 ? parts[parts.length - 1].toLowerCase() : '';
+  const lastPart = parts[parts.length - 1];
+  return parts.length > 1 && lastPart ? lastPart.toLowerCase() : '';
 }
 
 /**
@@ -135,7 +136,7 @@ export function base64ToBlob(base64: string, contentType: string = ''): Blob {
     byteArrays.push(new Uint8Array(byteNumbers));
   }
 
-  return new Blob(byteArrays, { type: contentType });
+  return new Blob(byteArrays as BlobPart[], { type: contentType });
 }
 
 /**

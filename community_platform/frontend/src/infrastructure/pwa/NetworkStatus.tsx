@@ -16,6 +16,7 @@ export default function NetworkStatus() {
     if (!isOnline) {
       setShowOffline(true)
       setShowOnline(false)
+      return undefined
     } else {
       // 从离线恢复时显示在线提示
       if (showOffline) {
@@ -29,6 +30,7 @@ export default function NetworkStatus() {
         
         return () => clearTimeout(timer)
       }
+      return undefined
     }
   }, [isOnline, showOffline])
 

@@ -66,19 +66,19 @@ export default defineConfig({
     clearMocks: true,
     
     // 是否在每个测试前重置 mock
-    mockReset: true,
+    mockReset: false,
     
     // 是否在每个测试前恢复 mock
-    restoreMocks: true,
+    restoreMocks: false,
     
     // 测试隔离
-    isolate: true,
+    isolate: false,
     
     // 监视模式配置
     watch: false,
     
     // 报告器
-    reporters: ['verbose'],
+    reporters: ['default', 'verbose'],
     
     // 别名
     alias: {
@@ -91,6 +91,7 @@ export default defineConfig({
       '@types': path.resolve(__dirname, './src/types'),
       '@styles': path.resolve(__dirname, './src/styles'),
       '@assets': path.resolve(__dirname, './src/assets'),
+      '@tauri-apps/api/tauri': path.resolve(__dirname, './src/tests/mocks/tauri-api.ts'),
       '@tauri-apps/api/core': path.resolve(__dirname, './src/tests/mocks/tauri-api.ts'),
     },
   },
@@ -106,6 +107,7 @@ export default defineConfig({
       '@types': path.resolve(__dirname, './src/types'),
       '@styles': path.resolve(__dirname, './src/styles'),
       '@assets': path.resolve(__dirname, './src/assets'),
+      '@tauri-apps/api/tauri': path.resolve(__dirname, './src/tests/mocks/tauri-api.ts'),
       '@tauri-apps/api/core': path.resolve(__dirname, './src/tests/mocks/tauri-api.ts'),
     },
   },

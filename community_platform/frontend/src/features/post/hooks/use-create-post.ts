@@ -4,7 +4,7 @@
  */
 
 import { useMutation, useQueryClient, type UseMutationResult } from '@tanstack/react-query';
-import { toast } from 'sonner';
+import { toast } from '@/shared/components/ui/use-toast';
 import { postApiClient } from '../api';
 import type { Post, CreatePostDto } from '../domain';
 import { createPostSchema } from '../domain';
@@ -30,11 +30,18 @@ export function useCreatePost(): UseMutationResult<Post, Error, CreatePostDto> {
       // 乐观更新：将新帖子添加到缓存中
       queryClient.setQueryData(POST_QUERY_KEYS.detail(newPost.id), newPost);
       
-      toast.success('帖子创建成功！');
+      toast({
+        title: '帖子创建成功！',
+        variant: 'default',
+      });
     },
     onError: (error) => {
       console.error('创建帖子失败:', error);
-      toast.error(error.message || '创建帖子失败，请稍后重试');
+      toast({
+        title: '创建帖子失败',
+        description: error.message || '请稍后重试',
+        variant: 'destructive',
+      });
     },
   });
 }

@@ -72,6 +72,7 @@ export function useLocalStorage<T>(
       window.addEventListener('storage', handleStorageChange);
       return () => window.removeEventListener('storage', handleStorageChange);
     }
+    return undefined;
   }, [key]);
 
   return [storedValue, setValue, removeValue];

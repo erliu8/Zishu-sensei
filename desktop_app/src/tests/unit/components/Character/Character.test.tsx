@@ -4,6 +4,7 @@
  * 测试主要Character组件的渲染、配置和交互功能
  */
 
+import React from 'react'
 import { describe, it, expect, vi, beforeEach, afterEach } from 'vitest'
 import { render, screen, waitFor } from '@testing-library/react'
 import userEvent from '@testing-library/user-event'
@@ -12,32 +13,42 @@ import { renderWithProviders } from '@/tests/utils/test-utils'
 
 // Mock Live2DViewer组件
 vi.mock('@/components/Character/Live2D/Live2DViewer', () => ({
-  Live2DViewer: vi.fn(({ onInteraction, onModelLoad, onError, modelConfig }) => (
-    <div 
-      data-testid="live2d-viewer"
-      data-model-id={modelConfig?.id}
-      onClick={() => {
-        onInteraction?.({
-          type: 'click',
-          position: { x: 100, y: 100 }
-        })
-      }}
-    >
-      <button 
-        data-testid="trigger-load"
-        onClick={() => onModelLoad?.(modelConfig?.id)}
+  Live2DViewer: vi.fn(({ onInteraction, onModelLoad, onError, modelConfig }) => {
+    // 模拟组件挂载后立即触发模型加载完成
+    React.useEffect(() => {
+      if (modelConfig?.id && onModelLoad) {
+        // 使用 setTimeout 模拟异步加载
+        setTimeout(() => onModelLoad(modelConfig.id), 0)
+      }
+    }, [modelConfig?.id, onModelLoad])
+
+    return (
+      <div 
+        data-testid="live2d-viewer"
+        data-model-id={modelConfig?.id}
+        onClick={() => {
+          onInteraction?.({
+            type: 'click',
+            position: { x: 100, y: 100 }
+          })
+        }}
       >
-        Trigger Load
-      </button>
-      <button 
-        data-testid="trigger-error"
-        onClick={() => onError?.(new Error('Test Error'))}
-      >
-        Trigger Error
-      </button>
-      Live2D Viewer Mock
-    </div>
-  ))
+        <button 
+          data-testid="trigger-load"
+          onClick={() => onModelLoad?.(modelConfig?.id)}
+        >
+          Trigger Load
+        </button>
+        <button 
+          data-testid="trigger-error"
+          onClick={() => onError?.(new Error('Test Error'))}
+        >
+          Trigger Error
+        </button>
+        Live2D Viewer Mock
+      </div>
+    )
+  })
 }))
 
 // Mock ModelLoader hook
@@ -108,7 +119,7 @@ describe('Character组件', () => {
       }, { timeout: 3000 })
     })
 
-    it('当没有角色时应该返回null', () => {
+    it('当没有角色时应该渲染空容器', () => {
       const mockOnInteraction = vi.fn()
       
       const { container } = render(
@@ -118,7 +129,9 @@ describe('Character组件', () => {
         />
       )
 
-      expect(container.firstChild).toBeNull()
+      // 应该有容器，但没有Live2D内容
+      expect(container.firstChild).not.toBeNull()
+      expect(screen.queryByTestId('live2d-viewer')).not.toBeInTheDocument()
     })
 
     it('应该正确传递角色数据到Live2D组件', async () => {
@@ -338,6 +351,10 @@ describe('Character组件', () => {
         />
       )
 
+      await waitFor(() => {
+        expect(screen.getByTestId('live2d-viewer')).toBeInTheDocument()
+      }, { timeout: 3000 })
+      
       const viewer = screen.getByTestId('live2d-viewer')
       await user.click(viewer)
 
@@ -357,6 +374,10 @@ describe('Character组件', () => {
         />
       )
 
+      await waitFor(() => {
+        expect(screen.getByTestId('live2d-viewer')).toBeInTheDocument()
+      }, { timeout: 3000 })
+      
       const viewer = screen.getByTestId('live2d-viewer')
       await user.click(viewer)
 
@@ -382,6 +403,10 @@ describe('Character组件', () => {
         />
       )
 
+      await waitFor(() => {
+        expect(screen.getByTestId('live2d-viewer')).toBeInTheDocument()
+      }, { timeout: 3000 })
+      
       const viewer = screen.getByTestId('live2d-viewer')
       await user.click(viewer)
 
@@ -408,6 +433,10 @@ describe('Character组件', () => {
         />
       )
 
+      await waitFor(() => {
+        expect(screen.getByTestId('live2d-viewer')).toBeInTheDocument()
+      }, { timeout: 3000 })
+      
       const viewer = screen.getByTestId('live2d-viewer')
       await user.click(viewer)
 
@@ -444,6 +473,10 @@ describe('Character组件', () => {
         />
       )
 
+      await waitFor(() => {
+        expect(screen.getByTestId('live2d-viewer')).toBeInTheDocument()
+      }, { timeout: 3000 })
+
       const triggerButton = screen.getByTestId('trigger-load')
       await user.click(triggerButton)
 
@@ -465,6 +498,10 @@ describe('Character组件', () => {
           onInteraction={mockOnInteraction}
         />
       )
+
+      await waitFor(() => {
+        expect(screen.getByTestId('live2d-viewer')).toBeInTheDocument()
+      }, { timeout: 3000 })
 
       const triggerButton = screen.getByTestId('trigger-load')
       await user.click(triggerButton)
@@ -491,6 +528,10 @@ describe('Character组件', () => {
         />
       )
 
+      await waitFor(() => {
+        expect(screen.getByTestId('live2d-viewer')).toBeInTheDocument()
+      }, { timeout: 3000 })
+
       const triggerErrorButton = screen.getByTestId('trigger-error')
       await user.click(triggerErrorButton)
 
@@ -514,6 +555,10 @@ describe('Character组件', () => {
         />
       )
 
+      await waitFor(() => {
+        expect(screen.getByTestId('live2d-viewer')).toBeInTheDocument()
+      }, { timeout: 3000 })
+
       const triggerErrorButton = screen.getByTestId('trigger-error')
       await user.click(triggerErrorButton)
 
@@ -532,6 +577,10 @@ describe('Character组件', () => {
           onInteraction={mockOnInteraction}
         />
       )
+
+      await waitFor(() => {
+        expect(screen.getByTestId('live2d-viewer')).toBeInTheDocument()
+      }, { timeout: 3000 })
 
       const triggerErrorButton = screen.getByTestId('trigger-error')
       await user.click(triggerErrorButton)
@@ -552,7 +601,7 @@ describe('Character组件', () => {
     it('应该处理角色从有到无的变化', async () => {
       const mockOnInteraction = vi.fn()
       
-      const { rerender, container } = render(
+      const { rerender } = render(
         <Character 
           character={mockCharacter} 
           onInteraction={mockOnInteraction}
@@ -570,7 +619,8 @@ describe('Character组件', () => {
         />
       )
 
-      expect(container.firstChild).toBeNull()
+      // 组件应该仍然存在但没有Live2D内容
+      expect(screen.queryByTestId('live2d-viewer')).not.toBeInTheDocument()
     })
 
     it('应该处理角色从无到有的变化', async () => {
@@ -809,7 +859,7 @@ describe('Character组件', () => {
       await user.click(viewer)
 
       await waitFor(() => {
-        expect(mockOnInteraction).toHaveBeenCalledTimes(3)
+        expect(mockOnInteraction).toHaveBeenCalledTimes(4) // 3次点击 + 1次自动模型加载
       })
     })
   })

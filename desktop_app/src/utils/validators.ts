@@ -211,6 +211,11 @@ export function validateTextLength(
 
   const value = trim ? text.trim() : text
 
+  // 如果允许空值且值为空，直接返回成功
+  if (allowEmpty && isEmpty(value)) {
+    return { valid: true }
+  }
+
   if (!allowEmpty && isEmpty(value)) {
     return {
       valid: false,
@@ -680,15 +685,20 @@ export function validatePasswordStrength(
     requireSpecialChars = true,
   } = options
 
-  // 检查长度
+  const errors: string[] = []
+
+  // 检查长度（收集错误而不是直接返回）
   const lengthResult = validateTextLength(password, {
     minLength,
     maxLength,
     allowEmpty: false,
   })
-  if (!lengthResult.valid) return lengthResult
-
-  const errors: string[] = []
+  if (!lengthResult.valid) {
+    // 将长度错误添加到错误列表
+    if (lengthResult.message) {
+      errors.push(lengthResult.message)
+    }
+  }
 
   // 检查大写字母
   if (requireUppercase && !/[A-Z]/.test(password)) {
@@ -810,7 +820,11 @@ export function validateAll(
 
     // 处理返回 ValidationResult 的验证函数
     if (!result.valid) {
-      return result
+      // 如果规则提供了自定义消息，使用它覆盖验证器返回的消息
+      return {
+        ...result,
+        message: rule.message || result.message,
+      }
     }
   }
 

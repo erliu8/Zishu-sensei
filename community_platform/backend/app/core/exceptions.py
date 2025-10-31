@@ -305,3 +305,11 @@ class InvalidFileTypeException(FileException):
             details={"file_type": file_type, "allowed_types": allowed_types}
         )
 
+
+# ==================== 简写别名（向后兼容） ====================
+
+# 常用异常的简短别名
+NotFoundException = ResourceNotFoundException
+BadRequestException = BusinessLogicException
+ForbiddenException = AuthorizationException
+

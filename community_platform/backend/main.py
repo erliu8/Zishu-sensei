@@ -78,7 +78,7 @@ register_exception_handlers(app)
 # 1. CORS 中间件（最外层）
 app.add_middleware(
     CORSMiddleware,
-    allow_origins=settings.CORS_ORIGINS,
+    allow_origins=settings.cors_origins_list,
     allow_credentials=True,
     allow_methods=["*"],
     allow_headers=["*"],
@@ -147,7 +147,7 @@ if __name__ == "__main__":
     uvicorn.run(
         "main:app",
         host="0.0.0.0",
-        port=8000,
+        port=8001,
         reload=settings.DEBUG,
         log_level=settings.LOG_LEVEL.lower(),
     )

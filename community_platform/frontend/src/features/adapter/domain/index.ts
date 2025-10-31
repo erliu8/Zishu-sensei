@@ -5,6 +5,8 @@
 
 // 导出所有类型
 export * from './adapter.types';
+export * from './live2d.types';
+export * from './lora.types';
 
 // 导出Domain类（如果有实体类的话）
 // export * from './Adapter';

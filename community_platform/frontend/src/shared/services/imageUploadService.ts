@@ -197,7 +197,8 @@ export class ImageUploadService {
 
     // 如果有错误，抛出
     if (errors.length > 0 && results.length === 0) {
-      throw new Error(`所有文件上传失败: ${errors[0].message}`)
+      const firstError = errors[0];
+      throw new Error(`所有文件上传失败: ${firstError?.message || '未知错误'}`)
     }
 
     return results.filter(Boolean) // 过滤掉失败的

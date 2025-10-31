@@ -4,21 +4,23 @@
 from fastapi import APIRouter, Depends, HTTPException, status
 from sqlalchemy.ext.asyncio import AsyncSession
 
-from app.core.deps import get_db
+from app.core.deps import get_db, get_current_user
 from app.schemas.auth import (
     LoginRequest,
     RegisterRequest,
     Token,
+    AuthResponse,
     RefreshTokenRequest,
+    AuthStatusResponse,
 )
-from app.schemas.user import UserPublic
 from app.db.repositories.user import UserRepository
 from app.services.auth import JWTService, PasswordService
+from app.models.user import User
 
 router = APIRouter()
 
 
-@router.post("/register", response_model=UserPublic, status_code=status.HTTP_201_CREATED)
+@router.post("/register", response_model=AuthResponse, status_code=status.HTTP_201_CREATED)
 async def register(
     register_data: RegisterRequest,
     db: AsyncSession = Depends(get_db),
@@ -30,6 +32,8 @@ async def register(
     - **email**: 邮箱
     - **password**: 密码（最少 6 字符）
     - **full_name**: 全名（可选）
+    
+    返回用户信息、访问令牌和刷新令牌，用户注册后自动登录
     """
     user_repo = UserRepository(db)
     
@@ -58,10 +62,20 @@ async def register(
         "full_name": register_data.full_name,
     })
     
-    return user
+    # 创建令牌，用户注册后自动登录
+    tokens = JWTService.create_tokens(user.id, user.username)
+    
+    # 返回包含用户信息和令牌的响应
+    return AuthResponse(
+        user=user,
+        access_token=tokens["access_token"],
+        refresh_token=tokens.get("refresh_token"),
+        token_type=tokens.get("token_type", "bearer"),
+        expires_in=tokens["expires_in"],
+    )
 
 
-@router.post("/login", response_model=Token)
+@router.post("/login", response_model=AuthResponse)
 async def login(
     login_data: LoginRequest,
     db: AsyncSession = Depends(get_db),
@@ -72,7 +86,7 @@ async def login(
     - **username**: 用户名或邮箱
     - **password**: 密码
     
-    返回访问令牌和刷新令牌
+    返回用户信息、访问令牌和刷新令牌
     """
     user_repo = UserRepository(db)
     
@@ -104,7 +118,14 @@ async def login(
     # 创建令牌
     tokens = JWTService.create_tokens(user.id, user.username)
     
-    return tokens
+    # 返回包含用户信息和令牌的响应
+    return AuthResponse(
+        user=user,
+        access_token=tokens["access_token"],
+        refresh_token=tokens.get("refresh_token"),
+        token_type=tokens.get("token_type", "bearer"),
+        expires_in=tokens["expires_in"],
+    )
 
 
 @router.post("/refresh", response_model=Token)
@@ -168,4 +189,28 @@ async def logout():
     客户端应该删除本地存储的令牌
     """
     return {"message": "登出成功"}
+
+
+@router.get("/me", response_model=AuthStatusResponse)
+async def get_auth_status(
+    current_user: User = Depends(get_current_user),
+):
+    """
+    获取当前用户的认证状态
+    
+    这是一个轻量级的端点，仅用于验证用户是否已登录
+    如需获取完整的用户信息，请使用 /users/me 端点
+    
+    返回:
+    - **authenticated**: 认证状态（始终为 True，否则会返回 401）
+    - **user_id**: 用户 ID
+    - **username**: 用户名
+    - **is_active**: 用户是否激活
+    """
+    return AuthStatusResponse(
+        authenticated=True,
+        user_id=current_user.id,
+        username=current_user.username,
+        is_active=current_user.is_active,
+    )
 

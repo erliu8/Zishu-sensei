@@ -7,6 +7,7 @@ from app.models.comment import Comment
 from app.models.like import Like
 from app.models.follow import Follow
 from app.models.notification import Notification
+from app.models.character import Character
 
 # 导出所有模型供 Alembic 和其他模块使用
 __all__ = [
@@ -16,5 +17,6 @@ __all__ = [
     "Like",
     "Follow",
     "Notification",
+    "Character",
 ]
 

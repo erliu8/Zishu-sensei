@@ -89,7 +89,7 @@ export function VerifyEmailForm({
   onResendEmail,
   status,
   error,
-  isLoading = false,
+  isLoading: _isLoading = false,
   userEmail,
   loginUrl = '/login',
 }: VerifyEmailFormProps) {

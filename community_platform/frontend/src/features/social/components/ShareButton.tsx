@@ -90,7 +90,7 @@ const sharePlatformConfigs: Record<SharePlatform, SharePlatformConfig> = {
   linkedin: {
     name: 'LinkedIn',
     icon: LinkIcon,
-    getUrl: (url, title) =>
+    getUrl: (url) =>
       `https://www.linkedin.com/sharing/share-offsite/?url=${encodeURIComponent(url)}`,
     color: 'text-[#0077B5]',
   },
@@ -167,7 +167,7 @@ export const ShareButton: React.FC<ShareButtonProps> = ({
     const shareUrl = config.getUrl(url, title, description);
 
     // 尝试使用 Web Share API（移动端优先）
-    if (navigator.share && platform !== 'copy') {
+    if (navigator.share) {
       try {
         await navigator.share({
           title,
@@ -283,7 +283,7 @@ export const QuickShareButton: React.FC<QuickShareButtonProps> = ({
   return (
     <Button
       variant={variant}
-      size={size}
+      size={size as any}
       className={className}
       onClick={handleCopy}
       disabled={disabled}

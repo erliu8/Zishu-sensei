@@ -3,7 +3,7 @@
 import React, { useEffect } from 'react';
 import { Bell, MessageSquare, Heart, UserPlus, Trophy, AlertCircle } from 'lucide-react';
 import { useToast } from '@/shared/hooks/use-toast';
-import { Notification, NotificationType } from '../types';
+import { Notification, NotificationType } from '../domain/notification';
 import { useRouter } from 'next/navigation';
 
 interface NotificationToastProps {
@@ -23,24 +23,18 @@ export function NotificationToast({
   const router = useRouter();
 
   useEffect(() => {
-    const icon = getNotificationIcon(notification.type);
-    
     toast({
-      title: (
-        <div className="flex items-center gap-2">
-          {icon}
-          <span>{notification.title}</span>
-        </div>
-      ),
+      title: notification.title,
       description: notification.content,
       action: notification.actionUrl
         ? {
-            label: '查看',
+            altText: '查看',
+            children: '查看',
             onClick: () => {
               router.push(notification.actionUrl!);
               onDismiss?.();
             },
-          }
+          } as any
         : undefined,
       variant: notification.type === 'system' ? 'default' : 'default',
     });
@@ -52,7 +46,7 @@ export function NotificationToast({
 /**
  * 根据通知类型获取图标
  */
-function getNotificationIcon(type: NotificationType) {
+export function getNotificationIcon(type: NotificationType) {
   const iconClassName = 'h-4 w-4';
   
   switch (type) {
@@ -89,10 +83,10 @@ export function NotificationToastContainer({
     if (!enabled) return;
 
     // 示例：监听自定义事件
-    const handleNewNotification = (event: CustomEvent<Notification>) => {
-      const notification = event.detail;
+    const handleNewNotification = (_: CustomEvent<Notification>) => {
       // 渲染通知 toast
       // 这里可以维护一个通知队列
+      // TODO: 实现通知 toast 的渲染逻辑
     };
 
     window.addEventListener('new-notification', handleNewNotification as EventListener);
@@ -108,9 +102,9 @@ export function NotificationToastContainer({
 /**
  * 触发新通知 Toast 的辅助函数
  */
-export function showNotificationToast(notification: Notification) {
+export function showNotificationToast(_notification: Notification) {
   const event = new CustomEvent('new-notification', {
-    detail: notification,
+    detail: _notification,
   });
   window.dispatchEvent(event);
 }

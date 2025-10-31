@@ -20,11 +20,12 @@ export * from './common'
 export * from './ui/card'
 export * from './ui/dialog'
 export * from './ui/alert-dialog'
-// export * from './ui/dropdown-menu' // 待实现
+export * from './ui/dropdown-menu'
 export * from './ui/sheet'
 export * from './ui/tabs'
 export * from './ui/separator'
 export * from './ui/scroll-area'
+// Note: Using common/Breadcrumb instead of ui/breadcrumb to avoid duplicate exports
 
 // 表单组件
 export * from './ui/button'
@@ -54,7 +55,7 @@ export * from './ui/use-toast'
 export * from './ui/table'
 // export * from './ui/avatar' // 使用 common 中的增强版本
 // export * from './ui/calendar' // 待实现
-// export * from './ui/command' // 待实现
+export * from './ui/command'
 // export * from './ui/empty-state' // 使用 common 中的增强版本
 
 // 业务组件

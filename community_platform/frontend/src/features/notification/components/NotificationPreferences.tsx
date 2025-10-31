@@ -12,7 +12,6 @@ import {
   FormField,
   FormItem,
   FormLabel,
-  FormMessage,
 } from '@/shared/components/ui/form';
 import { Switch } from '@/shared/components/ui/switch';
 import { Button } from '@/shared/components/ui/button';
@@ -36,19 +35,19 @@ const preferencesSchema = z.object({
   pushEnabled: z.boolean(),
   
   // 通知类型启用设置
-  likeEnabled: z.boolean(),
-  commentEnabled: z.boolean(),
-  followEnabled: z.boolean(),
-  mentionEnabled: z.boolean(),
-  replyEnabled: z.boolean(),
-  shareEnabled: z.boolean(),
-  systemEnabled: z.boolean(),
-  achievementEnabled: z.boolean(),
-  trendingEnabled: z.boolean(),
+  likeEnabled: z.boolean().optional(),
+  commentEnabled: z.boolean().optional(),
+  followEnabled: z.boolean().optional(),
+  mentionEnabled: z.boolean().optional(),
+  replyEnabled: z.boolean().optional(),
+  shareEnabled: z.boolean().optional(),
+  systemEnabled: z.boolean().optional(),
+  achievementEnabled: z.boolean().optional(),
+  trendingEnabled: z.boolean().optional(),
   
   // 静音设置
-  muteAll: z.boolean(),
-  muteDuringNight: z.boolean(),
+  muteAll: z.boolean().optional(),
+  muteDuringNight: z.boolean().optional(),
 });
 
 type PreferencesFormData = z.infer<typeof preferencesSchema>;
@@ -61,8 +60,9 @@ export function NotificationPreferences() {
   const { data: preferences, isLoading } = useNotificationPreferences();
   const updatePreferencesMutation = useUpdateNotificationPreferences();
 
-  const form = useForm<PreferencesFormData>({
+  const form = useForm({
     resolver: zodResolver(preferencesSchema),
+    mode: 'onChange' as const,
     defaultValues: {
       emailEnabled: preferences?.emailEnabled ?? true,
       pushEnabled: preferences?.pushEnabled ?? true,
@@ -85,15 +85,15 @@ export function NotificationPreferences() {
           emailEnabled: preferences.emailEnabled,
           pushEnabled: preferences.pushEnabled,
           
-          likeEnabled: preferences.notificationTypes.like,
-          commentEnabled: preferences.notificationTypes.comment,
-          followEnabled: preferences.notificationTypes.follow,
-          mentionEnabled: preferences.notificationTypes.mention,
-          replyEnabled: preferences.notificationTypes.reply,
-          shareEnabled: preferences.notificationTypes.share,
-          systemEnabled: preferences.notificationTypes.system,
-          achievementEnabled: preferences.notificationTypes.achievement,
-          trendingEnabled: preferences.notificationTypes.trending,
+          likeEnabled: preferences.notificationTypes?.like,
+          commentEnabled: preferences.notificationTypes?.comment,
+          followEnabled: preferences.notificationTypes?.follow,
+          mentionEnabled: preferences.notificationTypes?.mention,
+          replyEnabled: preferences.notificationTypes?.reply,
+          shareEnabled: preferences.notificationTypes?.share,
+          systemEnabled: preferences.notificationTypes?.system,
+          achievementEnabled: preferences.notificationTypes?.achievement,
+          trendingEnabled: preferences.notificationTypes?.trending,
           
           muteAll: preferences.muteAll,
           muteDuringNight: preferences.muteDuringNight,

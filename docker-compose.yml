@@ -6,11 +6,14 @@ services:
     build:
       context: .
       dockerfile: docker/Dockerfile.api
+      # 禁用 no_cache 以利用 Docker 缓存
+      no_cache: false
     container_name: zishu-api
     ports:
       - "8000:8000"
     environment:
-      - ENVIRONMENT=production
+      - ENVIRONMENT=${ENVIRONMENT:-development}
+      - DEBUG=${DEBUG:-True}
       - LOG_LEVEL=${ZISHU_LOG_LEVEL:-INFO}
       - MODEL_PATH=${MODEL_PATH:-/app/models}
       - CACHE_DIR=${CACHE_DIR:-/app/cache}
@@ -20,14 +23,20 @@ services:
       - QDRANT_API_KEY=${QDRANT_API_KEY}
       - OPENAI_API_KEY=${OPENAI_API_KEY}
     volumes:
+      # 开发模式：挂载源代码（代码变化无需重建镜像）
+      - .:/app
+      # 数据卷（只读/读写分离）
       - ./models:/app/models:ro
       - ./config:/app/config:ro
       - ./cache:/app/cache
       - ./logs:/app/logs
     depends_on:
-      - redis
-      - postgres
-      - qdrant
+      redis:
+        condition: service_healthy
+      postgres:
+        condition: service_healthy
+      qdrant:
+        condition: service_healthy
     networks:
       - zishu-network
     restart: unless-stopped
@@ -36,6 +45,7 @@ services:
       interval: 30s
       timeout: 10s
       retries: 3
+      start_period: 60s
 
   # 向量数据库
   qdrant:
@@ -56,7 +66,7 @@ services:
       - zishu-network
     restart: unless-stopped
     healthcheck:
-      test: ["CMD", "curl", "-f", "http://localhost:6333/healthz"]
+      test: ["CMD", "bash", "-c", "exec 3<>/dev/tcp/localhost/6333 && echo -e 'GET /healthz HTTP/1.1\\r\\nHost: localhost\\r\\nConnection: close\\r\\n\\r\\n' >&3 && timeout 5 cat <&3 | grep -q 'healthz check passed'"]
       interval: 30s
       timeout: 10s
       retries: 3
@@ -194,8 +204,6 @@ services:
     networks:
       - zishu-network
     restart: unless-stopped
-    profiles:
-      - community
 
   # 社区平台后端
   community-backend:
@@ -223,6 +231,7 @@ services:
       - QDRANT_API_KEY=${QDRANT_API_KEY}
       - SECRET_KEY=${COMMUNITY_SECRET_KEY:-zishu-community-secret-key-change-in-production}
     volumes:
+      - ./community_platform/backend:/app
       - ./community_platform/backend/uploads:/app/uploads
     depends_on:
       - postgres
@@ -231,8 +240,6 @@ services:
     networks:
       - zishu-network
     restart: unless-stopped
-    profiles:
-      - community
 
 networks:
   zishu-network:

@@ -11,6 +11,9 @@ from app.api.v1.endpoints import (
     search,
     notifications,
     websocket,
+    adapters,
+    characters,
+    packaging,
 )
 
 api_router = APIRouter()
@@ -34,6 +37,20 @@ api_router.include_router(
     posts.router,
     prefix="/posts",
     tags=["帖子 Posts"],
+)
+
+# 适配器路由
+api_router.include_router(
+    adapters.router,
+    prefix="/adapters",
+    tags=["适配器 Adapters"],
+)
+
+# 角色路由
+api_router.include_router(
+    characters.router,
+    prefix="/characters",
+    tags=["角色 Characters"],
 )
 
 # 评论路由
@@ -61,5 +78,12 @@ api_router.include_router(
 api_router.include_router(
     websocket.router,
     tags=["WebSocket"],
+)
+
+# 打包路由
+api_router.include_router(
+    packaging.router,
+    prefix="/packaging",
+    tags=["打包 Packaging"],
 )
 

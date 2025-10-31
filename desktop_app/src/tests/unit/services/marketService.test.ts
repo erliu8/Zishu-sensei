@@ -5,7 +5,7 @@
  */
 
 import { describe, it, expect, beforeEach, afterEach, vi } from 'vitest';
-import { invoke } from '@tauri-apps/api/core';
+import { invoke } from '@tauri-apps/api/tauri';
 import {
   MarketService,
   MarketProductType,
@@ -16,7 +16,7 @@ import {
 import { createMockApiResponse, createMockErrorResponse } from '../../mocks/factories';
 
 // Mock Tauri API
-vi.mock('@tauri-apps/api/core', () => ({
+vi.mock('@tauri-apps/api/tauri', () => ({
   invoke: vi.fn(),
 }));
 
@@ -242,7 +242,7 @@ describe('MarketService', () => {
 
       const result = await MarketService.getCategories();
 
-      expect(mockInvoke).toHaveBeenCalledWith('get_market_categories');
+      expect(mockInvoke).toHaveBeenCalledWith('get_market_categories', { productType: undefined });
       expect(result).toEqual(mockCategories);
     });
   });
@@ -292,7 +292,7 @@ describe('MarketService', () => {
 
       const result = await MarketService.getFeaturedProducts();
 
-      expect(mockInvoke).toHaveBeenCalledWith('get_featured_products');
+      expect(mockInvoke).toHaveBeenCalledWith('get_featured_products', { productType: undefined, limit: undefined });
       expect(result).toEqual(mockProducts);
       expect(result[0].is_featured).toBe(true);
     });

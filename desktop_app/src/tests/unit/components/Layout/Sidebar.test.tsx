@@ -173,7 +173,7 @@ const Sidebar: React.FC<SidebarProps> = ({
     },
   ]
   
-  const items = navigationItems.length > 0 ? navigationItems : defaultNavigationItems
+  const items = navigationItems && navigationItems.length > 0 ? navigationItems : defaultNavigationItems
   
   // 默认用户信息
   const defaultUserInfo: UserInfo = {
@@ -541,7 +541,7 @@ describe('Sidebar 侧边栏组件', () => {
       
       const sidebar = screen.getByTestId('sidebar')
       expectHasClass(sidebar, customClass)
-      expect(sidebar).toHaveStyle('background-color: red')
+      expect(sidebar).toHaveStyle('background-color: rgb(255, 0, 0)')
     })
   })
   
@@ -685,14 +685,14 @@ describe('Sidebar 侧边栏组件', () => {
     })
     
     it('收起状态下不应该显示子菜单', async () => {
-      const { user } = renderWithProviders(<Sidebar collapsed={false} />)
+      const { user, rerender } = renderWithProviders(<Sidebar collapsed={false} />)
       
       // 先展开子菜单
       await clickElement(screen.getByTestId('nav-button-workflows'), user)
       expectVisible(screen.getByTestId('nav-submenu-workflows'))
       
-      // 然后收起侧边栏
-      await clickElement(screen.getByTestId('collapse-toggle'), user)
+      // 重新渲染为收起状态 
+      rerender(<Sidebar collapsed={true} />)
       
       expect(screen.queryByTestId('nav-submenu-workflows')).not.toBeInTheDocument()
     })
@@ -922,13 +922,23 @@ describe('Sidebar 侧边栏组件', () => {
     
     it('应该支持键盘导航', async () => {
       const { user } = renderWithProviders(<Sidebar />)
-      
+
       const firstNavItem = screen.getByTestId('nav-button-chat')
-      
-      // 应该可以通过Tab键导航到导航项
+      const collapseButton = screen.getByTestId('collapse-toggle')
+      const searchInput = screen.getByTestId('search-input')
+
+      // 第一个Tab应该聚焦到折叠按钮
+      await user.tab()
+      expect(collapseButton).toHaveFocus()
+
+      // 第二个Tab应该聚焦到搜索输入框
+      await user.tab()
+      expect(searchInput).toHaveFocus()
+
+      // 第三个Tab应该聚焦到第一个导航项
       await user.tab()
       expect(firstNavItem).toHaveFocus()
-      
+
       // 应该可以通过Enter键激活
       await user.keyboard('{Enter}')
       // 这里应该触发导航，但我们没有完整的导航实现
@@ -941,8 +951,25 @@ describe('Sidebar 侧边栏组件', () => {
     it('应该处理空的导航项列表', () => {
       renderWithProviders(<Sidebar navigationItems={[]} />)
       
-      const navMenu = screen.getByRole('menubar')
-      expect(navMenu).toBeEmptyDOMElement()
+      // 当传递空数组时，应该使用默认导航项
+      expectVisible(screen.getByTestId('nav-button-chat'))
+      expectVisible(screen.getByTestId('nav-button-character'))
+      expectVisible(screen.getByTestId('nav-button-adapters'))
+      expectVisible(screen.getByTestId('nav-button-workflows'))
+      expectVisible(screen.getByTestId('nav-button-desktop'))
+      expectVisible(screen.getByTestId('nav-button-settings'))
+    })
+
+    it('应该处理未定义的导航项', () => {
+      renderWithProviders(<Sidebar navigationItems={undefined} />)
+      
+      // 当不传递navigationItems时，应该使用默认导航项
+      expectVisible(screen.getByTestId('nav-button-chat'))
+      expectVisible(screen.getByTestId('nav-button-character'))
+      expectVisible(screen.getByTestId('nav-button-adapters'))
+      expectVisible(screen.getByTestId('nav-button-workflows'))
+      expectVisible(screen.getByTestId('nav-button-desktop'))
+      expectVisible(screen.getByTestId('nav-button-settings'))
     })
     
     it('应该处理没有用户信息的情况', () => {

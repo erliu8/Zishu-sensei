@@ -5,7 +5,6 @@
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { characterApi } from '../api';
 import type {
-  Character,
   CreateCharacterInput,
   UpdateCharacterInput,
   PublishCharacterInput,
@@ -21,7 +20,7 @@ export const characterKeys = {
   list: (filters?: CharacterFilters) =>
     [...characterKeys.lists(), filters] as const,
   details: () => [...characterKeys.all, 'detail'] as const,
-  detail: (id: string) => [...characterKeys.details(), id] as const,
+  detail: (id: number) => [...characterKeys.details(), id] as const,
   my: () => [...characterKeys.all, 'my'] as const,
   featured: () => [...characterKeys.all, 'featured'] as const,
   trending: () => [...characterKeys.all, 'trending'] as const,
@@ -41,7 +40,7 @@ export function useCharacters(filters?: CharacterFilters) {
 /**
  * 获取单个角色详情
  */
-export function useCharacter(id: string, enabled: boolean = true) {
+export function useCharacter(id: number, enabled: boolean = true) {
   return useQuery({
     queryKey: characterKeys.detail(id),
     queryFn: () => characterApi.getCharacter(id),
@@ -117,7 +116,7 @@ export function useUpdateCharacter() {
       id,
       input,
     }: {
-      id: string;
+      id: number;
       input: UpdateCharacterInput;
     }) => characterApi.updateCharacter(id, input),
     onSuccess: (updatedCharacter) => {
@@ -141,7 +140,7 @@ export function useDeleteCharacter() {
   const queryClient = useQueryClient();
 
   return useMutation({
-    mutationFn: (id: string) => characterApi.deleteCharacter(id),
+    mutationFn: (id: number) => characterApi.deleteCharacter(id),
     onSuccess: (_, deletedId) => {
       // 移除角色详情缓存
       queryClient.removeQueries({ queryKey: characterKeys.detail(deletedId) });
@@ -164,7 +163,7 @@ export function usePublishCharacter() {
       id,
       input,
     }: {
-      id: string;
+      id: number;
       input?: PublishCharacterInput;
     }) => characterApi.publishCharacter(id, input),
     onSuccess: (publishedCharacter) => {
@@ -189,7 +188,7 @@ export function useUnpublishCharacter() {
   const queryClient = useQueryClient();
 
   return useMutation({
-    mutationFn: (id: string) => characterApi.unpublishCharacter(id),
+    mutationFn: (id: number) => characterApi.unpublishCharacter(id),
     onSuccess: (unpublishedCharacter) => {
       // 更新角色详情缓存
       queryClient.setQueryData(
@@ -211,7 +210,7 @@ export function useArchiveCharacter() {
   const queryClient = useQueryClient();
 
   return useMutation({
-    mutationFn: (id: string) => characterApi.archiveCharacter(id),
+    mutationFn: (id: number) => characterApi.archiveCharacter(id),
     onSuccess: (archivedCharacter) => {
       // 更新角色详情缓存
       queryClient.setQueryData(
@@ -233,7 +232,7 @@ export function useCloneCharacter() {
   const queryClient = useQueryClient();
 
   return useMutation({
-    mutationFn: (id: string) => characterApi.cloneCharacter(id),
+    mutationFn: (id: number) => characterApi.cloneCharacter(id),
     onSuccess: (clonedCharacter) => {
       // 设置克隆角色详情缓存
       queryClient.setQueryData(

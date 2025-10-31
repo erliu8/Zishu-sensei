@@ -1,23 +1,12 @@
 import { apiClient } from '@/infrastructure/api/client';
+import type { PaginatedResponse } from '@/infrastructure/api/types';
 import type {
   Notification,
   CreateNotificationDto,
-  UpdateNotificationDto,
   NotificationQueryParams,
   NotificationStats,
   NotificationPreferences,
 } from '../domain/notification';
-
-/**
- * 分页响应接口
- */
-interface PaginatedResponse<T> {
-  data: T[];
-  total: number;
-  page: number;
-  pageSize: number;
-  totalPages: number;
-}
 
 /**
  * 通知 API 客户端

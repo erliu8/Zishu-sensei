@@ -15,13 +15,13 @@ export default defineConfig({
   fullyParallel: true,
 
   // CI 上失败时禁止重试
-  forbidOnly: !!process.env.CI,
+  forbidOnly: !!process.env['CI'],
 
   // CI 上重试失败的测试
-  retries: process.env.CI ? 2 : 0,
+  retries: process.env['CI'] ? 2 : 0,
 
   // 工作线程数量
-  workers: process.env.CI ? 1 : undefined,
+  workers: process.env['CI'] ? 1 : undefined,
 
   // 报告器配置
   reporter: [
@@ -34,7 +34,7 @@ export default defineConfig({
   // 共享配置
   use: {
     // 基础 URL
-    baseURL: process.env.PLAYWRIGHT_BASE_URL || 'http://localhost:3000',
+    baseURL: process.env['PLAYWRIGHT_BASE_URL'] || 'http://localhost:3000',
 
     // 追踪配置
     trace: 'on-first-retry',
@@ -106,12 +106,12 @@ export default defineConfig({
   ],
 
   // 开发服务器配置
-  webServer: process.env.CI
+  webServer: process.env['CI']
     ? undefined
     : {
         command: 'npm run dev',
         url: 'http://localhost:3000',
-        reuseExistingServer: !process.env.CI,
+        reuseExistingServer: !process.env['CI'],
         timeout: 120 * 1000, // 2分钟启动超时
         stdout: 'ignore',
         stderr: 'pipe',

@@ -198,23 +198,27 @@ export function ImageBatchUploader({
         compress: false, // 已经压缩过了
         onFileComplete: (result, index) => {
           const fileItem = pendingFiles[index]
-          setFiles((prev) =>
-            prev.map((f) =>
-              f.id === fileItem.id ? { ...f, status: 'success', progress: 100, result } : f
+          if (fileItem) {
+            setFiles((prev) =>
+              prev.map((f) =>
+                f.id === fileItem.id ? { ...f, status: 'success', progress: 100, result } : f
+              )
             )
-          )
+          }
         },
         onFileError: (error, index) => {
           const fileItem = pendingFiles[index]
-          setFiles((prev) =>
-            prev.map((f) =>
-              f.id === fileItem.id
-                ? { ...f, status: 'error', error: error.message }
-                : f
+          if (fileItem) {
+            setFiles((prev) =>
+              prev.map((f) =>
+                f.id === fileItem.id
+                  ? { ...f, status: 'error', error: error.message }
+                  : f
+              )
             )
-          )
+          }
         },
-        onProgress: (progress) => {
+        onProgress: () => {
           // 总体进度已经通过 stats 计算
         },
       })

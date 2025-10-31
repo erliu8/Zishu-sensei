@@ -40,11 +40,8 @@ export function initSentry(config: SentryConfig): void {
     
     // 集成配置
     integrations: [
-      new Sentry.BrowserTracing({
-        // 自动追踪路由变化
-        routingInstrumentation: Sentry.nextRouterInstrumentation,
-      }),
-      new Sentry.Replay({
+      Sentry.browserTracingIntegration(),
+      Sentry.replayIntegration({
         // 隐私保护：遮盖所有文本和输入
         maskAllText: true,
         blockAllMedia: true,
@@ -167,14 +164,26 @@ export function startTransaction(options: {
   name: string;
   op: string;
   tags?: Record<string, string>;
-}): Sentry.Transaction {
-  const transaction = Sentry.startTransaction({
+}): any {
+  // 使用现代的 Sentry span API
+  return Sentry.startSpan({
     name: options.name,
     op: options.op,
-    tags: options.tags,
+  }, (_span) => {
+    // 设置标签
+    if (options.tags) {
+      Object.entries(options.tags).forEach(([key, value]) => {
+        Sentry.setTag(key, value);
+      });
+    }
+    
+    // 返回一个简单的 span 对象
+    return {
+      setTag: (key: string, value: string) => Sentry.setTag(key, value),
+      setData: (key: string, value: any) => Sentry.setContext('custom', { [key]: value }),
+      finish: () => {},
+    };
   });
-  
-  return transaction;
 }
 
 /**

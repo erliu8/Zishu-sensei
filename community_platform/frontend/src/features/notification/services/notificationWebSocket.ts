@@ -1,4 +1,4 @@
-import type { WebSocketNotificationMessage, Notification } from '../domain/notification';
+import type { WebSocketNotificationMessage } from '../domain/notification';
 
 type NotificationEventHandler = (message: WebSocketNotificationMessage) => void;
 
@@ -19,7 +19,7 @@ export class NotificationWebSocketService {
     // 从环境变量获取 WebSocket URL，默认使用当前域名
     const wsProtocol = window.location.protocol === 'https:' ? 'wss:' : 'ws:';
     const defaultUrl = `${wsProtocol}//${window.location.host}/ws/notifications`;
-    this.url = baseUrl || process.env.NEXT_PUBLIC_WS_URL || defaultUrl;
+    this.url = baseUrl || process.env['NEXT_PUBLIC_WS_URL'] || defaultUrl;
   }
 
   /**
@@ -106,7 +106,7 @@ export class NotificationWebSocketService {
       const message: WebSocketNotificationMessage = JSON.parse(event.data);
       
       // 忽略心跳响应
-      if (message.action === 'pong' || (message as any).type === 'pong') {
+      if ((message as any).action === 'pong' || (message as any).type === 'pong') {
         return;
       }
 

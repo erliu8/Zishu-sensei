@@ -70,6 +70,7 @@ export function ImageCropper({
       setImageSrc(url)
       return () => URL.revokeObjectURL(url)
     }
+    return undefined;
   }, [image])
 
   // 图片加载完成

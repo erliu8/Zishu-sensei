@@ -52,6 +52,7 @@ export * from './avatar'
 // export * from './calendar' // 待实现
 // export * from './command' // 待实现
 export * from './empty-state'
+export * from './pagination'
 
 // ============================================
 // 业务组件

@@ -33,13 +33,38 @@ const queryClient = new QueryClient({
 function AuthInitializer({ children }: { children: React.ReactNode }) {
   const [isInitialized, setIsInitialized] = useState(false);
   const initialize = useAuthStore((state) => state.initialize);
+  const isAuthenticated = useAuthStore((state) => state.isAuthenticated);
+  const user = useAuthStore((state) => state.user);
 
   useEffect(() => {
     // 初始化认证状态
-    initialize().finally(() => {
-      setIsInitialized(true);
-    });
+    const initAuth = async () => {
+      try {
+        await initialize();
+        console.log('[AuthInitializer] Auth state initialized', {
+          isAuthenticated: useAuthStore.getState().isAuthenticated,
+          hasUser: !!useAuthStore.getState().user,
+        });
+      } catch (error) {
+        console.error('[AuthInitializer] Failed to initialize auth:', error);
+      } finally {
+        setIsInitialized(true);
+      }
+    };
+
+    initAuth();
   }, [initialize]);
+
+  // 监听认证状态变化，并输出日志
+  useEffect(() => {
+    if (isInitialized) {
+      console.log('[AuthInitializer] Auth state changed:', {
+        isAuthenticated,
+        username: user?.username,
+        email: user?.email,
+      });
+    }
+  }, [isAuthenticated, user, isInitialized]);
 
   // 可以在这里显示一个加载页面
   if (!isInitialized) {

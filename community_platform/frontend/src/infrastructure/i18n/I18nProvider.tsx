@@ -7,7 +7,6 @@
 import React, { createContext, useCallback, useEffect, useState } from 'react';
 import type { Locale, I18nContext } from './types';
 import {
-  DEFAULT_LOCALE,
   getBrowserLocale,
   getAllLocalesInfo,
 } from './config';
@@ -21,9 +20,9 @@ import {
 } from './utils';
 
 /**
- * I18n 上下文
+ * I18n React 上下文
  */
-export const I18nContext = createContext<I18nContext | null>(null);
+export const I18nReactContext = createContext<I18nContext | null>(null);
 
 /**
  * Provider Props
@@ -183,7 +182,7 @@ export function I18nProvider({
   };
 
   return (
-    <I18nContext.Provider value={contextValue}>{children}</I18nContext.Provider>
+    <I18nReactContext.Provider value={contextValue}>{children}</I18nReactContext.Provider>
   );
 }
 

@@ -36,6 +36,8 @@ class User(Base):
     posts = relationship("Post", back_populates="author", cascade="all, delete-orphan")
     comments = relationship("Comment", back_populates="author", cascade="all, delete-orphan")
     likes = relationship("Like", back_populates="user", cascade="all, delete-orphan")
+    characters = relationship("Character", back_populates="creator", cascade="all, delete-orphan")
+    adapters = relationship("Adapter", foreign_keys="Adapter.author_id", back_populates="author", cascade="all, delete-orphan")
     
     # 关注关系
     followers = relationship(

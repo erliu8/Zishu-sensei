@@ -59,7 +59,7 @@ export const AdapterList: React.FC<AdapterListProps> = ({
   if (loading) {
     return (
       <div className="flex min-h-[400px] items-center justify-center">
-        <LoadingSpinner size="lg" text="加载中..." />
+        <LoadingSpinner size="lg" label="加载中..." />
       </div>
     );
   }
@@ -68,7 +68,7 @@ export const AdapterList: React.FC<AdapterListProps> = ({
   if (empty || adapters.length === 0) {
     return (
       <EmptyState
-        icon={Package}
+        icon={<Package className="h-12 w-12" />}
         title={emptyText}
         description={emptyDescription}
       />

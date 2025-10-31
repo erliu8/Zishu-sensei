@@ -250,7 +250,7 @@ export const ModelPreview: React.FC<ModelPreviewProps> = ({
           {/* 加载状态 */}
           {isLoading && (
             <div className="absolute inset-0 flex items-center justify-center bg-background/80 backdrop-blur-sm z-10">
-              <LoadingSpinner size="lg" text="加载模型中..." />
+              <LoadingSpinner size="lg" label="加载模型中..." />
             </div>
           )}
 

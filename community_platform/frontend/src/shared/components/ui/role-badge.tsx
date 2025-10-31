@@ -33,7 +33,7 @@ const roleBadgeVariants = cva(
 )
 
 export interface RoleBadgeProps
-  extends React.HTMLAttributes<HTMLDivElement>,
+  extends Omit<React.HTMLAttributes<HTMLDivElement>, 'role'>,
     VariantProps<typeof roleBadgeVariants> {
   /**
    * 是否显示图标
@@ -74,13 +74,14 @@ const RoleBadge = React.forwardRef<HTMLDivElement, RoleBadgeProps>(
       admin: <Shield className="h-3 w-3" />,
     }
 
-    const displayLabel = label || defaultLabels[role || 'user']
-    const icon = role ? roleIcons[role] : null
+    const safeRole = (role && (role === 'user' || role === 'admin')) ? role : 'user'
+    const displayLabel = label || defaultLabels[safeRole]
+    const icon = roleIcons[safeRole]
 
     return (
       <div
         ref={ref}
-        className={cn(roleBadgeVariants({ role, size }), className)}
+        className={cn(roleBadgeVariants({ role: safeRole, size }), className)}
         role="status"
         aria-label={`角色: ${displayLabel}`}
         {...props}

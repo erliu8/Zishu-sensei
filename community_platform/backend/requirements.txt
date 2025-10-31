@@ -39,7 +39,7 @@ qdrant-client==1.7.0
 
 # Machine Learning / Embeddings
 sentence-transformers==2.2.2
-torch==2.1.2
+# torch 已在 Dockerfile 中安装 CPU 版本
 transformers==4.36.2
 numpy==1.24.3
 

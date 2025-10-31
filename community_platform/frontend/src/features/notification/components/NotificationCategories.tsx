@@ -12,7 +12,7 @@ import {
 } from 'lucide-react';
 import { Button } from '@/shared/components/ui/button';
 import { cn } from '@/shared/utils';
-import { NotificationType } from '../types';
+import { NotificationType } from '../domain/notification';
 
 interface NotificationCategoriesProps {
   selectedCategory?: NotificationType | 'all';
@@ -36,37 +36,37 @@ const categories: Category[] = [
     color: 'text-foreground',
   },
   {
-    key: 'comment',
+    key: NotificationType.COMMENT,
     label: '评论',
     icon: <MessageSquare className="h-4 w-4" />,
     color: 'text-blue-500',
   },
   {
-    key: 'like',
+    key: NotificationType.LIKE,
     label: '点赞',
     icon: <Heart className="h-4 w-4" />,
     color: 'text-pink-500',
   },
   {
-    key: 'follow',
+    key: NotificationType.FOLLOW,
     label: '关注',
     icon: <UserPlus className="h-4 w-4" />,
     color: 'text-green-500',
   },
   {
-    key: 'mention',
+    key: NotificationType.MENTION,
     label: '提及',
     icon: <Mail className="h-4 w-4" />,
     color: 'text-purple-500',
   },
   {
-    key: 'achievement',
+    key: NotificationType.ACHIEVEMENT,
     label: '成就',
     icon: <Trophy className="h-4 w-4" />,
     color: 'text-yellow-500',
   },
   {
-    key: 'system',
+    key: NotificationType.SYSTEM,
     label: '系统',
     icon: <AlertCircle className="h-4 w-4" />,
     color: 'text-gray-500',

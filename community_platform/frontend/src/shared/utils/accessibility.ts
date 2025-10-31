@@ -93,9 +93,9 @@ export function hexToRgb(hex: string): { r: number; g: number; b: number } | nul
   const result = /^#?([a-f\d]{2})([a-f\d]{2})([a-f\d]{2})$/i.exec(hex);
   return result
     ? {
-        r: parseInt(result[1], 16),
-        g: parseInt(result[2], 16),
-        b: parseInt(result[3], 16),
+        r: parseInt(result[1] || '0', 16),
+        g: parseInt(result[2] || '0', 16),
+        b: parseInt(result[3] || '0', 16),
       }
     : null;
 }
@@ -105,7 +105,7 @@ export function getLuminance(r: number, g: number, b: number): number {
     const sRGB = c / 255;
     return sRGB <= 0.03928 ? sRGB / 12.92 : Math.pow((sRGB + 0.055) / 1.055, 2.4);
   });
-  return 0.2126 * rs + 0.7152 * gs + 0.0722 * bs;
+  return 0.2126 * (rs ?? 0) + 0.7152 * (gs ?? 0) + 0.0722 * (bs ?? 0);
 }
 
 export function getContrastRatio(hex1: string, hex2: string): number | null {
@@ -210,14 +210,14 @@ export function trapFocus(container: HTMLElement, event: KeyboardEvent): void {
   if (event.shiftKey) {
     if (activeElement === firstElement || !container.contains(activeElement)) {
       event.preventDefault();
-      lastElement.focus();
+      lastElement?.focus();
     }
   }
   // Tab
   else {
     if (activeElement === lastElement || !container.contains(activeElement)) {
       event.preventDefault();
-      firstElement.focus();
+      firstElement?.focus();
     }
   }
 }

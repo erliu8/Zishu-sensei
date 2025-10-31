@@ -124,7 +124,7 @@ export function usePushNotification(vapidPublicKey?: string) {
           tag: options.tag,
           data: options.data,
           requireInteraction: options.requireInteraction,
-          actions: options.actions,
+          // actions 仅在 Service Worker 通知中支持，普通 Notification 不支持
         })
 
         return notification

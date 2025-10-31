@@ -329,6 +329,8 @@ export interface Adapter {
     maxPlatformVersion?: string;
     compatibilityLevel: CompatibilityLevel;
   };
+  /** 部署配置 */
+  deployment?: DeploymentConfig;
   /** 创建时间 */
   createdAt: string;
   /** 更新时间 */
@@ -403,6 +405,16 @@ export interface UpdateAdapterInput extends Partial<Omit<CreateAdapterInput, 'na
 }
 
 /**
+ * 排序字段类型
+ */
+export type SortField = 'createdAt' | 'updatedAt' | 'downloads' | 'rating' | 'likes' | 'name';
+
+/**
+ * 排序方向类型
+ */
+export type SortOrder = 'asc' | 'desc';
+
+/**
  * 适配器查询参数
  */
 export interface AdapterQueryParams {
@@ -419,9 +431,9 @@ export interface AdapterQueryParams {
   /** 搜索关键词 */
   search?: string;
   /** 排序字段 */
-  sortBy?: 'createdAt' | 'updatedAt' | 'downloads' | 'rating' | 'likes' | 'name';
+  sortBy?: SortField;
   /** 排序方向 */
-  sortOrder?: 'asc' | 'desc';
+  sortOrder?: SortOrder;
   /** 状态 */
   status?: AdapterStatus;
   /** 作者ID */
@@ -562,5 +574,27 @@ export interface AdapterSearchSuggestion {
   type: 'name' | 'tag' | 'category' | 'author';
   /** 匹配数量 */
   count?: number;
+}
+
+/**
+ * 部署位置类型
+ */
+export enum DeploymentLocation {
+  /** 云端部署 */
+  CLOUD = 'cloud',
+  /** 本地部署 */
+  LOCAL = 'local',
+}
+
+/**
+ * 部署配置
+ */
+export interface DeploymentConfig {
+  /** 部署位置 */
+  location: DeploymentLocation;
+  /** 本地路径（当location为LOCAL时必填） */
+  localPath?: string;
+  /** 云端URL（当location为CLOUD时使用） */
+  cloudUrl?: string;
 }
 

@@ -5,7 +5,6 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/shared/components/ui
 import { Button } from '@/shared/components/ui/button';
 import { Badge } from '@/shared/components/ui/badge';
 import { Textarea } from '@/shared/components/ui/textarea';
-import { Label } from '@/shared/components/ui/label';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/shared/components/ui/card';
 import { cn } from '@/shared/utils/cn';
 import { Brain, Heart, Target, BarChart3, Save, RotateCcw } from 'lucide-react';

@@ -44,7 +44,7 @@ export function useAddFavorite() {
 
   return useMutation({
     mutationFn: (input: CreateFavoriteInput) => favoriteApiClient.addFavorite(input),
-    onSuccess: (data, variables) => {
+    onSuccess: (_, variables) => {
       queryClient.invalidateQueries({ 
         queryKey: favoriteKeys.check(variables.targetType, variables.targetId) 
       });
@@ -78,7 +78,7 @@ export function useRemoveFavorite() {
   return useMutation({
     mutationFn: ({ targetType, targetId }: { targetType: FavoriteTargetType; targetId: string }) => 
       favoriteApiClient.removeFavorite(targetType, targetId),
-    onSuccess: (data, variables) => {
+    onSuccess: (_, variables) => {
       queryClient.invalidateQueries({ 
         queryKey: favoriteKeys.check(variables.targetType, variables.targetId) 
       });
@@ -247,7 +247,7 @@ export function useToggleFavorite() {
         variant: 'destructive',
       });
     },
-    onSettled: (data, error, variables) => {
+    onSettled: (_, __, variables) => {
       queryClient.invalidateQueries({ 
         queryKey: favoriteKeys.stats(variables.targetType, variables.targetId) 
       });
@@ -326,7 +326,7 @@ export function useUpdateCollection() {
   return useMutation({
     mutationFn: ({ id, input }: { id: string; input: Partial<CreateCollectionInput> }) => 
       favoriteApiClient.updateCollection(id, input),
-    onSuccess: (data, variables) => {
+    onSuccess: (_, variables) => {
       queryClient.invalidateQueries({ queryKey: favoriteKeys.collections() });
       queryClient.invalidateQueries({ queryKey: favoriteKeys.collection(variables.id) });
       

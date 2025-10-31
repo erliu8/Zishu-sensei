@@ -127,12 +127,13 @@ export function formatDate(
 ): string {
   const d = new Date(date);
   
-  const options: Intl.DateTimeFormatOptions = {
+  const optionsMap: Record<string, Intl.DateTimeFormatOptions> = {
     full: { year: 'numeric', month: 'long', day: 'numeric' },
     long: { year: 'numeric', month: 'long', day: 'numeric', hour: '2-digit', minute: '2-digit' },
     medium: { year: 'numeric', month: '2-digit', day: '2-digit' },
     short: { year: '2-digit', month: '2-digit', day: '2-digit' },
-  }[format];
+  };
+  const options = optionsMap[format];
 
   return d.toLocaleDateString(locale, options);
 }

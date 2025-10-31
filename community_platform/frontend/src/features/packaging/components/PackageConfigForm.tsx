@@ -109,12 +109,12 @@ export const PackageConfigForm: React.FC<PackageConfigFormProps> = ({
 
     // 自动选择该平台的第一个支持的架构和格式
     const supportedArchs = PackageConfigDomain.getSupportedArchitectures(platform);
-    if (supportedArchs.length > 0) {
+    if (supportedArchs.length > 0 && supportedArchs[0]) {
       form.setValue('architecture', supportedArchs[0]);
     }
 
     const supportedFormats = PackageConfigDomain.getSupportedFormats(platform);
-    if (supportedFormats.length > 0) {
+    if (supportedFormats.length > 0 && supportedFormats[0]) {
       form.setValue('format', supportedFormats[0]);
     }
   };

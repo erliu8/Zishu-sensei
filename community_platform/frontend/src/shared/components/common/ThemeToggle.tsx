@@ -71,7 +71,7 @@ const themeOptions: Array<{
  */
 interface ThemeToggleProps {
   /** 按钮变体 */
-  variant?: 'default' | 'outline' | 'ghost' | 'icon'
+  variant?: 'default' | 'outline' | 'ghost' | 'secondary'
   /** 按钮大小 */
   size?: 'default' | 'sm' | 'lg' | 'icon'
   /** 是否显示标签 */
@@ -92,7 +92,7 @@ export function ThemeToggle({
   className,
   align = 'end',
 }: ThemeToggleProps) {
-  const { theme, resolvedTheme, setTheme } = useTheme()
+  const { theme, setTheme } = useTheme()
 
   // 获取当前主题图标
   const CurrentIcon = themeOptions.find((opt) => opt.value === theme)?.icon || Sun

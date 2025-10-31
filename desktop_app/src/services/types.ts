@@ -287,4 +287,5 @@ export interface PluginConfig {
 // Export All Types
 // ================================
 
-export * from './adapter';
+// Removed to avoid circular dependency
+// Import adapter types directly from './adapter' when needed

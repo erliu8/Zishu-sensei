@@ -13,7 +13,6 @@ import {
 } from '@/shared/components/ui/select';
 import { Button } from '@/shared/components/ui/button';
 import { 
-  ArrowUpDown, 
   ArrowUp, 
   ArrowDown,
   TrendingUp,

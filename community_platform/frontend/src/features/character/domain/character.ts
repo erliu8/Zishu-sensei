@@ -2,15 +2,16 @@
  * 角色领域模型
  */
 
-import type { 
+import { 
   CharacterStatus, 
   CharacterVisibility, 
-  AdapterReference 
 } from '../types';
+import type { AdapterReference } from '../types';
 import type { Personality } from './personality';
 import type { Expression } from './expression';
 import type { Voice } from './voice';
 import type { Model } from './model';
+import type { CharacterFullConfig } from './model-config.types';
 
 /**
  * 角色统计信息
@@ -37,7 +38,7 @@ export interface CharacterStats {
  */
 export interface Character {
   /** 角色ID */
-  id: string;
+  id: number;
   /** 角色名称 */
   name: string;
   /** 角色显示名称（可能包含特殊字符） */
@@ -55,12 +56,15 @@ export interface Character {
   /** 可见性 */
   visibility: CharacterVisibility;
   /** 创建者ID */
-  creatorId: string;
+  creatorId: number;
   /** 创建者名称 */
   creatorName?: string;
   
-  /** 关联的适配器列表 */
+  /** 关联的适配器列表（兼容旧版） */
   adapters: AdapterReference[];
+  
+  /** 角色完整配置（新版：包含AI模型、Live2D模型、插件） */
+  config?: CharacterFullConfig;
   
   /** 人格配置（可选，可能需要单独加载） */
   personality?: Personality;
@@ -99,6 +103,8 @@ export interface CreateCharacterInput {
   tags?: string[];
   visibility?: CharacterVisibility;
   adapters?: AdapterReference[];
+  /** 角色完整配置 */
+  config?: CharacterFullConfig;
   version?: string;
 }
 
@@ -115,6 +121,8 @@ export interface UpdateCharacterInput {
   status?: CharacterStatus;
   visibility?: CharacterVisibility;
   adapters?: AdapterReference[];
+  /** 角色完整配置 */
+  config?: CharacterFullConfig;
   version?: string;
 }
 
@@ -160,7 +168,7 @@ export interface CharacterFilters {
  * 角色领域模型类
  */
 export class CharacterModel implements Character {
-  id: string;
+  id: number;
   name: string;
   displayName: string;
   description: string;
@@ -169,7 +177,7 @@ export class CharacterModel implements Character {
   tags: string[];
   status: CharacterStatus;
   visibility: CharacterVisibility;
-  creatorId: string;
+  creatorId: number;
   creatorName?: string;
   adapters: AdapterReference[];
   personality?: Personality;
@@ -296,7 +304,7 @@ export class CharacterModel implements Character {
    * 获取启用的表情列表
    */
   getEnabledExpressions(): Expression[] {
-    return this.expressions?.filter((expr) => expr.enabled) || [];
+    return this.expressions?.filter((expr) => expr.isActive) || [];
   }
 
   /**
@@ -304,7 +312,7 @@ export class CharacterModel implements Character {
    */
   getExpressionByTrigger(trigger: string): Expression | undefined {
     return this.expressions?.find(
-      (expr) => expr.trigger === trigger && expr.enabled
+      (expr) => expr.triggers.some(t => t.value === trigger) && expr.isActive
     );
   }
 

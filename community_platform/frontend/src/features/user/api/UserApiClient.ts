@@ -6,7 +6,6 @@
 import { apiClient } from '@/infrastructure/api/client';
 import type {
   UserProfile,
-  UserBasic,
   UserStats,
   UserActivity,
   PaginatedUsers,
@@ -16,8 +15,6 @@ import type {
   UpdatePreferencesRequest,
   SearchUsersParams,
   UserPreferences,
-  UserSession,
-  LoginHistory,
   PaginatedSessions,
   PaginatedLoginHistory,
 } from '../types';

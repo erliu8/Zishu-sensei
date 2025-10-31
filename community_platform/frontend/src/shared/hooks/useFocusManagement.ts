@@ -197,7 +197,7 @@ export function useFocusLock(enabled = true) {
       if (!container.contains(target)) {
         event.preventDefault();
         const focusableElements = getFocusableElements(container);
-        if (focusableElements.length > 0) {
+        if (focusableElements.length > 0 && focusableElements[0]) {
           focusableElements[0].focus();
         }
       }

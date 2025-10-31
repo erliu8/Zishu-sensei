@@ -5,7 +5,6 @@
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { personalityApi } from '../api';
 import type {
-  Personality,
   CreatePersonalityInput,
   UpdatePersonalityInput,
 } from '../domain';
@@ -107,7 +106,7 @@ export function useDeletePersonality() {
 
   return useMutation({
     mutationFn: (id: string) => personalityApi.deletePersonality(id),
-    onSuccess: (_, deletedId, context: any) => {
+    onSuccess: (_, __, context: any) => {
       // 从context中获取characterId（在调用mutation时传入）
       const { characterId } = context || {};
 

@@ -14,6 +14,35 @@ import type {
 } from '../domain';
 
 /**
+ * 规范化帖子数据，确保所有必需字段都存在
+ */
+function normalizePost(post: any): Post {
+  return {
+    ...post,
+    author: post.author || { id: '', name: '未知用户', username: 'unknown' },
+    stats: {
+      views: post.stats?.views ?? 0,
+      likes: post.stats?.likes ?? 0,
+      comments: post.stats?.comments ?? 0,
+      favorites: post.stats?.favorites ?? 0,
+      shares: post.stats?.shares ?? 0,
+    },
+    tags: Array.isArray(post.tags) ? post.tags : [],
+    category: post.category || undefined,
+  };
+}
+
+/**
+ * 规范化帖子列表响应
+ */
+function normalizePostListResponse(response: any): PostListResponse {
+  return {
+    ...response,
+    data: Array.isArray(response.data) ? response.data.map(normalizePost) : [],
+  };
+}
+
+/**
  * 帖子 API 客户端
  */
 export class PostApiClient {
@@ -28,7 +57,7 @@ export class PostApiClient {
     const response = await apiClient.get<ApiResponse<PostListResponse>>(this.basePath, {
       params,
     });
-    return response.data.data;
+    return normalizePostListResponse(response.data.data);
   }
 
   /**
@@ -38,7 +67,7 @@ export class PostApiClient {
    */
   async getPost(id: string): Promise<Post> {
     const response = await apiClient.get<ApiResponse<Post>>(`${this.basePath}/${id}`);
-    return response.data.data;
+    return normalizePost(response.data.data);
   }
 
   /**
@@ -48,7 +77,7 @@ export class PostApiClient {
    */
   async createPost(data: CreatePostDto): Promise<Post> {
     const response = await apiClient.post<ApiResponse<Post>>(this.basePath, data);
-    return response.data.data;
+    return normalizePost(response.data.data);
   }
 
   /**
@@ -59,7 +88,7 @@ export class PostApiClient {
    */
   async updatePost(id: string, data: UpdatePostDto): Promise<Post> {
     const response = await apiClient.patch<ApiResponse<Post>>(`${this.basePath}/${id}`, data);
-    return response.data.data;
+    return normalizePost(response.data.data);
   }
 
   /**
@@ -78,7 +107,7 @@ export class PostApiClient {
    */
   async likePost(id: string): Promise<Post> {
     const response = await apiClient.post<ApiResponse<Post>>(`${this.basePath}/${id}/like`);
-    return response.data.data;
+    return normalizePost(response.data.data);
   }
 
   /**
@@ -88,7 +117,7 @@ export class PostApiClient {
    */
   async unlikePost(id: string): Promise<Post> {
     const response = await apiClient.delete<ApiResponse<Post>>(`${this.basePath}/${id}/like`);
-    return response.data.data;
+    return normalizePost(response.data.data);
   }
 
   /**
@@ -98,7 +127,7 @@ export class PostApiClient {
    */
   async favoritePost(id: string): Promise<Post> {
     const response = await apiClient.post<ApiResponse<Post>>(`${this.basePath}/${id}/favorite`);
-    return response.data.data;
+    return normalizePost(response.data.data);
   }
 
   /**
@@ -108,7 +137,7 @@ export class PostApiClient {
    */
   async unfavoritePost(id: string): Promise<Post> {
     const response = await apiClient.delete<ApiResponse<Post>>(`${this.basePath}/${id}/favorite`);
-    return response.data.data;
+    return normalizePost(response.data.data);
   }
 
   /**
@@ -130,7 +159,7 @@ export class PostApiClient {
     const response = await apiClient.get<ApiResponse<PostListResponse>>(`/users/${userId}/posts`, {
       params,
     });
-    return response.data.data;
+    return normalizePostListResponse(response.data.data);
   }
 
   /**
@@ -142,7 +171,8 @@ export class PostApiClient {
     const response = await apiClient.get<ApiResponse<Post[]>>(`${this.basePath}/featured`, {
       params: { limit },
     });
-    return response.data.data;
+    const posts = response.data.data;
+    return Array.isArray(posts) ? posts.map(normalizePost) : [];
   }
 
   /**
@@ -154,7 +184,8 @@ export class PostApiClient {
     const response = await apiClient.get<ApiResponse<Post[]>>(`${this.basePath}/trending`, {
       params: { limit },
     });
-    return response.data.data;
+    const posts = response.data.data;
+    return Array.isArray(posts) ? posts.map(normalizePost) : [];
   }
 }
 

@@ -36,6 +36,12 @@ const defaultPreferences: UserPreferences = {
   pushNotifications: true,
   marketingEmails: false,
   weeklyDigest: true,
+  profileVisibility: 'public',
+  showEmail: false,
+  showActivity: true,
+  allowFollow: true,
+  allowComment: true,
+  allowMessage: true,
 };
 
 /**

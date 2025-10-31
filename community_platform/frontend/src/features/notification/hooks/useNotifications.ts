@@ -1,10 +1,9 @@
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { notificationApiClient } from '../api/notificationApiClient';
 import { useNotificationStore } from '../store/notificationStore';
+import { NotificationStatus } from '../domain/notification';
 import type {
   NotificationQueryParams,
-  Notification,
-  NotificationStats,
   NotificationPreferences,
 } from '../domain/notification';
 
@@ -104,7 +103,7 @@ export function useMarkAsRead() {
       await queryClient.cancelQueries({ queryKey: notificationKeys.lists() });
 
       // 更新 store
-      updateNotification(id, { status: 'read' });
+      updateNotification(id, { status: NotificationStatus.READ });
       decrementUnreadCount();
     },
     onSuccess: (_, id) => {
@@ -129,7 +128,7 @@ export function useMarkAsUnread() {
       await queryClient.cancelQueries({ queryKey: notificationKeys.lists() });
 
       // 更新 store
-      updateNotification(id, { status: 'unread' });
+      updateNotification(id, { status: NotificationStatus.UNREAD });
       incrementUnreadCount();
     },
     onSuccess: (_, id) => {

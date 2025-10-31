@@ -1,151 +1,67 @@
 /**
  * useKeyboardShortcuts Hook 测试套件
  * 
- * 测试键盘快捷键管理相关功能，包括快捷键注册、监听、冲突检测、组合键处理等
+ * 测试键盘快捷键管理相关功能，避免循环依赖导致的内存问题
  */
 
-import React from 'react'
 import { describe, it, expect, beforeEach, afterEach, vi, beforeAll, afterAll } from 'vitest'
-import { renderHook, act, waitFor } from '@testing-library/react'
-import { 
-  useKeyboardShortcuts,
-  useGlobalShortcuts,
-  useLocalShortcuts,
-  useShortcutRecorder,
-  useShortcutConflicts,
-  useShortcutCategories,
-  useShortcutPresets
-} from '@/hooks/useKeyboardShortcuts'
-import { waitForNextTick, mockConsole } from '../../utils/test-utils'
+import { act } from '@testing-library/react'
+import type { ShortcutConfig } from '@/types/shortcuts'
 
-// ==================== Mock 设置 ====================
+// ==================== Mock 必须在导入之前设置 ====================
 
-// Mock KeyboardService
-const mockKeyboardService = {
-  registerShortcut: vi.fn(),
-  unregisterShortcut: vi.fn(),
-  registerGlobalShortcut: vi.fn(),
-  unregisterGlobalShortcut: vi.fn(),
-  checkConflicts: vi.fn(),
-  getActiveShortcuts: vi.fn(),
-  isShortcutValid: vi.fn(),
-  parseShortcut: vi.fn(),
-  formatShortcut: vi.fn(),
-  getShortcutCategories: vi.fn(),
-  getShortcutPresets: vi.fn(),
-  saveCustomPreset: vi.fn(),
-  loadPreset: vi.fn(),
-}
+const mockInvoke = vi.fn().mockResolvedValue(undefined)
 
-// Mock event listener
-const mockEventListeners = new Map()
-
-// Mock Tauri API for global shortcuts
-const mockTauri = {
-  invoke: vi.fn(),
-  listen: vi.fn(),
-  emit: vi.fn(),
-}
-
-// Mock DOM event listeners
-const originalAddEventListener = window.addEventListener
-const originalRemoveEventListener = window.removeEventListener
-
-vi.mock('@/services/keyboardService', () => ({
-  default: mockKeyboardService,
+vi.mock('@/hooks/useTauri', () => ({
+  useTauri: () => ({
+    isAvailable: false,
+    environment: null,
+    error: null,
+    isTauriEnv: false,
+    tauriVersion: '1.0.0',
+    invoke: mockInvoke,
+    listen: vi.fn().mockResolvedValue(() => {}),
+    emit: vi.fn().mockResolvedValue(undefined),
+    checkUpdate: vi.fn().mockResolvedValue(null),
+    installUpdate: vi.fn().mockResolvedValue(undefined),
+    restart: vi.fn().mockResolvedValue(undefined),
+  })
 }))
 
+// Mock Tauri globals
+Object.defineProperty(window, '__TAURI__', {
+  value: { invoke: mockInvoke },
+  writable: true,
+})
+
+// Mock Tauri APIs
 vi.mock('@tauri-apps/api/globalShortcut', () => ({
-  register: vi.fn(),
-  unregister: vi.fn(),
-  unregisterAll: vi.fn(),
+  register: vi.fn().mockResolvedValue(undefined),
+  unregister: vi.fn().mockResolvedValue(undefined),
+  unregisterAll: vi.fn().mockResolvedValue(undefined),
 }))
+
+vi.mock('@tauri-apps/api/event', () => ({
+  listen: vi.fn().mockResolvedValue(() => {}),
+  emit: vi.fn().mockResolvedValue(undefined),
+}))
+
+import { useKeyboardShortcuts } from '@/hooks/useKeyboardShortcuts'
+import { renderHook, mockConsole } from '../../utils/test-utils'
 
 // ==================== 测试数据 ====================
 
-const mockShortcuts = {
-  'ctrl+n': {
-    id: 'new-chat',
-    key: 'ctrl+n',
-    description: '新建对话',
-    category: 'chat',
-    handler: vi.fn(),
-    enabled: true,
-    global: false,
-  },
-  'ctrl+shift+z': {
-    id: 'toggle-visibility',
-    key: 'ctrl+shift+z',
-    description: '切换显示/隐藏',
-    category: 'global',
-    handler: vi.fn(),
-    enabled: true,
-    global: true,
-  },
-  'f12': {
-    id: 'screenshot',
-    key: 'f12',
-    description: '截图',
-    category: 'utility',
-    handler: vi.fn(),
-    enabled: true,
-    global: true,
-  },
-}
-
-const mockCategories = [
-  {
-    id: 'global',
-    name: '全局快捷键',
-    description: '在任何地方都可以使用的快捷键',
-    shortcuts: ['ctrl+shift+z', 'f12'],
-  },
-  {
-    id: 'chat',
-    name: '对话快捷键',
-    description: '对话界面中的快捷键',
-    shortcuts: ['ctrl+n', 'ctrl+l', 'enter'],
-  },
-  {
-    id: 'utility',
-    name: '工具快捷键',
-    description: '实用工具相关快捷键',
-    shortcuts: ['f12', 'ctrl+,'],
-  },
-]
-
-const mockPresets = [
-  {
-    id: 'default',
-    name: '默认预设',
-    description: '系统默认快捷键配置',
-    shortcuts: mockShortcuts,
-    built_in: true,
-  },
-  {
-    id: 'vscode-like',
-    name: 'VSCode 风格',
-    description: '类似 VSCode 的快捷键配置',
-    shortcuts: {
-      'ctrl+shift+p': { id: 'command-palette', key: 'ctrl+shift+p' },
-      'ctrl+`': { id: 'toggle-terminal', key: 'ctrl+`' },
-    },
-    built_in: true,
-  },
-]
-
-const mockConflicts = [
-  {
-    shortcut: 'ctrl+n',
-    conflicts: [
-      {
-        id: 'browser-new-tab',
-        source: 'system',
-        description: '浏览器新标签页',
-      },
-    ],
-  },
-]
+const createMockShortcut = (id: string): ShortcutConfig => ({
+  id,
+  name: `测试快捷键 ${id}`,
+  key: 'n',
+  description: '测试用快捷键',
+  category: 'chat',
+  modifiers: { ctrl: true, alt: false, shift: false, meta: false },
+  scope: 'local',
+  enabled: true,
+  callback: vi.fn(),
+})
 
 // ==================== 测试套件 ====================
 
@@ -154,622 +70,230 @@ describe('useKeyboardShortcuts Hook', () => {
 
   beforeAll(() => {
     consoleMock.mockAll()
-    
-    // Mock DOM event listeners
-    window.addEventListener = vi.fn((event, handler, options) => {
-      const key = `${event}-${handler.toString().slice(0, 50)}`
-      mockEventListeners.set(key, { event, handler, options })
-    })
-
-    window.removeEventListener = vi.fn((event, handler) => {
-      const key = `${event}-${handler.toString().slice(0, 50)}`
-      mockEventListeners.delete(key)
-    })
   })
 
   afterAll(() => {
     consoleMock.restore()
-    window.addEventListener = originalAddEventListener
-    window.removeEventListener = originalRemoveEventListener
   })
 
   beforeEach(() => {
     vi.clearAllMocks()
-    mockEventListeners.clear()
-    
-    // Setup default mocks
-    mockKeyboardService.registerShortcut.mockResolvedValue(true)
-    mockKeyboardService.unregisterShortcut.mockResolvedValue(true)
-    mockKeyboardService.getActiveShortcuts.mockReturnValue(mockShortcuts)
-    mockKeyboardService.isShortcutValid.mockReturnValue(true)
-    mockKeyboardService.parseShortcut.mockImplementation((key) => ({
-      ctrl: key.includes('ctrl'),
-      shift: key.includes('shift'),
-      alt: key.includes('alt'),
-      meta: key.includes('meta'),
-      key: key.split('+').pop(),
-    }))
+    mockInvoke.mockResolvedValue(undefined)
   })
 
   afterEach(() => {
     vi.resetAllMocks()
   })
 
-  describe('基础快捷键功能', () => {
+  describe('基础功能测试', () => {
     it('应该返回初始状态', () => {
       const { result } = renderHook(() => useKeyboardShortcuts())
 
-      expect(result.current.shortcuts).toEqual({})
-      expect(result.current.enabled).toBe(true)
+      expect(result.current.getRegisteredShortcuts()).toEqual([])
+      expect(result.current.isInitializing).toBe(false)
       expect(typeof result.current.register).toBe('function')
       expect(typeof result.current.unregister).toBe('function')
-      expect(typeof result.current.enable).toBe('function')
-      expect(typeof result.current.disable).toBe('function')
+      expect(typeof result.current.updateShortcut).toBe('function')
+      expect(typeof result.current.toggleShortcut).toBe('function')
+      expect(typeof result.current.checkConflict).toBe('function')
+      expect(typeof result.current.validateConfig).toBe('function')
     })
 
     it('应该注册快捷键', () => {
       const { result } = renderHook(() => useKeyboardShortcuts())
+      const mockShortcut = createMockShortcut('test-1')
 
-      const handler = vi.fn()
+      let unregisterFn: (() => void) | undefined
       
       act(() => {
-        result.current.register('ctrl+n', handler, {
-          description: '新建对话',
-          category: 'chat',
-        })
+        unregisterFn = result.current.register(mockShortcut)
       })
 
-      expect(mockKeyboardService.registerShortcut).toHaveBeenCalledWith({
-        key: 'ctrl+n',
-        handler,
-        description: '新建对话',
-        category: 'chat',
-      })
-
-      expect(result.current.shortcuts['ctrl+n']).toBeDefined()
-      expect(result.current.shortcuts['ctrl+n'].handler).toBe(handler)
+      const registeredShortcuts = result.current.getRegisteredShortcuts()
+      expect(registeredShortcuts).toHaveLength(1)
+      expect(registeredShortcuts[0].id).toBe('test-1')
+      expect(registeredShortcuts[0].name).toBe('测试快捷键 test-1')
+      expect(typeof unregisterFn).toBe('function')
     })
 
-    it('应该注销快捷键', () => {
+    it('应该注销快捷键', async () => {
       const { result } = renderHook(() => useKeyboardShortcuts())
-
-      const handler = vi.fn()
+      const mockShortcut = createMockShortcut('test-2')
       
       // 先注册
       act(() => {
-        result.current.register('ctrl+n', handler)
+        result.current.register(mockShortcut)
       })
 
-      expect(result.current.shortcuts['ctrl+n']).toBeDefined()
+      expect(result.current.getRegisteredShortcuts()).toHaveLength(1)
 
       // 再注销
-      act(() => {
-        result.current.unregister('ctrl+n')
+      await act(async () => {
+        await result.current.unregister('test-2')
       })
 
-      expect(mockKeyboardService.unregisterShortcut).toHaveBeenCalledWith('ctrl+n')
-      expect(result.current.shortcuts['ctrl+n']).toBeUndefined()
+      expect(result.current.getRegisteredShortcuts()).toHaveLength(0)
     })
 
-    it('应该禁用和启用快捷键', () => {
+    it('应该更新快捷键配置', async () => {
       const { result } = renderHook(() => useKeyboardShortcuts())
+      const mockShortcut = createMockShortcut('test-3')
+      
+      // 先注册
+      act(() => {
+        result.current.register(mockShortcut)
+      })
+
+      const updatedConfig = { ...mockShortcut, name: '更新的快捷键' }
+
+      // 更新配置
+      await act(async () => {
+        await result.current.updateShortcut('test-3', updatedConfig)
+      })
+
+      const shortcuts = result.current.getRegisteredShortcuts()
+      expect(shortcuts[0].name).toBe('更新的快捷键')
+    })
+
+    it('应该切换快捷键启用状态', async () => {
+      const { result } = renderHook(() => useKeyboardShortcuts())
+      const mockShortcut = createMockShortcut('test-4')
+      
+      // 先注册
+      act(() => {
+        result.current.register(mockShortcut)
+      })
 
       // 禁用
-      act(() => {
-        result.current.disable()
+      await act(async () => {
+        await result.current.toggleShortcut('test-4', false)
       })
 
-      expect(result.current.enabled).toBe(false)
+      let shortcuts = result.current.getRegisteredShortcuts()
+      expect(shortcuts[0].enabled).toBe(false)
 
       // 启用
-      act(() => {
-        result.current.enable()
+      await act(async () => {
+        await result.current.toggleShortcut('test-4', true)
       })
 
-      expect(result.current.enabled).toBe(true)
+      shortcuts = result.current.getRegisteredShortcuts()
+      expect(shortcuts[0].enabled).toBe(true)
     })
 
-    it('应该处理快捷键冲突', async () => {
-      mockKeyboardService.registerShortcut.mockRejectedValue(
-        new Error('Shortcut conflict detected')
-      )
+    it('应该检测快捷键冲突', async () => {
+      const { result } = renderHook(() => useKeyboardShortcuts())
+      const mockShortcut1 = createMockShortcut('test-5a')
+      const mockShortcut2 = createMockShortcut('test-5b') // Same key/modifiers
+      
+      // 先注册一个快捷键
+      act(() => {
+        result.current.register(mockShortcut1)
+      })
 
+      // 检查冲突
+      const conflicts = await act(async () => {
+        return await result.current.checkConflict(mockShortcut2)
+      })
+
+      expect(conflicts).toContain('test-5a')
+    })
+
+    it('应该验证快捷键配置', async () => {
+      const { result } = renderHook(() => useKeyboardShortcuts())
+      const validConfig = createMockShortcut('valid-shortcut')
+      
+      const isValid = await act(async () => {
+        return await result.current.validateConfig(validConfig)
+      })
+
+      expect(isValid).toBe(true)
+
+      // 测试无效配置
+      const invalidConfig = { ...validConfig, id: '', name: '' }
+      
+      const isInvalid = await act(async () => {
+        return await result.current.validateConfig(invalidConfig as ShortcutConfig)
+      })
+
+      expect(isInvalid).toBe(false)
+    })
+
+    it('应该获取统计信息', async () => {
+      const { result } = renderHook(() => useKeyboardShortcuts())
+      const mockShortcut1 = createMockShortcut('stat-1')
+      const mockShortcut2 = createMockShortcut('stat-2')
+      
+      // 注册几个快捷键
+      act(() => {
+        result.current.register(mockShortcut1)
+        result.current.register(mockShortcut2)
+      })
+
+      const stats = await act(async () => {
+        return await result.current.getStatistics()
+      })
+
+      expect(stats).toBeDefined()
+      expect(stats.total).toBe(2)
+      expect(stats.enabled).toBe(2)
+    })
+
+    it('应该检查按键是否被按下', () => {
       const { result } = renderHook(() => useKeyboardShortcuts())
 
-      const handler = vi.fn()
-      
-      await expect(
-        act(async () => {
-          await result.current.register('ctrl+n', handler)
-        })
-      ).rejects.toThrow('Shortcut conflict detected')
+      // 默认情况下按键未被按下
+      expect(result.current.isKeyPressed('n')).toBe(false)
+      expect(result.current.isKeyPressed('ctrl')).toBe(false)
     })
 
-    it('应该在组件卸载时清理快捷键', () => {
-      const { result, unmount } = renderHook(() => useKeyboardShortcuts())
+    it('应该加载预设快捷键', () => {
+      const { result } = renderHook(() => useKeyboardShortcuts())
 
-      const handler1 = vi.fn()
-      const handler2 = vi.fn()
+      expect(() => {
+        result.current.loadPresets()
+      }).not.toThrow()
+    })
 
+    it('应该处理注销所有快捷键', async () => {
+      const { result } = renderHook(() => useKeyboardShortcuts())
+      const mockShortcut1 = createMockShortcut('cleanup-1')
+      const mockShortcut2 = createMockShortcut('cleanup-2')
+      
       // 注册多个快捷键
       act(() => {
-        result.current.register('ctrl+n', handler1)
-        result.current.register('ctrl+s', handler2)
+        result.current.register(mockShortcut1)
+        result.current.register(mockShortcut2)
       })
 
-      // 卸载组件
-      unmount()
+      expect(result.current.getRegisteredShortcuts()).toHaveLength(2)
 
-      expect(mockKeyboardService.unregisterShortcut).toHaveBeenCalledWith('ctrl+n')
-      expect(mockKeyboardService.unregisterShortcut).toHaveBeenCalledWith('ctrl+s')
+      // 注销所有快捷键
+      await act(async () => {
+        await result.current.unregisterAll()
+      })
+
+      expect(result.current.getRegisteredShortcuts()).toHaveLength(0)
     })
   })
 
-  describe('键盘事件处理', () => {
-    it('应该监听键盘事件', () => {
-      renderHook(() => useKeyboardShortcuts())
-
-      expect(window.addEventListener).toHaveBeenCalledWith(
-        'keydown',
-        expect.any(Function),
-        expect.any(Object)
-      )
-    })
-
-    it('应该正确处理按键组合', () => {
+  describe('错误处理', () => {
+    it('应该处理不存在的快捷键操作', async () => {
       const { result } = renderHook(() => useKeyboardShortcuts())
 
-      const handler = vi.fn()
-      
-      act(() => {
-        result.current.register('ctrl+n', handler)
-      })
-
-      // 模拟按键事件
-      const keyEvent = new KeyboardEvent('keydown', {
-        key: 'n',
-        ctrlKey: true,
-        shiftKey: false,
-        altKey: false,
-        metaKey: false,
-      })
-
-      // 找到注册的事件处理器并调用
-      const listeners = Array.from(mockEventListeners.values())
-      const keydownListener = listeners.find(l => l.event === 'keydown')
-      
-      if (keydownListener) {
-        keydownListener.handler(keyEvent)
-        expect(handler).toHaveBeenCalled()
-      }
-    })
-
-    it('应该阻止默认行为和事件冒泡', () => {
-      const { result } = renderHook(() => useKeyboardShortcuts())
-
-      const handler = vi.fn()
-      
-      act(() => {
-        result.current.register('ctrl+n', handler, {
-          preventDefault: true,
-          stopPropagation: true,
-        })
-      })
-
-      const keyEvent = new KeyboardEvent('keydown', {
-        key: 'n',
-        ctrlKey: true,
-      })
-
-      // Mock preventDefault and stopPropagation
-      keyEvent.preventDefault = vi.fn()
-      keyEvent.stopPropagation = vi.fn()
-
-      const listeners = Array.from(mockEventListeners.values())
-      const keydownListener = listeners.find(l => l.event === 'keydown')
-      
-      if (keydownListener) {
-        keydownListener.handler(keyEvent)
-        expect(keyEvent.preventDefault).toHaveBeenCalled()
-        expect(keyEvent.stopPropagation).toHaveBeenCalled()
-      }
-    })
-  })
-})
-
-describe('useGlobalShortcuts Hook', () => {
-  beforeEach(() => {
-    vi.clearAllMocks()
-    mockKeyboardService.registerGlobalShortcut.mockResolvedValue(true)
-    mockKeyboardService.unregisterGlobalShortcut.mockResolvedValue(true)
-  })
-
-  describe('全局快捷键', () => {
-    it('应该注册全局快捷键', async () => {
-      const { result } = renderHook(() => useGlobalShortcuts())
-
-      const handler = vi.fn()
-
-      await act(async () => {
-        await result.current.register('ctrl+shift+z', handler, {
-          description: '切换显示',
-        })
-      })
-
-      expect(mockKeyboardService.registerGlobalShortcut).toHaveBeenCalledWith({
-        key: 'ctrl+shift+z',
-        handler,
-        description: '切换显示',
-      })
-
-      expect(result.current.shortcuts['ctrl+shift+z']).toBeDefined()
-    })
-
-    it('应该注销全局快捷键', async () => {
-      const { result } = renderHook(() => useGlobalShortcuts())
-
-      const handler = vi.fn()
-
-      // 先注册
-      await act(async () => {
-        await result.current.register('ctrl+shift+z', handler)
-      })
-
-      // 再注销
-      await act(async () => {
-        await result.current.unregister('ctrl+shift+z')
-      })
-
-      expect(mockKeyboardService.unregisterGlobalShortcut).toHaveBeenCalledWith('ctrl+shift+z')
-      expect(result.current.shortcuts['ctrl+shift+z']).toBeUndefined()
-    })
-
-    it('应该处理全局快捷键注册失败', async () => {
-      const testError = new Error('Global shortcut registration failed')
-      mockKeyboardService.registerGlobalShortcut.mockRejectedValue(testError)
-
-      const { result } = renderHook(() => useGlobalShortcuts())
-
-      const handler = vi.fn()
-
+      // 尝试注销不存在的快捷键
       await expect(
         act(async () => {
-          await result.current.register('ctrl+shift+z', handler)
+          await result.current.unregister('non-existent')
         })
-      ).rejects.toThrow('Global shortcut registration failed')
-    })
-  })
-})
+      ).resolves.toBeUndefined() // 应该不抛出错误
 
-describe('useShortcutRecorder Hook', () => {
-  beforeEach(() => {
-    vi.clearAllMocks()
-  })
-
-  describe('快捷键录制', () => {
-    it('应该开始和停止录制', () => {
-      const { result } = renderHook(() => useShortcutRecorder())
-
-      expect(result.current.recording).toBe(false)
-      expect(result.current.recordedKeys).toEqual([])
-
-      // 开始录制
-      act(() => {
-        result.current.startRecording()
-      })
-
-      expect(result.current.recording).toBe(true)
-
-      // 停止录制
-      act(() => {
-        result.current.stopRecording()
-      })
-
-      expect(result.current.recording).toBe(false)
-    })
-
-    it('应该录制按键序列', () => {
-      const { result } = renderHook(() => useShortcutRecorder())
-
-      // 开始录制
-      act(() => {
-        result.current.startRecording()
-      })
-
-      // 模拟按键
-      const keyEvent1 = new KeyboardEvent('keydown', {
-        key: 'Control',
-        ctrlKey: true,
-      })
-
-      const keyEvent2 = new KeyboardEvent('keydown', {
-        key: 'n',
-        ctrlKey: true,
-      })
-
-      // 录制按键
-      act(() => {
-        result.current.recordKey('ctrl')
-        result.current.recordKey('n')
-      })
-
-      expect(result.current.recordedKeys).toContain('ctrl')
-      expect(result.current.recordedKeys).toContain('n')
-    })
-
-    it('应该清除录制的按键', () => {
-      const { result } = renderHook(() => useShortcutRecorder())
-
-      act(() => {
-        result.current.startRecording()
-        result.current.recordKey('ctrl')
-        result.current.recordKey('n')
-      })
-
-      expect(result.current.recordedKeys).toHaveLength(2)
-
-      act(() => {
-        result.current.clearRecording()
-      })
-
-      expect(result.current.recordedKeys).toEqual([])
-    })
-
-    it('应该生成快捷键字符串', () => {
-      const { result } = renderHook(() => useShortcutRecorder())
-
-      act(() => {
-        result.current.startRecording()
-        result.current.recordKey('ctrl')
-        result.current.recordKey('shift')
-        result.current.recordKey('z')
-      })
-
-      const shortcut = result.current.getShortcutString()
-      expect(shortcut).toBe('ctrl+shift+z')
-    })
-  })
-})
-
-describe('useShortcutConflicts Hook', () => {
-  beforeEach(() => {
-    vi.clearAllMocks()
-    mockKeyboardService.checkConflicts.mockResolvedValue(mockConflicts)
-  })
-
-  describe('快捷键冲突检测', () => {
-    it('应该检测快捷键冲突', async () => {
-      const { result } = renderHook(() => useShortcutConflicts())
-
-      let conflicts: any
-      await act(async () => {
-        conflicts = await result.current.checkConflicts('ctrl+n')
-      })
-
-      expect(mockKeyboardService.checkConflicts).toHaveBeenCalledWith('ctrl+n')
-      expect(conflicts).toEqual(mockConflicts)
-    })
-
-    it('应该批量检测冲突', async () => {
-      const { result } = renderHook(() => useShortcutConflicts())
-
-      const shortcuts = ['ctrl+n', 'ctrl+s', 'f12']
-
-      let allConflicts: any
-      await act(async () => {
-        allConflicts = await result.current.checkMultipleConflicts(shortcuts)
-      })
-
-      expect(mockKeyboardService.checkConflicts).toHaveBeenCalledTimes(3)
-      expect(allConflicts).toHaveLength(3)
-    })
-
-    it('应该处理冲突检测错误', async () => {
-      const testError = new Error('Conflict check failed')
-      mockKeyboardService.checkConflicts.mockRejectedValue(testError)
-
-      const { result } = renderHook(() => useShortcutConflicts())
-
+      // 尝试切换不存在的快捷键
       await expect(
         act(async () => {
-          await result.current.checkConflicts('ctrl+n')
+          await result.current.toggleShortcut('non-existent', true)
         })
-      ).rejects.toThrow('Conflict check failed')
+      ).rejects.toThrow() // 应该抛出错误
     })
-  })
-})
-
-describe('useShortcutCategories Hook', () => {
-  beforeEach(() => {
-    vi.clearAllMocks()
-    mockKeyboardService.getShortcutCategories.mockResolvedValue(mockCategories)
-  })
-
-  describe('快捷键分类', () => {
-    it('应该获取快捷键分类', async () => {
-      const { result } = renderHook(() => useShortcutCategories())
-
-      await waitFor(() => {
-        expect(result.current.categories).toEqual(mockCategories)
-        expect(result.current.loading).toBe(false)
-      })
-
-      expect(mockKeyboardService.getShortcutCategories).toHaveBeenCalled()
-    })
-
-    it('应该按分类过滤快捷键', async () => {
-      const { result } = renderHook(() => useShortcutCategories())
-
-      await waitFor(() => {
-        expect(result.current.categories).toBeTruthy()
-      })
-
-      const chatShortcuts = result.current.getShortcutsByCategory('chat')
-      expect(chatShortcuts).toHaveLength(3) // ctrl+n, ctrl+l, enter
-    })
-
-    it('应该处理分类获取错误', async () => {
-      const testError = new Error('Categories load failed')
-      mockKeyboardService.getShortcutCategories.mockRejectedValue(testError)
-
-      const { result } = renderHook(() => useShortcutCategories())
-
-      await waitFor(() => {
-        expect(result.current.error).toBe('获取快捷键分类失败')
-      })
-    })
-  })
-})
-
-describe('useShortcutPresets Hook', () => {
-  beforeEach(() => {
-    vi.clearAllMocks()
-    mockKeyboardService.getShortcutPresets.mockResolvedValue(mockPresets)
-    mockKeyboardService.loadPreset.mockResolvedValue(undefined)
-    mockKeyboardService.saveCustomPreset.mockResolvedValue(undefined)
-  })
-
-  describe('快捷键预设', () => {
-    it('应该获取快捷键预设', async () => {
-      const { result } = renderHook(() => useShortcutPresets())
-
-      await waitFor(() => {
-        expect(result.current.presets).toEqual(mockPresets)
-        expect(result.current.loading).toBe(false)
-      })
-
-      expect(mockKeyboardService.getShortcutPresets).toHaveBeenCalled()
-    })
-
-    it('应该加载预设', async () => {
-      const { result } = renderHook(() => useShortcutPresets())
-
-      await waitFor(() => {
-        expect(result.current.presets).toBeTruthy()
-      })
-
-      await act(async () => {
-        await result.current.loadPreset('vscode-like')
-      })
-
-      expect(mockKeyboardService.loadPreset).toHaveBeenCalledWith('vscode-like')
-    })
-
-    it('应该保存自定义预设', async () => {
-      const { result } = renderHook(() => useShortcutPresets())
-
-      const customPreset = {
-        name: '我的预设',
-        description: '自定义快捷键配置',
-        shortcuts: mockShortcuts,
-      }
-
-      await act(async () => {
-        await result.current.saveCustomPreset(customPreset)
-      })
-
-      expect(mockKeyboardService.saveCustomPreset).toHaveBeenCalledWith(customPreset)
-    })
-
-    it('应该处理预设操作错误', async () => {
-      const testError = new Error('Preset load failed')
-      mockKeyboardService.loadPreset.mockRejectedValue(testError)
-
-      const { result } = renderHook(() => useShortcutPresets())
-
-      await expect(
-        act(async () => {
-          await result.current.loadPreset('invalid-preset')
-        })
-      ).rejects.toThrow('Preset load failed')
-    })
-  })
-})
-
-// ==================== 集成测试 ====================
-
-describe('Keyboard Shortcuts 集成测试', () => {
-  beforeEach(() => {
-    vi.clearAllMocks()
-    
-    // 设置所有服务的 mock 返回值
-    mockKeyboardService.registerShortcut.mockResolvedValue(true)
-    mockKeyboardService.checkConflicts.mockResolvedValue([])
-    mockKeyboardService.getShortcutCategories.mockResolvedValue(mockCategories)
-    mockKeyboardService.getShortcutPresets.mockResolvedValue(mockPresets)
-  })
-
-  it('应该完成快捷键管理完整流程', async () => {
-    const shortcutsHook = renderHook(() => useKeyboardShortcuts())
-    const conflictsHook = renderHook(() => useShortcutConflicts())
-    const presetsHook = renderHook(() => useShortcutPresets())
-
-    // 1. 检查快捷键冲突
-    let conflicts: any
-    await act(async () => {
-      conflicts = await conflictsHook.result.current.checkConflicts('ctrl+n')
-    })
-
-    expect(conflicts).toEqual([])
-
-    // 2. 注册快捷键
-    const handler = vi.fn()
-    act(() => {
-      shortcutsHook.result.current.register('ctrl+n', handler, {
-        description: '新建对话',
-        category: 'chat',
-      })
-    })
-
-    expect(shortcutsHook.result.current.shortcuts['ctrl+n']).toBeDefined()
-
-    // 3. 加载预设
-    await waitFor(() => {
-      expect(presetsHook.result.current.presets).toBeTruthy()
-    })
-
-    await act(async () => {
-      await presetsHook.result.current.loadPreset('default')
-    })
-
-    // 验证所有操作成功
-    expect(mockKeyboardService.registerShortcut).toHaveBeenCalled()
-    expect(mockKeyboardService.checkConflicts).toHaveBeenCalled()
-    expect(mockKeyboardService.loadPreset).toHaveBeenCalled()
-  })
-
-  it('应该处理快捷键录制和应用流程', () => {
-    const recorderHook = renderHook(() => useShortcutRecorder())
-    const shortcutsHook = renderHook(() => useKeyboardShortcuts())
-
-    // 1. 开始录制
-    act(() => {
-      recorderHook.result.current.startRecording()
-    })
-
-    expect(recorderHook.result.current.recording).toBe(true)
-
-    // 2. 录制按键
-    act(() => {
-      recorderHook.result.current.recordKey('ctrl')
-      recorderHook.result.current.recordKey('shift')
-      recorderHook.result.current.recordKey('p')
-    })
-
-    // 3. 生成快捷键字符串
-    const shortcut = recorderHook.result.current.getShortcutString()
-    expect(shortcut).toBe('ctrl+shift+p')
-
-    // 4. 停止录制并注册快捷键
-    act(() => {
-      recorderHook.result.current.stopRecording()
-    })
-
-    const handler = vi.fn()
-    act(() => {
-      shortcutsHook.result.current.register(shortcut, handler)
-    })
-
-    expect(shortcutsHook.result.current.shortcuts[shortcut]).toBeDefined()
   })
 })

@@ -60,7 +60,7 @@ export type {
   SidebarSectionProps,
 } from './Sidebar'
 
-export { AppHeader }
+export { AppHeader } from './AppHeader'
 
 export { AppNavbar } from './AppNavbar'
 export type { AppNavbarProps } from './AppNavbar'

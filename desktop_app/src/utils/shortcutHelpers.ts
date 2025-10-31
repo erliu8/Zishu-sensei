@@ -20,6 +20,11 @@ export function shortcutToString(config: Pick<ShortcutConfig, 'key' | 'modifiers
     const { key, modifiers } = config
     const parts: string[] = []
 
+    // 防御性检查：如果 modifiers 或 key 未定义，返回空字符串
+    if (!modifiers || !key) {
+        return ''
+    }
+
     if (modifiers.ctrl) parts.push('Ctrl')
     if (modifiers.alt) parts.push('Alt')
     if (modifiers.shift) parts.push('Shift')
@@ -240,6 +245,11 @@ export function isValidShortcutString(str: string): boolean {
         return false
     }
     
+    // 拒绝只包含空白字符的字符串
+    if (str.trim().length === 0) {
+        return false
+    }
+    
     const parts = str.split('+').map(p => p.trim())
     
     // 至少要有一个按键
@@ -247,9 +257,14 @@ export function isValidShortcutString(str: string): boolean {
         return false
     }
     
-    // 最后一个部分应该是主键
+    // 最后一个部分应该是主键，且不能为空
     const key = parts[parts.length - 1]
-    if (!key) {
+    if (!key || key.length === 0) {
+        return false
+    }
+    
+    // 检查是否有空的部分（例如 'Ctrl+' 或 '+K'）
+    if (parts.some(p => p.length === 0)) {
         return false
     }
     
@@ -289,9 +304,9 @@ export function getShortcutPriority(config: ShortcutConfig): number {
  */
 export function sortShortcuts(shortcuts: ShortcutConfig[]): ShortcutConfig[] {
     return [...shortcuts].sort((a, b) => {
-        // 首先按分类排序
+        // 首先按分类排序（高优先级在前，所以是降序）
         if (a.category !== b.category) {
-            return getShortcutPriority(a) - getShortcutPriority(b)
+            return getShortcutPriority(b) - getShortcutPriority(a)
         }
         
         // 然后按名称排序

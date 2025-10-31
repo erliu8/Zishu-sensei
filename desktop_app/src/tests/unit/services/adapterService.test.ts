@@ -5,7 +5,7 @@
  */
 
 import { describe, it, expect, beforeEach, afterEach, vi } from 'vitest';
-import { invoke } from '@tauri-apps/api/core';
+import { invoke } from '@tauri-apps/api/tauri';
 import { 
   AdapterService,
   AdapterStatus,
@@ -26,7 +26,7 @@ import {
 } from '../../mocks/factories';
 
 // Mock Tauri API
-vi.mock('@tauri-apps/api/core', () => ({
+vi.mock('@tauri-apps/api/tauri', () => ({
   invoke: vi.fn(),
 }));
 
@@ -35,6 +35,7 @@ describe('AdapterService', () => {
 
   beforeEach(() => {
     vi.clearAllMocks();
+    vi.spyOn(console, 'error').mockImplementation(() => {});
   });
 
   afterEach(() => {

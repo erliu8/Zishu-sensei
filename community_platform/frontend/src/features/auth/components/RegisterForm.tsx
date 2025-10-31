@@ -4,7 +4,7 @@ import * as React from 'react';
 import { useForm } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
 import Link from 'next/link';
-import { Eye, EyeOff, Mail, Lock, User } from 'lucide-react';
+import { Eye, EyeOff, Mail, Lock, User, CheckCircle2, XCircle, Loader2 } from 'lucide-react';
 
 import { Button } from '@/shared/components/ui/button';
 import {
@@ -19,6 +19,25 @@ import {
 import { Input } from '@/shared/components/ui/input';
 import { Checkbox } from '@/shared/components/ui/checkbox';
 import { registerSchema, type RegisterFormData } from '../schemas';
+import { AuthApiClient } from '../api/auth.client';
+
+/**
+ * 防抖函数
+ */
+function debounce<T extends (...args: any[]) => any>(
+  func: T,
+  wait: number
+): (...args: Parameters<T>) => void {
+  let timeout: NodeJS.Timeout | null = null;
+  return function executedFunction(...args: Parameters<T>) {
+    const later = () => {
+      timeout = null;
+      func(...args);
+    };
+    if (timeout) clearTimeout(timeout);
+    timeout = setTimeout(later, wait);
+  };
+}
 
 export interface RegisterFormProps {
   /**
@@ -64,6 +83,20 @@ export function RegisterForm({
 }: RegisterFormProps) {
   const [showPassword, setShowPassword] = React.useState(false);
   const [showConfirmPassword, setShowConfirmPassword] = React.useState(false);
+  
+  // 用户名验证状态
+  const [usernameValidation, setUsernameValidation] = React.useState<{
+    checking: boolean;
+    available: boolean | null;
+    message: string;
+  }>({ checking: false, available: null, message: '' });
+
+  // 邮箱验证状态
+  const [emailValidation, setEmailValidation] = React.useState<{
+    checking: boolean;
+    available: boolean | null;
+    message: string;
+  }>({ checking: false, available: null, message: '' });
 
   const form = useForm<RegisterFormData>({
     resolver: zodResolver(registerSchema),
@@ -75,6 +108,65 @@ export function RegisterForm({
       agreeToTerms: false,
     },
   });
+
+  // 防抖的用户名检查
+  const checkUsernameDebounced = React.useMemo(
+    () =>
+      debounce(async (username: string) => {
+        if (!username || username.length < 3) {
+          setUsernameValidation({ checking: false, available: null, message: '' });
+          return;
+        }
+
+        setUsernameValidation({ checking: true, available: null, message: '' });
+
+        try {
+          const result = await AuthApiClient.checkUsernameAvailability(username);
+          setUsernameValidation({
+            checking: false,
+            available: result.available,
+            message: result.reason,
+          });
+        } catch (err) {
+          setUsernameValidation({
+            checking: false,
+            available: null,
+            message: '',
+          });
+        }
+      }, 500),
+    []
+  );
+
+  // 防抖的邮箱检查
+  const checkEmailDebounced = React.useMemo(
+    () =>
+      debounce(async (email: string) => {
+        // 基础邮箱格式验证
+        if (!email || !email.includes('@')) {
+          setEmailValidation({ checking: false, available: null, message: '' });
+          return;
+        }
+
+        setEmailValidation({ checking: true, available: null, message: '' });
+
+        try {
+          const result = await AuthApiClient.checkEmailAvailability(email);
+          setEmailValidation({
+            checking: false,
+            available: result.available,
+            message: result.reason,
+          });
+        } catch (err) {
+          setEmailValidation({
+            checking: false,
+            available: null,
+            message: '',
+          });
+        }
+      }, 500),
+    []
+  );
 
   const handleSubmit = async (data: RegisterFormData) => {
     try {
@@ -109,15 +201,44 @@ export function RegisterForm({
                       {...field}
                       type="text"
                       placeholder="您的用户名"
-                      className="pl-10"
+                      className="pl-10 pr-10"
                       disabled={isLoading}
                       autoComplete="username"
+                      onChange={(e) => {
+                        field.onChange(e);
+                        checkUsernameDebounced(e.target.value);
+                      }}
                     />
+                    {/* 验证状态图标 */}
+                    <div className="absolute right-3 top-3">
+                      {usernameValidation.checking && (
+                        <Loader2 className="h-4 w-4 animate-spin text-muted-foreground" />
+                      )}
+                      {!usernameValidation.checking && usernameValidation.available === true && (
+                        <CheckCircle2 className="h-4 w-4 text-green-500" />
+                      )}
+                      {!usernameValidation.checking && usernameValidation.available === false && (
+                        <XCircle className="h-4 w-4 text-destructive" />
+                      )}
+                    </div>
                   </div>
                 </FormControl>
-                <FormDescription>
-                  3-20个字符，只能包含字母、数字、下划线和连字符
-                </FormDescription>
+                {/* 显示验证消息或默认描述 */}
+                {usernameValidation.message ? (
+                  <p
+                    className={`text-sm ${
+                      usernameValidation.available
+                        ? 'text-green-600'
+                        : 'text-destructive'
+                    }`}
+                  >
+                    {usernameValidation.message}
+                  </p>
+                ) : (
+                  <FormDescription>
+                    3-20个字符，只能包含字母、数字、下划线和连字符
+                  </FormDescription>
+                )}
                 <FormMessage />
               </FormItem>
             )}
@@ -137,12 +258,40 @@ export function RegisterForm({
                       {...field}
                       type="email"
                       placeholder="your@email.com"
-                      className="pl-10"
+                      className="pl-10 pr-10"
                       disabled={isLoading}
                       autoComplete="email"
+                      onChange={(e) => {
+                        field.onChange(e);
+                        checkEmailDebounced(e.target.value);
+                      }}
                     />
+                    {/* 验证状态图标 */}
+                    <div className="absolute right-3 top-3">
+                      {emailValidation.checking && (
+                        <Loader2 className="h-4 w-4 animate-spin text-muted-foreground" />
+                      )}
+                      {!emailValidation.checking && emailValidation.available === true && (
+                        <CheckCircle2 className="h-4 w-4 text-green-500" />
+                      )}
+                      {!emailValidation.checking && emailValidation.available === false && (
+                        <XCircle className="h-4 w-4 text-destructive" />
+                      )}
+                    </div>
                   </div>
                 </FormControl>
+                {/* 显示验证消息 */}
+                {emailValidation.message && (
+                  <p
+                    className={`text-sm ${
+                      emailValidation.available
+                        ? 'text-green-600'
+                        : 'text-destructive'
+                    }`}
+                  >
+                    {emailValidation.message}
+                  </p>
+                )}
                 <FormMessage />
               </FormItem>
             )}

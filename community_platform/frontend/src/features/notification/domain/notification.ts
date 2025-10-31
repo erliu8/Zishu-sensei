@@ -7,7 +7,10 @@ export enum NotificationType {
   REPLY = 'reply',                  // 回复
   FOLLOW = 'follow',                // 关注
   MENTION = 'mention',              // @提及
+  SHARE = 'share',                  // 分享
   SYSTEM = 'system',                // 系统通知
+  ACHIEVEMENT = 'achievement',      // 成就
+  TRENDING = 'trending',            // 趋势
   ADAPTER_UPDATE = 'adapter_update', // 适配器更新
   POST_UPDATE = 'post_update',      // 帖子更新
   CHARACTER_SHARE = 'character_share', // 角色分享
@@ -131,9 +134,22 @@ export interface NotificationPreferences {
   emailEnabled: boolean;
   pushEnabled: boolean;
   enabledTypes: NotificationType[];
+  notificationTypes?: {
+    like?: boolean;
+    comment?: boolean;
+    follow?: boolean;
+    mention?: boolean;
+    reply?: boolean;
+    share?: boolean;
+    system?: boolean;
+    achievement?: boolean;
+    trending?: boolean;
+  };
   quietHoursStart?: string; // HH:mm format
   quietHoursEnd?: string;
   groupSimilar: boolean; // 是否合并相似通知
+  muteAll?: boolean;
+  muteDuringNight?: boolean;
 }
 
 /**

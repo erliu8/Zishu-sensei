@@ -123,8 +123,8 @@ export const FollowingList: React.FC<FollowingListProps> = ({
     sortOrder: 'desc',
   });
 
-  const following = followingData?.data?.items || [];
-  const pagination = followingData?.data?.pagination;
+  const following = (followingData as any)?.data?.items || (followingData as any)?.items || [];
+  const pagination = (followingData as any)?.data?.pagination || (followingData as any)?.pagination;
   const totalPages = pagination?.totalPages || 1;
 
   if (isLoading) {
@@ -159,7 +159,7 @@ export const FollowingList: React.FC<FollowingListProps> = ({
         )}
         <CardContent>
           <EmptyState
-            icon={UserCheck}
+            icon={<UserCheck className="h-8 w-8" />}
             title="加载失败"
             description="无法加载关注列表，请稍后重试"
           />
@@ -202,13 +202,13 @@ export const FollowingList: React.FC<FollowingListProps> = ({
 
         {following.length === 0 ? (
           <EmptyState
-            icon={UserCheck}
+            icon={<UserCheck className="h-8 w-8" />}
             title={search ? '未找到用户' : '暂无关注'}
             description={search ? '尝试其他搜索词' : '快去关注感兴趣的用户吧'}
           />
         ) : (
           <div className="space-y-2">
-            {following.map((item) => (
+            {following.map((item: any) => (
               <FollowingItem
                 key={item.id}
                 following={item}

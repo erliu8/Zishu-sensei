@@ -12,13 +12,11 @@ import { zhCN } from 'date-fns/locale';
 import {
   FileText,
   Package,
-  User as UserIcon,
   Heart,
   MessageSquare,
   Eye,
   Download,
   Star,
-  TrendingUp,
   Users,
   CheckCircle2,
 } from 'lucide-react';
@@ -93,14 +91,14 @@ function PostResultItem({ item }: { item: SearchResultPost }) {
             <FileText className="mt-1 h-5 w-5 flex-shrink-0 text-blue-600" />
             <div className="flex-1 space-y-2">
               <h3 className="font-medium leading-tight group-hover:text-primary">
-                {item.highlight?.title ? (
+                {item.highlight?.title?.[0] ? (
                   <span dangerouslySetInnerHTML={{ __html: item.highlight.title[0] }} />
                 ) : (
                   item.title
                 )}
               </h3>
               <p className="line-clamp-2 text-sm text-muted-foreground">
-                {item.highlight?.content ? (
+                {item.highlight?.content?.[0] ? (
                   <span dangerouslySetInnerHTML={{ __html: item.highlight.content[0] }} />
                 ) : (
                   item.excerpt
@@ -160,7 +158,7 @@ function AdapterResultItem({ item }: { item: SearchResultAdapter }) {
             <div className="flex-1 space-y-2">
               <div className="flex items-start justify-between gap-2">
                 <h3 className="font-medium leading-tight group-hover:text-primary">
-                  {item.highlight?.name ? (
+                  {item.highlight?.name?.[0] ? (
                     <span dangerouslySetInnerHTML={{ __html: item.highlight.name[0] }} />
                   ) : (
                     item.name
@@ -168,15 +166,15 @@ function AdapterResultItem({ item }: { item: SearchResultAdapter }) {
                 </h3>
                 <div className="flex items-center gap-1">
                   {item.verified && (
-                    <CheckCircle2 className="h-4 w-4 text-blue-600" title="已验证" />
+                    <CheckCircle2 className="h-4 w-4 text-blue-600" />
                   )}
                   {item.featured && (
-                    <Star className="h-4 w-4 text-yellow-600" title="特色推荐" />
+                    <Star className="h-4 w-4 text-yellow-600" />
                   )}
                 </div>
               </div>
               <p className="line-clamp-2 text-sm text-muted-foreground">
-                {item.highlight?.description ? (
+                {item.highlight?.description?.[0] ? (
                   <span dangerouslySetInnerHTML={{ __html: item.highlight.description[0] }} />
                 ) : (
                   item.description
@@ -236,7 +234,7 @@ function CharacterResultItem({ item }: { item: SearchResultCharacter }) {
             <div className="flex-1 space-y-2">
               <div className="flex items-start justify-between gap-2">
                 <h3 className="font-medium leading-tight group-hover:text-primary">
-                  {item.highlight?.name ? (
+                  {item.highlight?.name?.[0] ? (
                     <span dangerouslySetInnerHTML={{ __html: item.highlight.name[0] }} />
                   ) : (
                     item.name
@@ -244,15 +242,15 @@ function CharacterResultItem({ item }: { item: SearchResultCharacter }) {
                 </h3>
                 <div className="flex items-center gap-1">
                   {item.verified && (
-                    <CheckCircle2 className="h-4 w-4 text-blue-600" title="已验证" />
+                    <CheckCircle2 className="h-4 w-4 text-blue-600" />
                   )}
                   {item.featured && (
-                    <Star className="h-4 w-4 text-yellow-600" title="特色推荐" />
+                    <Star className="h-4 w-4 text-yellow-600" />
                   )}
                 </div>
               </div>
               <p className="line-clamp-2 text-sm text-muted-foreground">
-                {item.highlight?.description ? (
+                {item.highlight?.description?.[0] ? (
                   <span dangerouslySetInnerHTML={{ __html: item.highlight.description[0] }} />
                 ) : (
                   item.description
@@ -309,7 +307,7 @@ function UserResultItem({ item }: { item: SearchResultUser }) {
               <div className="flex items-start justify-between gap-2">
                 <div>
                   <h3 className="font-medium leading-tight group-hover:text-primary">
-                    {item.highlight?.username ? (
+                    {item.highlight?.username?.[0] ? (
                       <span dangerouslySetInnerHTML={{ __html: item.highlight.username[0] }} />
                     ) : (
                       item.username
@@ -320,12 +318,12 @@ function UserResultItem({ item }: { item: SearchResultUser }) {
                   )}
                 </div>
                 {item.verified && (
-                  <CheckCircle2 className="h-4 w-4 text-blue-600" title="已验证" />
+                  <CheckCircle2 className="h-4 w-4 text-blue-600" />
                 )}
               </div>
               {item.bio && (
                 <p className="line-clamp-2 text-sm text-muted-foreground">
-                  {item.highlight?.bio ? (
+                  {item.highlight?.bio?.[0] ? (
                     <span dangerouslySetInnerHTML={{ __html: item.highlight.bio[0] }} />
                   ) : (
                     item.bio

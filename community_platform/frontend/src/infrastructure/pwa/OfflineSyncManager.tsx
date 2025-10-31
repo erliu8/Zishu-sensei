@@ -2,7 +2,7 @@
 
 import { useEffect } from 'react'
 import { useOfflineSync } from './useOfflineSync'
-import { useToast } from '@/shared/hooks/useToast'
+import { useToast } from '@/shared/hooks/use-toast'
 import { Cloud, CloudOff, RefreshCw } from 'lucide-react'
 import { Button } from '@/shared/components/ui/button'
 import {
@@ -53,7 +53,6 @@ export default function OfflineSyncManager({
       toast({
         title: '数据同步',
         description: `正在同步 ${pendingCount} 个待处理操作...`,
-        icon: <RefreshCw className="h-4 w-4 animate-spin" />,
       })
     }
   }, [isOnline, pendingCount, showNotifications, toast])
@@ -65,7 +64,6 @@ export default function OfflineSyncManager({
         title: '同步失败',
         description: '请检查网络连接后重试',
         variant: 'destructive',
-        icon: <CloudOff className="h-4 w-4" />,
       })
       return
     }
@@ -75,7 +73,6 @@ export default function OfflineSyncManager({
     toast({
       title: '同步完成',
       description: '所有数据已同步',
-      icon: <Cloud className="h-4 w-4" />,
     })
   }
 

@@ -7,7 +7,7 @@
 
 import React from 'react';
 import { Card, CardContent, CardHeader, CardTitle } from '@/shared/components/ui/card';
-import { Package, CheckCircle, XCircle, Clock, TrendingUp } from 'lucide-react';
+import { Package, CheckCircle, XCircle, Clock } from 'lucide-react';
 import type { PackagingTaskStats } from '../domain/packaging.types';
 
 /**

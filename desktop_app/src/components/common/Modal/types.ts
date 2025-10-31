@@ -89,6 +89,12 @@ export interface ModalProps {
   
   /** 是否显示底部分割线 */
   showFooterDivider?: boolean
+  
+  /** 自定义 aria-labelledby */
+  'aria-labelledby'?: string
+  
+  /** 自定义 aria-describedby */
+  'aria-describedby'?: string
 }
 
 /**

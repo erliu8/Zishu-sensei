@@ -5,33 +5,47 @@
  */
 
 import { describe, it, expect, beforeEach, afterEach, vi } from 'vitest'
-import { renderHook, act, waitFor } from '@testing-library/react'
+import { act, waitFor } from '@testing-library/react'
 import {
   useFileManager,
   useFileStats,
   useFileDetail,
 } from '@/hooks/useFileManager'
 import type { FileInfo, FileStats } from '@/types/file'
-import { mockConsole } from '../../utils/test-utils'
+import { renderHook, mockConsole } from '../../utils/test-utils'
 
 // ==================== Mock 设置 ====================
 
-// Mock objects need to be hoisted to work with vi.mock
-const { mockFileService } = vi.hoisted(() => ({
+// Mock Tauri invoke function and fileService using vi.hoisted
+const { mockTauriInvoke, mockFileService } = vi.hoisted(() => ({
+  mockTauriInvoke: vi.fn(),
   mockFileService: {
     listFiles: vi.fn(),
-    getFile: vi.fn(),
     uploadFileObject: vi.fn(),
     deleteFile: vi.fn(),
     batchDelete: vi.fn(),
     searchFiles: vi.fn(),
     getFileStats: vi.fn(),
-  },
+    getFile: vi.fn(),
+  }
 }))
 
+// Override the global Tauri mock for this test
+vi.mock('@tauri-apps/api/tauri', () => ({
+  invoke: mockTauriInvoke,
+}))
+
+// Mock fileService
 vi.mock('@/services/fileService', () => ({
   fileService: mockFileService,
 }))
+
+// Mock File.arrayBuffer method for tests
+Object.defineProperty(File.prototype, 'arrayBuffer', {
+  value: function() {
+    return Promise.resolve(new ArrayBuffer(0))
+  }
+})
 
 // ==================== 测试数据 ====================
 
@@ -90,14 +104,50 @@ describe('useFileManager Hook', () => {
     consoleMock.mockAll()
     vi.clearAllMocks()
     
+    // 设置 mockFileService 的默认行为
     mockFileService.listFiles.mockResolvedValue(mockFiles)
     mockFileService.uploadFileObject.mockResolvedValue({
-      file_info: mockFiles[0],
-      upload_url: 'https://example.com/upload',
+      success: true,
+      file_id: 'new-file-id',
+      message: '文件上传成功',
     })
-    mockFileService.deleteFile.mockResolvedValue(undefined)
-    mockFileService.batchDelete.mockResolvedValue(undefined)
+    mockFileService.deleteFile.mockResolvedValue({
+      success: true,
+      message: '文件删除成功',
+    })
+    mockFileService.batchDelete.mockResolvedValue({
+      success: true,
+      deleted_count: 2,
+      message: '批量删除成功',
+    })
     mockFileService.searchFiles.mockResolvedValue(mockFiles)
+    mockFileService.getFileStats.mockResolvedValue(mockFileStats)
+    mockFileService.getFile.mockResolvedValue(mockFiles[0])
+    
+    // 重新设置 Tauri invoke mock
+    mockTauriInvoke.mockImplementation((command: string, args?: any) => {
+      switch (command) {
+        case 'list_files_by_filter':
+          return Promise.resolve(mockFiles)
+        case 'upload_file':
+          return Promise.resolve({
+            file_info: mockFiles[0],
+            upload_url: 'https://example.com/upload',
+          })
+        case 'delete_file':
+          return Promise.resolve(undefined)
+        case 'batch_delete':
+          return Promise.resolve(0)
+        case 'search_files_by_keyword':
+          return Promise.resolve(mockFiles)
+        case 'get_file_statistics':
+          return Promise.resolve(mockFileStats)
+        case 'get_file':
+          return Promise.resolve(mockFiles[0])
+        default:
+          return Promise.resolve(null)
+      }
+    })
   })
 
   afterEach(() => {
@@ -105,11 +155,15 @@ describe('useFileManager Hook', () => {
   })
 
   describe('基础功能', () => {
-    it('应该返回初始状态', () => {
+    it('应该返回初始状态', async () => {
       const { result } = renderHook(() => useFileManager())
 
-      expect(result.current.files).toEqual([])
-      expect(result.current.loading).toBe(false)
+      // 等待初始加载完成
+      await waitFor(() => {
+        expect(result.current.files).toEqual(mockFiles)
+        expect(result.current.loading).toBe(false)
+      })
+      
       expect(result.current.error).toBe(null)
       expect(result.current.uploadProgress).toEqual([])
       expect(typeof result.current.loadFiles).toBe('function')
@@ -124,7 +178,12 @@ describe('useFileManager Hook', () => {
         expect(result.current.loading).toBe(false)
       })
 
-      expect(mockFileService.listFiles).toHaveBeenCalledWith(undefined)
+      expect(mockTauriInvoke).toHaveBeenCalledWith('list_files_by_filter', {
+        conversationId: undefined,
+        fileType: undefined,
+        limit: undefined,
+        offset: undefined,
+      })
     })
 
     it('应该支持过滤选项', async () => {
@@ -138,12 +197,17 @@ describe('useFileManager Hook', () => {
         expect(result.current.files).toEqual(mockFiles)
       })
 
-      expect(mockFileService.listFiles).toHaveBeenCalledWith(filterOptions)
+      expect(mockTauriInvoke).toHaveBeenCalledWith('list_files_by_filter', {
+        conversationId: filterOptions.conversation_id,
+        fileType: filterOptions.file_type,
+        limit: filterOptions.limit,
+        offset: filterOptions.offset,
+      })
     })
 
     it('应该处理加载错误', async () => {
-      const testError = new Error('Failed to load files')
-      mockFileService.listFiles.mockRejectedValue(testError)
+      const testError = new Error('加载文件失败')
+      mockTauriInvoke.mockRejectedValue(testError)
 
       const { result } = renderHook(() => useFileManager())
 
@@ -171,10 +235,12 @@ describe('useFileManager Hook', () => {
         uploadResult = await result.current.uploadFile(testFile)
       })
 
-      expect(mockFileService.uploadFileObject).toHaveBeenCalledWith(
-        testFile,
-        undefined
-      )
+      expect(mockTauriInvoke).toHaveBeenCalledWith('upload_file', expect.objectContaining({
+        request: expect.objectContaining({
+          file_name: testFile.name,
+          file_data: expect.any(Array),
+        })
+      }))
       expect(uploadResult.file_info).toEqual(mockFiles[0])
     })
 
@@ -194,7 +260,7 @@ describe('useFileManager Hook', () => {
       const uploadPromise = new Promise((resolve) => {
         resolveUpload = resolve
       })
-      mockFileService.uploadFileObject.mockReturnValue(uploadPromise)
+      mockTauriInvoke.mockReturnValue(uploadPromise)
 
       const uploadTask = act(async () => {
         await result.current.uploadFile(testFile)
@@ -228,7 +294,7 @@ describe('useFileManager Hook', () => {
     })
 
     it('应该处理上传错误', async () => {
-      const testError = new Error('Upload failed')
+      const testError = new Error('上传失败')
       mockFileService.uploadFileObject.mockRejectedValue(testError)
 
       const { result } = renderHook(() => useFileManager())
@@ -245,14 +311,14 @@ describe('useFileManager Hook', () => {
         act(async () => {
           await result.current.uploadFile(testFile)
         })
-      ).rejects.toThrow('Upload failed')
+      ).rejects.toThrow('上传失败')
 
       // 检查错误状态
       const progress = result.current.uploadProgress.find(
         (p) => p.file_name === 'test.txt'
       )
       expect(progress?.status).toBe('error')
-      expect(progress?.error).toBe('Upload failed')
+      expect(progress?.error).toBe('上传失败')
     })
 
     it('应该批量上传文件', async () => {
@@ -351,7 +417,7 @@ describe('useFileManager Hook', () => {
     })
 
     it('应该处理删除错误', async () => {
-      const testError = new Error('Delete failed')
+      const testError = new Error('删除失败')
       mockFileService.deleteFile.mockRejectedValue(testError)
 
       const { result } = renderHook(() => useFileManager())
@@ -364,7 +430,7 @@ describe('useFileManager Hook', () => {
         act(async () => {
           await result.current.deleteFile('file-1')
         })
-      ).rejects.toThrow('Delete failed')
+      ).rejects.toThrow('删除失败')
 
       expect(result.current.error).toBe('删除失败')
     })
@@ -391,7 +457,7 @@ describe('useFileManager Hook', () => {
     })
 
     it('应该处理搜索错误', async () => {
-      const testError = new Error('Search failed')
+      const testError = new Error('搜索失败')
       mockFileService.searchFiles.mockRejectedValue(testError)
 
       const { result } = renderHook(() => useFileManager())
@@ -438,7 +504,19 @@ describe('useFileManager Hook', () => {
 describe('useFileStats Hook', () => {
   beforeEach(() => {
     vi.clearAllMocks()
-    mockFileService.getFileStats.mockResolvedValue(mockFileStats)
+    
+    mockTauriInvoke.mockImplementation((command: string, args?: any) => {
+      switch (command) {
+        case 'get_file_statistics':
+          return Promise.resolve(mockFileStats)
+        case 'list_files_by_filter':
+          return Promise.resolve(mockFiles)
+        case 'get_file':
+          return Promise.resolve(mockFiles[0])
+        default:
+          return Promise.resolve(null)
+      }
+    })
   })
 
   describe('文件统计', () => {
@@ -454,7 +532,7 @@ describe('useFileStats Hook', () => {
     })
 
     it('应该处理加载错误', async () => {
-      const testError = new Error('Failed to load stats')
+      const testError = new Error('加载统计失败')
       mockFileService.getFileStats.mockRejectedValue(testError)
 
       const { result } = renderHook(() => useFileStats())
@@ -496,7 +574,19 @@ describe('useFileStats Hook', () => {
 describe('useFileDetail Hook', () => {
   beforeEach(() => {
     vi.clearAllMocks()
-    mockFileService.getFile.mockResolvedValue(mockFiles[0])
+    
+    mockTauriInvoke.mockImplementation((command: string, args?: any) => {
+      switch (command) {
+        case 'get_file':
+          return Promise.resolve(mockFiles[0])
+        case 'list_files_by_filter':
+          return Promise.resolve(mockFiles)
+        case 'get_file_statistics':
+          return Promise.resolve(mockFileStats)
+        default:
+          return Promise.resolve(null)
+      }
+    })
   })
 
   describe('文件详情', () => {
@@ -543,7 +633,7 @@ describe('useFileDetail Hook', () => {
     })
 
     it('应该处理加载错误', async () => {
-      const testError = new Error('Failed to load file')
+      const testError = new Error('加载文件失败')
       mockFileService.getFile.mockRejectedValue(testError)
 
       const { result } = renderHook(() => useFileDetail('file-1'))
@@ -565,14 +655,30 @@ describe('FileManager Hooks 集成测试', () => {
     consoleMock.mockAll()
     vi.clearAllMocks()
     
-    mockFileService.listFiles.mockResolvedValue(mockFiles)
-    mockFileService.uploadFileObject.mockResolvedValue({
-      file_info: mockFiles[0],
-      upload_url: 'https://example.com/upload',
+    // 重新设置 Tauri invoke mock
+    mockTauriInvoke.mockImplementation((command: string, args?: any) => {
+      switch (command) {
+        case 'list_files_by_filter':
+          return Promise.resolve(mockFiles)
+        case 'upload_file':
+          return Promise.resolve({
+            file_info: mockFiles[0],
+            upload_url: 'https://example.com/upload',
+          })
+        case 'delete_file':
+          return Promise.resolve(undefined)
+        case 'batch_delete':
+          return Promise.resolve(0)
+        case 'search_files_by_keyword':
+          return Promise.resolve(mockFiles)
+        case 'get_file_statistics':
+          return Promise.resolve(mockFileStats)
+        case 'get_file':
+          return Promise.resolve(mockFiles[0])
+        default:
+          return Promise.resolve(null)
+      }
     })
-    mockFileService.deleteFile.mockResolvedValue(undefined)
-    mockFileService.getFileStats.mockResolvedValue(mockFileStats)
-    mockFileService.getFile.mockResolvedValue(mockFiles[0])
   })
 
   it('应该完成文件管理完整流程', async () => {

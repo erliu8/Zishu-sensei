@@ -13,7 +13,6 @@ import {
   Command,
   CommandEmpty,
   CommandGroup,
-  CommandInput,
   CommandItem,
   CommandList,
 } from '@/shared/components/ui/command';
@@ -212,7 +211,7 @@ export const MarketSearchBar: React.FC<MarketSearchBarProps> = ({
               {/* 热门搜索 */}
               {!isLoading && suggestions.length === 0 && trendingSearches.length > 0 && (
                 <CommandGroup heading="热门搜索">
-                  {trendingSearches.map((search) => (
+                  {trendingSearches.map((search: string) => (
                     <CommandItem
                       key={search}
                       onSelect={() => handleSelectSuggestion(search)}

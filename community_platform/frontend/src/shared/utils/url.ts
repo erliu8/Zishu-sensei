@@ -71,7 +71,7 @@ export function removeQueryParams(url: string, keys: string[]): string {
   keys.forEach((key) => urlObj.searchParams.delete(key));
 
   const newSearch = urlObj.search;
-  const baseUrl = url.split('?')[0];
+  const baseUrl = url.split('?')[0] || '';
 
   return newSearch ? `${baseUrl}${newSearch}` : baseUrl;
 }
@@ -136,7 +136,7 @@ export function normalizeUrl(url: string): string {
  * getBasePath('https://example.com/path?query=1#hash') // 'https://example.com/path'
  */
 export function getBasePath(url: string): string {
-  return url.split(/[?#]/)[0];
+  return url.split(/[?#]/)[0] || '';
 }
 
 /**

@@ -63,12 +63,12 @@ export function BasicSearchPage() {
       </div>
 
       {/* 搜索结果 */}
-      {error && <div className="text-red-600">搜索出错</div>}
+      {error && <div className="text-red-600">搜索出错: {String(error)}</div>}
       
-      <SearchResults items={data?.items || []} isLoading={isLoading} />
+      <SearchResults items={(data as any)?.items || []} isLoading={isLoading} />
 
       {/* 分页 */}
-      {data && data.totalPages > 1 && (
+      {data && (data as any).totalPages > 1 && (
         <div className="mt-8 flex justify-center gap-2">
           <button
             onClick={() => setPage((p) => Math.max(1, p - 1))}
@@ -77,11 +77,11 @@ export function BasicSearchPage() {
             上一页
           </button>
           <span>
-            {page} / {data.totalPages}
+            {page} / {(data as any).totalPages}
           </span>
           <button
-            onClick={() => setPage((p) => Math.min(data.totalPages, p + 1))}
-            disabled={page === data.totalPages}
+            onClick={() => setPage((p) => Math.min((data as any).totalPages, p + 1))}
+            disabled={page === (data as any).totalPages}
           >
             下一页
           </button>
@@ -116,7 +116,7 @@ export function PostSearchPage() {
       />
 
       <div className="mt-6">
-        <SearchResults items={data?.items || []} isLoading={isLoading} />
+        <SearchResults items={(data as any)?.items || []} isLoading={isLoading} />
       </div>
     </div>
   );
@@ -304,7 +304,7 @@ export function AdvancedSearchForm() {
 
       {/* 搜索结果 */}
       <div className="mt-8">
-        <SearchResults items={data?.items || []} isLoading={isLoading} />
+        <SearchResults items={(data as any)?.items || []} isLoading={isLoading} />
       </div>
     </div>
   );

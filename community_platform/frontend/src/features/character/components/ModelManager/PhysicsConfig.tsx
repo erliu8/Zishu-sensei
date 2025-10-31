@@ -140,8 +140,8 @@ export const PhysicsConfig: React.FC<PhysicsConfigProps> = ({
             min={0}
             max={10}
             step={0.1}
-            value={[config.gravity]}
-            onValueChange={([value]) => handleChange('gravity', value)}
+            value={[config.gravity || 0]}
+            onValueChange={([value]) => handleChange('gravity', value ?? 0)}
             disabled={isControlDisabled}
             className="w-full"
           />
@@ -179,8 +179,8 @@ export const PhysicsConfig: React.FC<PhysicsConfigProps> = ({
             min={0}
             max={10}
             step={0.1}
-            value={[config.wind]}
-            onValueChange={([value]) => handleChange('wind', value)}
+            value={[config.wind || 0]}
+            onValueChange={([value]) => handleChange('wind', value ?? 0)}
             disabled={isControlDisabled}
             className="w-full"
           />
@@ -218,8 +218,8 @@ export const PhysicsConfig: React.FC<PhysicsConfigProps> = ({
             min={0}
             max={1}
             step={0.01}
-            value={[config.elasticity]}
-            onValueChange={([value]) => handleChange('elasticity', value)}
+            value={[config.elasticity || 0]}
+            onValueChange={([value]) => handleChange('elasticity', value ?? 0)}
             disabled={isControlDisabled}
             className="w-full"
           />
@@ -257,8 +257,8 @@ export const PhysicsConfig: React.FC<PhysicsConfigProps> = ({
             min={0}
             max={1}
             step={0.01}
-            value={[config.damping]}
-            onValueChange={([value]) => handleChange('damping', value)}
+            value={[config.damping || 0]}
+            onValueChange={([value]) => handleChange('damping', value ?? 0)}
             disabled={isControlDisabled}
             className="w-full"
           />

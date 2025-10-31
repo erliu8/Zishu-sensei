@@ -182,7 +182,7 @@ export function VersionPublish({
           </div>
 
           {/* 更新日志模板 */}
-          <ChangelogTemplate onUseTemplate={(template) => {
+          <ChangelogTemplate onUseTemplate={(_template) => {
             // 这里可以通过 setValue 设置值，但需要从外部传入 setValue
             // 为了简化，这里提供一个示例
           }} />
@@ -375,21 +375,21 @@ function validateVersion(newVersion: string, currentVersion?: string): VersionVa
   const [, newMajor, newMinor, newPatch] = match.map(Number);
   const [, currentMajor, currentMinor, currentPatch] = currentMatch.map(Number);
 
-  if (newMajor < currentMajor) {
+  if (newMajor !== undefined && currentMajor !== undefined && newMajor < currentMajor) {
     return {
       isValid: false,
       message: '主版本号不能小于当前版本',
     };
   }
 
-  if (newMajor === currentMajor && newMinor < currentMinor) {
+  if (newMajor !== undefined && currentMajor !== undefined && newMinor !== undefined && currentMinor !== undefined && newMajor === currentMajor && newMinor < currentMinor) {
     return {
       isValid: false,
       message: '次版本号不能小于当前版本',
     };
   }
 
-  if (newMajor === currentMajor && newMinor === currentMinor && newPatch <= currentPatch) {
+  if (newMajor !== undefined && currentMajor !== undefined && newMinor !== undefined && currentMinor !== undefined && newPatch !== undefined && currentPatch !== undefined && newMajor === currentMajor && newMinor === currentMinor && newPatch <= currentPatch) {
     return {
       isValid: false,
       message: '修订号必须大于当前版本',
@@ -398,9 +398,9 @@ function validateVersion(newVersion: string, currentVersion?: string): VersionVa
 
   // 判断版本类型
   let versionType = '';
-  if (newMajor > currentMajor) {
+  if (newMajor !== undefined && currentMajor !== undefined && newMajor > currentMajor) {
     versionType = '主版本更新（破坏性变更）';
-  } else if (newMinor > currentMinor) {
+  } else if (newMinor !== undefined && currentMinor !== undefined && newMinor > currentMinor) {
     versionType = '次版本更新（新增功能）';
   } else {
     versionType = '修订版本更新（问题修复）';

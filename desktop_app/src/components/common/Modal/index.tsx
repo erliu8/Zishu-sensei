@@ -44,6 +44,8 @@ export const Modal: React.FC<ModalProps> = ({
   header,
   showHeaderDivider = true,
   showFooterDivider = true,
+  'aria-labelledby': ariaLabelledby,
+  'aria-describedby': ariaDescribedby
 }) => {
   const [state, setState] = useState<ModalState>({
     isVisible: false,
@@ -76,21 +78,17 @@ export const Modal: React.FC<ModalProps> = ({
         document.body.style.overflow = 'hidden'
       }
     } else if (state.isVisible) {
-      // 开始关闭动画
-      setState(prev => ({ ...prev, isAnimating: true }))
+      // 立即隐藏 DOM，不等待动画
+      setState({ isVisible: false, isAnimating: false })
+      onAfterClose?.()
       
-      setTimeout(() => {
-        setState({ isVisible: false, isAnimating: false })
-        onAfterClose?.()
-        
-        // 恢复焦点
-        previousActiveElement.current?.focus()
-        
-        // 解锁滚动
-        if (lockScroll) {
-          document.body.style.overflow = ''
-        }
-      }, 300) // 动画持续时间
+      // 恢复焦点
+      previousActiveElement.current?.focus()
+      
+      // 解锁滚动
+      if (lockScroll) {
+        document.body.style.overflow = ''
+      }
     }
   }, [open, lockScroll, onOpen, onAfterClose])
 
@@ -110,7 +108,7 @@ export const Modal: React.FC<ModalProps> = ({
 
   // 遮罩层点击关闭
   const handleOverlayClick = useCallback((e: React.MouseEvent) => {
-    if (closeOnOverlayClick && e.target === overlayRef.current) {
+    if (closeOnOverlayClick && e.target === e.currentTarget) {
       onClose()
     }
   }, [closeOnOverlayClick, onClose])
@@ -143,7 +141,8 @@ export const Modal: React.FC<ModalProps> = ({
       }}
       role="dialog"
       aria-modal="true"
-      aria-labelledby={title ? 'modal-title' : undefined}
+      aria-labelledby={ariaLabelledby || (title ? 'modal-title' : undefined)}
+      aria-describedby={ariaDescribedby}
     >
       <div
         className={`modal-container ${centered ? 'modal-centered' : ''}`}
@@ -170,6 +169,7 @@ export const Modal: React.FC<ModalProps> = ({
                       className="modal-close-button"
                       onClick={onClose}
                       aria-label="关闭"
+                      title="Close"
                       type="button"
                     >
                       <X size={20} />

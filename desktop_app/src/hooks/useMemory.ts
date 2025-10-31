@@ -42,8 +42,10 @@ export function useMemoryInfo(refreshInterval: number = 5000) {
 
   useEffect(() => {
     fetchMemoryInfo();
-    const timer = setInterval(fetchMemoryInfo, refreshInterval);
-    return () => clearInterval(timer);
+    if (refreshInterval > 0) {
+      const timer = setInterval(fetchMemoryInfo, refreshInterval);
+      return () => clearInterval(timer);
+    }
   }, [fetchMemoryInfo, refreshInterval]);
 
   return { memoryInfo, loading, error, refresh: fetchMemoryInfo };
@@ -73,8 +75,10 @@ export function useMemoryPoolStats(refreshInterval: number = 10000) {
 
   useEffect(() => {
     fetchPoolStats();
-    const timer = setInterval(fetchPoolStats, refreshInterval);
-    return () => clearInterval(timer);
+    if (refreshInterval > 0) {
+      const timer = setInterval(fetchPoolStats, refreshInterval);
+      return () => clearInterval(timer);
+    }
   }, [fetchPoolStats, refreshInterval]);
 
   return { poolStats, loading, error, refresh: fetchPoolStats };
@@ -321,8 +325,10 @@ export function useMemoryStatus(refreshInterval: number = 5000) {
 
   useEffect(() => {
     fetchStatus();
-    const timer = setInterval(fetchStatus, refreshInterval);
-    return () => clearInterval(timer);
+    if (refreshInterval > 0) {
+      const timer = setInterval(fetchStatus, refreshInterval);
+      return () => clearInterval(timer);
+    }
   }, [fetchStatus, refreshInterval]);
 
   return { status, summary, loading, error, refresh: fetchStatus };

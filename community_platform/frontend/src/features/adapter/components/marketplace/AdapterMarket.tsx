@@ -15,7 +15,7 @@ import { SortOptions } from './SortOptions';
 import { FeaturedAdapters } from './FeaturedAdapters';
 import { AdapterList } from './AdapterList';
 import { Button } from '@/shared/components/ui/button';
-import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/shared/components/ui/tabs';
+import { Tabs, TabsList, TabsTrigger } from '@/shared/components/ui/tabs';
 import { 
   LayoutGrid, 
   List, 

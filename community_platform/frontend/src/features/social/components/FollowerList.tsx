@@ -6,15 +6,15 @@
 'use client';
 
 import React, { useState } from 'react';
-import { Users, Search, Loader2 } from 'lucide-react';
+import { Users, Search } from 'lucide-react';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/shared/components/ui/card';
 import { Input } from '@/shared/components/ui/input';
 import { Avatar, AvatarFallback, AvatarImage } from '@/shared/components/ui/avatar';
-import { Button } from '@/shared/components/ui/button';
+// Button import removed as it's not used
 import { EmptyState } from '@/shared/components/common/EmptyState';
 import { LoadingSpinner } from '@/shared/components/common/LoadingSpinner';
 import { Pagination } from '@/shared/components/common/Pagination';
-import { cn } from '@/shared/utils/cn';
+// cn import removed as it's not used
 import { useFollowers } from '../hooks/useFollow';
 import { FollowButton } from './FollowButton';
 import type { Follow } from '../domain/Follow';
@@ -118,8 +118,8 @@ export const FollowerList: React.FC<FollowerListProps> = ({
     sortOrder: 'desc',
   });
 
-  const followers = followersData?.data?.items || [];
-  const pagination = followersData?.data?.pagination;
+  const followers = (followersData as any)?.data?.items || (followersData as any)?.items || [];
+  const pagination = (followersData as any)?.data?.pagination || (followersData as any)?.pagination;
   const totalPages = pagination?.totalPages || 1;
 
   if (isLoading) {
@@ -154,7 +154,7 @@ export const FollowerList: React.FC<FollowerListProps> = ({
         )}
         <CardContent>
           <EmptyState
-            icon={Users}
+            icon={<Users className="h-8 w-8" />}
             title="加载失败"
             description="无法加载粉丝列表，请稍后重试"
           />
@@ -197,13 +197,13 @@ export const FollowerList: React.FC<FollowerListProps> = ({
 
         {followers.length === 0 ? (
           <EmptyState
-            icon={Users}
+            icon={<Users className="h-8 w-8" />}
             title={search ? '未找到粉丝' : '暂无粉丝'}
             description={search ? '尝试其他搜索词' : '还没有人关注你'}
           />
         ) : (
           <div className="space-y-2">
-            {followers.map((follower) => (
+            {followers.map((follower: any) => (
               <FollowerItem
                 key={follower.id}
                 follower={follower}

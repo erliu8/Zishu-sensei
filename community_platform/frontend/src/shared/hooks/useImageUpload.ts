@@ -89,7 +89,7 @@ export function useImageUpload({
 
       for (let i = 0; i < items.length; i++) {
         const item = items[i]
-        if (item.type.indexOf('image') !== -1) {
+        if (item && item.type.indexOf('image') !== -1) {
           const file = item.getAsFile()
           if (file) {
             return await uploadImage(file)

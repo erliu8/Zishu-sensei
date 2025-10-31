@@ -3,7 +3,7 @@ import { Live2DViewer } from './Live2D/Live2DViewer'
 import { ModelSelector } from './ModelSelector'
 import { Live2DModelConfig, Live2DViewerConfig } from '@/types/live2d'
 import { modelManager } from '@/utils/modelManager'
-import { useModelLoader, CharacterInfo } from './ModelLoader'
+import { useModelLoader } from './ModelLoader'
 import { CharacterTransitionWithLoading, TransitionType } from './Animations/CharacterTransition'
 
 interface Character {
@@ -77,14 +77,12 @@ export const Character: React.FC<CharacterProps> = ({
         try {
             // 调用后端 API 切换角色
             await switchCharacter(modelId)
-            onInteraction('model_changed', { character, modelId })
+            onInteraction?.('model_changed', { character, modelId })
         } catch (error) {
             console.error('❌ 切换模型失败:', error)
-            onInteraction('model_error', { character, error })
+            onInteraction?.('model_error', { character, error })
         }
     }, [character, onInteraction, switchCharacter])
-
-    if (!character) return null
 
     // Live2D查看器配置 - 使用useMemo缓存以避免不必要的重新渲染
     const viewerConfig: Live2DViewerConfig = useMemo(() => ({
@@ -123,7 +121,7 @@ export const Character: React.FC<CharacterProps> = ({
 
     // 处理Live2D交互事件
     const handleLive2DInteraction = useCallback((event: any) => {
-        onInteraction('live2d_interaction', { 
+        onInteraction?.('live2d_interaction', { 
             character, 
             event,
             type: event.type,
@@ -134,16 +132,14 @@ export const Character: React.FC<CharacterProps> = ({
     // 处理模型加载完成
     const handleModelLoad = useCallback((modelId: string) => {
         console.log('Live2D模型加载完成:', modelId)
-        onInteraction('model_loaded', { character, modelId })
+        onInteraction?.('model_loaded', { character, modelId })
     }, [character, onInteraction])
 
     // 处理错误
     const handleError = useCallback((error: Error) => {
         console.error('Live2D模型加载错误:', error)
-        onInteraction('model_error', { character, error })
+        onInteraction?.('model_error', { character, error })
     }, [character, onInteraction])
-
-    if (!character) return null
 
     return (
         <div style={{
@@ -154,55 +150,59 @@ export const Character: React.FC<CharacterProps> = ({
             display: 'flex',
             flexDirection: 'column',
         }}>
-            {/* 模型选择器 */}
-            {showModelSelector && (
-                <div style={{
-                    position: 'absolute',
-                    top: '1rem',
-                    right: '1rem',
-                    zIndex: 1000,
-                    width: '280px',
-                }}>
-                    <ModelSelector
-                        currentModelId={currentModelId}
-                        onModelSelect={handleModelSelect}
-                    />
-                </div>
-            )}
-
-            {/* 带过渡动画的 Live2D 查看器 */}
-            <div style={{
-                flex: 1,
-                display: 'flex',
-                alignItems: 'center',
-                justifyContent: 'center',
-            }}>
-                <CharacterTransitionWithLoading
-                    characterId={currentModelId}
-                    transitionType={transitionType}
-                    duration={600}
-                    isLoading={isLoadingModel || !modelConfig}
-                    loadingText={`加载 ${currentCharacter?.name || '角色'} 中...`}
-                    onTransitionComplete={() => {
-                        console.log('✅ 角色过渡动画完成:', currentModelId)
-                    }}
-                >
-                    {modelConfig && (
-                        <Live2DViewer
-                            key={currentModelId} // 强制重新挂载以切换模型
-                            config={viewerConfig}
-                            modelConfig={modelConfig}
-                            onInteraction={handleLive2DInteraction}
-                            onModelLoad={handleModelLoad}
-                            onError={handleError}
-                            className=""
-                            style={{
-                                background: 'transparent'
-                            }}
-                        />
+            {character && (
+                <>
+                    {/* 模型选择器 */}
+                    {showModelSelector && (
+                        <div style={{
+                            position: 'absolute',
+                            top: '1rem',
+                            right: '1rem',
+                            zIndex: 1000,
+                            width: '280px',
+                        }}>
+                            <ModelSelector
+                                currentModelId={currentModelId}
+                                onModelSelect={handleModelSelect}
+                            />
+                        </div>
                     )}
-                </CharacterTransitionWithLoading>
-            </div>
+
+                    {/* 带过渡动画的 Live2D 查看器 */}
+                    <div style={{
+                        flex: 1,
+                        display: 'flex',
+                        alignItems: 'center',
+                        justifyContent: 'center',
+                    }}>
+                        <CharacterTransitionWithLoading
+                            characterId={currentModelId}
+                            transitionType={transitionType}
+                            duration={600}
+                            isLoading={isLoadingModel || !modelConfig}
+                            loadingText={`加载 ${currentCharacter?.name || '角色'} 中...`}
+                            onTransitionComplete={() => {
+                                console.log('✅ 角色过渡动画完成:', currentModelId)
+                            }}
+                        >
+                            {modelConfig && (
+                                <Live2DViewer
+                                    key={currentModelId} // 强制重新挂载以切换模型
+                                    config={viewerConfig}
+                                    modelConfig={modelConfig}
+                                    onInteraction={handleLive2DInteraction}
+                                    onModelLoad={handleModelLoad}
+                                    onError={handleError}
+                                    className=""
+                                    style={{
+                                        background: 'transparent'
+                                    }}
+                                />
+                            )}
+                        </CharacterTransitionWithLoading>
+                    </div>
+                </>
+            )}
         </div>
     )
 }

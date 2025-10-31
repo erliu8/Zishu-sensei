@@ -30,7 +30,7 @@ export default defineConfig({
   // 共享配置
   use: {
     // 基础 URL
-    baseURL: process.env.PLAYWRIGHT_BASE_URL || 'http://localhost:3000',
+    baseURL: process.env['PLAYWRIGHT_BASE_URL'] || 'http://localhost:3000',
 
     // 追踪配置 - 性能测试不需要追踪
     trace: 'off',
@@ -83,12 +83,12 @@ export default defineConfig({
   ],
 
   // 开发服务器配置
-  webServer: process.env.CI
+  webServer: process.env['CI']
     ? undefined
     : {
         command: 'npm run dev',
         url: 'http://localhost:3000',
-        reuseExistingServer: !process.env.CI,
+        reuseExistingServer: !process.env['CI'],
         timeout: 120 * 1000,
         stdout: 'ignore',
         stderr: 'pipe',

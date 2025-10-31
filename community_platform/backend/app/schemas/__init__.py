@@ -67,6 +67,14 @@ from app.schemas.websocket import (
     PingPong,
     ErrorMessage,
 )
+from app.schemas.character import (
+    CharacterCreate,
+    CharacterUpdate,
+    CharacterResponse,
+    CharacterListResponse,
+    CharacterQueryParams,
+    CharacterFullConfig,
+)
 
 __all__ = [
     # User
@@ -127,5 +135,12 @@ __all__ = [
     "PresenceUpdate",
     "PingPong",
     "ErrorMessage",
+    # Character
+    "CharacterCreate",
+    "CharacterUpdate",
+    "CharacterResponse",
+    "CharacterListResponse",
+    "CharacterQueryParams",
+    "CharacterFullConfig",
 ]
 

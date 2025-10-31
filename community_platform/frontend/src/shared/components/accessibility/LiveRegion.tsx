@@ -34,7 +34,7 @@ export function LiveRegion({
   priority = 'polite',
   role = 'status',
   atomic = true,
-  relevant = 'additions text',
+  relevant = 'additions',
   visuallyHidden = true,
   children,
   className,
@@ -80,9 +80,12 @@ export function Announcer({ message, priority = 'polite', clearDelay = 3000, onC
 
       return () => clearTimeout(timer);
     }
+    return undefined;
   }, [message, clearDelay, onClear]);
 
-  if (!message) return null;
+  if (!message) {
+    return null;
+  }
 
   return (
     <LiveRegion priority={priority} role="status">
@@ -146,9 +149,12 @@ export function LoadingAnnouncement({
       const timer = setTimeout(() => setMessage(''), 1000);
       return () => clearTimeout(timer);
     }
+    return undefined;
   }, [isLoading, loadingMessage, completeMessage, message]);
 
-  if (!message) return null;
+  if (!message) {
+    return null;
+  }
 
   return (
     <LiveRegion priority="polite" role="status">

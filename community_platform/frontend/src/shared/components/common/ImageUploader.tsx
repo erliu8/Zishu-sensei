@@ -200,7 +200,7 @@ export const ImageUploader = React.forwardRef<HTMLDivElement, ImageUploaderProps
 
       // 如果启用裁剪且只有一张图片
       if (enableCrop && fileArray.length === 1) {
-        setCropImage(fileArray[0])
+        setCropImage(fileArray[0] || null)
         return
       }
 

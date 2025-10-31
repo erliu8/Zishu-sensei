@@ -156,32 +156,30 @@ export function useThemePreference(): 'light' | 'dark' {
 }
 
 /**
- * useThemeTransition - Hook to detect theme transitions
+ * useThemeTransition - Hook to handle theme transitions with animation
  * 
- * @returns Boolean indicating if a theme transition is in progress
+ * @returns Object with isTransitioning state and transitionTo method
  */
-export function useThemeTransition(): boolean {
+export function useThemeTransition() {
   const [isTransitioning, setIsTransitioning] = useState(false);
 
-  useEffect(() => {
-    const manager = getThemeManager();
-
-    const handleThemeChange = () => {
-      setIsTransitioning(true);
+  const transitionTo = useCallback(async (theme: any) => {
+    setIsTransitioning(true);
+    try {
+      const manager = getThemeManager();
+      await manager.setTheme(theme);
       
-      // 重置过渡状态
-      const timeout = setTimeout(() => {
-        setIsTransitioning(false);
-      }, 300); // 匹配 CSS 过渡时间
-
-      return () => clearTimeout(timeout);
-    };
-
-    const unsubscribe = manager.subscribe(handleThemeChange);
-    return () => unsubscribe();
+      // 等待过渡动画完成
+      await new Promise(resolve => setTimeout(resolve, 300));
+    } finally {
+      setIsTransitioning(false);
+    }
   }, []);
 
-  return isTransitioning;
+  return {
+    isTransitioning,
+    transitionTo,
+  };
 }
 
 /**

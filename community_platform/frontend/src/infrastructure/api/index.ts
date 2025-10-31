@@ -19,7 +19,8 @@ export type {
 export { ApiError } from './types';
 
 // 导出 API Client
-export { ApiClient, createApiClient, apiClient } from './client';
+export { createApiClient, apiClient } from './client';
+export type { ApiClient } from './client';
 
 // 导出管理器
 export { CacheManager, createCacheInterceptors } from './cache';

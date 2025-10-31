@@ -7,7 +7,7 @@
 import { useCallback } from 'react';
 import { usePathname, useRouter } from 'next/navigation';
 import type { Locale } from '../types';
-import { formatMessage, getNestedValue } from '../utils';
+import { formatMessage } from '../utils';
 import { setStoredLocale, setLocaleToCookie } from '../utils';
 
 /**
@@ -48,20 +48,6 @@ function getCurrentLocale(): Locale {
   return 'zh-CN';
 }
 
-/**
- * 获取翻译资源
- */
-async function getTranslations(locale: Locale): Promise<Record<string, any>> {
-  try {
-    const translations = await import(`../locales/${locale}/index.ts`);
-    return translations.default;
-  } catch (error) {
-    console.error(`Failed to load translations for ${locale}:`, error);
-    // 回退到中文
-    const fallback = await import('../locales/zh-CN/index.ts');
-    return fallback.default;
-  }
-}
 
 /**
  * useI18n Hook

@@ -17,8 +17,8 @@ export const Footer = React.forwardRef<HTMLElement, FooterProps>(
       <footer
         ref={ref}
         className={cn(
-          'w-full bg-gray-50 dark:bg-gray-900',
-          bordered && 'border-t border-gray-200 dark:border-gray-800',
+          'w-full bg-muted/30',
+          bordered && 'border-t',
           className
         )}
         {...props}
@@ -45,7 +45,7 @@ export const FooterSection = React.forwardRef<HTMLDivElement, FooterSectionProps
     return (
       <div ref={ref} className={cn('space-y-4', className)} {...props}>
         {title && (
-          <h3 className="text-sm font-semibold text-gray-900 dark:text-gray-100 uppercase tracking-wider">
+          <h3 className="text-sm font-semibold text-foreground uppercase tracking-wider">
             {title}
           </h3>
         )}
@@ -68,7 +68,7 @@ export const FooterLink = React.forwardRef<HTMLAnchorElement, FooterLinkProps>(
       <a
         ref={ref}
         className={cn(
-          'block text-sm text-gray-600 dark:text-gray-400 hover:text-gray-900 dark:hover:text-gray-100 transition-colors',
+          'block text-sm text-muted-foreground hover:text-foreground transition-colors',
           className
         )}
         {...props}
@@ -90,7 +90,7 @@ export const FooterBottom = React.forwardRef<HTMLDivElement, FooterBottomProps>(
       <div
         ref={ref}
         className={cn(
-          'pt-8 mt-8 border-t border-gray-200 dark:border-gray-800 text-sm text-gray-600 dark:text-gray-400',
+          'pt-8 mt-8 border-t text-sm text-muted-foreground',
           className
         )}
         {...props}

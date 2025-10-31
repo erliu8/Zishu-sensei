@@ -4,7 +4,7 @@
  * 为组件提供预定义的动画变体
  */
 
-import { Variants, Transition } from 'framer-motion';
+import { Variants } from 'framer-motion';
 
 /* ========================================
    常用过渡配置
@@ -719,10 +719,10 @@ export const createDelayedVariants = (
   return {
     ...baseVariants,
     visible: {
-      ...baseVariants.visible,
+      ...baseVariants['visible'],
       transition: {
-        ...(typeof baseVariants.visible === 'object'
-          ? baseVariants.visible.transition
+        ...(typeof baseVariants['visible'] === 'object'
+          ? baseVariants['visible'].transition
           : {}),
         delay,
       },

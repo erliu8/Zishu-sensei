@@ -4,8 +4,8 @@
 
 import type {
   Expression,
-  CreateExpressionInput,
-  UpdateExpressionInput,
+  CreateExpressionDto,
+  UpdateExpressionDto,
 } from '../domain';
 
 /**
@@ -61,7 +61,7 @@ export class ExpressionApiClient {
    * 创建表情
    */
   async createExpression(
-    input: CreateExpressionInput
+    input: CreateExpressionDto
   ): Promise<Expression> {
     const response = await fetch(this.baseUrl, {
       method: 'POST',
@@ -84,7 +84,7 @@ export class ExpressionApiClient {
    */
   async updateExpression(
     id: string,
-    input: UpdateExpressionInput
+    input: UpdateExpressionDto
   ): Promise<Expression> {
     const response = await fetch(`${this.baseUrl}/${id}`, {
       method: 'PATCH',
@@ -119,7 +119,7 @@ export class ExpressionApiClient {
    * 批量创建表情
    */
   async batchCreateExpressions(
-    inputs: CreateExpressionInput[]
+    inputs: CreateExpressionDto[]
   ): Promise<Expression[]> {
     const response = await fetch(`${this.baseUrl}/batch`, {
       method: 'POST',

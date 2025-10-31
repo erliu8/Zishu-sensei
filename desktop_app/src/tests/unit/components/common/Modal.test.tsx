@@ -4,6 +4,7 @@
  * 测试模态框组件的各种功能和状态
  */
 
+import React from 'react'
 import { describe, it, expect, vi, beforeEach, afterEach } from 'vitest'
 import { render, screen, within, waitFor } from '@testing-library/react'
 import userEvent from '@testing-library/user-event'
@@ -14,14 +15,14 @@ import type { ModalSize, ModalAnimation } from '../../../../components/common/Mo
 // Mock CSS 模块
 vi.mock('../../../../src/components/common/Modal/styles.css', () => ({}))
 
-// Mock createPortal
-vi.mock('react-dom', async () => {
-  const actual = await vi.importActual('react-dom')
-  return {
-    ...actual,
-    createPortal: (node: React.ReactNode) => node,
-  }
-})
+  // Mock createPortal - render to document.body for proper testing
+  vi.mock('react-dom', async () => {
+    const actual = await vi.importActual('react-dom')
+    return {
+      ...actual,
+      createPortal: (node: React.ReactNode) => node,
+    }
+  })
 
 // Mock X icon from lucide-react
 vi.mock('lucide-react', () => ({
@@ -184,7 +185,7 @@ describe('Modal 组件', () => {
         </Modal>
       )
       
-      const closeButton = screen.getByRole('button', { name: /close/i })
+      const closeButton = screen.getByRole('button', { name: /关闭/i })
       await user.click(closeButton)
       
       expect(handleClose).toHaveBeenCalledTimes(1)
@@ -227,12 +228,10 @@ describe('Modal 组件', () => {
         </Modal>
       )
       
-      // 点击遮罩层（dialog 外部）
-      const overlay = document.querySelector('[role="dialog"]')?.parentElement
-      if (overlay) {
-        await user.click(overlay)
-        expect(handleClose).toHaveBeenCalled()
-      }
+      // 点击遮罩层（dialog 本身，因为它就是遮罩层）
+      const dialog = screen.getByRole('dialog')
+      await user.click(dialog)
+      expect(handleClose).toHaveBeenCalled()
     })
 
     it('禁用遮罩点击关闭时不应该响应点击', async () => {
@@ -244,11 +243,9 @@ describe('Modal 组件', () => {
         </Modal>
       )
       
-      const overlay = document.querySelector('[role="dialog"]')?.parentElement
-      if (overlay) {
-        await user.click(overlay)
-        expect(handleClose).not.toHaveBeenCalled()
-      }
+      const dialog = screen.getByRole('dialog')
+      await user.click(dialog)
+      expect(handleClose).not.toHaveBeenCalled()
     })
 
     it('隐藏关闭按钮时不应该渲染关闭按钮', () => {
@@ -258,7 +255,7 @@ describe('Modal 组件', () => {
         </Modal>
       )
       
-      expect(screen.queryByRole('button', { name: /close/i })).not.toBeInTheDocument()
+      expect(screen.queryByRole('button', { name: /关闭/i })).not.toBeInTheDocument()
     })
 
     it('点击内容区域不应该调用 onClose', async () => {
@@ -306,7 +303,7 @@ describe('Modal 组件', () => {
       expect(screen.getByRole('dialog')).toBeInTheDocument()
     })
 
-    it('应该应用自定义 z-index', () => {
+    it('应该应用自定义 z-index', async () => {
       const customZIndex = 5000
       
       render(
@@ -315,56 +312,67 @@ describe('Modal 组件', () => {
         </Modal>
       )
       
-      expect(screen.getByRole('dialog')).toBeInTheDocument()
+      // Wait for modal to be rendered
+      await waitFor(() => {
+        expect(screen.getByRole('dialog')).toBeInTheDocument()
+      })
     })
   })
 
   describe('✅ 滚动锁定测试', () => {
-    it('默认应该锁定页面滚动', () => {
+    it('默认应该锁定页面滚动', async () => {
       render(
         <Modal open={true} onClose={vi.fn()} lockScroll={true}>
           内容
         </Modal>
       )
       
-      expect(screen.getByRole('dialog')).toBeInTheDocument()
+      await waitFor(() => {
+        expect(screen.getByRole('dialog')).toBeInTheDocument()
+      })
     })
 
-    it('禁用滚动锁定时不应该影响页面滚动', () => {
+    it('禁用滚动锁定时不应该影响页面滚动', async () => {
       render(
         <Modal open={true} onClose={vi.fn()} lockScroll={false}>
           内容
         </Modal>
       )
       
-      expect(screen.getByRole('dialog')).toBeInTheDocument()
+      await waitFor(() => {
+        expect(screen.getByRole('dialog')).toBeInTheDocument()
+      })
     })
   })
 
   describe('✅ 居中和定位测试', () => {
-    it('默认应该居中显示', () => {
+    it('默认应该居中显示', async () => {
       render(
         <Modal open={true} onClose={vi.fn()} centered={true}>
           居中内容
         </Modal>
       )
       
-      expect(screen.getByText('居中内容')).toBeInTheDocument()
+      await waitFor(() => {
+        expect(screen.getByText('居中内容')).toBeInTheDocument()
+      })
     })
 
-    it('应该支持非居中显示', () => {
+    it('应该支持非居中显示', async () => {
       render(
         <Modal open={true} onClose={vi.fn()} centered={false}>
           非居中内容
         </Modal>
       )
       
-      expect(screen.getByText('非居中内容')).toBeInTheDocument()
+      await waitFor(() => {
+        expect(screen.getByText('非居中内容')).toBeInTheDocument()
+      })
     })
   })
 
   describe('✅ 生命周期回调测试', () => {
-    it('应该触发 onOpen 回调', () => {
+    it('应该触发 onOpen 回调', async () => {
       const handleOpen = vi.fn()
       
       render(
@@ -373,7 +381,10 @@ describe('Modal 组件', () => {
         </Modal>
       )
       
-      expect(handleOpen).toHaveBeenCalledTimes(1)
+      // Wait for the async onOpen callback (setTimeout in Modal implementation)
+      await waitFor(() => {
+        expect(handleOpen).toHaveBeenCalledTimes(1)
+      }, { timeout: 1000 })
     })
 
     it('应该触发 onAfterClose 回调', () => {
@@ -399,7 +410,7 @@ describe('Modal 组件', () => {
   })
 
   describe('✅ 分割线测试', () => {
-    it('应该显示头部分割线', () => {
+    it('应该显示头部分割线', async () => {
       render(
         <Modal 
           open={true} 
@@ -411,10 +422,12 @@ describe('Modal 组件', () => {
         </Modal>
       )
       
-      expect(screen.getByText('带分割线')).toBeInTheDocument()
+      await waitFor(() => {
+        expect(screen.getByText('带分割线')).toBeInTheDocument()
+      })
     })
 
-    it('应该隐藏头部分割线', () => {
+    it('应该隐藏头部分割线', async () => {
       render(
         <Modal 
           open={true} 
@@ -426,10 +439,12 @@ describe('Modal 组件', () => {
         </Modal>
       )
       
-      expect(screen.getByText('不带分割线')).toBeInTheDocument()
+      await waitFor(() => {
+        expect(screen.getByText('不带分割线')).toBeInTheDocument()
+      })
     })
 
-    it('应该显示底部分割线', () => {
+    it('应该显示底部分割线', async () => {
       render(
         <Modal 
           open={true} 
@@ -441,10 +456,12 @@ describe('Modal 组件', () => {
         </Modal>
       )
       
-      expect(screen.getByText('确定')).toBeInTheDocument()
+      await waitFor(() => {
+        expect(screen.getByText('确定')).toBeInTheDocument()
+      })
     })
 
-    it('应该隐藏底部分割线', () => {
+    it('应该隐藏底部分割线', async () => {
       render(
         <Modal 
           open={true} 
@@ -456,34 +473,40 @@ describe('Modal 组件', () => {
         </Modal>
       )
       
-      expect(screen.getByText('确定')).toBeInTheDocument()
+      await waitFor(() => {
+        expect(screen.getByText('确定')).toBeInTheDocument()
+      })
     })
   })
 
   describe('✅ 可访问性测试', () => {
-    it('应该有正确的 ARIA 属性', () => {
+    it('应该有正确的 ARIA 属性', async () => {
       render(
         <Modal open={true} onClose={vi.fn()} title="可访问性测试">
           内容
         </Modal>
       )
       
-      const dialog = screen.getByRole('dialog')
-      expect(dialog).toBeInTheDocument()
-      expect(dialog).toHaveAttribute('aria-modal', 'true')
+      await waitFor(() => {
+        const dialog = screen.getByRole('dialog')
+        expect(dialog).toBeInTheDocument()
+        expect(dialog).toHaveAttribute('aria-modal', 'true')
+      })
     })
 
-    it('关闭按钮应该有正确的 aria-label', () => {
+    it('关闭按钮应该有正确的 aria-label', async () => {
       render(
         <Modal open={true} onClose={vi.fn()} showCloseButton={true}>
           内容
         </Modal>
       )
       
-      expect(screen.getByRole('button', { name: /close/i })).toBeInTheDocument()
+      await waitFor(() => {
+        expect(screen.getByRole('button', { name: /关闭/i })).toBeInTheDocument()
+      })
     })
 
-    it('应该支持自定义 ARIA 标签', () => {
+    it('应该支持自定义 ARIA 标签', async () => {
       render(
         <Modal 
           open={true} 
@@ -496,9 +519,11 @@ describe('Modal 组件', () => {
         </Modal>
       )
       
-      const dialog = screen.getByRole('dialog')
-      expect(dialog).toHaveAttribute('aria-labelledby', 'custom-title')
-      expect(dialog).toHaveAttribute('aria-describedby', 'custom-description')
+      await waitFor(() => {
+        const dialog = screen.getByRole('dialog')
+        expect(dialog).toHaveAttribute('aria-labelledby', 'custom-title')
+        expect(dialog).toHaveAttribute('aria-describedby', 'custom-description')
+      })
     })
 
     it('应该正确管理焦点', () => {

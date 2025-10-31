@@ -7,7 +7,6 @@
 
 import { useCallback, useMemo } from 'react';
 import { useI18n, type TranslateFn } from './useI18n';
-import { getNestedValue } from '../utils';
 
 /**
  * 命名空间类型
@@ -54,7 +53,7 @@ export interface UseTranslationReturn {
 export function useTranslation(
   namespace?: Namespace
 ): UseTranslationReturn {
-  const { locale, t: globalT, formatMessage } = useI18n();
+  const { locale, t: globalT } = useI18n();
 
   /**
    * 带命名空间的翻译函数

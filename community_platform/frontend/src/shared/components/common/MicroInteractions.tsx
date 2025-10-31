@@ -485,7 +485,6 @@ interface CountUpProps {
 
 export const CountUp: React.FC<CountUpProps> = ({
   value,
-  duration = 1,
   formatter = (v) => Math.round(v).toString(),
   className,
 }) => {

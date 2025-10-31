@@ -21,7 +21,6 @@ import {
   useUpdateVoice,
   useSetDefaultVoice,
   useTestVoice,
-  useGenerateVoiceSample,
 } from '../hooks';
 import type { Voice, UpdateVoiceInput } from '../domain';
 
@@ -82,7 +81,6 @@ export const VoiceConfig: React.FC<VoiceConfigProps> = ({
   const updateVoiceMutation = useUpdateVoice();
   const setDefaultVoiceMutation = useSetDefaultVoice();
   const testVoiceMutation = useTestVoice();
-  const generateSampleMutation = useGenerateVoiceSample();
 
   // 获取当前选中的语音
   const selectedVoice = voices.find((v) => v.id === selectedVoiceId);
@@ -110,7 +108,9 @@ export const VoiceConfig: React.FC<VoiceConfigProps> = ({
   useEffect(() => {
     if (!isLoading && voices.length > 0 && !selectedVoiceId) {
       const defaultVoice = voices.find((v) => v.isDefault) || voices[0];
-      setSelectedVoiceId(defaultVoice.id);
+      if (defaultVoice) {
+        setSelectedVoiceId(defaultVoice.id);
+      }
     }
   }, [voices, isLoading, selectedVoiceId]);
 
@@ -271,7 +271,7 @@ export const VoiceConfig: React.FC<VoiceConfigProps> = ({
     return (
       <Card className={className}>
         <CardContent className="p-12 flex items-center justify-center">
-          <LoadingSpinner size="lg" text="加载语音配置中..." />
+          <LoadingSpinner size="lg" label="加载语音配置中..." />
         </CardContent>
       </Card>
     );

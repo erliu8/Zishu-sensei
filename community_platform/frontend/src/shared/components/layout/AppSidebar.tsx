@@ -24,7 +24,6 @@ import {
 import { Card, CardContent, CardHeader, CardTitle } from '@/shared/components/ui/card';
 import { Button } from '@/shared/components/ui/button';
 import { Badge } from '@/shared/components/ui/badge';
-import { Separator } from '@/shared/components/ui/separator';
 import { ScrollArea } from '@/shared/components/ui/scroll-area';
 import { cn } from '@/shared/utils/cn';
 

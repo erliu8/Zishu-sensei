@@ -74,7 +74,7 @@ export interface RegisterInput {
   email: string;
   username: string;
   password: string;
-  name?: string;
+  full_name?: string;
 }
 
 /**

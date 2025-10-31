@@ -5,7 +5,7 @@
  */
 
 import { describe, it, expect, vi, beforeEach } from 'vitest'
-import { render, screen, within } from '@testing-library/react'
+import { render, screen, within, act } from '@testing-library/react'
 import userEvent from '@testing-library/user-event'
 import { Live2DControlPanel } from '@/components/Character/Live2D/Live2DControlPanel'
 import { Live2DAnimationType, Live2DAnimationPriority } from '@/types/live2d'
@@ -266,15 +266,21 @@ describe('Live2DControlPanel组件', () => {
       )
 
       const settingsButton = screen.getByTitle('设置')
-      await user.click(settingsButton)
+      await act(async () => {
+        await user.click(settingsButton)
+      })
 
       // 点击动画标签页
       const animationsTab = screen.getByText('动画')
-      await user.click(animationsTab)
+      await act(async () => {
+        await user.click(animationsTab)
+      })
 
       // 点击随机播放按钮
       const randomButton = screen.getByText('随机播放')
-      await user.click(randomButton)
+      await act(async () => {
+        await user.click(randomButton)
+      })
 
       expect(mockOnPlayAnimation).toHaveBeenCalled()
     })

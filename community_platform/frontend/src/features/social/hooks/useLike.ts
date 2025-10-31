@@ -40,7 +40,7 @@ export function useLike() {
 
   return useMutation({
     mutationFn: (input: CreateLikeInput) => likeApiClient.like(input),
-    onSuccess: (data, variables) => {
+    onSuccess: (_, variables) => {
       // 使相关查询失效
       queryClient.invalidateQueries({ 
         queryKey: likeKeys.check(variables.targetType, variables.targetId) 
@@ -74,7 +74,7 @@ export function useUnlike() {
   return useMutation({
     mutationFn: ({ targetType, targetId }: { targetType: LikeTargetType; targetId: string }) => 
       likeApiClient.unlike(targetType, targetId),
-    onSuccess: (data, variables) => {
+    onSuccess: (_, variables) => {
       queryClient.invalidateQueries({ 
         queryKey: likeKeys.check(variables.targetType, variables.targetId) 
       });
@@ -258,7 +258,7 @@ export function useToggleLike() {
         variant: 'destructive',
       });
     },
-    onSettled: (data, error, variables) => {
+    onSettled: (_, __, variables) => {
       // 无论成功还是失败，都重新获取数据
       queryClient.invalidateQueries({ 
         queryKey: likeKeys.stats(variables.targetType, variables.targetId) 

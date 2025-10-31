@@ -10,7 +10,7 @@ export const bundleAnalyzerConfig = {
   /**
    * 是否启用分析器
    */
-  enabled: process.env.ANALYZE === 'true',
+  enabled: process.env['ANALYZE'] === 'true',
   
   /**
    * 分析器选项

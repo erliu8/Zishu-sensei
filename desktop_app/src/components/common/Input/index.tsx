@@ -119,10 +119,14 @@ export const Input = forwardRef<HTMLInputElement, InputProps>(({
   value,
   onChange,
   onClear,
+  id,
   ...props
 }, ref) => {
   const [showPassword, setShowPassword] = useState(false)
   const [internalValue, setInternalValue] = useState(value || '')
+  
+  // 生成唯一的 ID
+  const inputId = id || `input-${Math.random().toString(36).substr(2, 9)}`
 
   // 受控/非受控值管理
   const currentValue = value !== undefined ? value : internalValue
@@ -220,7 +224,7 @@ export const Input = forwardRef<HTMLInputElement, InputProps>(({
     <div className={combineClasses('space-y-1', block && 'w-full', containerClassName)}>
       {/* 标签 */}
       {label && (
-        <label className="block text-sm font-medium text-gray-700">
+        <label htmlFor={inputId} className="block text-sm font-medium text-gray-700">
           {label}
           {props.required && <span className="text-red-500 ml-1">*</span>}
         </label>
@@ -244,6 +248,7 @@ export const Input = forwardRef<HTMLInputElement, InputProps>(({
         {/* 输入框 */}
         <input
           ref={ref}
+          id={inputId}
           type={inputType}
           value={currentValue}
           onChange={handleChange}

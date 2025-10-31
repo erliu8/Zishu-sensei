@@ -130,8 +130,8 @@ export const TTSSettings: React.FC<TTSSettingsProps> = ({
             min={0.5}
             max={2.0}
             step={0.1}
-            value={[speechRate]}
-            onValueChange={([value]) => onSpeechRateChange(value)}
+            value={[speechRate || 1.0]}
+            onValueChange={([value]) => onSpeechRateChange(value || 1.0)}
             disabled={disabled}
             className="w-full"
           />
@@ -157,8 +157,8 @@ export const TTSSettings: React.FC<TTSSettingsProps> = ({
             min={0.5}
             max={2.0}
             step={0.1}
-            value={[pitch]}
-            onValueChange={([value]) => onPitchChange(value)}
+            value={[pitch || 1.0]}
+            onValueChange={([value]) => onPitchChange(value || 1.0)}
             disabled={disabled}
             className="w-full"
           />
@@ -184,8 +184,8 @@ export const TTSSettings: React.FC<TTSSettingsProps> = ({
             min={0.0}
             max={1.0}
             step={0.05}
-            value={[volume]}
-            onValueChange={([value]) => onVolumeChange(value)}
+            value={[volume || 0.8]}
+            onValueChange={([value]) => onVolumeChange(value || 0.8)}
             disabled={disabled}
             className="w-full"
           />

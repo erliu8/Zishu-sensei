@@ -1,0 +1,42 @@
+# Docker Compose 开发环境覆盖配置
+# 此文件会自动与 docker-compose.yml 合并
+# 用于开发环境的热重载和调试配置
+
+services:
+  # Qdrant 简化健康检查
+  qdrant:
+    healthcheck:
+      test: ["CMD-SHELL", "timeout 5 sh -c ':> /dev/tcp/127.0.0.1/6333' || exit 1"]
+      interval: 10s
+      timeout: 5s
+      retries: 3
+      start_period: 10s
+
+  # 后端开发配置
+  backend:
+    # 覆盖启动命令，添加 --reload 参数以支持热重载
+    command: uvicorn main:app --host 0.0.0.0 --port 8000 --reload --log-level debug
+    environment:
+      # 开发环境标识
+      ENVIRONMENT: development
+      # 启用详细日志
+      LOG_LEVEL: DEBUG
+      # Python 调试模式
+      PYTHONDONTWRITEBYTECODE: 1
+      PYTHONUNBUFFERED: 1
+    # 如需要自动重启，可以注释掉下面这行或改为 unless-stopped
+    # restart: "no"
+
+  # 前端开发配置（如果需要）
+  frontend:
+    environment:
+      # Next.js 开发模式
+      NODE_ENV: development
+    restart: "no"
+
+  # 开发环境可以禁用 Nginx（直接访问服务）
+  nginx:
+    # 如果不需要 Nginx，可以注释掉以下 profiles 配置
+    # profiles: ["production"]
+    restart: "no"
+

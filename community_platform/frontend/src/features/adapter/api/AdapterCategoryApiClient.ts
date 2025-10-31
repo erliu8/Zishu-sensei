@@ -49,7 +49,7 @@ export class AdapterCategoryApiClient {
     const response = await apiClient.get<ApiResponse<AdapterCategory[]>>(this.basePath, {
       params: { includeCount },
     } as any);
-    return response.data;
+    return response.data.data;
   }
 
   /**
@@ -60,7 +60,7 @@ export class AdapterCategoryApiClient {
     const response = await apiClient.get<ApiResponse<AdapterCategory[]>>(
       `${this.basePath}/tree`
     );
-    return response.data;
+    return response.data.data;
   }
 
   /**
@@ -72,7 +72,7 @@ export class AdapterCategoryApiClient {
     const response = await apiClient.get<ApiResponse<AdapterCategory>>(
       `${this.basePath}/${id}`
     );
-    return response.data;
+    return response.data.data;
   }
 
   /**
@@ -84,7 +84,7 @@ export class AdapterCategoryApiClient {
     const response = await apiClient.get<ApiResponse<AdapterCategory>>(
       `${this.basePath}/by-slug/${slug}`
     );
-    return response.data;
+    return response.data.data;
   }
 
   /**
@@ -94,7 +94,7 @@ export class AdapterCategoryApiClient {
    */
   async createCategory(data: CreateCategoryInput): Promise<AdapterCategory> {
     const response = await apiClient.post<ApiResponse<AdapterCategory>>(this.basePath, data);
-    return response.data;
+    return response.data.data;
   }
 
   /**
@@ -108,7 +108,7 @@ export class AdapterCategoryApiClient {
       `${this.basePath}/${id}`,
       data
     );
-    return response.data;
+    return response.data.data;
   }
 
   /**
@@ -129,7 +129,7 @@ export class AdapterCategoryApiClient {
     const response = await apiClient.get<ApiResponse<AdapterCategory[]>>(
       `${this.basePath}/${parentId}/children`
     );
-    return response.data;
+    return response.data.data;
   }
 
   /**
@@ -140,7 +140,7 @@ export class AdapterCategoryApiClient {
     const response = await apiClient.get<ApiResponse<AdapterCategory[]>>(
       `${this.basePath}/root`
     );
-    return response.data;
+    return response.data.data;
   }
 
   /**
@@ -164,7 +164,7 @@ export class AdapterCategoryApiClient {
       `${this.basePath}/popular`,
       { params: { limit } } as any
     );
-    return response.data;
+    return response.data.data;
   }
 }
 

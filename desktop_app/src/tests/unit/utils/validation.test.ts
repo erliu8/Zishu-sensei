@@ -552,7 +552,8 @@ describe('validators - 密码验证', () => {
         minLength: 8,
       })
       expect(result.valid).toBe(false)
-      expect(result.code).toBe(validators.VALIDATION_ERROR_CODES.TOO_SHORT)
+      expect(result.code).toBe(validators.VALIDATION_ERROR_CODES.PASSWORD_TOO_WEAK)
+      expect(result.message).toContain('长度')
     })
 
     it('应该拒绝缺少大写字母的密码', () => {
@@ -598,7 +599,7 @@ describe('validators - 密码验证', () => {
         requireSpecialChars: true,
       })
       expect(result.valid).toBe(false)
-      expect(result.data?.errors).toHaveLength(3) // 大写、数字、特殊字符
+      expect(result.data?.errors).toHaveLength(4) // 长度、大写、数字、特殊字符
     })
 
     it('应该支持自定义选项', () => {

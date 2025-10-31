@@ -82,6 +82,11 @@ export function getThemeColors(): ThemeColors {
  */
 export function hslToRgb(hsl: string): { r: number; g: number; b: number } {
   const [h, s, l] = hsl.split(' ').map((v) => parseFloat(v))
+  
+  if (s === undefined || l === undefined || h === undefined || isNaN(s) || isNaN(l) || isNaN(h)) {
+    return { r: 0, g: 0, b: 0 }
+  }
+  
   const sNorm = s / 100
   const lNorm = l / 100
 

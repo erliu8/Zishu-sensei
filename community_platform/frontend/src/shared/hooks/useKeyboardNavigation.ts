@@ -3,7 +3,7 @@
  */
 
 import { useEffect, useRef, useCallback } from 'react';
-import { KEYBOARD_KEYS, createKeyboardHandler } from '@/shared/utils/accessibility';
+import { KEYBOARD_KEYS } from '@/shared/utils/accessibility';
 
 /**
  * 使用键盘导航（上下左右箭头键）

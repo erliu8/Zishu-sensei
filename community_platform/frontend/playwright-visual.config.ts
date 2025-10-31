@@ -16,13 +16,13 @@ export default defineConfig({
   fullyParallel: true,
 
   // CI 上失败时禁止重试
-  forbidOnly: !!process.env.CI,
+  forbidOnly: !!process.env['CI'],
 
   // 失败重试次数（视觉测试建议不重试，除非网络问题）
   retries: 0,
 
   // 工作线程数量
-  workers: process.env.CI ? 2 : undefined,
+  workers: process.env['CI'] ? 2 : undefined,
 
   // 报告器配置
   reporter: [
@@ -36,7 +36,7 @@ export default defineConfig({
   // 共享配置
   use: {
     // 基础 URL
-    baseURL: process.env.PLAYWRIGHT_BASE_URL || 'http://localhost:3000',
+    baseURL: process.env['PLAYWRIGHT_BASE_URL'] || 'http://localhost:3000',
 
     // 追踪配置 - 视觉测试关闭追踪以提高性能
     trace: 'off',
@@ -56,10 +56,6 @@ export default defineConfig({
     // 超时配置
     actionTimeout: 15 * 1000, // 15秒
     navigationTimeout: 30 * 1000, // 30秒
-
-    // 视觉测试特定配置
-    // 等待所有网络请求完成
-    waitForTimeout: 1000,
   },
 
   // 全局超时配置
@@ -81,17 +77,8 @@ export default defineConfig({
       // 动画：等待动画完成
       animations: 'disabled',
       
-      // 字体：等待字体加载
-      fonts: 'ready',
-      
-      // CSS：等待 CSS 加载
-      css: 'ready',
-      
       // 截图规模
       scale: 'css',
-      
-      // 超时
-      timeout: 10000,
     },
   },
 
@@ -179,12 +166,12 @@ export default defineConfig({
   ],
 
   // 开发服务器配置
-  webServer: process.env.CI
+  webServer: process.env['CI']
     ? undefined
     : {
         command: 'npm run dev',
         url: 'http://localhost:3000',
-        reuseExistingServer: !process.env.CI,
+        reuseExistingServer: !process.env['CI'],
         timeout: 120 * 1000,
         stdout: 'ignore',
         stderr: 'pipe',

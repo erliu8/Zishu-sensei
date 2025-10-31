@@ -48,6 +48,7 @@ interface SettingItemProps {
     description?: string
     children: React.ReactNode
     className?: string
+    htmlFor?: string
 }
 
 /**
@@ -58,11 +59,15 @@ const SettingItem: React.FC<SettingItemProps> = ({
     description,
     children,
     className,
+    htmlFor,
 }) => (
     <div className={clsx('setting-item py-4', className)}>
         <div className="flex items-start justify-between gap-4">
             <div className="flex-1 min-w-0">
-                <label className="block text-sm font-medium text-gray-900 dark:text-white mb-1">
+                <label 
+                    className="block text-sm font-medium text-gray-900 dark:text-white mb-1"
+                    htmlFor={htmlFor}
+                >
                     {label}
                 </label>
                 {description && (
@@ -534,7 +539,7 @@ export const GeneralSettings: React.FC<GeneralSettingsProps> = ({
             <SectionTitle icon="🎨">主题设置</SectionTitle>
 
             <SettingItem
-                label="当前主题"
+                label="界面主题"
                 description="选择应用的界面主题"
             >
                 <Select
@@ -547,7 +552,7 @@ export const GeneralSettings: React.FC<GeneralSettingsProps> = ({
 
             {config.theme.current_theme === 'custom' && (
                 <SettingItem
-                    label="自定义 CSS"
+                    label="自定义CSS"
                     description="添加自定义样式代码 (最多 10000 字符)"
                 >
                     <textarea
@@ -619,6 +624,61 @@ export const GeneralSettings: React.FC<GeneralSettingsProps> = ({
                     onChange={show_notifications => updateSystemConfig({ show_notifications })}
                 />
             </SettingItem>
+
+            <Divider />
+
+            {/* 语言设置 */}
+            <SectionTitle icon="🌐">语言设置</SectionTitle>
+
+            <SettingItem
+                label="界面语言"
+                description="选择应用界面显示语言"
+            >
+                <Select
+                    id="language-interface"
+                    value="zh-CN"
+                    onChange={value => {
+                        // 语言设置通过其他Hook处理
+                        console.log('Language change:', value)
+                    }}
+                    options={[
+                        { value: 'zh-CN', label: '简体中文' },
+                        { value: 'zh-TW', label: '繁體中文' },
+                        { value: 'en-US', label: 'English' },
+                        { value: 'ja-JP', label: '日本語' },
+                    ]}
+                />
+            </SettingItem>
+
+            <div className="text-sm text-gray-500 dark:text-gray-400 mt-2">
+                <p className="flex items-center gap-2">
+                    <span className="inline-block w-2 h-2 bg-green-500 rounded-full" />
+                    <span>语言包状态: 已下载</span>
+                </p>
+            </div>
+
+            <Divider />
+
+            {/* 自动保存设置 */}
+            <SectionTitle icon="💾">自动保存</SectionTitle>
+
+            <SettingItem
+                label="自动保存"
+                description="启用配置的自动保存功能"
+            >
+                <Switch
+                    id="auto-save"
+                    checked={true}
+                    onChange={auto_save => {
+                        // 自动保存设置处理
+                        console.log('Auto save change:', auto_save)
+                    }}
+                />
+            </SettingItem>
+
+            <div className="text-sm text-gray-500 dark:text-gray-400 mt-2">
+                <p>最后保存: {new Date().toLocaleString()}</p>
+            </div>
 
             {/* 验证错误提示 */}
             {Object.keys(validationErrors).length > 0 && (

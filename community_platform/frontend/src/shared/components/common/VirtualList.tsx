@@ -132,7 +132,7 @@ export function VirtualList<T>({
               transform: `translateY(${virtualItem.start}px)`,
             }}
           >
-            {renderItem(items[virtualItem.index], virtualItem.index)}
+            {virtualItem.index < items.length ? renderItem(items[virtualItem.index]!, virtualItem.index) : null}
           </div>
         ))}
 
@@ -378,9 +378,9 @@ export function VirtualTable<T extends Record<string, unknown>>({
                         flex: column.width ? undefined : 1,
                       }}
                     >
-                      {column.render
+                      {item && column.render
                         ? column.render(item)
-                        : String(item[column.key] ?? '')}
+                        : String(item?.[column.key] ?? '')}
                     </div>
                   ))}
                 </div>

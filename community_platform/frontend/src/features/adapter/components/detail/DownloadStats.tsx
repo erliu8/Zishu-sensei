@@ -132,7 +132,7 @@ function formatNumber(num: number): string {
 /**
  * 下载统计组件
  */
-export function DownloadStats({ adapterId, stats, className }: DownloadStatsProps) {
+export function DownloadStats({ stats, className }: DownloadStatsProps) {
   const [timeRange, setTimeRange] = useState<TimeRange>('30d');
 
   // 模拟趋势数据
@@ -314,7 +314,7 @@ export function DownloadStats({ adapterId, stats, className }: DownloadStatsProp
                   <Globe className="h-4 w-4" />
                   <span className="font-medium">地区分析</span>
                 </div>
-                <p>您的适配器在{regionData[0].label}最受欢迎，占总下载量的 {((regionData[0].value / stats.downloads) * 100).toFixed(1)}%</p>
+                <p>您的适配器在{regionData[0]?.label}最受欢迎，占总下载量的 {((regionData[0]?.value || 0) / stats.downloads * 100).toFixed(1)}%</p>
               </div>
             </div>
           </TabsContent>
@@ -335,7 +335,7 @@ export function DownloadStats({ adapterId, stats, className }: DownloadStatsProp
                   <span className="font-medium">版本采用率</span>
                 </div>
                 <p>
-                  最新版本 (v2.0.0) 的采用率为 {((versionData[0].value / stats.downloads) * 100).toFixed(1)}%，
+                  最新版本 (v2.0.0) 的采用率为 {(((versionData[0]?.value || 0) / stats.downloads) * 100).toFixed(1)}%，
                   表明用户积极升级到新版本
                 </p>
               </div>

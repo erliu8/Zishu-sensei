@@ -2,7 +2,7 @@
  * 模型领域模型（Live2D、VRM等）
  */
 
-import type { ModelType } from '../types';
+import { ModelType } from '../types';
 
 /**
  * 物理参数配置

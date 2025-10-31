@@ -21,14 +21,14 @@ export interface TrendingPostsProps {
 }
 
 export const TrendingPosts: FC<TrendingPostsProps> = ({ className }) => {
-  const { data: hotPosts, isLoading: isLoadingHot } = usePosts({
+  const { data: hotPosts, isLoading: isLoadingHot, isError: isErrorHot, error: errorHot } = usePosts({
     page: 1,
     pageSize: 6,
-    sortBy: 'views',
+    sortBy: 'viewCount',
     sortOrder: 'desc',
   });
 
-  const { data: latestPosts, isLoading: isLoadingLatest } = usePosts({
+  const { data: latestPosts, isLoading: isLoadingLatest, isError: isErrorLatest, error: errorLatest } = usePosts({
     page: 1,
     pageSize: 6,
     sortBy: 'createdAt',
@@ -39,9 +39,9 @@ export const TrendingPosts: FC<TrendingPostsProps> = ({ className }) => {
     <div className={cn('space-y-4', className)}>
       <div className="flex items-center justify-between">
         <h2 className="text-2xl font-bold">社区动态</h2>
-        <Link href="/posts">
-          <Button variant="ghost">查看全部</Button>
-        </Link>
+        <Button variant="ghost" asChild>
+          <Link href="/posts">查看全部</Link>
+        </Button>
       </div>
 
       <Tabs defaultValue="hot" className="w-full">
@@ -61,7 +61,12 @@ export const TrendingPosts: FC<TrendingPostsProps> = ({ className }) => {
             <div className="flex items-center justify-center py-12">
               <LoadingSpinner size="lg" />
             </div>
-          ) : hotPosts && hotPosts.data.length > 0 ? (
+          ) : isErrorHot ? (
+            <EmptyState
+              title="加载失败"
+              description={errorHot?.message || '无法加载热门帖子，请稍后重试'}
+            />
+          ) : hotPosts?.data && hotPosts.data.length > 0 ? (
             <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
               {hotPosts.data.map((post) => (
                 <PostCard key={post.id} post={post} variant="default" />
@@ -71,11 +76,10 @@ export const TrendingPosts: FC<TrendingPostsProps> = ({ className }) => {
             <EmptyState
               title="暂无热门帖子"
               description="快来发布第一篇帖子吧！"
-              action={
-                <Link href="/posts/create">
-                  <Button>发布帖子</Button>
-                </Link>
-              }
+              action={{
+                label: '发布帖子',
+                onClick: () => window.location.href = '/posts/create'
+              }}
             />
           )}
         </TabsContent>
@@ -85,7 +89,12 @@ export const TrendingPosts: FC<TrendingPostsProps> = ({ className }) => {
             <div className="flex items-center justify-center py-12">
               <LoadingSpinner size="lg" />
             </div>
-          ) : latestPosts && latestPosts.data.length > 0 ? (
+          ) : isErrorLatest ? (
+            <EmptyState
+              title="加载失败"
+              description={errorLatest?.message || '无法加载最新帖子，请稍后重试'}
+            />
+          ) : latestPosts?.data && latestPosts.data.length > 0 ? (
             <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
               {latestPosts.data.map((post) => (
                 <PostCard key={post.id} post={post} variant="default" />
@@ -95,11 +104,10 @@ export const TrendingPosts: FC<TrendingPostsProps> = ({ className }) => {
             <EmptyState
               title="暂无帖子"
               description="快来发布第一篇帖子吧！"
-              action={
-                <Link href="/posts/create">
-                  <Button>发布帖子</Button>
-                </Link>
-              }
+              action={{
+                label: '发布帖子',
+                onClick: () => window.location.href = '/posts/create'
+              }}  
             />
           )}
         </TabsContent>

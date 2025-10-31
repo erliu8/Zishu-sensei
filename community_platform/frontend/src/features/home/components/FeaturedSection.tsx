@@ -5,12 +5,12 @@
 
 'use client';
 
-import { FC } from 'react';
-import { Card, CardContent } from '@/shared/components/ui/card';
+import React, { FC } from 'react';
+import { Card } from '@/shared/components/ui/card';
 import { Badge } from '@/shared/components/ui/badge';
 import { Sparkles } from 'lucide-react';
 import Link from 'next/link';
-import Image from 'next/image';
+import { HydrationSafeImage } from '@/shared/components/ui/hydration-safe-image';
 import { cn } from '@/shared/utils/cn';
 
 export interface FeaturedItem {
@@ -37,7 +37,7 @@ const typeConfig = {
 export const FeaturedSection: FC<FeaturedSectionProps> = ({ items, className }) => {
   if (!items || items.length === 0) return null;
 
-  const mainItem = items[0];
+  const mainItem = items[0]!; // 确保 mainItem 不为 undefined
   const sideItems = items.slice(1, 3);
 
   return (
@@ -54,12 +54,14 @@ export const FeaturedSection: FC<FeaturedSectionProps> = ({ items, className }) 
         <Link href={mainItem.link} className="lg:col-span-2 block group">
           <Card className="overflow-hidden hover:shadow-xl transition-all duration-300 h-full">
             <div className="relative h-64 lg:h-80">
-              <Image
+              <HydrationSafeImage
                 src={mainItem.image}
                 alt={mainItem.title}
-                fill
-                className="object-cover group-hover:scale-105 transition-transform duration-300"
-                sizes="(max-width: 1024px) 100vw, 66vw"
+                width={800}
+                height={320}
+                className="object-cover w-full h-full group-hover:scale-105 transition-transform duration-300"
+                sizes="100vw"
+                priority
               />
               <div className="absolute inset-0 bg-gradient-to-t from-black/70 via-black/20 to-transparent" />
               
@@ -90,12 +92,13 @@ export const FeaturedSection: FC<FeaturedSectionProps> = ({ items, className }) 
             <Link key={item.id} href={item.link} className="block group">
               <Card className="overflow-hidden hover:shadow-lg transition-all duration-300 h-full">
                 <div className="relative h-32 lg:h-36">
-                  <Image
+                  <HydrationSafeImage
                     src={item.image}
                     alt={item.title}
-                    fill
-                    className="object-cover group-hover:scale-105 transition-transform duration-300"
-                    sizes="(max-width: 1024px) 100vw, 33vw"
+                    width={400}
+                    height={144}
+                    className="object-cover w-full h-full group-hover:scale-105 transition-transform duration-300"
+                    sizes="50vw"
                   />
                   <div className="absolute inset-0 bg-gradient-to-t from-black/70 via-black/20 to-transparent" />
                   

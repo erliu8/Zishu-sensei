@@ -218,6 +218,9 @@ export const Select = forwardRef<HTMLDivElement, SelectProps>(({
 
   const containerRef = useRef<HTMLDivElement>(null)
   const dropdownRef = useRef<HTMLDivElement>(null)
+  
+  // Generate unique ID for form label association
+  const selectId = React.useId()
 
   // 受控/非受控值管理
   const currentValue = value !== undefined ? value : internalValue
@@ -516,7 +519,7 @@ export const Select = forwardRef<HTMLDivElement, SelectProps>(({
     <div className={combineClasses('space-y-1', block && 'w-full', containerClassName)}>
       {/* 标签 */}
       {label && (
-        <label className="block text-sm font-medium text-gray-700">
+        <label id={`${selectId}-label`} className="block text-sm font-medium text-gray-700">
           {label}
           {props.required && <span className="text-red-500 ml-1">*</span>}
         </label>
@@ -525,6 +528,7 @@ export const Select = forwardRef<HTMLDivElement, SelectProps>(({
       {/* 选择器容器 */}
       <div
         ref={containerRef}
+        id={selectId}
         className={combineClasses(baseClasses, className)}
         onClick={toggleDropdown}
         onKeyDown={handleKeyDown}
@@ -532,6 +536,7 @@ export const Select = forwardRef<HTMLDivElement, SelectProps>(({
         role="combobox"
         aria-expanded={isOpen}
         aria-haspopup="listbox"
+        aria-labelledby={label ? `${selectId}-label` : undefined}
         {...props}
       >
         {/* 选中值显示区域 */}

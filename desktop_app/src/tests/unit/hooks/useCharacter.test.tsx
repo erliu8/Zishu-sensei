@@ -6,9 +6,9 @@
 
 import React from 'react'
 import { describe, it, expect, beforeEach, afterEach, vi, beforeAll, afterAll } from 'vitest'
-import { renderHook, act, waitFor } from '@testing-library/react'
+import { act, waitFor } from '@testing-library/react'
 import { useCharacter } from '@/hooks/useCharacter'
-import { waitForNextTick, mockConsole } from '../../utils/test-utils'
+import { renderHook, waitForNextTick, mockConsole } from '../../utils/test-utils'
 
 // ==================== Mock 设置 ====================
 // 目前 useCharacter 不需要 mock，因为它是一个简单的状态管理 hook

@@ -10,7 +10,6 @@ import Link from 'next/link';
 import { Github, Twitter, Mail, Heart } from 'lucide-react';
 import { Footer, FooterSection, FooterLink, FooterBottom } from './Footer';
 import { Button } from '@/shared/components/ui/button';
-import { Separator } from '@/shared/components/ui/separator';
 
 export interface AppFooterProps {
   className?: string;
@@ -109,35 +108,38 @@ export const AppFooter: FC<AppFooterProps> = ({ className }) => {
         {/* 产品链接 */}
         <FooterSection title="产品">
           {footerLinks.product.map((link) => (
-            <FooterLink key={link.href} href={link.href} as={Link}>
+            <Link key={link.href} href={link.href} className="block text-sm text-muted-foreground hover:text-foreground transition-colors">
               {link.label}
-            </FooterLink>
+            </Link>
           ))}
         </FooterSection>
 
         {/* 资源链接 */}
         <FooterSection title="资源">
           {footerLinks.resources.map((link) => (
-            <FooterLink key={link.href} href={link.href} as={Link}>
+            <Link key={link.href} href={link.href} className="block text-sm text-muted-foreground hover:text-foreground transition-colors">
               {link.label}
-            </FooterLink>
+            </Link>
           ))}
         </FooterSection>
 
         {/* 社区链接 */}
         <FooterSection title="社区">
           {footerLinks.community.map((link) => (
-            <FooterLink
-              key={link.href}
-              href={link.href}
-              {...(link.href.startsWith('http') && {
-                target: '_blank',
-                rel: 'noopener noreferrer',
-              })}
-              as={link.href.startsWith('http') ? 'a' : Link}
-            >
-              {link.label}
-            </FooterLink>
+            link.href.startsWith('http') ? (
+              <FooterLink
+                key={link.href}
+                href={link.href}
+                target="_blank"
+                rel="noopener noreferrer"
+              >
+                {link.label}
+              </FooterLink>
+            ) : (
+              <Link key={link.href} href={link.href} className="block text-sm text-muted-foreground hover:text-foreground transition-colors">
+                {link.label}
+              </Link>
+            )
           ))}
         </FooterSection>
       </div>
@@ -157,19 +159,19 @@ export const AppFooter: FC<AppFooterProps> = ({ className }) => {
           </div>
 
           {/* 法律链接 */}
-          <div className="flex items-center gap-4 flex-wrap justify-center">
+          <div className="flex items-center gap-4 flex-wrap justify-center md:justify-end">
             {footerLinks.legal.map((link, index) => (
-              <span key={link.href} className="flex items-center gap-4">
+              <div key={link.href} className="flex items-center gap-4">
                 <Link
                   href={link.href}
-                  className="text-sm text-muted-foreground hover:text-foreground transition-colors"
+                  className="text-sm text-muted-foreground hover:text-foreground transition-colors whitespace-nowrap"
                 >
                   {link.label}
                 </Link>
                 {index < footerLinks.legal.length - 1 && (
-                  <Separator orientation="vertical" className="h-4" />
+                  <div className="w-px h-4 bg-border" />
                 )}
-              </span>
+              </div>
             ))}
           </div>
         </div>

@@ -1,12 +1,23 @@
 /**
- * 适配器功能组件统一导出
+ * 适配器组件统一导出
  * @module features/adapter/components
  */
 
-// 导出市场组件
+// 市场组件
 export * from './marketplace';
 
-// 待实现的其他组件模块
-// export * from './detail';
-// export * from './upload';
+// 选择器组件
+export { PluginSelector } from './PluginSelector';
+export type { PluginSelectorProps, PluginReference } from './PluginSelector';
 
+export { LoraAdapterSelector } from './LoraAdapterSelector';
+export type { 
+  LoraAdapterSelectorProps, 
+  LoraAdapterConfig 
+} from './LoraAdapterSelector';
+
+export { Live2DModelSelector } from './Live2DModelSelector';
+export type { 
+  Live2DModelSelectorProps, 
+  Live2DModelConfig 
+} from './Live2DModelSelector';

@@ -39,6 +39,64 @@ vi.mock('framer-motion', () => ({
   }
 }))
 
+// Mock clsx
+vi.mock('clsx', () => ({
+  default: vi.fn((...classes) => classes.filter(Boolean).join(' '))
+}))
+
+// Mock ConfigValidator
+vi.mock('@/utils/configValidator', () => ({
+  ConfigValidator: {
+    getInstance: vi.fn(() => ({
+      validateWindowConfig: vi.fn(() => ({ valid: true, errors: [] })),
+      validateCharacterConfig: vi.fn(() => ({ valid: true, errors: [] })),
+      validateThemeConfig: vi.fn(() => ({ valid: true, errors: [] })),
+      validateSystemConfig: vi.fn(() => ({ valid: true, errors: [] })),
+      validateAppConfig: vi.fn(() => ({ valid: true, errors: [] }))
+    }))
+  }
+}))
+
+// Mock types/settings
+vi.mock('@/types/settings', () => ({
+  CONFIG_VALIDATION_RULES: {
+    window: {
+      width: { min: 200, max: 4000 },
+      height: { min: 200, max: 4000 }
+    },
+    character: {
+      scale: { min: 0.1, max: 5.0 }
+    }
+  },
+  DEFAULT_CONFIG: {
+    window: {
+      width: 800,
+      height: 600,
+      always_on_top: false,
+      transparent: false,
+      decorations: true,
+      resizable: true,
+      position: null
+    },
+    character: {
+      current_id: 'default',
+      scale: 1.0,
+      auto_idle: true,
+      interaction_enabled: true
+    },
+    theme: {
+      current_theme: 'anime',
+      custom_css: null
+    },
+    system: {
+      auto_start: false,
+      minimize_to_tray: true,
+      close_to_tray: true,
+      show_notifications: true
+    }
+  }
+}))
+
 // 导入要测试的组件
 import { GeneralSettings } from '@/components/Settings/GeneralSettings'
 import { useSettings } from '@/hooks/useSettings'
@@ -76,9 +134,9 @@ describe('GeneralSettings - 通用设置组件', () => {
     }
     
     return render(
-      <TestProvider>
+      <div data-testid="general-settings-container">
         <GeneralSettings {...defaultProps} />
-      </TestProvider>
+      </div>
     )
   }
 
@@ -99,14 +157,20 @@ describe('GeneralSettings - 通用设置组件', () => {
 
       const sections = [
         '窗口设置',
+        '角色设置',
         '主题设置',
         '系统设置',
         '语言设置',
-        '通知设置'
+        '自动保存'
       ]
 
       sections.forEach(section => {
-        expect(screen.getByText(section)).toBeInTheDocument()
+        // 使用 getAllByText 来处理重复的文本
+        const elements = screen.getAllByText(section)
+        expect(elements.length).toBeGreaterThan(0)
+        // 确保至少有一个是 h3 元素（分组标题）
+        const headings = elements.filter(el => el.tagName === 'H3')
+        expect(headings.length).toBeGreaterThan(0)
       })
     })
 

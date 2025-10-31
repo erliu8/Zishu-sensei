@@ -2,7 +2,7 @@ import type { NextConfig } from 'next'
 import withBundleAnalyzer from '@next/bundle-analyzer'
 
 const bundleAnalyzer = withBundleAnalyzer({
-  enabled: process.env.ANALYZE === 'true',
+  enabled: process.env['ANALYZE'] === 'true',
 })
 
 const nextConfig: NextConfig = {
@@ -28,6 +28,9 @@ const nextConfig: NextConfig = {
       exclude: ['error', 'warn'],
     } : false,
   },
+
+  // 使用 SWC 压缩器
+  swcMinify: true,
 
   // 日志级别
   logging: {
@@ -69,9 +72,9 @@ const nextConfig: NextConfig = {
   // 环境变量
   env: {
     NEXT_PUBLIC_API_URL:
-      process.env['NEXT_PUBLIC_API_URL'] || 'http://localhost:8000/api',
+      process.env['NEXT_PUBLIC_API_URL'] || 'http://localhost:8001/api/v1',
     NEXT_PUBLIC_WS_URL:
-      process.env['NEXT_PUBLIC_WS_URL'] || 'ws://localhost:8000/ws',
+      process.env['NEXT_PUBLIC_WS_URL'] || 'ws://localhost:8001/ws',
   },
 
   // 重定向规则
@@ -94,12 +97,22 @@ const nextConfig: NextConfig = {
 
   // 重写规则（API代理）
   async rewrites() {
-    return [
-      {
-        source: '/api/:path*',
-        destination: `${process.env['NEXT_PUBLIC_API_URL'] || 'http://localhost:8000/api'}/:path*`,
-      },
-    ]
+    // 使用 BACKEND_API_URL 而不是 NEXT_PUBLIC_API_URL
+    // 因为 NEXT_PUBLIC_API_URL 是给浏览器用的（值为 /api）
+    const backendUrl = process.env['BACKEND_API_URL'] || 'http://localhost:8001/api/v1';
+    
+    return {
+      // 注意：不使用 beforeFiles，因为它会覆盖 app/api 路由
+      // 使用 afterFiles 让 Next.js API 路由优先匹配
+      afterFiles: [
+        // 只有当 Next.js app/api 路由不存在时，才代理到后端
+        // 这样 app/api/* 会先被匹配，然后才是这个 rewrite
+        {
+          source: '/api/:path*',
+          destination: `${backendUrl}/:path*`,
+        },
+      ],
+    }
   },
 
   // 安全头配置
@@ -216,12 +229,6 @@ const nextConfig: NextConfig = {
     serverActions: {
       bodySizeLimit: '2mb',
     },
-    // 使用 SWC 压缩器
-    swcMinify: true,
-    // 启用增量缓存
-    incrementalCacheHandlerPath: undefined,
-    // 严格模式下的 React
-    strictNextHead: true,
   },
 
   // 类型检查

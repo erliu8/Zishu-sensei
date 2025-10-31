@@ -5,7 +5,7 @@
  * 用于检查项目中的颜色组合是否符合 WCAG 标准
  */
 
-import { checkContrast, type WCAGLevel, type TextSize } from './accessibility';
+import { checkContrast, type TextSize } from './accessibility';
 
 /**
  * 颜色组合定义
@@ -38,8 +38,7 @@ export interface ContrastReport {
  * 批量检查颜色对比度
  */
 export function checkColorPairs(
-  pairs: ColorPair[],
-  level: WCAGLevel = 'AA'
+  pairs: ColorPair[]
 ): ContrastReport[] {
   return pairs.map((pair) => {
     const textSize = pair.textSize || 'normal';

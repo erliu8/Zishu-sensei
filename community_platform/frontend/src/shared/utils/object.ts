@@ -54,7 +54,7 @@ export function deepMerge<T extends Record<string, any>>(
         if (!target[key]) {
           Object.assign(target, { [key]: {} });
         }
-        deepMerge(target[key], source[key]);
+        deepMerge(target[key] as Record<string, any>, source[key] as Partial<Record<string, any>>);
       } else {
         Object.assign(target, { [key]: source[key] });
       }
@@ -127,12 +127,12 @@ export function set<T extends Record<string, any>>(
 
   for (const key of keys) {
     if (!(key in current) || !isObject(current[key])) {
-      current[key] = {};
+      (current as any)[key] = {};
     }
-    current = current[key];
+    current = (current as any)[key];
   }
 
-  current[lastKey] = value;
+  (current as any)[lastKey] = value;
   return obj;
 }
 

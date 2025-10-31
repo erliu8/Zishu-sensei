@@ -153,6 +153,7 @@ export default defineConfig(({ mode }) => ({
             '@/api': resolve(__dirname, 'src/api'),
             '@/constants': resolve(__dirname, 'src/constants'),
             '@/contexts': resolve(__dirname, 'src/contexts'),
+            '@/services': resolve(__dirname, 'src/services'),
         },
     },
 

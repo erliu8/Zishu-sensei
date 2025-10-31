@@ -5,7 +5,6 @@
 
 import type {
   UserProfile,
-  UserBasic,
   UserStats,
   UserActivity,
   PaginatedUsers,

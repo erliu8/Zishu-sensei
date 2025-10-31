@@ -11,8 +11,6 @@ import { Skeleton } from '@/shared/components/ui/skeleton';
 import { ChevronLeft, ExternalLink } from 'lucide-react';
 import { CommentItem } from './CommentItem';
 import { useComment } from '../hooks/useComments';
-import { getCommentPath, buildCommentTree } from '../domain/comment.model';
-import type { Comment } from '../domain/comment.types';
 import { cn } from '@/shared/utils/cn';
 
 interface CommentThreadProps {

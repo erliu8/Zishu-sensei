@@ -73,7 +73,8 @@ export function useAsync<T, Args extends any[] = []>(
 
   useEffect(() => {
     if (immediate) {
-      execute([] as any as Args);
+      // 只有当Args为空数组类型时才能立即执行
+      execute(...([] as unknown as Args));
     }
   }, [immediate, execute]);
 

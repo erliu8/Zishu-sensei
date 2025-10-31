@@ -1,6 +1,7 @@
 import { create } from 'zustand';
 import { devtools, persist } from 'zustand/middleware';
 import type { Notification, NotificationPreferences } from '../domain/notification';
+import { NotificationStatus } from '../domain/notification';
 
 interface NotificationState {
   // 未读数量
@@ -47,7 +48,7 @@ const initialState = {
 export const useNotificationStore = create<NotificationState>()(
   devtools(
     persist(
-      (set, get) => ({
+      (set) => ({
         ...initialState,
 
         // 设置未读数量
@@ -111,6 +112,8 @@ export const useNotificationStore = create<NotificationState>()(
               if (index === -1) return state;
 
               const oldNotification = state.recentNotifications[index];
+              if (!oldNotification) return state;
+              
               const newNotification = { ...oldNotification, ...updates };
               
               const newNotifications = [...state.recentNotifications];
@@ -119,13 +122,13 @@ export const useNotificationStore = create<NotificationState>()(
               // 如果状态从未读变为已读，减少未读计数
               let newUnreadCount = state.unreadCount;
               if (
-                oldNotification.status === 'unread' &&
-                newNotification.status === 'read'
+                oldNotification?.status === 'unread' &&
+                newNotification?.status === 'read'
               ) {
                 newUnreadCount = Math.max(0, state.unreadCount - 1);
               } else if (
-                oldNotification.status === 'read' &&
-                newNotification.status === 'unread'
+                oldNotification?.status === 'read' &&
+                newNotification?.status === 'unread'
               ) {
                 newUnreadCount = state.unreadCount + 1;
               }
@@ -177,8 +180,9 @@ export const useNotificationStore = create<NotificationState>()(
         markAllAsRead: () =>
           set(
             (state) => ({
+              ...state,
               recentNotifications: state.recentNotifications.map((n) =>
-                n.status === 'unread' ? { ...n, status: 'read' as const } : n
+                n.status === NotificationStatus.UNREAD ? { ...n, status: NotificationStatus.READ } : n
               ),
               unreadCount: 0,
             }),

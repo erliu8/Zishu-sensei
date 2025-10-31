@@ -46,6 +46,12 @@ export const PostCard: FC<PostCardProps> = memo(({
 }) => {
   const dateLocale = localeMap[locale];
 
+  // 防御性检查：确保所有必需的数据都存在
+  if (!post || !post.author || !post.stats) {
+    console.warn('[PostCard] Missing required post data:', post);
+    return null;
+  }
+
   const handleLike = (e: React.MouseEvent) => {
     e.preventDefault();
     e.stopPropagation();
@@ -106,12 +112,12 @@ export const PostCard: FC<PostCardProps> = memo(({
           {/* 作者信息 */}
           <div className="flex items-center gap-3 mb-3">
             <Avatar className="h-8 w-8">
-              <AvatarImage src={post.author.avatar} alt={post.author.name} />
-              <AvatarFallback>{post.author.name[0]}</AvatarFallback>
+              <AvatarImage src={post.author?.avatar} alt={post.author?.name ?? '未知用户'} />
+              <AvatarFallback>{post.author?.name?.[0] ?? '?'}</AvatarFallback>
             </Avatar>
             <div className="flex-1 min-w-0">
               <p className="text-sm font-medium text-foreground truncate">
-                {post.author.name}
+                {post.author?.name ?? '未知用户'}
               </p>
               <p className="text-xs text-muted-foreground">
                 {formatDate(post.publishedAt || post.createdAt)}
@@ -149,7 +155,7 @@ export const PostCard: FC<PostCardProps> = memo(({
           )}
 
           {/* 标签 */}
-          {post.tags && post.tags.length > 0 && (
+          {Array.isArray(post.tags) && post.tags.length > 0 && (
             <div className="flex flex-wrap gap-2">
               {post.tags.slice(0, 3).map((tag) => (
                 <Badge 
@@ -174,15 +180,15 @@ export const PostCard: FC<PostCardProps> = memo(({
           <div className="flex items-center gap-4 text-sm text-muted-foreground">
             <div className="flex items-center gap-1">
               <Eye className="h-4 w-4" />
-              <span>{post.stats.views.toLocaleString()}</span>
+              <span>{(post.stats?.views ?? 0).toLocaleString()}</span>
             </div>
             <div className="flex items-center gap-1">
               <Heart className="h-4 w-4" />
-              <span>{post.stats.likes.toLocaleString()}</span>
+              <span>{(post.stats?.likes ?? 0).toLocaleString()}</span>
             </div>
             <div className="flex items-center gap-1">
               <MessageCircle className="h-4 w-4" />
-              <span>{post.stats.comments.toLocaleString()}</span>
+              <span>{(post.stats?.comments ?? 0).toLocaleString()}</span>
             </div>
           </div>
 

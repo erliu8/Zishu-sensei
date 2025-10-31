@@ -14,7 +14,7 @@ import {
 import { Switch } from '@/shared/components/ui/switch'
 import { Label } from '@/shared/components/ui/label'
 import { Badge } from '@/shared/components/ui/badge'
-import { useToast } from '@/shared/hooks/useToast'
+import { useToast } from '@/shared/hooks/use-toast'
 import {
   Alert,
   AlertDescription,
@@ -78,7 +78,6 @@ export default function PushNotificationManager({
         toast({
           title: '推送通知已启用',
           description: '您将收到重要更新的通知',
-          icon: <Bell className="h-4 w-4" />,
         })
       } else {
         toast({
@@ -110,7 +109,6 @@ export default function PushNotificationManager({
         toast({
           title: '推送通知已禁用',
           description: '您将不再收到推送通知',
-          icon: <BellOff className="h-4 w-4" />,
         })
       } else {
         toast({

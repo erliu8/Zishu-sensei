@@ -8,7 +8,6 @@ import {
   DEFAULT_LOCALE,
   SUPPORTED_LOCALES,
   isValidLocale,
-  getBrowserLocale,
 } from '@/infrastructure/i18n/config';
 import type { Locale } from '@/infrastructure/i18n/types';
 
@@ -53,7 +52,7 @@ function getLocaleFromHeaders(request: NextRequest): Locale | null {
   const languages = acceptLanguage
     .split(',')
     .map((lang) => {
-      const [locale, q = '1'] = lang.trim().split(';q=');
+      const [locale = '', q = '1'] = lang.trim().split(';q=');
       return {
         locale: locale.trim(),
         quality: parseFloat(q),
@@ -63,6 +62,8 @@ function getLocaleFromHeaders(request: NextRequest): Locale | null {
   
   // 查找匹配的语言
   for (const { locale } of languages) {
+    if (!locale) continue;
+    
     // 精确匹配
     if (isValidLocale(locale)) {
       return locale as Locale;
@@ -70,9 +71,11 @@ function getLocaleFromHeaders(request: NextRequest): Locale | null {
     
     // 前缀匹配 (如 'en' 匹配 'en-US')
     const prefix = locale.split('-')[0];
-    const match = SUPPORTED_LOCALES.find((l) => l.startsWith(prefix));
-    if (match) {
-      return match;
+    if (prefix) {
+      const match = SUPPORTED_LOCALES.find((l) => l.startsWith(prefix));
+      if (match) {
+        return match;
+      }
     }
   }
   

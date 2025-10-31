@@ -20,7 +20,7 @@ import { Separator } from '@/shared/components/ui/separator';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/shared/components/ui/tabs';
 import { Progress } from '@/shared/components/ui/progress';
 import type { Character } from '../domain';
-import type { AdapterType } from '../types';
+import { CharacterConfigSummary } from './CharacterConfigSummary';
 import {
   Heart,
   Download,
@@ -345,6 +345,19 @@ export const CharacterDetail: React.FC<CharacterDetailProps> = ({
             </CardContent>
           </Card>
 
+          {/* 显示角色配置摘要 */}
+          {character.config && (
+            <Card>
+              <CardHeader>
+                <CardTitle>角色配置</CardTitle>
+                <CardDescription>AI模型、Live2D模型和插件配置</CardDescription>
+              </CardHeader>
+              <CardContent>
+                <CharacterConfigSummary config={character.config} compact={false} />
+              </CardContent>
+            </Card>
+          )}
+
           {tags.length > 0 && (
             <Card>
               <CardHeader>
@@ -481,7 +494,7 @@ export const CharacterDetail: React.FC<CharacterDetailProps> = ({
                 <div className="grid grid-cols-2 md:grid-cols-3 gap-4">
                   {expressions.slice(0, 6).map((expr) => (
                     <div key={expr.id} className="text-sm text-center p-2 border rounded">
-                      {expr.name || expr.trigger}
+                      {expr.name || expr.triggers?.[0]?.value}
                     </div>
                   ))}
                 </div>

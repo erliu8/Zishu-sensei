@@ -7,4 +7,5 @@ export * from './personality';
 export * from './expression';
 export * from './voice';
 export * from './model';
+export * from './model-config.types';
 

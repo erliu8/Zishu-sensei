@@ -4,7 +4,7 @@
  */
 
 import { useMutation, useQueryClient, type UseMutationResult } from '@tanstack/react-query';
-import { toast } from 'sonner';
+import { toast } from '@/shared/components/ui/use-toast';
 import { postApiClient } from '../api';
 import type { Post, UpdatePostDto } from '../domain';
 import { updatePostSchema } from '../domain';
@@ -53,7 +53,10 @@ export function useUpdatePost(): UseMutationResult<Post, Error, UpdatePostParams
       // 使帖子列表缓存失效
       queryClient.invalidateQueries({ queryKey: POST_QUERY_KEYS.lists() });
       
-      toast.success('帖子更新成功！');
+      toast({
+        title: '帖子更新成功！',
+        variant: 'default',
+      });
     },
     onError: (error, { id }, context) => {
       // 回滚到之前的数据
@@ -62,7 +65,11 @@ export function useUpdatePost(): UseMutationResult<Post, Error, UpdatePostParams
       }
       
       console.error('更新帖子失败:', error);
-      toast.error(error.message || '更新帖子失败，请稍后重试');
+      toast({
+        title: '更新帖子失败',
+        description: error.message || '请稍后重试',
+        variant: 'destructive',
+      });
     },
     onSettled: (_, __, { id }) => {
       // 确保数据是最新的

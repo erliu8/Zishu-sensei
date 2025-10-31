@@ -6,17 +6,9 @@
 'use client';
 
 import React, { useState } from 'react';
-import { Plus, Settings, Download, Upload as UploadIcon } from 'lucide-react';
+import { Plus, Download, Upload as UploadIcon } from 'lucide-react';
 import { Button } from '@/shared/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/shared/components/ui/card';
-import {
-  Dialog,
-  DialogContent,
-  DialogDescription,
-  DialogHeader,
-  DialogTitle,
-} from '@/shared/components/ui/dialog';
-import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/shared/components/ui/tabs';
 import { Skeleton } from '@/shared/components/ui/skeleton';
 import { ExpressionList } from './ExpressionList';
 import { ExpressionEditor } from './ExpressionEditor';

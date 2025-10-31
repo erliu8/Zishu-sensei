@@ -162,8 +162,6 @@ export function useSetDefaultModel() {
  * 上传模型文件（带进度）
  */
 export function useUploadModelFile() {
-  const queryClient = useQueryClient();
-
   return useMutation({
     mutationFn: ({
       file,
@@ -186,7 +184,7 @@ export function useUploadModelThumbnail() {
   return useMutation({
     mutationFn: ({ id, file }: { id: string; file: File }) =>
       modelApi.uploadThumbnail(id, file),
-    onSuccess: (result, { id }) => {
+    onSuccess: (_, { id }) => {
       // 刷新模型详情
       queryClient.invalidateQueries({ queryKey: modelKeys.detail(id) });
 

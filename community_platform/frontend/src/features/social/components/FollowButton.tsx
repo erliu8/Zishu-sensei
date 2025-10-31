@@ -127,7 +127,7 @@ export const FollowButton: React.FC<FollowButtonProps> = ({
 export interface CompactFollowButtonProps extends Omit<FollowButtonProps, 'iconOnly' | 'showIcon'> {}
 
 export const CompactFollowButton: React.FC<CompactFollowButtonProps> = (props) => {
-  return <FollowButton {...props} iconOnly size="icon-sm" />;
+  return <FollowButton {...props} iconOnly size="sm" />;
 };
 
 export default FollowButton;

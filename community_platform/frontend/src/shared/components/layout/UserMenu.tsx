@@ -7,7 +7,6 @@
 
 import { FC } from 'react';
 import Link from 'next/link';
-import { useRouter } from 'next/navigation';
 import {
   User,
   Settings,
@@ -29,29 +28,22 @@ import {
 } from '@/shared/components/ui/dropdown-menu';
 import { Avatar, AvatarFallback, AvatarImage } from '@/shared/components/ui/avatar';
 import { Button } from '@/shared/components/ui/button';
+import { useAuth } from '@/features/auth/hooks';
+import type { User as AuthUser } from '@/features/auth/types';
 
 export interface UserMenuProps {
   className?: string;
 }
 
-export const UserMenu: FC<UserMenuProps> = ({ className }) => {
-  const router = useRouter();
-  
-  // TODO: 从认证上下文获取用户信息
-  const isAuthenticated = false;
-  const user = {
-    id: '1',
-    name: '测试用户',
-    email: 'test@example.com',
-    avatar: '',
-  };
+export const UserMenu: FC<UserMenuProps> = () => {
+  const { user, isAuthenticated, logout } = useAuth();
+  const authUser = user as AuthUser | null;
 
   const handleLogout = async () => {
-    // TODO: 实现登出逻辑
-    router.push('/login');
+    await logout();
   };
 
-  if (!isAuthenticated) {
+  if (!isAuthenticated || !authUser) {
     return (
       <div className="flex items-center gap-2">
         <Link href="/login">
@@ -75,24 +67,26 @@ export const UserMenu: FC<UserMenuProps> = ({ className }) => {
       <DropdownMenuTrigger asChild>
         <Button variant="ghost" size="sm" className="relative h-9 w-9 rounded-full p-0">
           <Avatar className="h-9 w-9">
-            <AvatarImage src={user.avatar} alt={user.name} />
-            <AvatarFallback>{user.name[0]}</AvatarFallback>
+            <AvatarImage src={authUser.avatar || ''} alt={authUser.username || 'User'} />
+            <AvatarFallback>
+              {authUser.username?.charAt(0).toUpperCase() || 'U'}
+            </AvatarFallback>
           </Avatar>
         </Button>
       </DropdownMenuTrigger>
       <DropdownMenuContent className="w-56" align="end" forceMount>
         <DropdownMenuLabel>
           <div className="flex flex-col space-y-1">
-            <p className="text-sm font-medium leading-none">{user.name}</p>
+            <p className="text-sm font-medium leading-none">{authUser.username}</p>
             <p className="text-xs leading-none text-muted-foreground">
-              {user.email}
+              {authUser.email}
             </p>
           </div>
         </DropdownMenuLabel>
         <DropdownMenuSeparator />
         
         <DropdownMenuItem asChild>
-          <Link href={`/users/${user.id}`} className="cursor-pointer">
+          <Link href={`/users/${authUser.id}`} className="cursor-pointer">
             <User className="mr-2 h-4 w-4" />
             <span>个人主页</span>
           </Link>

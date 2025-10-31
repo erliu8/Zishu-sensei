@@ -25,7 +25,6 @@ import {
   DropdownMenuItem,
   DropdownMenuTrigger,
 } from '@/shared/components/ui/dropdown-menu';
-import { Avatar, AvatarFallback, AvatarImage } from '@/shared/components/ui/avatar';
 import { Skeleton } from '@/shared/components/ui/skeleton';
 import type { Notification, NotificationType } from '../domain/notification';
 import Link from 'next/link';
@@ -54,6 +53,10 @@ const NOTIFICATION_ICONS: Record<NotificationType, React.ComponentType<{ classNa
   system: Bell,
   achievement: Award,
   trending: TrendingUp,
+  adapter_update: AlertCircle,
+  post_update: MessageCircle,
+  character_share: Share2,
+  package_complete: CheckCircle,
 };
 
 // 通知类型颜色映射
@@ -67,6 +70,10 @@ const NOTIFICATION_COLORS: Record<NotificationType, string> = {
   system: 'text-gray-500',
   achievement: 'text-yellow-500',
   trending: 'text-red-500',
+  adapter_update: 'text-amber-500',
+  post_update: 'text-cyan-500',
+  character_share: 'text-teal-500',
+  package_complete: 'text-emerald-500',
 };
 
 /**
@@ -154,9 +161,9 @@ function NotificationItem({
   });
 
   // 构建链接
-  const LinkWrapper = notification.link
+  const LinkWrapper = notification.actionUrl
     ? ({ children }: { children: React.ReactNode }) => (
-        <Link href={notification.link!} className="flex-1">
+        <Link href={notification.actionUrl!} className="flex-1">
           {children}
         </Link>
       )

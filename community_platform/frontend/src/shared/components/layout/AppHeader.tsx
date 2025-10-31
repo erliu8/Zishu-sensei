@@ -2,7 +2,7 @@
 
 import React from 'react';
 import Link from 'next/link';
-import { Bell, Search, Menu, User } from 'lucide-react';
+import { Search, Menu } from 'lucide-react';
 import { Button } from '@/shared/components/ui/button';
 import { Input } from '@/shared/components/ui/input';
 import {
@@ -13,8 +13,10 @@ import {
   DropdownMenuTrigger,
 } from '@/shared/components/ui/dropdown-menu';
 import { Avatar, AvatarFallback, AvatarImage } from '@/shared/components/ui/avatar';
-import { NotificationDropdown } from '@/features/notification/components';
+import { NotificationDropdown } from './NotificationDropdown';
 import { cn } from '@/shared/utils';
+import { useAuth } from '@/features/auth/hooks';
+import type { User as AuthUser } from '@/features/auth/types';
 
 interface AppHeaderProps {
   className?: string;
@@ -25,12 +27,8 @@ interface AppHeaderProps {
  * 包含 Logo、搜索框、通知中心和用户菜单
  */
 export function AppHeader({ className }: AppHeaderProps) {
-  // TODO: 从认证上下文获取用户信息
-  const user = {
-    name: 'Demo User',
-    email: 'demo@example.com',
-    avatar: '',
-  };
+  const { user, isAuthenticated, logout } = useAuth();
+  const authUser = user as AuthUser | null;
 
   return (
     <header
@@ -97,40 +95,51 @@ export function AppHeader({ className }: AppHeaderProps) {
           <NotificationDropdown />
 
           {/* 用户菜单 */}
-          <DropdownMenu>
-            <DropdownMenuTrigger asChild>
-              <Button variant="ghost" className="relative h-9 w-9 rounded-full">
-                <Avatar className="h-9 w-9">
-                  <AvatarImage src={user.avatar} alt={user.name} />
-                  <AvatarFallback>
-                    {user.name.charAt(0).toUpperCase()}
-                  </AvatarFallback>
-                </Avatar>
-              </Button>
-            </DropdownMenuTrigger>
-            <DropdownMenuContent align="end" className="w-56">
-              <div className="flex items-center justify-start gap-2 p-2">
-                <div className="flex flex-col space-y-1 leading-none">
-                  <p className="font-medium">{user.name}</p>
-                  <p className="text-xs text-muted-foreground">{user.email}</p>
+          {isAuthenticated && authUser ? (
+            <DropdownMenu>
+              <DropdownMenuTrigger asChild>
+                <Button variant="ghost" className="relative h-9 w-9 rounded-full">
+                  <Avatar className="h-9 w-9">
+                    <AvatarImage src={authUser.avatar || ''} alt={authUser.username || 'User'} />
+                    <AvatarFallback>
+                      {authUser.username?.charAt(0).toUpperCase() || 'U'}
+                    </AvatarFallback>
+                  </Avatar>
+                </Button>
+              </DropdownMenuTrigger>
+              <DropdownMenuContent align="end" className="w-56">
+                <div className="flex items-center justify-start gap-2 p-2">
+                  <div className="flex flex-col space-y-1 leading-none">
+                    <p className="font-medium">{authUser.username}</p>
+                    <p className="text-xs text-muted-foreground">{authUser.email}</p>
+                  </div>
                 </div>
-              </div>
-              <DropdownMenuSeparator />
-              <DropdownMenuItem asChild>
-                <Link href="/profile">个人主页</Link>
-              </DropdownMenuItem>
-              <DropdownMenuItem asChild>
-                <Link href="/profile/settings">设置</Link>
-              </DropdownMenuItem>
-              <DropdownMenuItem asChild>
-                <Link href="/notifications">通知</Link>
-              </DropdownMenuItem>
-              <DropdownMenuSeparator />
-              <DropdownMenuItem className="text-destructive">
-                退出登录
-              </DropdownMenuItem>
-            </DropdownMenuContent>
-          </DropdownMenu>
+                <DropdownMenuSeparator />
+                <DropdownMenuItem asChild>
+                  <Link href="/profile">个人主页</Link>
+                </DropdownMenuItem>
+                <DropdownMenuItem asChild>
+                  <Link href="/profile/settings">设置</Link>
+                </DropdownMenuItem>
+                <DropdownMenuItem asChild>
+                  <Link href="/notifications">通知</Link>
+                </DropdownMenuItem>
+                <DropdownMenuSeparator />
+                <DropdownMenuItem className="text-destructive" onClick={() => logout()}>
+                  退出登录
+                </DropdownMenuItem>
+              </DropdownMenuContent>
+            </DropdownMenu>
+          ) : (
+            <div className="flex items-center gap-2">
+              <Link href="/login">
+                <Button variant="ghost" size="sm">登录</Button>
+              </Link>
+              <Link href="/register">
+                <Button size="sm">注册</Button>
+              </Link>
+            </div>
+          )}
 
           {/* 移动端菜单 */}
           <Button variant="ghost" size="icon" className="md:hidden">

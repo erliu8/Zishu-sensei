@@ -573,49 +573,90 @@ export default chatMocks
  */
 export function setupChatMocks() {
   // Mock WebSocket
-  global.WebSocket = MockWebSocket as any
+  Object.defineProperty(global, 'WebSocket', {
+    value: MockWebSocket,
+    writable: true,
+    configurable: true,
+  })
   
   // Mock MediaRecorder
-  global.MediaRecorder = MockMediaRecorder as any
+  Object.defineProperty(global, 'MediaRecorder', {
+    value: MockMediaRecorder,
+    writable: true,
+    configurable: true,
+  })
   
   // Mock SpeechRecognition
-  (global as any).SpeechRecognition = MockSpeechRecognition as any;
-  (global as any).webkitSpeechRecognition = MockSpeechRecognition as any
+  Object.defineProperty(global, 'SpeechRecognition', {
+    value: MockSpeechRecognition,
+    writable: true,
+    configurable: true,
+  })
+  Object.defineProperty(global, 'webkitSpeechRecognition', {
+    value: MockSpeechRecognition,
+    writable: true,
+    configurable: true,
+  })
   
   // Mock Navigator APIs
   Object.defineProperty(navigator, 'mediaDevices', {
     value: mockMediaDevices,
     writable: true,
+    configurable: true,
   })
   
   Object.defineProperty(navigator, 'clipboard', {
     value: mockClipboard,
     writable: true,
+    configurable: true,
   })
   
   // Mock URL APIs
-  global.URL.createObjectURL = vi.fn(() => 'blob:mock-url')
-  global.URL.revokeObjectURL = vi.fn()
+  Object.defineProperty(global.URL, 'createObjectURL', {
+    value: vi.fn(() => 'blob:mock-url'),
+    writable: true,
+    configurable: true,
+  })
+  Object.defineProperty(global.URL, 'revokeObjectURL', {
+    value: vi.fn(),
+    writable: true,
+    configurable: true,
+  })
   
   // Mock Audio
-  global.Audio = vi.fn(() => ({
-    play: vi.fn(() => Promise.resolve()),
-    pause: vi.fn(),
-    load: vi.fn(),
-    addEventListener: vi.fn(),
-    removeEventListener: vi.fn(),
-    src: '',
-    duration: 0,
-    currentTime: 0,
-    paused: true,
-    ended: false,
-  })) as any
+  Object.defineProperty(global, 'Audio', {
+    value: vi.fn(() => ({
+      play: vi.fn(() => Promise.resolve()),
+      pause: vi.fn(),
+      load: vi.fn(),
+      addEventListener: vi.fn(),
+      removeEventListener: vi.fn(),
+      src: '',
+      duration: 0,
+      currentTime: 0,
+      paused: true,
+      ended: false,
+    })),
+    writable: true,
+    configurable: true,
+  })
   
   // Mock Notification
-  global.Notification = vi.fn() as any
-  global.Notification.requestPermission = vi.fn(() => Promise.resolve('granted'))
+  Object.defineProperty(global, 'Notification', {
+    value: vi.fn(() => ({
+      permission: 'granted',
+      requestPermission: vi.fn(() => Promise.resolve('granted')),
+    })),
+    writable: true,
+    configurable: true,
+  })
   Object.defineProperty(global.Notification, 'permission', {
     value: 'granted',
+    writable: true,
+    configurable: true,
+  })
+  Object.defineProperty(global.Notification, 'requestPermission', {
+    value: vi.fn(() => Promise.resolve('granted')),
     writable: true,
     configurable: true,
   })

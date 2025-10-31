@@ -5,7 +5,7 @@
  */
 
 import { describe, it, expect, beforeEach, afterEach, vi } from 'vitest'
-import { renderHook, act, waitFor } from '@testing-library/react'
+import { act, waitFor } from '@testing-library/react'
 import {
   usePermissions,
   useEntityGrants,
@@ -20,21 +20,28 @@ import {
   PermissionLevel, 
   PermissionStatus 
 } from '@/types/permission'
-import { mockConsole } from '../../utils/test-utils'
+import { renderHook, mockConsole } from '../../utils/test-utils'
 
 // ==================== Mock 设置 ====================
 
+// Mock Tauri API
+const mockInvoke = vi.fn()
+vi.mock('@tauri-apps/api/tauri', () => ({
+  invoke: mockInvoke,
+}))
+
+// Mock 权限服务 - 必须在 vi.mock 之前定义
 vi.mock('@/services/permissionService', () => ({
-  getAllPermissions: vi.fn(),
-  getEntityGrants: vi.fn(),
-  getPendingGrants: vi.fn(),
-  grantPermission: vi.fn(),
-  revokePermission: vi.fn(),
-  denyPermission: vi.fn(),
-  checkPermission: vi.fn(),
-  getPermissionStats: vi.fn(),
-  getPermissionUsageLogs: vi.fn(),
-  applyPermissionPreset: vi.fn(),
+  getAllPermissions: vi.fn().mockResolvedValue([]),
+  getEntityGrants: vi.fn().mockResolvedValue([]),
+  getPendingGrants: vi.fn().mockResolvedValue([]),
+  grantPermission: vi.fn().mockResolvedValue(undefined),
+  revokePermission: vi.fn().mockResolvedValue(undefined),
+  denyPermission: vi.fn().mockResolvedValue(undefined),
+  checkPermission: vi.fn().mockResolvedValue(false),
+  getPermissionStats: vi.fn().mockResolvedValue({ total_grants: 0, active_grants: 0, pending_grants: 0, denied_grants: 0, revoked_grants: 0 }),
+  getPermissionUsageLogs: vi.fn().mockResolvedValue([]),
+  applyPermissionPreset: vi.fn().mockResolvedValue(undefined),
   PERMISSION_PRESETS: {
     BASIC_ADAPTER: [
       { type: 'FILE_READ', level: 'READ_ONLY' },
@@ -64,8 +71,9 @@ vi.mock('@/services/permissionService', () => ({
   },
 }))
 
-// Get mocked functions after the mock is set up
-let mockPermissionService: any
+// 获取 mocked 模块的引用
+import * as permissionServiceModule from '@/services/permissionService'
+const mockPermissionService = permissionServiceModule as any
 
 // ==================== 测试数据 ====================
 
@@ -155,17 +163,15 @@ const mockUsageLogs = [
 describe('usePermissions Hook', () => {
   const consoleMock = mockConsole()
 
-  beforeEach(async () => {
+  beforeEach(() => {
     consoleMock.mockAll()
     vi.clearAllMocks()
-    
-    // Get the mocked service
-    mockPermissionService = await vi.importMock('@/services/permissionService')
     mockPermissionService.getAllPermissions.mockResolvedValue(mockPermissions)
   })
 
   afterEach(() => {
     vi.resetAllMocks()
+    consoleMock.restore()
   })
 
   describe('基础功能', () => {
@@ -220,9 +226,8 @@ describe('usePermissions Hook', () => {
 })
 
 describe('useEntityGrants Hook', () => {
-  beforeEach(async () => {
+  beforeEach(() => {
     vi.clearAllMocks()
-    mockPermissionService = await vi.importMock('@/services/permissionService')
     mockPermissionService.getEntityGrants.mockResolvedValue(mockGrants)
     mockPermissionService.grantPermission.mockResolvedValue(undefined)
     mockPermissionService.revokePermission.mockResolvedValue(undefined)
@@ -356,9 +361,8 @@ describe('useEntityGrants Hook', () => {
 })
 
 describe('usePendingGrants Hook', () => {
-  beforeEach(async () => {
+  beforeEach(() => {
     vi.clearAllMocks()
-    mockPermissionService = await vi.importMock('@/services/permissionService')
     const pendingGrants = mockGrants.filter(
       (g) => g.status === PermissionStatus.PENDING
     )
@@ -428,9 +432,8 @@ describe('usePendingGrants Hook', () => {
 })
 
 describe('usePermissionCheck Hook', () => {
-  beforeEach(async () => {
+  beforeEach(() => {
     vi.clearAllMocks()
-    mockPermissionService = await vi.importMock('@/services/permissionService')
     mockPermissionService.checkPermission.mockResolvedValue(true)
   })
 
@@ -526,9 +529,8 @@ describe('usePermissionCheck Hook', () => {
 })
 
 describe('usePermissionStats Hook', () => {
-  beforeEach(async () => {
+  beforeEach(() => {
     vi.clearAllMocks()
-    mockPermissionService = await vi.importMock('@/services/permissionService')
     mockPermissionService.getPermissionStats.mockResolvedValue(mockStats)
   })
 
@@ -570,9 +572,8 @@ describe('usePermissionStats Hook', () => {
 })
 
 describe('usePermissionUsageLogs Hook', () => {
-  beforeEach(async () => {
+  beforeEach(() => {
     vi.clearAllMocks()
-    mockPermissionService = await vi.importMock('@/services/permissionService')
     mockPermissionService.getPermissionUsageLogs.mockResolvedValue(
       mockUsageLogs
     )
@@ -601,28 +602,35 @@ describe('usePermissionUsageLogs Hook', () => {
     })
 
     it('应该支持分页加载', async () => {
+      // 创建第一页数据（满页10条）
+      const firstPageLogs = Array.from({ length: 10 }, (_, i) => ({
+        ...mockUsageLogs[0],
+        id: `log-${i + 1}`,
+      }))
+      mockPermissionService.getPermissionUsageLogs.mockResolvedValue(firstPageLogs)
+
       const { result } = renderHook(() =>
         usePermissionUsageLogs('adapter', 'test-adapter', undefined, 10)
       )
 
       await waitFor(() => {
-        expect(result.current.logs).toEqual(mockUsageLogs)
-        expect(result.current.hasMore).toBe(false)
+        expect(result.current.logs).toEqual(firstPageLogs)
+        expect(result.current.hasMore).toBe(true)
       })
 
       mockPermissionService.getPermissionUsageLogs.mockClear()
-      const moreLogs = Array.from({ length: 10 }, (_, i) => ({
+      const secondPageLogs = Array.from({ length: 10 }, (_, i) => ({
         ...mockUsageLogs[0],
-        id: `log-${i + 3}`,
+        id: `log-${i + 11}`,
       }))
-      mockPermissionService.getPermissionUsageLogs.mockResolvedValue(moreLogs)
+      mockPermissionService.getPermissionUsageLogs.mockResolvedValue(secondPageLogs)
 
       await act(async () => {
         result.current.loadMore()
       })
 
       await waitFor(() => {
-        expect(result.current.logs.length).toBe(mockUsageLogs.length + moreLogs.length)
+        expect(result.current.logs.length).toBe(firstPageLogs.length + secondPageLogs.length)
         expect(result.current.hasMore).toBe(true)
       })
     })
@@ -648,9 +656,8 @@ describe('usePermissionUsageLogs Hook', () => {
 })
 
 describe('usePermissionPresets Hook', () => {
-  beforeEach(async () => {
+  beforeEach(() => {
     vi.clearAllMocks()
-    mockPermissionService = await vi.importMock('@/services/permissionService')
     mockPermissionService.applyPermissionPreset.mockResolvedValue(undefined)
   })
 
@@ -707,9 +714,8 @@ describe('usePermissionPresets Hook', () => {
 // ==================== 集成测试 ====================
 
 describe('Permission Hooks 集成测试', () => {
-  beforeEach(async () => {
+  beforeEach(() => {
     vi.clearAllMocks()
-    mockPermissionService = await vi.importMock('@/services/permissionService')
     mockPermissionService.getAllPermissions.mockResolvedValue(mockPermissions)
     mockPermissionService.getEntityGrants.mockResolvedValue(mockGrants)
     mockPermissionService.grantPermission.mockResolvedValue(undefined)

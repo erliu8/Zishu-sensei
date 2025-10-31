@@ -68,7 +68,8 @@ export interface UploadFileRequest {
  */
 export interface UploadFileResponse {
   file_info: FileInfo;
-  is_duplicate: boolean;
+  upload_url?: string;
+  is_duplicate?: boolean;
 }
 
 /**

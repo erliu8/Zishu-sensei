@@ -5,6 +5,7 @@
 
 'use client';
 
+import React from 'react';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { UserApiClient } from '../api/UserApiClient';
 import { useUserStore } from '../store/user.store';
@@ -13,7 +14,6 @@ import type {
   UpdatePasswordRequest,
   UpdateEmailRequest,
   UpdatePreferencesRequest,
-  UserProfile,
 } from '../types';
 import { useAuthStore } from '@/features/auth/store';
 
@@ -46,10 +46,14 @@ export function useCurrentUser() {
     queryFn: UserApiClient.getCurrentUser,
     enabled: !!authUser,
     staleTime: 5 * 60 * 1000, // 5 minutes
-    onSuccess: (data) => {
-      setCurrentUserProfile(data);
-    },
   });
+
+  // 使用 useEffect 处理成功回调
+  React.useEffect(() => {
+    if (query.data) {
+      setCurrentUserProfile(query.data);
+    }
+  }, [query.data, setCurrentUserProfile]);
 
   return {
     user: query.data,
@@ -100,10 +104,14 @@ export function useUserStats(userId?: string) {
  * 使用用户活动
  */
 export function useUserActivities(userId?: string, page: number = 1) {
-  const query = useQuery({
+  const query = useQuery<{
+    activities: any[];
+    total: number;
+    hasMore: boolean;
+  }>({
     queryKey: [...userKeys.activities(userId), page],
     queryFn: () => UserApiClient.getUserActivities(userId, page),
-    keepPreviousData: true,
+    placeholderData: (prevData) => prevData,
   });
 
   return {
@@ -126,8 +134,8 @@ export function useUpdateProfile() {
   return useMutation({
     mutationFn: (data: UpdateProfileRequest) => UserApiClient.updateProfile(data),
     onSuccess: (updatedProfile) => {
-      queryClient.invalidateQueries(userKeys.current());
-      queryClient.invalidateQueries(userKeys.detail(updatedProfile.id));
+      queryClient.invalidateQueries({ queryKey: userKeys.current() });
+      queryClient.invalidateQueries({ queryKey: userKeys.detail(updatedProfile.id) });
       setCurrentUserProfile(updatedProfile);
     },
   });
@@ -142,7 +150,7 @@ export function useUploadAvatar() {
   return useMutation({
     mutationFn: (file: File) => UserApiClient.uploadAvatar(file),
     onSuccess: () => {
-      queryClient.invalidateQueries(userKeys.current());
+      queryClient.invalidateQueries({ queryKey: userKeys.current() });
     },
   });
 }
@@ -156,7 +164,7 @@ export function useDeleteAvatar() {
   return useMutation({
     mutationFn: () => UserApiClient.deleteAvatar(),
     onSuccess: () => {
-      queryClient.invalidateQueries(userKeys.current());
+      queryClient.invalidateQueries({ queryKey: userKeys.current() });
     },
   });
 }
@@ -179,7 +187,7 @@ export function useUpdateEmail() {
   return useMutation({
     mutationFn: (data: UpdateEmailRequest) => UserApiClient.updateEmail(data),
     onSuccess: () => {
-      queryClient.invalidateQueries(userKeys.current());
+      queryClient.invalidateQueries({ queryKey: userKeys.current() });
     },
   });
 }
@@ -195,10 +203,14 @@ export function usePreferences() {
     queryFn: UserApiClient.getPreferences,
     initialData: preferences || undefined,
     staleTime: 10 * 60 * 1000, // 10 minutes
-    onSuccess: (data) => {
-      setPreferences(data);
-    },
   });
+
+  // 使用 useEffect 处理成功回调
+  React.useEffect(() => {
+    if (query.data) {
+      setPreferences(query.data);
+    }
+  }, [query.data, setPreferences]);
 
   return {
     preferences: query.data,
@@ -219,7 +231,7 @@ export function useUpdatePreferences() {
     mutationFn: (data: UpdatePreferencesRequest) => 
       UserApiClient.updatePreferences(data),
     onSuccess: (updatedPreferences) => {
-      queryClient.invalidateQueries(userKeys.preferences());
+      queryClient.invalidateQueries({ queryKey: userKeys.preferences() });
       updatePreferences(updatedPreferences);
     },
   });
@@ -274,7 +286,7 @@ export function useDeleteSession() {
   return useMutation({
     mutationFn: (sessionId: string) => UserApiClient.deleteSession(sessionId),
     onSuccess: () => {
-      queryClient.invalidateQueries(userKeys.sessions());
+      queryClient.invalidateQueries({ queryKey: userKeys.sessions() });
     },
   });
 }
@@ -288,7 +300,7 @@ export function useDeleteOtherSessions() {
   return useMutation({
     mutationFn: () => UserApiClient.deleteOtherSessions(),
     onSuccess: () => {
-      queryClient.invalidateQueries(userKeys.sessions());
+      queryClient.invalidateQueries({ queryKey: userKeys.sessions() });
     },
   });
 }

@@ -13,7 +13,6 @@ import { cn } from '@/shared/utils/cn';
 import {
   spinnerVariants,
   pulseVariants,
-  dotPulseVariants,
 } from '@/shared/animations/variants';
 
 /* ========================================
@@ -80,9 +79,16 @@ export const DotsLoader: React.FC<DotsLoaderProps> = ({
         <motion.div
           key={index}
           className={cn('bg-primary rounded-full', dotSizes[size])}
-          variants={dotPulseVariants}
-          animate="animate"
-          custom={index}
+          animate={{
+            scale: [0.8, 1, 0.8],
+            opacity: [0.3, 1, 0.3]
+          }}
+          transition={{
+            duration: 1.4,
+            repeat: Infinity,
+            delay: index * 0.16,
+            ease: 'easeInOut',
+          }}
         />
       ))}
     </div>

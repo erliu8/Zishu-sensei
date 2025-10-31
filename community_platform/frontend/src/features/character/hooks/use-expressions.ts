@@ -6,8 +6,8 @@ import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { expressionApi } from '../api';
 import type {
   Expression,
-  CreateExpressionInput,
-  UpdateExpressionInput,
+  CreateExpressionDto,
+  UpdateExpressionDto,
 } from '../domain';
 import { characterKeys } from './use-characters';
 
@@ -52,7 +52,7 @@ export function useCreateExpression() {
   const queryClient = useQueryClient();
 
   return useMutation({
-    mutationFn: (input: CreateExpressionInput) =>
+    mutationFn: (input: CreateExpressionDto) =>
       expressionApi.createExpression(input),
     onSuccess: (newExpression) => {
       // 更新表情列表缓存
@@ -75,21 +75,23 @@ export function useBatchCreateExpressions() {
   const queryClient = useQueryClient();
 
   return useMutation({
-    mutationFn: (inputs: CreateExpressionInput[]) =>
+    mutationFn: (inputs: CreateExpressionDto[]) =>
       expressionApi.batchCreateExpressions(inputs),
     onSuccess: (newExpressions) => {
       if (newExpressions.length > 0) {
-        const characterId = newExpressions[0].characterId;
+        const characterId = newExpressions[0]?.characterId;
+        
+        if (characterId) {
+          // 更新表情列表缓存
+          queryClient.invalidateQueries({
+            queryKey: expressionKeys.byCharacter(characterId),
+          });
 
-        // 更新表情列表缓存
-        queryClient.invalidateQueries({
-          queryKey: expressionKeys.byCharacter(characterId),
-        });
-
-        // 更新角色详情缓存
-        queryClient.invalidateQueries({
-          queryKey: characterKeys.detail(characterId),
-        });
+          // 更新角色详情缓存
+          queryClient.invalidateQueries({
+            queryKey: characterKeys.detail(characterId),
+          });
+        }
       }
     },
   });
@@ -107,7 +109,7 @@ export function useUpdateExpression() {
       input,
     }: {
       id: string;
-      input: UpdateExpressionInput;
+      input: UpdateExpressionDto;
     }) => expressionApi.updateExpression(id, input),
     onSuccess: (updatedExpression) => {
       // 更新单个表情缓存
@@ -193,12 +195,14 @@ export function useUpdateExpressionPriorities() {
       expressionApi.updatePriorities(updates),
     onSuccess: (updatedExpressions) => {
       if (updatedExpressions.length > 0) {
-        const characterId = updatedExpressions[0].characterId;
-
-        // 更新表情列表缓存
-        queryClient.invalidateQueries({
-          queryKey: expressionKeys.byCharacter(characterId),
-        });
+        const characterId = updatedExpressions[0]?.characterId;
+        
+        if (characterId) {
+          // 更新表情列表缓存
+          queryClient.invalidateQueries({
+            queryKey: expressionKeys.byCharacter(characterId),
+          });
+        }
       }
     },
   });
@@ -213,7 +217,7 @@ export function useUploadExpressionImage() {
   return useMutation({
     mutationFn: ({ id, file }: { id: string; file: File }) =>
       expressionApi.uploadExpressionImage(id, file),
-    onSuccess: (result, { id }) => {
+    onSuccess: (_, { id }) => {
       // 刷新表情详情
       queryClient.invalidateQueries({ queryKey: expressionKeys.detail(id) });
 

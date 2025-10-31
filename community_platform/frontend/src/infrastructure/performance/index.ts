@@ -70,4 +70,9 @@ export {
 export { usePerformanceObserver } from './use-performance-observer'
 
 // Bundle 分析
-export { BundleAnalyzer } from './bundle-analyzer'
+export { 
+  BundleSizeChecker,
+  BundleReportGenerator,
+  bundleAnalyzerConfig,
+  bundleSizebudget
+} from './bundle-analyzer'

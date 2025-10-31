@@ -9,7 +9,6 @@ import React, { useState } from 'react';
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from '@/shared/components/ui/dialog';
 import { Button } from '@/shared/components/ui/button';
 import { cn } from '@/shared/utils/cn';
-import { KEYBOARD_KEYS } from '@/shared/utils/accessibility';
 
 interface KeyboardShortcut {
   /** 快捷键组合 */

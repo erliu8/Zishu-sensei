@@ -53,14 +53,12 @@ const Button = React.forwardRef<HTMLButtonElement, ButtonProps>(
     ref
   ) => {
     const Comp = asChild ? Slot : 'button'
-    return (
-      <Comp
-        className={cn(buttonVariants({ variant, size, className }))}
-        ref={ref}
-        disabled={disabled || loading}
-        {...props}
-      >
-        {loading && (
+    
+    // 当 asChild 为 true 时，Slot 组件只能接受单个子元素
+    // 因此我们需要将 loading spinner 和 children 包装在一起
+    const content = (
+      <>
+        {loading && !asChild && (
           <svg
             className="animate-spin"
             xmlns="http://www.w3.org/2000/svg"
@@ -83,6 +81,17 @@ const Button = React.forwardRef<HTMLButtonElement, ButtonProps>(
           </svg>
         )}
         {children}
+      </>
+    )
+    
+    return (
+      <Comp
+        className={cn(buttonVariants({ variant, size, className }))}
+        ref={ref}
+        disabled={disabled || loading}
+        {...props}
+      >
+        {asChild ? children : content}
       </Comp>
     )
   }

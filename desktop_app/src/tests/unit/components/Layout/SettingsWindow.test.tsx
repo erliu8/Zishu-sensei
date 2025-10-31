@@ -30,30 +30,31 @@ import {
 } from '../../../utils/test-utils'
 import { createMockSettings } from '../../../mocks/factories'
 
+// 导入需要 mock 的 hooks
+import { useSettings } from '@/hooks/useSettings'
+import { useTauri } from '@/hooks/useTauri'
+import { useWindowManager } from '@/hooks/useWindowManager'
+import { Settings } from '@/components/Settings'
+
 // 导入实际的 SettingsWindow 组件
 import { SettingsWindow } from '../../../../components/Layout/SettingsWindow'
 
 // Mock 依赖
-const mockUseSettings = vi.fn()
-const mockUseTauri = vi.fn()
-const mockUseWindowManager = vi.fn()
-
 vi.mock('@/hooks/useSettings', () => ({
-  useSettings: mockUseSettings,
+  useSettings: vi.fn(),
 }))
 
 vi.mock('@/hooks/useTauri', () => ({
-  useTauri: mockUseTauri,
+  useTauri: vi.fn(),
 }))
 
 vi.mock('@/hooks/useWindowManager', () => ({
-  useWindowManager: mockUseWindowManager,
+  useWindowManager: vi.fn(),
 }))
 
 // Mock Settings 组件
-const MockSettings = vi.fn(() => <div data-testid="mock-settings">Settings Content</div>)
 vi.mock('@/components/Settings', () => ({
-  Settings: MockSettings,
+  Settings: vi.fn(() => <div data-testid="mock-settings">Settings Content</div>),
 }))
 
 // Mock framer-motion
@@ -91,15 +92,15 @@ describe('SettingsWindow 设置窗口组件', () => {
   // Mock 回调函数
   const mockOnClose = vi.fn()
   const mockInvoke = vi.fn()
-  const mockCenterWindow = vi.fn()
-  const mockFocusWindow = vi.fn()
-  const mockCloseWindow = vi.fn()
+  const mockCenterWindow = vi.fn().mockResolvedValue(undefined)
+  const mockFocusWindow = vi.fn().mockResolvedValue(undefined)
+  const mockCloseWindow = vi.fn().mockResolvedValue(undefined)
   
   beforeEach(() => {
     vi.clearAllMocks()
     
     // Mock hooks 返回值
-    mockUseSettings.mockReturnValue({
+    vi.mocked(useSettings).mockReturnValue({
       config: mockSettings,
       updateConfig: vi.fn(),
       isLoading: false,
@@ -107,14 +108,14 @@ describe('SettingsWindow 设置窗口组件', () => {
       clearError: vi.fn(),
     })
     
-    mockUseTauri.mockReturnValue({
+    vi.mocked(useTauri).mockReturnValue({
       isAvailable: true,
       invoke: mockInvoke,
     })
     
-    mockUseWindowManager.mockReturnValue({
-      centerWindow: mockCenterWindow,
-      focusWindow: mockFocusWindow,
+    vi.mocked(useWindowManager).mockReturnValue({
+      center: mockCenterWindow,
+      focus: mockFocusWindow,
       closeWindow: mockCloseWindow,
     })
     
@@ -214,7 +215,7 @@ describe('SettingsWindow 设置窗口组件', () => {
     })
     
     it('Tauri 不可用时应该正常工作', () => {
-      mockUseTauri.mockReturnValue({
+      vi.mocked(useTauri).mockReturnValue({
         isAvailable: false,
         invoke: vi.fn(),
       })
@@ -273,12 +274,14 @@ describe('SettingsWindow 设置窗口组件', () => {
       renderWithProviders(<SettingsWindow isOpen={true} onClose={mockOnClose} />)
       
       const preventDefault = vi.fn()
-      fireEvent.keyDown(window, { 
+      const event = new KeyboardEvent('keydown', { 
         key: 's', 
         code: 'KeyS', 
-        ctrlKey: true,
-        preventDefault 
+        ctrlKey: true 
       })
+      event.preventDefault = preventDefault
+      
+      window.dispatchEvent(event)
       
       expect(preventDefault).toHaveBeenCalled()
     })
@@ -324,7 +327,7 @@ describe('SettingsWindow 设置窗口组件', () => {
     it('应该渲染 Settings 组件', () => {
       renderWithProviders(<SettingsWindow onClose={mockOnClose} />)
       
-      expect(MockSettings).toHaveBeenCalled()
+      expect(vi.mocked(Settings)).toHaveBeenCalled()
     })
     
     it('应该传递正确的 props 给 Settings 组件', () => {
@@ -337,7 +340,7 @@ describe('SettingsWindow 设置窗口组件', () => {
         />
       )
       
-      expect(MockSettings).toHaveBeenCalledWith(
+      expect(vi.mocked(Settings)).toHaveBeenCalledWith(
         expect.objectContaining({
           initialTab: 'character',
           showHeader: false,
@@ -354,7 +357,7 @@ describe('SettingsWindow 设置窗口组件', () => {
   describe('错误处理测试', () => {
     it('应该显示设置加载错误', () => {
       const mockError = new Error('设置加载失败')
-      mockUseSettings.mockReturnValue({
+      vi.mocked(useSettings).mockReturnValue({
         config: mockSettings,
         updateConfig: vi.fn(),
         isLoading: false,
@@ -453,19 +456,19 @@ describe('SettingsWindow 设置窗口组件', () => {
     it('应该避免不必要的重新渲染', () => {
       const { rerender } = renderWithProviders(<SettingsWindow onClose={mockOnClose} />)
       
-      const initialCallCount = MockSettings.mock.calls.length
+      const initialCallCount = vi.mocked(Settings).mock.calls.length
       
       // 相同 props 重新渲染
       rerender(<SettingsWindow onClose={mockOnClose} />)
       
       // Settings 组件不应该被不必要地重新渲染
-      expect(MockSettings.mock.calls.length).toBeLessThanOrEqual(initialCallCount + 2)
+      expect(vi.mocked(Settings).mock.calls.length).toBeLessThanOrEqual(initialCallCount + 2)
     })
     
     it('窗口尺寸变化不应该导致过多重渲染', () => {
       renderWithProviders(<SettingsWindow onClose={mockOnClose} />)
       
-      const initialCallCount = MockSettings.mock.calls.length
+      const initialCallCount = vi.mocked(Settings).mock.calls.length
       
       // 触发多次 resize 事件
       for (let i = 0; i < 5; i++) {
@@ -473,7 +476,7 @@ describe('SettingsWindow 设置窗口组件', () => {
       }
       
       // 应该有合理的重渲染次数
-      expect(MockSettings.mock.calls.length).toBeLessThan(initialCallCount + 10)
+      expect(vi.mocked(Settings).mock.calls.length).toBeLessThan(initialCallCount + 10)
     })
     
     it('快速开关窗口应该正常处理', () => {
@@ -579,23 +582,23 @@ describe('SettingsWindow 设置窗口组件', () => {
     it('应该正确集成 useSettings hook', () => {
       renderWithProviders(<SettingsWindow onClose={mockOnClose} />)
       
-      expect(mockUseSettings).toHaveBeenCalled()
+      expect(vi.mocked(useSettings)).toHaveBeenCalled()
     })
     
     it('应该正确集成 useTauri hook', () => {
       renderWithProviders(<SettingsWindow onClose={mockOnClose} />)
       
-      expect(mockUseTauri).toHaveBeenCalled()
+      expect(vi.mocked(useTauri)).toHaveBeenCalled()
     })
     
     it('应该正确集成 useWindowManager hook', () => {
       renderWithProviders(<SettingsWindow onClose={mockOnClose} />)
       
-      expect(mockUseWindowManager).toHaveBeenCalled()
+      expect(vi.mocked(useWindowManager)).toHaveBeenCalled()
     })
     
     it('loading 状态应该正确处理', () => {
-      mockUseSettings.mockReturnValue({
+      vi.mocked(useSettings).mockReturnValue({
         config: mockSettings,
         updateConfig: vi.fn(),
         isLoading: true,

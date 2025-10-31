@@ -30,7 +30,7 @@ export function useAutoSave<T>({
 }: UseAutoSaveOptions<T>): UseAutoSaveReturn {
   const isSavingRef = useRef(false)
   const lastSavedAtRef = useRef<Date | null>(null)
-  const timeoutRef = useRef<NodeJS.Timeout>()
+  const timeoutRef = useRef<NodeJS.Timeout | null>(null)
   const previousDataRef = useRef<T>(data)
 
   const saveNow = useCallback(async () => {

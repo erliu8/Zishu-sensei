@@ -10,7 +10,6 @@ import { useRouter } from 'next/navigation';
 import { 
   ChevronLeft, 
   ChevronRight, 
-  Save, 
   Upload as UploadIcon, 
   CheckCircle2,
   AlertCircle,
@@ -20,13 +19,12 @@ import { Button } from '@/shared/components/ui/button';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/shared/components/ui/card';
 import { Progress } from '@/shared/components/ui/progress';
 import { Alert, AlertDescription, AlertTitle } from '@/shared/components/ui/alert';
-import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/shared/components/ui/tabs';
 import { Separator } from '@/shared/components/ui/separator';
 import { Badge } from '@/shared/components/ui/badge';
-import { MetadataEditor, type MetadataFormData } from './MetadataEditor';
+import { MetadataEditor } from './MetadataEditor';
 import { FileUploadZone, type FileItem } from './FileUploadZone';
 import { DependencyManager } from './DependencyManager';
-import { VersionPublish, type VersionFormData } from './VersionPublish';
+import { VersionPublish } from './VersionPublish';
 import type {
   AdapterMetadata,
   AdapterVersion,
@@ -142,15 +140,19 @@ export function AdapterUpload({
   const goNext = useCallback(() => {
     if (canGoNext) {
       const nextStep = steps[currentStepIndex + 1];
-      setCompletedSteps((prev) => new Set([...prev, currentStep]));
-      goToStep(nextStep.id);
+      if (nextStep) {
+        setCompletedSteps((prev) => new Set([...prev, currentStep]));
+        goToStep(nextStep.id);
+      }
     }
   }, [canGoNext, currentStep, currentStepIndex, goToStep]);
 
   const goPrevious = useCallback(() => {
     if (canGoPrevious) {
       const previousStep = steps[currentStepIndex - 1];
-      goToStep(previousStep.id);
+      if (previousStep) {
+        goToStep(previousStep.id);
+      }
     }
   }, [canGoPrevious, currentStepIndex, goToStep]);
 

@@ -211,8 +211,11 @@ export class CacheManager {
       
       // 删除最旧的 20%
       const toDelete = Math.ceil(entries.length * 0.2)
-      for (let i = 0; i < toDelete; i++) {
-        this.memoryCache.delete(entries[i][0])
+      for (let i = 0; i < toDelete && i < entries.length; i++) {
+        const entry = entries[i]
+        if (entry) {
+          this.memoryCache.delete(entry[0])
+        }
       }
     }
   }
@@ -438,8 +441,8 @@ export function withCache<T extends (...args: any[]) => Promise<any>>(
   config: Omit<CacheConfig, 'key'> & { keyGenerator: (...args: Parameters<T>) => string }
 ) {
   return function (
-    target: any,
-    propertyKey: string,
+    _target: any,
+    _propertyKey: string,
     descriptor: PropertyDescriptor
   ) {
     const originalMethod = descriptor.value

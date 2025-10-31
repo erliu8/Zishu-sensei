@@ -48,7 +48,7 @@ export class ApiError extends Error {
   /** 错误代码 */
   code: number;
   /** 错误消息 */
-  message: string;
+  override message: string;
   /** 原始响应 */
   response?: AxiosResponse;
   /** 请求配置 */
@@ -162,7 +162,7 @@ export type DownloadProgressCallback = (progressEvent: {
 /**
  * 请求配置扩展
  */
-export interface RequestConfig extends AxiosRequestConfig {
+export interface RequestConfig extends Omit<AxiosRequestConfig, 'data' | 'onUploadProgress' | 'onDownloadProgress'> {
   /** 是否跳过错误处理 */
   skipErrorHandler?: boolean;
   /** 是否跳过认证 */

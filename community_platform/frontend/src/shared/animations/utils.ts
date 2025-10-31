@@ -126,8 +126,11 @@ export const useInViewport = (
     const element = ref.current;
     if (!element) return;
 
-    const observer = new IntersectionObserver(([entry]) => {
-      setIsInViewport(entry.isIntersecting);
+    const observer = new IntersectionObserver((entries) => {
+      const entry = entries[0];
+      if (entry) {
+        setIsInViewport(entry.isIntersecting);
+      }
     }, options);
 
     observer.observe(element);
@@ -407,6 +410,8 @@ export const createAnimationSequence = (
     if (currentStep >= steps.length) return;
 
     const step = steps[currentStep];
+    if (!step) return;
+    
     step.callback();
 
     setTimeout(() => {

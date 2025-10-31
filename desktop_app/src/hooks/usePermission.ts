@@ -8,7 +8,7 @@
  * - 权限授权流程
  */
 
-import { useState, useEffect, useCallback, useMemo } from 'react';
+import { useState, useEffect, useCallback, useMemo, useRef } from 'react';
 import {
   Permission,
   PermissionGrant,
@@ -156,6 +156,9 @@ export function useEntityGrants(entityType: string, entityId: string) {
 
   // 统计信息
   const stats = useMemo(() => {
+    if (!grants || !Array.isArray(grants)) {
+      return { total: 0, active: 0, pending: 0, denied: 0, revoked: 0 };
+    }
     const total = grants.length;
     const active = grants.filter((g) => g.status === PermissionStatus.GRANTED).length;
     const pending = grants.filter((g) => g.status === PermissionStatus.PENDING).length;
@@ -359,12 +362,15 @@ export function usePermissionUsageLogs(
   const [offset, setOffset] = useState(0);
   const [hasMore, setHasMore] = useState(true);
 
+  const offsetRef = useRef(offset);
+  offsetRef.current = offset;
+
   const loadLogs = useCallback(
     async (reset = false) => {
       try {
         setLoading(true);
         setError(null);
-        const currentOffset = reset ? 0 : offset;
+        const currentOffset = reset ? 0 : offsetRef.current;
         const data = await permissionService.getPermissionUsageLogs({
           entityType,
           entityId,
@@ -388,7 +394,7 @@ export function usePermissionUsageLogs(
         setLoading(false);
       }
     },
-    [entityType, entityId, permissionType, limit, offset]
+    [entityType, entityId, permissionType, limit]
   );
 
   useEffect(() => {

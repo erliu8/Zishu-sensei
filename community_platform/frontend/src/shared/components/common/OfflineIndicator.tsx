@@ -26,9 +26,15 @@ export default function OfflineIndicator() {
       setIsSyncing(true)
 
       // 触发后台同步
-      if ('serviceWorker' in navigator && 'sync' in ServiceWorkerRegistration.prototype) {
+      if ('serviceWorker' in navigator) {
         navigator.serviceWorker.ready.then((registration) => {
-          return registration.sync.register('sync-data')
+          // 检查是否支持 Background Sync
+          if ('sync' in window.ServiceWorkerRegistration.prototype) {
+            return (registration as any).sync.register('sync-data')
+          } else {
+            console.log('[OfflineIndicator] Background sync not supported')
+            return Promise.resolve()
+          }
         }).then(() => {
           console.log('[OfflineIndicator] Background sync registered')
           setTimeout(() => setIsSyncing(false), 2000)

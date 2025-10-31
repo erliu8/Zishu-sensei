@@ -6,12 +6,13 @@
 import { cn } from '@/shared/utils'
 import React from 'react'
 
-export interface SidebarProps extends React.HTMLAttributes<HTMLElement> {
+export interface SidebarProps extends Omit<React.HTMLAttributes<HTMLElement>, 'children'> {
   position?: 'left' | 'right'
   width?: 'sm' | 'md' | 'lg'
   collapsible?: boolean
   defaultCollapsed?: boolean
   fixed?: boolean
+  children?: React.ReactNode | ((props: { isCollapsed: boolean }) => React.ReactNode)
 }
 
 const widthClasses = {

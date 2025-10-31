@@ -13,11 +13,10 @@ import { Label } from '@/shared/components/ui/label';
 import { Progress } from '@/shared/components/ui/progress';
 import { Badge } from '@/shared/components/ui/badge';
 import { Alert, AlertDescription } from '@/shared/components/ui/alert';
-import { FileUploader } from '@/shared/components/common';
+import { FileUploader } from '@/shared/components/common/FileUploader';
 import { useToast } from '@/shared/components/ui/use-toast';
 import {
   Upload,
-  FileCheck,
   AlertCircle,
   CheckCircle2,
   Info,
@@ -26,8 +25,7 @@ import {
   Image as ImageIcon,
 } from 'lucide-react';
 import { cn } from '@/shared/utils';
-import { useUploadModelFile, useValidateModel, useUploadModelThumbnail } from '../../hooks';
-import { ModelType } from '../../types';
+import { useUploadModelFile, useValidateModel } from '../../hooks';
 
 export interface Live2DUploadProps {
   /** 角色ID */
@@ -72,7 +70,6 @@ export const Live2DUpload: React.FC<Live2DUploadProps> = ({
   // Mutations
   const validateModelMutation = useValidateModel();
   const uploadModelMutation = useUploadModelFile();
-  const uploadThumbnailMutation = useUploadModelThumbnail();
 
   // 验证模型文件
   const validateModel = async (file: File): Promise<boolean> => {
@@ -131,6 +128,7 @@ export const Live2DUpload: React.FC<Live2DUploadProps> = ({
     if (files.length === 0) return;
 
     const file = files[0];
+    if (!file) return;
 
     // 检查文件类型（.model3.json 或 .zip）
     const isValidType =
@@ -162,7 +160,9 @@ export const Live2DUpload: React.FC<Live2DUploadProps> = ({
   // 处理缩略图选择
   const handleThumbnailFileChange = (files: File[]) => {
     if (files.length === 0) return;
-    setThumbnailFile(files[0]);
+    const file = files[0];
+    if (!file) return;
+    setThumbnailFile(file);
   };
 
   // 处理文件上传错误
@@ -208,30 +208,30 @@ export const Live2DUpload: React.FC<Live2DUploadProps> = ({
         onProgress: (progress) => {
           setUploadState((prev) => ({
             ...prev,
-            progress: progress.percentage,
-            message: `正在上传: ${progress.percentage}%`,
+            progress: progress,
+            message: `正在上传: ${Math.round(progress)}%`,
           }));
         },
       });
 
-      // 如果有缩略图，上传缩略图
-      if (thumbnailFile && uploadResult.modelId) {
+      // 如果有缩略图，上传缩略图  
+      if (thumbnailFile && uploadResult.modelUrl) {
         setUploadState((prev) => ({
           ...prev,
           message: '正在上传缩略图...',
         }));
 
-        await uploadThumbnailMutation.mutateAsync({
-          id: uploadResult.modelId,
-          file: thumbnailFile,
-        });
+        // TODO: 需要获取 modelId 来上传缩略图
+        // await uploadThumbnailMutation.mutateAsync({
+        //   id: uploadResult.modelId,
+        //   file: thumbnailFile,
+        // });
       }
 
       setUploadState({
         status: 'success',
         progress: 100,
         message: '上传成功！',
-        modelId: uploadResult.modelId,
         modelUrl: uploadResult.modelUrl,
       });
 
@@ -240,7 +240,7 @@ export const Live2DUpload: React.FC<Live2DUploadProps> = ({
         description: 'Live2D 模型已成功上传',
       });
 
-      onUploadSuccess?.(uploadResult.modelId, uploadResult.modelUrl);
+      onUploadSuccess?.('', uploadResult.modelUrl); // TODO: 需要返回实际的 modelId
     } catch (error) {
       const err = error instanceof Error ? error : new Error('上传失败');
 

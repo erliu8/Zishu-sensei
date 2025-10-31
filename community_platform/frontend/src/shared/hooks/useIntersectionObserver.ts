@@ -29,10 +29,10 @@ export function useIntersectionObserver<T extends HTMLElement = HTMLElement>(
 
     const observer = new IntersectionObserver(
       ([entry]) => {
-        setEntry(entry);
+        setEntry(entry || null);
 
         // 如果只触发一次且已经可见，则停止观察
-        if (triggerOnce && entry.isIntersecting) {
+        if (triggerOnce && entry?.isIntersecting) {
           observer.unobserve(element);
         }
       },

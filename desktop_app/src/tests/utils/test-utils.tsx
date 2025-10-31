@@ -5,11 +5,17 @@
  */
 
 import React, { ReactElement } from 'react'
-import { render, RenderOptions, RenderResult } from '@testing-library/react'
+import { render, RenderOptions, RenderResult, renderHook as rtlRenderHook, RenderHookOptions, RenderHookResult } from '@testing-library/react'
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query'
 import { BrowserRouter } from 'react-router-dom'
 import userEvent from '@testing-library/user-event'
 import { vi, beforeAll, afterAll, expect } from 'vitest'
+
+// 导入 mock 设置
+import '../mocks/tauri'
+import '../mocks/chatAPI'
+import '../mocks/tauriHook'
+import '../mocks/services'
 
 // ==================== 测试渲染包装器 ====================
 
@@ -85,6 +91,31 @@ export function renderWithProviders(
     user,
     ...render(ui, { wrapper: Wrapper, ...renderOptions }),
   }
+}
+
+/**
+ * 自定义 renderHook 函数 - 包含 providers
+ */
+interface CustomRenderHookOptions<Props> {
+  queryClient?: QueryClient
+  initialProps?: Props
+}
+
+export function renderHook<Result, Props = undefined>(
+  hook: (props: Props) => Result,
+  options?: CustomRenderHookOptions<Props>
+): RenderHookResult<Result, Props> {
+  const { queryClient, initialProps, ...otherOptions } = options || {}
+  
+  const Wrapper = ({ children }: { children: React.ReactNode }) => (
+    <AllProviders queryClient={queryClient}>{children}</AllProviders>
+  )
+  
+  return rtlRenderHook(hook, { 
+    wrapper: Wrapper, 
+    initialProps,
+    ...otherOptions 
+  } as any)
 }
 
 // ==================== 等待工具 ====================
@@ -435,6 +466,7 @@ export function suppressConsoleError() {
 export default {
   // 渲染工具
   renderWithProviders,
+  renderHook,
   createTestQueryClient,
   AllProviders,
   

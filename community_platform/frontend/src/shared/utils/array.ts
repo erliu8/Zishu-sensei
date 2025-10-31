@@ -83,7 +83,9 @@ export function shuffle<T>(arr: T[]): T[] {
   const result = [...arr];
   for (let i = result.length - 1; i > 0; i--) {
     const j = Math.floor(Math.random() * (i + 1));
-    [result[i], result[j]] = [result[j], result[i]];
+    const temp = result[i]!;
+    result[i] = result[j]!;
+    result[j] = temp;
   }
   return result;
 }
@@ -117,7 +119,7 @@ export function sampleSize<T>(arr: T[], count: number): T[] {
  */
 export function intersection<T>(...arrays: T[][]): T[] {
   if (arrays.length === 0) return [];
-  if (arrays.length === 1) return arrays[0];
+  if (arrays.length === 1) return arrays[0] || [];
 
   return arrays.reduce((acc, arr) => {
     return acc.filter((item) => arr.includes(item));
@@ -248,7 +250,9 @@ export function sortByKey<T>(
 export function move<T>(arr: T[], from: number, to: number): T[] {
   const result = [...arr];
   const [item] = result.splice(from, 1);
-  result.splice(to, 0, item);
+  if (item !== undefined) {
+    result.splice(to, 0, item);
+  }
   return result;
 }
 

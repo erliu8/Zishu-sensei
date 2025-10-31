@@ -1,7 +1,7 @@
 'use client';
 
 import React, { useState } from 'react';
-import { Bell, Check, Settings, Trash2 } from 'lucide-react';
+import { Bell, Check, Settings } from 'lucide-react';
 import { Button } from '@/shared/components/ui/button';
 import {
   DropdownMenu,
@@ -14,6 +14,7 @@ import { Separator } from '@/shared/components/ui/separator';
 import { cn } from '@/shared/utils';
 import { NotificationBadge } from './NotificationBadge';
 import { NotificationList } from './NotificationList';
+import { NotificationStatus } from '../domain/notification';
 import {
   useNotifications,
   useUnreadCount,
@@ -22,7 +23,6 @@ import {
   useDeleteNotification,
   useArchiveNotification,
 } from '../hooks/useNotifications';
-import { useNotificationStore } from '../store/notificationStore';
 import Link from 'next/link';
 
 interface NotificationCenterProps {
@@ -49,7 +49,7 @@ export function NotificationCenter({ className }: NotificationCenterProps) {
   const { data: unreadNotifications } = useNotifications({
     page: 1,
     pageSize: 20,
-    status: 'unread',
+    status: NotificationStatus.UNREAD,
   });
 
   // Mutations

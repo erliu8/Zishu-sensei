@@ -3,8 +3,8 @@
  * 打包配置领域模型
  */
 
-import type {
-  PackageConfig,
+import {
+  type PackageConfig,
   PackagingPlatform,
   PackagingArchitecture,
   PackagingFormat,

@@ -36,7 +36,7 @@ export function useFollow() {
 
   return useMutation({
     mutationFn: (input: CreateFollowInput) => followApiClient.follow(input),
-    onSuccess: (data, variables) => {
+    onSuccess: (_, variables) => {
       // 使相关查询失效
       queryClient.invalidateQueries({ queryKey: followKeys.check(variables.followeeId) });
       queryClient.invalidateQueries({ queryKey: followKeys.stats(variables.followeeId) });
@@ -66,7 +66,7 @@ export function useUnfollow() {
 
   return useMutation({
     mutationFn: (followeeId: string) => followApiClient.unfollow(followeeId),
-    onSuccess: (data, followeeId) => {
+    onSuccess: (_, followeeId) => {
       queryClient.invalidateQueries({ queryKey: followKeys.check(followeeId) });
       queryClient.invalidateQueries({ queryKey: followKeys.stats(followeeId) });
       queryClient.invalidateQueries({ queryKey: followKeys.following('current') });
@@ -233,7 +233,6 @@ export function useRecommendedUsers(limit: number = 10) {
  * 切换关注状态（关注/取消关注）
  */
 export function useToggleFollow() {
-  const queryClient = useQueryClient();
   const followMutation = useFollow();
   const unfollowMutation = useUnfollow();
 

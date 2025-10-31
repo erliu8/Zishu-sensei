@@ -6,8 +6,8 @@
 // 导出类型
 export * from './types';
 
-// 导出领域模型
-export * from './domain';
+// 导出领域模型 (排除User接口以避免冲突)
+export { User as UserClass } from './domain';
 
 // 导出 API
 export * from './api';
