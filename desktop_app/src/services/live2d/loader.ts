@@ -3728,7 +3728,7 @@ export class Live2DModelLoader {
 
     // 隐藏当前模型
     if (this.currentModel && this.currentModel.config.id !== modelId) {
-      this.currentModel.model.visible = false
+      (this.currentModel.model as any).visible = false
     }
 
     // 显示目标模型
@@ -3792,7 +3792,7 @@ export class Live2DModelLoader {
       return
     }
 
-    modelInstance.model.position.set(x, y)
+    (modelInstance.model as any).position.set(x, y)
     modelInstance.renderConfig.position = { x, y }
     
     // 标记用户已手动调整位置
@@ -3812,8 +3812,12 @@ export class Live2DModelLoader {
     if (!modelInstance || !modelInstance.model) return
 
     // 限制缩放范围
-    const clampedScale = Math.max(0.1, Math.min(5.0, scale))
-    modelInstance.model.scale.set(clampedScale)
+    let clampedScale: number = scale
+    if (clampedScale < 0.1) clampedScale = 0.1
+    if (clampedScale > 5.0) clampedScale = 5.0
+    
+    const modelScale = modelInstance.model as any
+    modelScale.scale.set(clampedScale)
     modelInstance.renderConfig.scale = clampedScale
     
     // 标记用户已手动调整缩放
@@ -3838,11 +3842,11 @@ export class Live2DModelLoader {
 
     // 尝试从不同的地方获取缩放值
     let scaleValue = modelInstance.renderConfig?.scale
-    if (scaleValue === undefined && model.scale) {
-      if (typeof model.scale === 'number') {
-        scaleValue = model.scale
-      } else if (typeof model.scale.x === 'number') {
-        scaleValue = model.scale.x
+    if (scaleValue === undefined && (model as any).scale) {
+      if (typeof (model as any).scale === 'number') {
+        scaleValue = (model as any).scale
+      } else if (typeof (model as any).scale.x === 'number') {
+        scaleValue = (model as any).scale.x
       }
     }
 
@@ -3852,8 +3856,8 @@ export class Live2DModelLoader {
     }
 
     return {
-      x: model.position?.x || 0,
-      y: model.position?.y || 0,
+      x: (model as any).position?.x || 0,
+      y: (model as any).position?.y || 0,
       scale: scaleValue
     }
   }
