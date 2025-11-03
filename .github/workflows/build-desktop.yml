@@ -35,6 +35,12 @@ jobs:
       - name: 检出代码
         uses: actions/checkout@v4
 
+      - name: 清理平台特定的锁文件
+        run: |
+          # 删除可能存在的 package-lock.json，让 npm 根据当前平台重新生成
+          rm -f desktop_app/package-lock.json
+          rm -f package-lock.json
+
       - name: 设置 Node.js
         uses: actions/setup-node@v4
         with:
