@@ -70,7 +70,11 @@ jobs:
           npm cache clean --force
           # 重新安装依赖，确保平台特定包正确安装
           npm install --force
+          # 检查平台特定的Tauri CLI包是否安装
+          echo "检查已安装的Tauri CLI包:"
+          ls -la node_modules/@tauri-apps/ || echo "Tauri apps目录不存在"
           # 验证Tauri CLI安装
+          echo "验证Tauri CLI版本:"
           npx tauri --version
 
       - name: 构建 Tauri 应用
