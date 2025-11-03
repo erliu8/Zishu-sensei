@@ -35,7 +35,16 @@ jobs:
       - name: 检出代码
         uses: actions/checkout@v4
 
-      - name: 清理平台特定的锁文件
+      - name: 清理平台特定的锁文件（Windows）
+        if: runner.os == 'Windows'
+        run: |
+          # 删除可能存在的 package-lock.json，让 npm 根据当前平台重新生成
+          if (Test-Path "desktop_app/package-lock.json") { Remove-Item "desktop_app/package-lock.json" -Force }
+          if (Test-Path "package-lock.json") { Remove-Item "package-lock.json" -Force }
+        shell: pwsh
+
+      - name: 清理平台特定的锁文件（Unix）
+        if: runner.os != 'Windows'
         run: |
           # 删除可能存在的 package-lock.json，让 npm 根据当前平台重新生成
           rm -f desktop_app/package-lock.json
