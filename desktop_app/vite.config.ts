@@ -1,4 +1,4 @@
-import react from '@vitejs/plugin-react-swc'
+import react from '@vitejs/plugin-react'
 import { resolve } from 'path'
 import { defineConfig } from 'vitest/config'
 import type { Plugin } from 'vite'
@@ -108,12 +108,7 @@ function pixiJSFixPlugin(): Plugin {
 export default defineConfig(({ mode }) => ({
     plugins: [
         pixiJSFixPlugin(), // PixiJS 修复插件 - 必须在 react 插件之前
-        react({
-            // 启用 SWC 装饰器支持（如需）
-            // plugins: [
-            //   ['@swc/plugin-styled-components', {}],
-            // ],
-        }),
+        react(),
     ],
     
     // 开发模式下禁用 TypeScript 检查以提高 HMR 性能
