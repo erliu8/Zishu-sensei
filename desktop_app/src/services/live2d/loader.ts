@@ -2525,7 +2525,7 @@ export class Live2DModelLoader {
       }
       
       // 🚨 [EMERGENCY FIX] 强制确保模型可见
-      model.visible = true
+      (model as any).visible = true
       model.alpha = 1.0
       ;(model as any).renderable = true
       if ((model as any).cullable !== undefined) {
@@ -2778,10 +2778,10 @@ export class Live2DModelLoader {
     
     // 🔧 强制设置pivot为模型中心（确保模型正确居中）
     try {
-      const modelBounds = model.getBounds()
+      const modelBounds = (model as any).getBounds()
       const pivotX = modelBounds.width / 2
       const pivotY = modelBounds.height / 2
-      model.pivot.set(pivotX, pivotY)
+      ;(model as any).pivot.set(pivotX, pivotY)
       console.log(`✅ [DEBUG] 模型pivot设置完成: (${pivotX}, ${pivotY})`)
       console.log(`✅ [DEBUG] 模型边界: x=${modelBounds.x}, y=${modelBounds.y}, w=${modelBounds.width}, h=${modelBounds.height}`)
     } catch (e) {
@@ -2804,7 +2804,7 @@ export class Live2DModelLoader {
       const canvasHeight = rendererAny.height || 600
       
       // 获取模型当前边界（应用pivot后）
-      const modelBounds = model.getBounds()
+      const modelBounds = (model as any).getBounds()
       const modelWidth = modelBounds.width
       const modelHeight = modelBounds.height
       
@@ -2833,12 +2833,12 @@ export class Live2DModelLoader {
       finalScale = 0.1
     }
     
-    model.scale.set(finalScale)
+    ;(model as any).scale.set(finalScale)
     console.log(`🎯 应用模型缩放: ${finalScale.toFixed(3)} (用户调整过: ${userAdjustedScale})`)
     
     // 🔍 [DEBUG] 检查模型边界
     try {
-      const bounds = model.getBounds()
+      const bounds = (model as any).getBounds()
       console.log(`📐 [DEBUG] 模型边界信息:`)
       console.log(`   - 边界: x=${bounds.x.toFixed(1)}, y=${bounds.y.toFixed(1)}, w=${bounds.width.toFixed(1)}, h=${bounds.height.toFixed(1)}`)
       console.log(`   - 右边界: ${(bounds.x + bounds.width).toFixed(1)}, 下边界: ${(bounds.y + bounds.height).toFixed(1)}`)
@@ -2876,12 +2876,12 @@ export class Live2DModelLoader {
       console.log(`🎯 [DEBUG] 自动居中计算: x=${targetX}, y=${targetY}`)
     } else if (userAdjustedPosition) {
       // 如果用户调整过位置，使用模型当前位置而不是配置中的位置
-      targetX = model.position.x
-      targetY = model.position.y
+      targetX = (model as any).position.x
+      targetY = (model as any).position.y
       console.log(`🎯 [DEBUG] 保持用户调整的位置: x=${targetX}, y=${targetY}`)
     }
     
-    model.position.set(targetX, targetY)
+    (model as any).position.set(targetX, targetY)
     
     // 🔧 [FIX] 更新 renderConfig 以保持一致性
     renderConfig.position = { x: targetX, y: targetY }
@@ -2896,13 +2896,13 @@ export class Live2DModelLoader {
     
     // 🔧 [DEBUG] 输出最终位置信息
     console.log('🎯 [DEBUG] 模型最终定位:', {
-      position: { x: model.x, y: model.y },
+      position: { x: (model as any).x, y: (model as any).y },
       anchor: (model as any).anchor ? { x: (model as any).anchor.x, y: (model as any).anchor.y } : 'N/A',
-      pivot: { x: model.pivot.x, y: model.pivot.y }
+      pivot: { x: (model as any).pivot.x, y: (model as any).pivot.y }
     })
     
     // 设置透明度
-    model.alpha = renderConfig.opacity
+    (model as any).alpha = renderConfig.opacity
     console.log(`🎨 [DEBUG] 模型透明度设置: ${renderConfig.opacity}`)
 
     // 配置内部模型设置
@@ -3045,7 +3045,7 @@ export class Live2DModelLoader {
       if (!this.app || !this.app.renderer || !model) return
 
       console.log('🎨 [FINALIZE] 开始最终化模型位置:', {
-        currentPosition: { x: model.x, y: model.y },
+        currentPosition: { x: (model as any).x, y: (model as any).y },
         configPosition: renderConfig.position,
         rendererSize: { width: (this.app.renderer as any).width, height: (this.app.renderer as any).height }
       })
@@ -3058,12 +3058,12 @@ export class Live2DModelLoader {
       // renderConfig.position 已经是正确的值，模型位置也已经设置好了
       // 这里只需要确保模型可见性和交互性
       
-      console.log('🎨 [FINALIZE] 保持当前位置，不重新计算:', { x: model.x, y: model.y })
+      console.log('🎨 [FINALIZE] 保持当前位置，不重新计算:', { x: (model as any).x, y: (model as any).y })
 
       // 🔧 [FIX] 强制确保模型完全可见和正确定位
-      model.alpha = renderConfig.opacity
-      model.visible = true
-      model.renderable = true
+      (model as any).alpha = renderConfig.opacity
+      (model as any).visible = true
+      (model as any).renderable = true
       ;(model as any).interactive = true
 
       // 🔧 [FIX] 验证模型在stage中（不再重复添加）
@@ -3071,7 +3071,7 @@ export class Live2DModelLoader {
       console.log('🔍 [DEBUG] 模型在 stage 中:', isInStage, ', stage children 数量:', this.app.stage.children.length)
 
       // 🔧 [FIX] 强制更新变换矩阵
-      model.updateTransform()
+      (model as any).updateTransform()
 
       // 触发多次即时渲染确保显示
       for (let i = 0; i < 5; i++) {
@@ -3732,7 +3732,7 @@ export class Live2DModelLoader {
     }
 
     // 显示目标模型
-    modelInstance.model.visible = true
+    modelInstance.(model as any).visible = true
     this.currentModel = modelInstance
 
     return modelInstance

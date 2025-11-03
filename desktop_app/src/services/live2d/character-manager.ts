@@ -545,14 +545,14 @@ export class CharacterResourceManager {
   private updateModelDisplay(modelInstance: Live2DModelInstance): void {
     const { model, renderConfig } = modelInstance
     
-    // 更新缩放
-    model.scale.set(renderConfig.scale)
+    // 更新缩放 - 使用类型断言来访问 PIXI 属性
+    ;(model as any).scale.set(renderConfig.scale)
     
     // 更新位置
-    model.position.set(renderConfig.position.x, renderConfig.position.y)
+    ;(model as any).position.set(renderConfig.position.x, renderConfig.position.y)
     
     // 更新透明度
-    model.alpha = renderConfig.opacity
+    ;(model as any).alpha = renderConfig.opacity
   }
 
   /**
@@ -562,8 +562,8 @@ export class CharacterResourceManager {
     const modelInstance = this.loadedCharacters.get(characterId)
     if (modelInstance) {
       // 从舞台移除
-      if (modelInstance.model.parent) {
-        modelInstance.model.parent.removeChild(modelInstance.model)
+      if ((modelInstance.model as any).parent) {
+        (modelInstance.model as any).parent.removeChild(modelInstance.model)
       }
 
       // 销毁模型

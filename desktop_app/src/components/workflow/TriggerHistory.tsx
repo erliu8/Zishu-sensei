@@ -143,7 +143,7 @@ const TriggerHistory: React.FC<TriggerHistoryProps> = ({ workflowId, triggerId }
               size="small"
               placeholder="搜索..."
               value={searchTerm}
-              onChange={(e) => setSearchTerm(e.target.value)}
+              onChange={(e: React.ChangeEvent<HTMLInputElement>) => setSearchTerm(e.target.value)}
               InputProps={{
                 startAdornment: (
                   <InputAdornment position="start">
@@ -227,14 +227,14 @@ const TriggerHistory: React.FC<TriggerHistoryProps> = ({ workflowId, triggerId }
           component="div"
           count={filteredHistory.length}
           page={page}
-          onPageChange={(_, newPage) => setPage(newPage)}
+          onPageChange={(_: unknown, newPage: number) => setPage(newPage)}
           rowsPerPage={rowsPerPage}
-          onRowsPerPageChange={(e) => {
+          onRowsPerPageChange={(e: React.ChangeEvent<HTMLInputElement>) => {
             setRowsPerPage(parseInt(e.target.value, 10));
             setPage(0);
           }}
           labelRowsPerPage="每页行数:"
-          labelDisplayedRows={({ from, to, count }) => `${from}-${to} 共 ${count}`}
+          labelDisplayedRows={({ from, to, count }: { from: number; to: number; count: number }) => `${from}-${to} 共 ${count}`}
         />
       </CardContent>
     </Card>

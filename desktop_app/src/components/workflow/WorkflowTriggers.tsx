@@ -245,7 +245,7 @@ const WorkflowTriggers: React.FC<WorkflowTriggersProps> = ({ workflowId }) => {
       )}
 
       <Box sx={{ borderBottom: 1, borderColor: 'divider', mb: 2 }}>
-        <Tabs value={activeTab} onChange={(_, v) => setActiveTab(v)}>
+        <Tabs value={activeTab} onChange={(_: React.SyntheticEvent, v: number) => setActiveTab(v)}>
           <Tab icon={<EventIcon />} label="事件触发器" />
           <Tab icon={<WebhookIcon />} label="Webhook" />
           <Tab icon={<ScheduleIcon />} label="定时任务" />
@@ -428,7 +428,7 @@ const WorkflowTriggers: React.FC<WorkflowTriggersProps> = ({ workflowId }) => {
             <InputLabel>事件类型</InputLabel>
             <Select
               value={newEventTrigger.event_type}
-              onChange={(e) =>
+              onChange={(e: React.ChangeEvent<HTMLInputElement>) =>
                 setNewEventTrigger({
                   ...newEventTrigger,
                   event_type: e.target.value as EventType,
@@ -448,7 +448,7 @@ const WorkflowTriggers: React.FC<WorkflowTriggersProps> = ({ workflowId }) => {
             fullWidth
             label="描述"
             value={newEventTrigger.description}
-            onChange={(e) =>
+            onChange={(e: React.ChangeEvent<HTMLInputElement>) =>
               setNewEventTrigger({ ...newEventTrigger, description: e.target.value })
             }
             sx={{ mt: 2 }}
@@ -460,7 +460,7 @@ const WorkflowTriggers: React.FC<WorkflowTriggersProps> = ({ workflowId }) => {
             fullWidth
             label="条件表达式 (可选)"
             value={newEventTrigger.condition}
-            onChange={(e) =>
+            onChange={(e: React.ChangeEvent<HTMLInputElement>) =>
               setNewEventTrigger({ ...newEventTrigger, condition: e.target.value })
             }
             sx={{ mt: 2 }}
@@ -472,7 +472,7 @@ const WorkflowTriggers: React.FC<WorkflowTriggersProps> = ({ workflowId }) => {
             control={
               <Switch
                 checked={newEventTrigger.enabled}
-                onChange={(e) =>
+                onChange={(e: React.ChangeEvent<HTMLInputElement>) =>
                   setNewEventTrigger({ ...newEventTrigger, enabled: e.target.checked })
                 }
               />
@@ -502,7 +502,7 @@ const WorkflowTriggers: React.FC<WorkflowTriggersProps> = ({ workflowId }) => {
             fullWidth
             label="密钥 (可选)"
             value={newWebhookConfig.secret || ''}
-            onChange={(e) =>
+            onChange={(e: React.ChangeEvent<HTMLInputElement>) =>
               setNewWebhookConfig({ ...newWebhookConfig, secret: e.target.value || undefined })
             }
             sx={{ mt: 2 }}
@@ -514,11 +514,11 @@ const WorkflowTriggers: React.FC<WorkflowTriggersProps> = ({ workflowId }) => {
             fullWidth
             label="IP 白名单 (可选)"
             value={newWebhookConfig.allowed_ips?.join(', ') || ''}
-            onChange={(e) =>
+            onChange={(e: React.ChangeEvent<HTMLInputElement>) =>
               setNewWebhookConfig({
                 ...newWebhookConfig,
                 allowed_ips: e.target.value
-                  ? e.target.value.split(',').map((ip) => ip.trim())
+                  ? e.target.value.split(',').map((ip: string) => ip.trim())
                   : undefined,
               })
             }
@@ -532,7 +532,7 @@ const WorkflowTriggers: React.FC<WorkflowTriggersProps> = ({ workflowId }) => {
             label="超时时间 (秒)"
             type="number"
             value={newWebhookConfig.timeout_seconds}
-            onChange={(e) =>
+            onChange={(e: React.ChangeEvent<HTMLInputElement>) =>
               setNewWebhookConfig({
                 ...newWebhookConfig,
                 timeout_seconds: parseInt(e.target.value) || 30,
@@ -545,7 +545,7 @@ const WorkflowTriggers: React.FC<WorkflowTriggersProps> = ({ workflowId }) => {
             control={
               <Switch
                 checked={newWebhookConfig.require_auth}
-                onChange={(e) =>
+                onChange={(e: React.ChangeEvent<HTMLInputElement>) =>
                   setNewWebhookConfig({ ...newWebhookConfig, require_auth: e.target.checked })
                 }
               />
@@ -575,7 +575,7 @@ const WorkflowTriggers: React.FC<WorkflowTriggersProps> = ({ workflowId }) => {
             <InputLabel>事件类型</InputLabel>
             <Select
               value={manualEventType}
-              onChange={(e) => setManualEventType(e.target.value as EventType)}
+              onChange={(e: React.ChangeEvent<HTMLInputElement>) => setManualEventType(e.target.value as EventType)}
               label="事件类型"
             >
               {eventTypes.map((type) => (
@@ -590,7 +590,7 @@ const WorkflowTriggers: React.FC<WorkflowTriggersProps> = ({ workflowId }) => {
             fullWidth
             label="事件数据 (JSON)"
             value={manualEventData}
-            onChange={(e) => setManualEventData(e.target.value)}
+            onChange={(e: React.ChangeEvent<HTMLInputElement>) => setManualEventData(e.target.value)}
             sx={{ mt: 2 }}
             multiline
             rows={6}
