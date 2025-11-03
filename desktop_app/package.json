@@ -166,8 +166,8 @@
     "devDependencies": {
         "@playwright/test": "^1.56.1",
         "@tailwindcss/aspect-ratio": "^0.4.2",
-        "@tailwindcss/forms": "^0.5.7",
-        "@tailwindcss/typography": "^0.5.10",
+        "@tailwindcss/forms": "^0.5.9",
+        "@tailwindcss/typography": "^0.5.15",
         "@tauri-apps/cli": "^1.6.0",
         "@testing-library/jest-dom": "^6.1.5",
         "@testing-library/react": "^14.1.2",
