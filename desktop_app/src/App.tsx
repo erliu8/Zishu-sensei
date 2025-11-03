@@ -689,7 +689,17 @@ const App: React.FC = () => {
     // ==================== 主渲染 ====================
     return (
         <ErrorBoundary
-            FallbackComponent={ErrorFallback}
+            fallbackRender={({ error, resetErrorBoundary }) => (
+                <ErrorFallback
+                    error={{
+                        message: error.message,
+                        stack: error.stack,
+                        timestamp: Date.now(),
+                    }}
+                    resetError={resetErrorBoundary}
+                    onRestart={() => window.location.reload()}
+                />
+            )}
             onError={handleError}
             onReset={() => setAppState(prev => ({ ...prev, hasError: false, lastError: null }))}
         >
