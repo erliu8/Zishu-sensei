@@ -67,7 +67,7 @@ export interface SelectOptionGroup {
 /**
  * Select 组件属性
  */
-export interface SelectProps extends Omit<React.HTMLAttributes<HTMLDivElement>, 'onChange'> {
+export interface SelectProps extends Omit<React.HTMLAttributes<HTMLDivElement>, 'onChange' | 'defaultValue'> {
   /** 选项列表 */
   options?: SelectOption[]
   
@@ -106,6 +106,9 @@ export interface SelectProps extends Omit<React.HTMLAttributes<HTMLDivElement>, 
   
   /** 是否只读 */
   readOnly?: boolean
+  
+  /** 是否必填 */
+  required?: boolean
   
   /** 标签文本 */
   label?: string
@@ -186,6 +189,7 @@ export const Select = forwardRef<HTMLDivElement, SelectProps>(({
   clearable = false,
   disabled = false,
   readOnly = false,
+  required = false,
   label,
   helperText,
   errorText,
@@ -206,7 +210,7 @@ export const Select = forwardRef<HTMLDivElement, SelectProps>(({
   onOpenChange,
   className,
   ...props
-}, ref) => {
+}) => {
   const [isOpen, setIsOpen] = useState(false)
   const [searchQuery, setSearchQuery] = useState('')
   const [internalValue, setInternalValue] = useState(() => {
@@ -521,7 +525,7 @@ export const Select = forwardRef<HTMLDivElement, SelectProps>(({
       {label && (
         <label id={`${selectId}-label`} className="block text-sm font-medium text-gray-700">
           {label}
-          {props.required && <span className="text-red-500 ml-1">*</span>}
+          {required && <span className="text-red-500 ml-1">*</span>}
         </label>
       )}
       

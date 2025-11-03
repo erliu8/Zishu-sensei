@@ -16,7 +16,6 @@ import {
   StarOff,
   Search, 
   Trash2, 
-  FolderPlus,
   Tag,
   Calendar,
   X,
@@ -99,8 +98,8 @@ const truncateText = (text: string, maxLength: number): string => {
 export const MessageFavorites: React.FC<MessageFavoritesProps> = ({
   favorites,
   onToggleFavorite,
-  onAddTag,
-  onRemoveTag,
+  // onAddTag,
+  // onRemoveTag,
   onUpdateNote,
   onDeleteFavorite,
   onJumpToMessage,

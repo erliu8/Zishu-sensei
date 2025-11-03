@@ -16,6 +16,7 @@ import {
   Search,
   Menu,
   X,
+  Download,
 } from 'lucide-react';
 import { Button } from '@/shared/components/ui/button';
 import { cn } from '@/shared/utils/cn';
@@ -54,6 +55,11 @@ const navItems: NavItem[] = [
     label: '角色',
     href: '/characters',
     icon: <Users className="h-4 w-4" />,
+  },
+  {
+    label: '下载',
+    href: '/downloads',
+    icon: <Download className="h-4 w-4" />,
   },
 ];
 

@@ -8,6 +8,7 @@ import tempfile
 import zipfile
 import hashlib
 from typing import Optional, Dict, Any
+from sqlalchemy.ext.asyncio import AsyncSession
 from sqlalchemy.orm import Session
 from datetime import datetime
 import uuid
@@ -29,18 +30,22 @@ class PackagingService:
     STORAGE_URL_PREFIX = os.getenv("STORAGE_URL_PREFIX", "https://storage.zishu.ai")
     
     @staticmethod
-    def create_task(
-        db: Session,
+    async def create_task(
+        db: AsyncSession,
         task_data: PackagingTaskCreate,
         user: User
     ) -> PackagingTask:
         """创建打包任务"""
+        from sqlalchemy import select
+        
         # 验证配置
         config = task_data.config
         
         # 验证适配器ID是否存在
         for adapter_id in config.adapters:
-            adapter = db.query(Adapter).filter(Adapter.id == adapter_id).first()
+            stmt = select(Adapter).where(Adapter.id == adapter_id)
+            result = await db.execute(stmt)
+            adapter = result.scalar_one_or_none()
             if not adapter:
                 raise BadRequestException(f"适配器 {adapter_id} 不存在")
         
@@ -56,22 +61,84 @@ class PackagingService:
         )
         
         db.add(task)
-        db.commit()
-        db.refresh(task)
+        await db.commit()
+        await db.refresh(task)
         
         # 异步启动打包任务
-        from app.tasks.packaging import create_package_task
-        create_package_task.delay(task_id)
+        try:
+            from app.tasks.packaging import create_package_task
+            create_package_task.delay(task_id)
+        except ImportError:
+            # 如果 celery 不可用，直接同步执行（开发环境）
+            import threading
+            def run_packaging():
+                try:
+                    result = PackagingService.execute_packaging(
+                        task_id=task_id,
+                        config=config.model_dump(),
+                        platform=task_data.platform
+                    )
+                    if result["success"]:
+                        PackagingService.update_task_status(
+                            db=db,
+                            task_id=task_id,
+                            status="completed",
+                            progress=100,
+                            download_url=result["download_url"],
+                            file_size=result["file_size"],
+                            file_hash=result["file_hash"]
+                        )
+                    else:
+                        PackagingService.update_task_status(
+                            db=db,
+                            task_id=task_id,
+                            status="failed",
+                            error_message=result["error"]
+                        )
+                except Exception as e:
+                    PackagingService.update_task_status(
+                        db=db,
+                        task_id=task_id,
+                        status="failed",
+                        error_message=str(e)
+                    )
+            
+            # 在后台线程中执行
+            thread = threading.Thread(target=run_packaging)
+            thread.daemon = True
+            thread.start()
         
         return task
     
     @staticmethod
-    def get_task(
-        db: Session,
+    async def get_task(
+        db: AsyncSession,
         task_id: str,
         user: Optional[User] = None
     ) -> PackagingTask:
         """获取打包任务"""
+        from sqlalchemy import select
+        
+        stmt = select(PackagingTask).where(PackagingTask.id == task_id)
+        result = await db.execute(stmt)
+        task = result.scalar_one_or_none()
+        
+        if not task:
+            raise NotFoundException(f"打包任务 {task_id} 不存在")
+        
+        # 检查权限
+        if user and task.user_id != user.id and user.role != "admin":
+            raise BadRequestException("无权访问此打包任务")
+        
+        return task
+    
+    @staticmethod
+    def get_task_sync(
+        db: Session,
+        task_id: str,
+        user: Optional[User] = None
+    ) -> PackagingTask:
+        """获取打包任务（同步版本，用于Celery任务）"""
         task = db.query(PackagingTask).filter(PackagingTask.id == task_id).first()
         
         if not task:
@@ -84,37 +151,45 @@ class PackagingService:
         return task
     
     @staticmethod
-    def get_user_tasks(
-        db: Session,
+    async def get_user_tasks(
+        db: AsyncSession,
         user: User,
         page: int = 1,
         size: int = 20
     ):
         """获取用户的打包任务列表"""
-        query = db.query(PackagingTask).filter(
-            PackagingTask.user_id == user.id
-        ).order_by(PackagingTask.created_at.desc())
+        from sqlalchemy import select, func
         
-        total = query.count()
+        # 查询总数
+        count_stmt = select(func.count(PackagingTask.id)).where(PackagingTask.user_id == user.id)
+        count_result = await db.execute(count_stmt)
+        total = count_result.scalar()
+        
+        # 查询任务列表
         offset = (page - 1) * size
-        tasks = query.offset(offset).limit(size).all()
+        stmt = select(PackagingTask).where(
+            PackagingTask.user_id == user.id
+        ).order_by(PackagingTask.created_at.desc()).offset(offset).limit(size)
+        
+        result = await db.execute(stmt)
+        tasks = list(result.scalars().all())
         
         return tasks, total
     
     @staticmethod
-    def cancel_task(
-        db: Session,
+    async def cancel_task(
+        db: AsyncSession,
         task_id: str,
         user: User
     ):
         """取消打包任务"""
-        task = PackagingService.get_task(db, task_id, user=user)
+        task = await PackagingService.get_task(db, task_id, user=user)
         
         if task.status in ["completed", "failed"]:
             raise BadRequestException("任务已完成或失败，无法取消")
         
         task.status = "cancelled"
-        db.commit()
+        await db.commit()
     
     @staticmethod
     def update_task_status(

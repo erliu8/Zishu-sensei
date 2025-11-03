@@ -359,12 +359,12 @@ export const SettingsWindow: React.FC<SettingsWindowProps> = ({
                             className
                         )}
                         style={{
-                            width: isMaximized ? '100%' : windowSize.width,
-                            height: isMaximized ? '100%' : windowSize.height,
+                            width: isMaximized ? '100%' : `${windowSize.width}px`,
+                            height: isMaximized ? '100%' : `${windowSize.height}px`,
                             transform: isMaximized
                                 ? 'none'
                                 : `translate(${windowPosition.x}px, ${windowPosition.y}px)`,
-                        }}
+                        } as React.CSSProperties}
                         initial={{ opacity: 0, scale: 0.95, y: 20 }}
                         animate={{ opacity: 1, scale: 1, y: 0 }}
                         exit={{ opacity: 0, scale: 0.95, y: 20 }}

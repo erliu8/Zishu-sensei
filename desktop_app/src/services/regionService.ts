@@ -10,9 +10,7 @@ import {
   RegionPreferences,
   RegionConfig,
   FormattedValue,
-  RegionError,
-  RegionFormatStats,
-  ConversionOptions
+  RegionFormatStats
 } from '../types/region';
 
 /**

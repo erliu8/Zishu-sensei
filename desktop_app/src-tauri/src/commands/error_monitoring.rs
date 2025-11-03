@@ -558,7 +558,7 @@ fn generate_error_id(name: &str, message: &str, component: Option<&str>) -> Stri
 
 /// 计算系统健康评分
 fn calculate_health_score(stats: &ErrorStatistics) -> u8 {
-    let mut score = 100;
+    let mut score: u8 = 100;
 
     // 基于错误数量扣分
     if stats.total_errors > 1000 {

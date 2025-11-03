@@ -148,9 +148,9 @@ export function useWindowSize(options: WindowSizeOptions = {}): WindowSize {
   const throttledUpdateSize = useMemo(() => {
     if (throttle === 0) return updateSize
     
-    let timeoutId: NodeJS.Timeout | undefined
     let lastExecution = 0
     let isThrottling = false
+    let _timeoutId: NodeJS.Timeout | null = null
     
     return () => {
       const now = Date.now()
@@ -164,10 +164,14 @@ export function useWindowSize(options: WindowSizeOptions = {}): WindowSize {
         isThrottling = true
         const remainingTime = throttle - (now - lastExecution)
         
-        timeoutId = setTimeout(() => {
+        if (_timeoutId) {
+          clearTimeout(_timeoutId)
+        }
+        _timeoutId = setTimeout(() => {
           updateSize()
           lastExecution = Date.now()
           isThrottling = false
+          _timeoutId = null
         }, remainingTime)
       }
       // 如果正在节流期间且已经设置了延时器，忽略这次调用

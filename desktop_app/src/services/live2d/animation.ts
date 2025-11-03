@@ -381,15 +381,24 @@ export class Live2DAnimationManager implements IAnimationManager {
       }
     }
 
-    // 监听动画完成事件
-    const model = this.modelInstance?.model
-    if (model) {
-      const onMotionFinish = () => {
-        model.off('motionFinish', onMotionFinish)
-        checkLoop()
+    // 使用定时器检查动画完成状态
+    const checkMotionFinish = () => {
+      const model = this.modelInstance?.model
+      if (model && model.internalModel && model.internalModel.motionManager) {
+        const motionManager = model.internalModel.motionManager as any
+        // 检查是否有正在播放的动作
+        const hasActiveMotion = motionManager.isFinished ? !motionManager.isFinished() : false
+        if (!hasActiveMotion) {
+          checkLoop()
+          return
+        }
       }
-      model.on('motionFinish', onMotionFinish)
+      // 如果动作还在播放，继续检查
+      setTimeout(checkMotionFinish, 100)
     }
+    
+    // 延迟一点时间开始检查，让动画有时间开始
+    setTimeout(checkMotionFinish, 100)
   }
 
   /**

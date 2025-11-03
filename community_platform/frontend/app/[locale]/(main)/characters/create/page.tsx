@@ -8,7 +8,6 @@
 import { useState, useEffect } from 'react';
 import { useRouter } from 'next/navigation';
 import { useCreateCharacter } from '@/features/character/hooks';
-import { useSession } from 'next-auth/react';
 import { useAuth } from '@/features/auth/hooks/useAuth';
 import {
   Button,
@@ -29,14 +28,12 @@ import type { CreateCharacterInput } from '@/features/character/domain';
 export default function CreateCharacterPage() {
   const router = useRouter();
   const { toast } = useToast();
-  const { status: sessionStatus } = useSession();
-  const { isAuthenticated: isAuthStoreAuthenticated, isLoading: isAuthStoreLoading } = useAuth();
+  const { isAuthenticated, isLoading: isAuthLoading } = useAuth();
   const [isSaving, setIsSaving] = useState(false);
 
   console.log('[CreateCharacterPage] Rendering', { 
-    sessionStatus, 
-    isAuthStoreAuthenticated, 
-    isAuthStoreLoading, 
+    isAuthenticated, 
+    isAuthLoading, 
     isSaving 
   });
 
@@ -74,9 +71,8 @@ export default function CreateCharacterPage() {
   // 检查登录状态 - 使用 useEffect 避免在渲染期间导航
   useEffect(() => {
     console.log('[CreateCharacterPage] Auth status changed:', { 
-      sessionStatus, 
-      isAuthStoreAuthenticated, 
-      isAuthStoreLoading 
+      isAuthenticated, 
+      isAuthLoading 
     });
     
     // 在开发环境下，可以通过 URL 参数 ?skip_auth=true 跳过认证检查
@@ -84,36 +80,19 @@ export default function CreateCharacterPage() {
       const skipAuth = new URLSearchParams(window.location.search).get('skip_auth') === 'true';
       const isDev = process.env.NODE_ENV === 'development';
       
-      // 只有在两个认证系统都确认未登录时才重定向
-      // 优先使用 Zustand store 的状态，因为它有 token 持久化
-      const isLoading = sessionStatus === 'loading' || isAuthStoreLoading;
-      const isAuthenticated = isAuthStoreAuthenticated || sessionStatus === 'authenticated';
-      
-      if (!isLoading && !isAuthenticated) {
+      if (!isAuthLoading && !isAuthenticated) {
         if (isDev && skipAuth) {
           console.warn('[CreateCharacterPage] ⚠️ Auth check bypassed for development');
           return;
         }
         console.log('[CreateCharacterPage] Not authenticated, redirecting to login');
         router.push('/login?redirect=/characters/create');
-      } else if (isAuthStoreAuthenticated && sessionStatus === 'unauthenticated') {
-        // Zustand store 显示已登录，但 NextAuth session 未登录
-        // 这可能是因为页面刷新后 NextAuth session 丢失
-        console.warn('[CreateCharacterPage] ⚠️ Auth state mismatch detected:', {
-          authStore: 'authenticated',
-          nextAuth: 'unauthenticated',
-          message: '认证状态不同步，使用 Auth Store 状态'
-        });
       }
     }
-  }, [sessionStatus, isAuthStoreAuthenticated, isAuthStoreLoading, router]);
-
-  // 计算最终的认证状态
-  const isLoading = sessionStatus === 'loading' || isAuthStoreLoading;
-  const isAuthenticated = isAuthStoreAuthenticated || sessionStatus === 'authenticated';
+  }, [isAuthenticated, isAuthLoading, router]);
 
   // 如果正在加载，显示加载状态
-  if (isLoading) {
+  if (isAuthLoading) {
     return (
       <div className="container mx-auto px-4 py-8">
         <div className="flex items-center justify-center min-h-[400px]">

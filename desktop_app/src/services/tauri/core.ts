@@ -91,9 +91,9 @@ export class TauriService {
                 tauriVersion,
                 platformName,
                 archName,
-                localeName,
+                /* localeName */,
                 appVersion,
-                currentTheme
+                /* currentTheme */
             ] = await Promise.all([
                 this._safeInvoke('get_version', {}).catch(() => 'unknown'),
                 platform().catch(() => 'unknown'),

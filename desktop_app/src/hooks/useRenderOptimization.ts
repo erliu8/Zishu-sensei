@@ -4,7 +4,7 @@
  * 提供性能分析、优化和监控的 React Hooks
  */
 
-import { useState, useEffect, useCallback, useRef, useMemo } from 'react';
+import { useState, useEffect, useCallback, useRef } from 'react';
 import { renderingService, type OptimizationSuggestion, type RenderStats } from '../services/renderingService';
 
 // ============================================================================
@@ -35,7 +35,6 @@ export function usePerformanceMonitor(options: PerformanceMonitorOptions = {}) {
   const {
     autoStart = false,
     sampleInterval = 1000,
-    detailed = false,
   } = options;
 
   const [isMonitoring, setIsMonitoring] = useState(false);

@@ -750,42 +750,6 @@ export class Live2DModelLoader {
   private webglContextPatched = false
   private sharedGLContext: (WebGLRenderingContext | WebGL2RenderingContext) | null = null
   private hasLoggedLooseRetry: boolean = false
-  private getOrCreateSharedWebGLContext(): WebGLRenderingContext | WebGL2RenderingContext | null {
-    try {
-      if (this.sharedGLContext) return this.sharedGLContext
-      const nativeGetContext = this.originalCanvasGetContext || HTMLCanvasElement.prototype.getContext
-      const gl2 = nativeGetContext.call(this.canvas, 'webgl2', {
-        alpha: true,
-        antialias: false,
-        depth: true,
-        stencil: true,
-        premultipliedAlpha: true,
-        preserveDrawingBuffer: false,
-        failIfMajorPerformanceCaveat: false,
-        powerPreference: 'default'
-      }) as unknown as (WebGL2RenderingContext | null)
-      let gl: WebGLRenderingContext | WebGL2RenderingContext | null = gl2
-      if (!gl2) {
-        const gl1 = nativeGetContext.call(this.canvas, 'webgl', {
-          alpha: true,
-          antialias: false,
-          depth: true,
-          stencil: true,
-          premultipliedAlpha: true,
-          preserveDrawingBuffer: false,
-          failIfMajorPerformanceCaveat: false,
-          powerPreference: 'default'
-        }) as unknown as (WebGLRenderingContext | null)
-        gl = gl1
-      }
-      if (gl) {
-        this.sharedGLContext = this.patchWebGLContext(gl as any) as any
-      }
-      return this.sharedGLContext
-    } catch {
-      return null
-    }
-  }
 
   // 默认渲染配置
   private defaultRenderConfig: Live2DRenderConfig = {
@@ -3029,7 +2993,7 @@ export class Live2DModelLoader {
         eventMode: (model as any).eventMode,
         cursor: (model as any).cursor,
         hitArea: !!(model as any).hitArea,
-        hasOnMethod: typeof model.on === 'function'
+        hasOnMethod: typeof (model as any).on === 'function'
       })
       
       // 确保模型具有正确的事件管理器
@@ -3414,52 +3378,58 @@ export class Live2DModelLoader {
       // 设置模型事件监听
       console.log('🔧 [DEBUG] 设置模型事件监听器...')
       
-      if (typeof model.on === 'function') {
+      if (typeof (model as any).on === 'function') {
         console.log('✅ [DEBUG] 模型具有.on方法，开始绑定事件...')
         
         try {
-          model.on('motionStart', (group: string, index: number) => {
+          (model as any).on('motionStart', (group: string, index: number) => {
             console.log('🎬 [DEBUG] 动画开始:', { group, index })
             modelInstance.currentMotion = `${group}_${index}`
             this.emit(LoaderEvent.MOTION_START, { group, index, model: modelInstance })
           })
 
-          model.on('motionFinish', () => {
-            console.log('🎬 [DEBUG] 动画结束')
-            modelInstance.currentMotion = undefined
-            this.emit(LoaderEvent.MOTION_COMPLETE, { model: modelInstance })
-          })
+          // 使用类型断言来处理可能不存在的 on 方法
+          if (typeof (model as any).on === 'function') {
+            (model as any).on('motionFinish', () => {
+              console.log('🎬 [DEBUG] 动画结束')
+              modelInstance.currentMotion = undefined
+              this.emit(LoaderEvent.MOTION_COMPLETE, { model: modelInstance })
+            })
+          }
 
           // 设置点击事件
-          model.on('hit', (hitAreas: string[]) => {
-            console.log('👆 [DEBUG] 模型被点击！点击区域:', hitAreas)
-            this.handleModelHit(modelInstance, hitAreas)
-          })
+          if (typeof (model as any).on === 'function') {
+            (model as any).on('hit', (hitAreas: string[]) => {
+              console.log('👆 [DEBUG] 模型被点击！点击区域:', hitAreas)
+              this.handleModelHit(modelInstance, hitAreas)
+            })
+          }
           
           // 添加更多交互事件的调试
-          if (typeof model.on === 'function') {
+          if (typeof (model as any).on === 'function') {
+            const modelWithEvents = model as any
             // 鼠标事件
-            model.on('pointerdown', (event: any) => {
+            modelWithEvents.on('pointerdown', (event: any) => {
               console.log('👆 [DEBUG] 鼠标按下事件:', event)
               this.handleModelClick(event, model, modelInstance)
             })
             
-            model.on('pointerup', (event: any) => {
+            modelWithEvents.on('pointerup', (event: any) => {
               console.log('👆 [DEBUG] 鼠标释放事件:', event)
             })
             
-            model.on('pointermove', (event: any) => {
+            modelWithEvents.on('pointermove', (event: any) => {
               if (Math.random() < 0.01) { // 只记录1%的移动事件以避免日志过多
                 console.log('👆 [DEBUG] 鼠标移动事件 (样本):', { x: event.x, y: event.y })
               }
             })
             
-            model.on('pointerover', (event: any) => {
+            modelWithEvents.on('pointerover', (event: any) => {
               console.log('👆 [DEBUG] 鼠标悬停事件:', event)
             })
             
             // 点击事件 - 这个更可靠
-            model.on('tap', (event: any) => {
+            modelWithEvents.on('tap', (event: any) => {
               console.log('👆 [DEBUG] 点击事件:', event)
               this.handleModelClick(event, model, modelInstance)
             })

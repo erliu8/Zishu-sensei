@@ -8,19 +8,15 @@
  * - 统计信息显示
  */
 
-import React, { useState, useEffect } from 'react';
+import React, { useState } from 'react';
 import { 
   Settings, 
   RefreshCw, 
-  Download, 
   Check, 
   AlertCircle, 
-  Clock, 
   BarChart3,
   History,
-  Trash2,
   Undo2,
-  ExternalLink,
   Info
 } from 'lucide-react';
 import {
@@ -33,7 +29,6 @@ import {
 } from '../../hooks/useUpdate';
 import {
   UpdateStatus,
-  UpdateType,
   UpdateTypeText,
   UpdateStatusText,
   UpdateTypeColor,
@@ -129,7 +124,7 @@ export const UpdateManager: React.FC<UpdateManagerProps> = ({
 /**
  * 更新概览组件
  */
-const UpdateOverview: React.FC<{ compact: boolean; currentVersion: string }> = ({ compact, currentVersion }) => {
+const UpdateOverview: React.FC<{ compact: boolean; currentVersion: string }> = ({ currentVersion }) => {
   const {
     updateInfo,
     hasUpdate,
@@ -137,9 +132,7 @@ const UpdateOverview: React.FC<{ compact: boolean; currentVersion: string }> = (
     checkError,
     lastCheckTime,
     checkForUpdates,
-    isUpdateAvailable,
-    isUpdateInProgress,
-    isUpdateFailed
+    isUpdateInProgress
   } = useUpdateCheck();
 
   const handleCheckUpdate = async () => {
@@ -316,7 +309,7 @@ const UpdateOverview: React.FC<{ compact: boolean; currentVersion: string }> = (
 /**
  * 更新设置组件
  */
-const UpdateSettings: React.FC<{ compact: boolean }> = ({ compact }) => {
+const UpdateSettings: React.FC<{ compact: boolean }> = () => {
   const { config, isLoading, error, hasChanges, updateConfig, saveConfig, resetConfig } = useUpdateConfig();
 
   const handleSave = async () => {
@@ -553,7 +546,7 @@ const UpdateSettings: React.FC<{ compact: boolean }> = ({ compact }) => {
 /**
  * 版本历史组件
  */
-const UpdateHistory: React.FC<{ compact: boolean }> = ({ compact }) => {
+const UpdateHistory: React.FC<{ compact: boolean }> = () => {
   const { history, isLoading, error, rollbackToVersion } = useVersionHistory();
 
   const handleRollback = async (version: string) => {
@@ -656,7 +649,7 @@ const UpdateHistory: React.FC<{ compact: boolean }> = ({ compact }) => {
 /**
  * 更新统计组件
  */
-const UpdateStats: React.FC<{ compact: boolean }> = ({ compact }) => {
+const UpdateStats: React.FC<{ compact: boolean }> = () => {
   const { stats, isLoading, error } = useUpdateStats();
 
   if (isLoading) {

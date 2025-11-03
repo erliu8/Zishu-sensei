@@ -713,7 +713,7 @@ const App: React.FC = () => {
                         exit="exit"
                         variants={ANIMATION_VARIANTS}
                         transition={TRANSITION_CONFIG}
-                        style={{ height: '100%', width: '100%' }}
+                        className="h-full w-full"
                     >
                         <Suspense
                             fallback={

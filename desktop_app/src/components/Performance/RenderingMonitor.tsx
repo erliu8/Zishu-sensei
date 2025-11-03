@@ -4,7 +4,7 @@
  * 实时显示渲染性能指标和优化建议
  */
 
-import React, { useState, useEffect } from 'react';
+import { useState } from 'react';
 import {
   usePerformanceMonitor,
   usePerformanceAnalyzer,
@@ -271,7 +271,7 @@ interface ComponentsTabProps {
   detailed: boolean;
 }
 
-function ComponentsTab({ stats, detailed }: ComponentsTabProps) {
+function ComponentsTab({ stats }: ComponentsTabProps) {
   if (!stats || !stats.componentStats) {
     return (
       <div className="empty-state">
@@ -327,7 +327,7 @@ interface SuggestionsTabProps {
   analysis: any;
 }
 
-function SuggestionsTab({ suggestions, analysis }: SuggestionsTabProps) {
+function SuggestionsTab({ suggestions }: SuggestionsTabProps) {
   if (!suggestions || suggestions.length === 0) {
     return (
       <div className="empty-state">

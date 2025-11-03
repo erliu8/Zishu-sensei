@@ -126,7 +126,7 @@ export const isValidOrientation = (orientation: string): orientation is DisplayO
  * 工具函数：计算显示器统计信息
  */
 export const calculateMonitorStats = (desktopInfo: DesktopInfo): MonitorStats => {
-  const { monitors, virtual_screen } = desktopInfo
+  const { monitors } = desktopInfo
   
   // 找到主显示器索引
   const primaryIndex = monitors.findIndex(m => m.is_primary)

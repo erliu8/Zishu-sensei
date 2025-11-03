@@ -13,7 +13,6 @@ import {
   usePublishCharacter,
   useUnpublishCharacter,
 } from '@/features/character/hooks';
-import { useSession } from 'next-auth/react';
 import { useAuth } from '@/features/auth/hooks/useAuth';
 import {
   Button,
@@ -41,11 +40,10 @@ interface EditCharacterPageProps {
  */
 export default function EditCharacterPage({ params }: EditCharacterPageProps) {
   const resolvedParams = use(params);
-  const characterId = resolvedParams.id;
+  const characterId = parseInt(resolvedParams.id, 10);
   const router = useRouter();
   const { toast } = useToast();
-  const { data: session, status: sessionStatus } = useSession();
-  const { isAuthenticated: isAuthStoreAuthenticated, isLoading: isAuthStoreLoading, user: authStoreUser } = useAuth();
+  const { isAuthenticated, isLoading: isAuthLoading, user } = useAuth();
   const [isSaving, setIsSaving] = useState(false);
 
   // 获取角色数据
@@ -55,10 +53,6 @@ export default function EditCharacterPage({ params }: EditCharacterPageProps) {
   const updateCharacter = useUpdateCharacter();
   const publishCharacter = usePublishCharacter();
   const unpublishCharacter = useUnpublishCharacter();
-
-  // 计算最终的认证状态
-  const isAuthLoading = sessionStatus === 'loading' || isAuthStoreLoading;
-  const isAuthenticated = isAuthStoreAuthenticated || sessionStatus === 'authenticated';
 
   // 检查登录状态 - 使用 useEffect 避免在渲染期间导航
   useEffect(() => {
@@ -86,8 +80,8 @@ export default function EditCharacterPage({ params }: EditCharacterPageProps) {
     return null;
   }
 
-  // 获取当前用户ID（优先使用 authStoreUser，否则使用 session）
-  const currentUserId = authStoreUser?.id || (session?.user as any)?.id;
+  // 获取当前用户ID
+  const currentUserId = user?.id;
 
   // 检查是否是角色创建者
   const isOwner = currentUserId === character?.creatorId;

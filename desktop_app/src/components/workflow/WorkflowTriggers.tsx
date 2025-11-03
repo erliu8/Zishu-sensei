@@ -26,6 +26,7 @@ import {
   Tab,
   Alert,
   Tooltip,
+  CircularProgress,
 } from '@mui/material';
 import {
   Add as AddIcon,
@@ -221,6 +222,14 @@ const WorkflowTriggers: React.FC<WorkflowTriggersProps> = ({ workflowId }) => {
     'UserLogout',
     'Custom',
   ];
+
+  if (loading) {
+    return (
+      <Box sx={{ display: 'flex', justifyContent: 'center', py: 4 }}>
+        <CircularProgress />
+      </Box>
+    );
+  }
 
   return (
     <Box>

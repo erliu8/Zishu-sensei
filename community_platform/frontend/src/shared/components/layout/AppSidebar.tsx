@@ -20,6 +20,7 @@ import {
   Bookmark,
   Settings,
   HelpCircle,
+  Download,
 } from 'lucide-react';
 import { Card, CardContent, CardHeader, CardTitle } from '@/shared/components/ui/card';
 import { Button } from '@/shared/components/ui/button';
@@ -84,6 +85,11 @@ const contentNavItems: NavItem[] = [
     href: '/characters',
     icon: <Users className="h-4 w-4" />,
   },
+  {
+    label: '下载',
+    href: '/downloads',
+    icon: <Download className="h-4 w-4" />,
+  },
 ];
 
 const userNavItems: NavItem[] = [
@@ -119,7 +125,7 @@ export const AppSidebar: FC<AppSidebarProps> = ({ className }) => {
   };
 
   return (
-    <aside className={cn('w-64 shrink-0 space-y-4', className)}>
+    <aside className={cn('hidden lg:block w-64 shrink-0 space-y-4 p-4', className)}>
       {/* 快速导航 */}
       <Card>
         <CardHeader className="pb-3">

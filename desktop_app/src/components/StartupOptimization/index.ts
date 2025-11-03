@@ -3,8 +3,8 @@
  */
 
 // 懒加载组件
-export { LazyComponent, enhancedLazy, createLazyComponent } from './LazyComponent';
-export type { LazyComponentProps, LazyComponentOptions } from './LazyComponent';
+export { LazyComponent, enhancedLazy, createLazyComponent } from '../LazyLoad/LazyComponent';
+export type { LazyComponentProps, LazyComponentOptions } from '../LazyLoad/LazyComponent';
 
 // 常用懒加载组件
 export * from '../LazyLoad/lazyComponents';
@@ -32,5 +32,5 @@ export {
 export type { StartupMonitorProps } from './StartupMonitor';
 
 // 懒加载路由
-export { default as lazyRoutes, routePreloader } from '../router/lazyRoutes';
-export type { RoutePreloader } from '../router/lazyRoutes';
+export { default as lazyRoutes, routePreloader } from '../../router/lazyRoutes';
+export type { RoutePreloader } from '../../router/lazyRoutes';

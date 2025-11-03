@@ -13,7 +13,7 @@
  * @module WorkflowEditor
  */
 
-import React, { useState, useCallback, useEffect, useMemo } from 'react'
+import React, { useState, useCallback } from 'react'
 import { motion, AnimatePresence, Reorder } from 'framer-motion'
 import { Button } from '../../common/Button/index'
 import type { WorkflowDefinition, WorkflowStep, WorkflowConfig } from '@/services/api/desktop'

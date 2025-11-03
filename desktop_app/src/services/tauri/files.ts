@@ -2,13 +2,12 @@
  * Tauri 文件系统服务
  */
 
-import { copyFile, createDir, exists, readBinaryFile, readTextFile, removeDir, removeFile, renameFile, writeBinaryFile, writeTextFile } from '@tauri-apps/api/fs'
-import type { TauriFsOptions } from '../../types/tauri'
+import { copyFile, createDir, exists, readBinaryFile, readTextFile, removeDir, removeFile, renameFile, writeBinaryFile, writeTextFile, type FsOptions, type FsDirOptions } from '@tauri-apps/api/fs'
 
 /**
  * 读取文本文件
  */
-export const readFile = async (path: string, options?: TauriFsOptions): Promise<string> => {
+export const readFile = async (path: string, options?: FsOptions): Promise<string> => {
     try {
         if (!window.__TAURI__) {
             throw new Error('文件系统操作仅在桌面环境下可用')
@@ -24,7 +23,7 @@ export const readFile = async (path: string, options?: TauriFsOptions): Promise<
 /**
  * 写入文本文件
  */
-export const writeFile = async (path: string, content: string, options?: TauriFsOptions): Promise<void> => {
+export const writeFile = async (path: string, content: string, options?: FsOptions): Promise<void> => {
     try {
         if (!window.__TAURI__) {
             throw new Error('文件系统操作仅在桌面环境下可用')
@@ -40,7 +39,7 @@ export const writeFile = async (path: string, content: string, options?: TauriFs
 /**
  * 读取二进制文件
  */
-export const readBinaryFileContent = async (path: string, options?: TauriFsOptions): Promise<Uint8Array> => {
+export const readBinaryFileContent = async (path: string, options?: FsOptions): Promise<Uint8Array> => {
     try {
         if (!window.__TAURI__) {
             throw new Error('文件系统操作仅在桌面环境下可用')
@@ -56,7 +55,7 @@ export const readBinaryFileContent = async (path: string, options?: TauriFsOptio
 /**
  * 写入二进制文件
  */
-export const writeBinaryFileContent = async (path: string, content: Uint8Array, options?: TauriFsOptions): Promise<void> => {
+export const writeBinaryFileContent = async (path: string, content: Uint8Array, options?: FsOptions): Promise<void> => {
     try {
         if (!window.__TAURI__) {
             throw new Error('文件系统操作仅在桌面环境下可用')
@@ -72,7 +71,7 @@ export const writeBinaryFileContent = async (path: string, content: Uint8Array, 
 /**
  * 检查文件是否存在
  */
-export const fileExists = async (path: string, options?: TauriFsOptions): Promise<boolean> => {
+export const fileExists = async (path: string, options?: FsOptions): Promise<boolean> => {
     try {
         if (!window.__TAURI__) {
             return false
@@ -88,13 +87,13 @@ export const fileExists = async (path: string, options?: TauriFsOptions): Promis
 /**
  * 创建目录
  */
-export const createDirectory = async (path: string, options?: TauriFsOptions): Promise<void> => {
+export const createDirectory = async (path: string, options?: FsDirOptions): Promise<void> => {
     try {
         if (!window.__TAURI__) {
             throw new Error('文件系统操作仅在桌面环境下可用')
         }
 
-        await createDir(path, { ...options, recursive: options?.recursive ?? true })
+        await createDir(path, { recursive: options?.recursive ?? true, dir: options?.dir })
     } catch (error) {
         console.error('创建目录失败:', error)
         throw error
@@ -104,7 +103,7 @@ export const createDirectory = async (path: string, options?: TauriFsOptions): P
 /**
  * 删除文件
  */
-export const deleteFile = async (path: string, options?: TauriFsOptions): Promise<void> => {
+export const deleteFile = async (path: string, options?: FsOptions): Promise<void> => {
     try {
         if (!window.__TAURI__) {
             throw new Error('文件系统操作仅在桌面环境下可用')
@@ -120,13 +119,13 @@ export const deleteFile = async (path: string, options?: TauriFsOptions): Promis
 /**
  * 删除目录
  */
-export const deleteDirectory = async (path: string, options?: TauriFsOptions): Promise<void> => {
+export const deleteDirectory = async (path: string, options?: FsDirOptions): Promise<void> => {
     try {
         if (!window.__TAURI__) {
             throw new Error('文件系统操作仅在桌面环境下可用')
         }
 
-        await removeDir(path, { ...options, recursive: options?.recursive ?? true })
+        await removeDir(path, { recursive: options?.recursive ?? true, dir: options?.dir })
     } catch (error) {
         console.error('删除目录失败:', error)
         throw error
@@ -136,7 +135,7 @@ export const deleteDirectory = async (path: string, options?: TauriFsOptions): P
 /**
  * 复制文件
  */
-export const copyFileContent = async (source: string, destination: string, options?: TauriFsOptions): Promise<void> => {
+export const copyFileContent = async (source: string, destination: string, options?: FsOptions): Promise<void> => {
     try {
         if (!window.__TAURI__) {
             throw new Error('文件系统操作仅在桌面环境下可用')
@@ -152,7 +151,7 @@ export const copyFileContent = async (source: string, destination: string, optio
 /**
  * 重命名文件
  */
-export const renameFileContent = async (oldPath: string, newPath: string, options?: TauriFsOptions): Promise<void> => {
+export const renameFileContent = async (oldPath: string, newPath: string, options?: FsOptions): Promise<void> => {
     try {
         if (!window.__TAURI__) {
             throw new Error('文件系统操作仅在桌面环境下可用')

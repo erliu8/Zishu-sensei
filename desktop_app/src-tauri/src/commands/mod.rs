@@ -119,6 +119,18 @@ pub mod performance;
 /// 日志管理命令
 pub mod logging;
 
+/// Deep Link 处理命令
+pub mod deeplink;
+
+/// 启动相关命令
+pub mod startup;
+
+/// 错误监控命令
+pub mod error_monitoring;
+
+/// 主题管理命令
+pub mod theme;
+
 // ================================
 // 公共命令类型定义
 // ================================
@@ -666,6 +678,9 @@ pub use region::*;
 
 // 日志命令
 pub use logging::*;
+
+// Deep Link 命令
+pub use deeplink::*;
 
 // ================================
 // 测试模块

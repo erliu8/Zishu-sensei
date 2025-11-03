@@ -30,7 +30,7 @@ router = APIRouter()
 
 # ==================== 适配器 CRUD ====================
 
-@router.get("/", response_model=ApiResponse[AdapterListResponse])
+@router.get("", response_model=ApiResponse[AdapterListResponse])
 async def get_adapters(
     page: int = Query(1, ge=1, description="页码"),
     size: int = Query(20, ge=1, le=100, description="每页数量"),
@@ -156,7 +156,7 @@ async def get_adapter(
     return create_response(data=AdapterDetail(**adapter_dict))
 
 
-@router.post("/", response_model=ApiResponse[AdapterInDB])
+@router.post("", response_model=ApiResponse[AdapterInDB])
 async def create_adapter(
     adapter_data: AdapterCreate,
     db: Session = Depends(get_db),

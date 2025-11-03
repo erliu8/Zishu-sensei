@@ -166,6 +166,7 @@ const AppRoot: React.FC = () => {
                                         <App />
                                         {/* React Query 开发工具 */}
                                         {import.meta.env?.DEV && (
+                                            // @ts-ignore - ReactQueryDevtools type compatibility issue
                                             <ReactQueryDevtools
                                                 initialIsOpen={false}
                                                 position={'bottom-right' as any}

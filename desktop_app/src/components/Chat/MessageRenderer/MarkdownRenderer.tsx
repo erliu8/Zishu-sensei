@@ -24,6 +24,9 @@ import styles from './MarkdownRenderer.module.css'
 
 // ==================== 类型定义 ====================
 
+// 类型助手函数，解决 react-i18next 类型冲突
+const sanitizeChildren = (children: any): React.ReactNode => children as React.ReactNode
+
 export interface MarkdownRendererProps {
   /** Markdown 内容 */
   content: string
@@ -167,14 +170,17 @@ export const MarkdownRenderer: React.FC<MarkdownRendererProps> = memo(({
       )}
       style={{ maxHeight: maxHeight ? `${maxHeight}px` : undefined }}
     >
+      {/* @ts-ignore */}
       <ReactMarkdown
         remarkPlugins={[remarkGfm]}
         rehypePlugins={[rehypeRaw, rehypeSanitize]}
         components={{
           // 代码块
-          code: (props) => (
+          code: ({ children, className, ...props }) => (
             <CodeBlock
               {...props}
+              children={sanitizeChildren(children)}
+              className={className}
               darkMode={effectiveDarkMode}
               enableCodeCopy={enableCodeCopy}
               showLineNumbers={showLineNumbers}
@@ -182,108 +188,148 @@ export const MarkdownRenderer: React.FC<MarkdownRendererProps> = memo(({
           ),
           
           // 链接 - 在新标签页打开
-          a: ({ node, ...props }) => (
+          a: ({ node, children, ...props }) => (
             <a
               {...props}
               target="_blank"
               rel="noopener noreferrer"
               className={styles.link}
-            />
+            >
+              {sanitizeChildren(children)}
+            </a>
           ),
           
           // 表格
-          table: ({ node, ...props }) => (
+          table: ({ node, children, ...props }) => (
             <div className={styles.tableWrapper}>
-              <table className={styles.table} {...props} />
+              <table className={styles.table} {...props}>
+                {sanitizeChildren(children)}
+              </table>
             </div>
           ),
           
           // 表格头
-          thead: ({ node, ...props }) => (
-            <thead className={styles.tableHead} {...props} />
+          thead: ({ node, children, ...props }) => (
+            <thead className={styles.tableHead} {...props}>
+              {sanitizeChildren(children)}
+            </thead>
           ),
           
           // 表格行
-          tr: ({ node, ...props }) => (
-            <tr className={styles.tableRow} {...props} />
+          tr: ({ node, children, ...props }) => (
+            <tr className={styles.tableRow} {...props}>
+              {sanitizeChildren(children)}
+            </tr>
           ),
           
           // 表格单元格
-          td: ({ node, ...props }) => (
-            <td className={styles.tableCell} {...props} />
+          td: ({ node, children, ...props }) => (
+            <td className={styles.tableCell} {...props}>
+              {sanitizeChildren(children)}
+            </td>
           ),
           
-          th: ({ node, ...props }) => (
-            <th className={styles.tableHeader} {...props} />
+          th: ({ node, children, ...props }) => (
+            <th className={styles.tableHeader} {...props}>
+              {sanitizeChildren(children)}
+            </th>
           ),
           
           // 引用块
-          blockquote: ({ node, ...props }) => (
-            <blockquote className={styles.blockquote} {...props} />
+          blockquote: ({ node, children, ...props }) => (
+            <blockquote className={styles.blockquote} {...props}>
+              {sanitizeChildren(children)}
+            </blockquote>
           ),
           
           // 标题
-          h1: ({ node, ...props }) => (
-            <h1 className={styles.heading1} {...props} />
+          h1: ({ node, children, ...props }) => (
+            <h1 className={styles.heading1} {...props}>
+              {sanitizeChildren(children)}
+            </h1>
           ),
-          h2: ({ node, ...props }) => (
-            <h2 className={styles.heading2} {...props} />
+          h2: ({ node, children, ...props }) => (
+            <h2 className={styles.heading2} {...props}>
+              {sanitizeChildren(children)}
+            </h2>
           ),
-          h3: ({ node, ...props }) => (
-            <h3 className={styles.heading3} {...props} />
+          h3: ({ node, children, ...props }) => (
+            <h3 className={styles.heading3} {...props}>
+              {sanitizeChildren(children)}
+            </h3>
           ),
-          h4: ({ node, ...props }) => (
-            <h4 className={styles.heading4} {...props} />
+          h4: ({ node, children, ...props }) => (
+            <h4 className={styles.heading4} {...props}>
+              {sanitizeChildren(children)}
+            </h4>
           ),
-          h5: ({ node, ...props }) => (
-            <h5 className={styles.heading5} {...props} />
+          h5: ({ node, children, ...props }) => (
+            <h5 className={styles.heading5} {...props}>
+              {sanitizeChildren(children)}
+            </h5>
           ),
-          h6: ({ node, ...props }) => (
-            <h6 className={styles.heading6} {...props} />
+          h6: ({ node, children, ...props }) => (
+            <h6 className={styles.heading6} {...props}>
+              {sanitizeChildren(children)}
+            </h6>
           ),
           
           // 列表
-          ul: ({ node, ...props }) => (
-            <ul className={styles.unorderedList} {...props} />
+          ul: ({ node, children, ...props }) => (
+            <ul className={styles.unorderedList} {...props}>
+              {sanitizeChildren(children)}
+            </ul>
           ),
-          ol: ({ node, ...props }) => (
-            <ol className={styles.orderedList} {...props} />
+          ol: ({ node, children, ...props }) => (
+            <ol className={styles.orderedList} {...props}>
+              {sanitizeChildren(children)}
+            </ol>
           ),
-          li: ({ node, ...props }) => (
-            <li className={styles.listItem} {...props} />
+          li: ({ node, children, ...props }) => (
+            <li className={styles.listItem} {...props}>
+              {sanitizeChildren(children)}
+            </li>
           ),
           
           // 分隔线
-          hr: ({ node, ...props }) => (
+          hr: ({ node, children, ...props }) => (
             <hr className={styles.horizontalRule} {...props} />
           ),
           
           // 图片
-          img: ({ node, ...props }) => (
+          img: ({ node, children, alt, ...props }) => (
             <img
               {...props}
               className={styles.image}
               loading="lazy"
-              alt={props.alt || '图片'}
+              alt={alt || '图片'}
             />
           ),
           
           // 段落
-          p: ({ node, ...props }) => (
-            <p className={styles.paragraph} {...props} />
+          p: ({ node, children, ...props }) => (
+            <p className={styles.paragraph} {...props}>
+              {sanitizeChildren(children)}
+            </p>
           ),
           
           // 强调
-          strong: ({ node, ...props }) => (
-            <strong className={styles.strong} {...props} />
+          strong: ({ node, children, ...props }) => (
+            <strong className={styles.strong} {...props}>
+              {sanitizeChildren(children)}
+            </strong>
           ),
-          em: ({ node, ...props }) => (
-            <em className={styles.emphasis} {...props} />
+          em: ({ node, children, ...props }) => (
+            <em className={styles.emphasis} {...props}>
+              {sanitizeChildren(children)}
+            </em>
           ),
           
           // 删除线
-          del: ({ node, ...props }) => (
-            <del className={styles.strikethrough} {...props} />
+          del: ({ node, children, ...props }) => (
+            <del className={styles.strikethrough} {...props}>
+              {sanitizeChildren(children)}
+            </del>
           ),
         }}
       >

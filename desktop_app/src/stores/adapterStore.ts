@@ -295,7 +295,7 @@ export const useAdapterStore = create<AdapterState & AdapterActions>()(
           }),
           
           addAdapter: (adapter) => set((state) => {
-            const existingIndex = state.adapters.findIndex(a => a.name === adapter.name)
+            const existingIndex = state.adapters.findIndex((a: AdapterInfo) => a.name === adapter.name)
             if (existingIndex >= 0) {
               state.adapters[existingIndex] = adapter
             } else {
@@ -305,7 +305,7 @@ export const useAdapterStore = create<AdapterState & AdapterActions>()(
           }),
           
           updateAdapter: (adapterId, updates) => set((state) => {
-            const index = state.adapters.findIndex(a => a.name === adapterId)
+            const index = state.adapters.findIndex((a: AdapterInfo) => a.name === adapterId)
             if (index >= 0) {
               Object.assign(state.adapters[index], updates)
               state.lastUpdated = Date.now()
@@ -313,7 +313,7 @@ export const useAdapterStore = create<AdapterState & AdapterActions>()(
           }),
           
           removeAdapter: (adapterId) => set((state) => {
-            state.adapters = state.adapters.filter(a => a.name !== adapterId)
+            state.adapters = state.adapters.filter((a: AdapterInfo) => a.name !== adapterId)
             state.lastUpdated = Date.now()
           }),
           
@@ -558,7 +558,7 @@ export const useAdapterStore = create<AdapterState & AdapterActions>()(
             let totalLoadTime = 0
             let loadTimeCount = 0
             
-            adapters.forEach(adapter => {
+            adapters.forEach((adapter: AdapterInfo) => {
               // 状态统计
               switch (adapter.status) {
                 case AdapterStatus.Loaded:

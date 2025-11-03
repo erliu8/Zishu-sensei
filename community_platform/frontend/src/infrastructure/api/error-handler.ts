@@ -157,7 +157,7 @@ export class ErrorHandler {
   private static handleUnauthorized(): void {
     // 清除认证信息
     if (typeof window !== 'undefined') {
-      localStorage.removeItem('auth_token');
+      localStorage.removeItem('auth_access_token');
       // 重定向到登录页（避免循环重定向）
       if (!window.location.pathname.includes('/login')) {
         window.location.href = `/login?redirect=${encodeURIComponent(window.location.pathname)}`;

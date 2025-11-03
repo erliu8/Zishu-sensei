@@ -10,19 +10,16 @@
  * - 📈 主题统计
  */
 
-import React, { useState, useCallback, useMemo, useEffect } from 'react'
+import React, { useState, useCallback, useMemo } from 'react'
 import clsx from 'clsx'
 import toast from 'react-hot-toast'
 import { motion, AnimatePresence } from 'framer-motion'
 import type {
     ThemeCard,
-    ThemeDetail,
     ThemeSearchOptions,
-    ThemeSearchFilters,
     ThemeSortBy,
     ThemeCategory
 } from '@/types/theme'
-import { ThemePreview } from '../ThemeCustomizer/ThemePreview'
 
 /**
  * 组件属性
@@ -199,7 +196,6 @@ export const ThemeMarket: React.FC<ThemeMarketProps> = ({
     const [favoritedOnly, setFavoritedOnly] = useState(initialOptions?.filters?.favoritedOnly || false)
     const [themes, setThemes] = useState<ThemeCard[]>(MOCK_THEMES)
     const [loading, setLoading] = useState(false)
-    const [selectedTheme, setSelectedTheme] = useState<string | null>(null)
     
     // ==================== 过滤和排序 ====================
     
@@ -334,7 +330,6 @@ export const ThemeMarket: React.FC<ThemeMarketProps> = ({
     }, [onFavorite, themes])
     
     const handleViewDetails = useCallback((themeId: string) => {
-        setSelectedTheme(themeId)
         if (onViewDetails) {
             onViewDetails(themeId)
         }

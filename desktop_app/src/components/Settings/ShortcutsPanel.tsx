@@ -10,7 +10,6 @@ import useKeyboardShortcuts from '@/hooks/useKeyboardShortcuts'
 import { 
     shortcutToDisplayString, 
     formatCategoryName, 
-    formatScopeName,
     groupShortcutsByCategory,
     searchShortcuts,
 } from '@/utils/shortcutHelpers'
@@ -18,7 +17,7 @@ import { ShortcutStorageManager } from '@/utils/shortcutStorage'
 import { SHORTCUT_GROUPS } from '@/config/shortcutPresets'
 import './ShortcutsPanel.css'
 
-interface ShortcutsPanelProps {
+export interface ShortcutsPanelProps {
     /** 是否显示 */
     visible?: boolean
     /** 关闭回调 */

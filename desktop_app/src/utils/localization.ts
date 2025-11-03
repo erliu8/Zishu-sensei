@@ -15,24 +15,44 @@ declare namespace Intl {
 }
 
 // 数字格式化选项
-interface NumberFormatOptions extends Intl.NumberFormatOptions {
+interface NumberFormatOptions {
   locale?: SupportedLanguage;
+  style?: 'decimal' | 'currency' | 'percent';
+  currency?: string;
+  minimumFractionDigits?: number;
+  maximumFractionDigits?: number;
+  minimumIntegerDigits?: number;
+  useGrouping?: boolean;
 }
 
 // 日期格式化选项
-interface DateFormatOptions extends Intl.DateTimeFormatOptions {
+interface DateFormatOptions {
   locale?: SupportedLanguage;
+  year?: 'numeric' | '2-digit';
+  month?: 'numeric' | '2-digit' | 'long' | 'short' | 'narrow';
+  day?: 'numeric' | '2-digit';
+  hour?: 'numeric' | '2-digit';
+  minute?: 'numeric' | '2-digit';
+  second?: 'numeric' | '2-digit';
+  weekday?: 'long' | 'short' | 'narrow';
+  era?: 'long' | 'short' | 'narrow';
+  timeZoneName?: 'long' | 'short';
 }
 
 // 货币格式化选项
-interface CurrencyFormatOptions extends Intl.NumberFormatOptions {
+interface CurrencyFormatOptions {
   locale?: SupportedLanguage;
   currency?: string;
+  style?: 'currency';
+  minimumFractionDigits?: number;
+  maximumFractionDigits?: number;
 }
 
 // 相对时间格式化选项
-interface RelativeTimeFormatOptions extends Intl.RelativeTimeFormatOptions {
+interface RelativeTimeFormatOptions {
   locale?: SupportedLanguage;
+  numeric?: 'always' | 'auto';
+  style?: 'long' | 'short' | 'narrow';
 }
 
 /**
@@ -45,7 +65,12 @@ export const formatNumber = (
   const { locale = getCurrentLanguage(), ...formatOptions } = options;
   
   try {
-    return new Intl.NumberFormat(locale, formatOptions).format(value);
+    // 检查是否支持Intl.NumberFormat
+    if (typeof Intl !== 'undefined' && (Intl as any).NumberFormat) {
+      return new (Intl as any).NumberFormat(locale, formatOptions).format(value);
+    } else {
+      return value.toString();
+    }
   } catch (error) {
     console.warn('Number formatting failed:', error);
     return value.toString();
@@ -79,7 +104,7 @@ export const formatCurrency = (
   } = options;
   
   try {
-    return new Intl.NumberFormat(locale, {
+    return new (Intl as any).NumberFormat(locale, {
       style: 'currency',
       currency,
       ...formatOptions
@@ -106,7 +131,7 @@ export const formatDate = (
   }
   
   try {
-    return new Intl.DateTimeFormat(locale, formatOptions).format(dateObj);
+    return new (Intl as any).DateTimeFormat(locale, formatOptions).format(dateObj);
   } catch (error) {
     console.warn('Date formatting failed:', error);
     return dateObj.toLocaleDateString();
@@ -170,7 +195,7 @@ export const formatRelativeTime = (
   const diffYears = Math.floor(diffDays / 365);
   
   try {
-    const rtf = new Intl.RelativeTimeFormat(locale, {
+    const rtf = new (Intl as any).RelativeTimeFormat(locale, {
       numeric: 'auto',
       ...formatOptions
     });
@@ -246,7 +271,7 @@ export const formatList = (
   try {
     // Check if Intl.ListFormat is available
     if (typeof Intl.ListFormat !== 'undefined') {
-      const listFormatter = new Intl.ListFormat(locale, { style, type });
+      const listFormatter = new (Intl as any).ListFormat(locale, { style, type });
       return listFormatter.format(items);
     } else {
       // Fallback for environments without Intl.ListFormat support
@@ -314,11 +339,11 @@ export const formatPlural = (
     locale?: SupportedLanguage;
     type?: 'cardinal' | 'ordinal';
   } = {}
-): Intl.LDMLPluralRule => {
+): string => {
   const { locale = getCurrentLanguage(), type = 'cardinal' } = options;
   
   try {
-    const pluralRules = new Intl.PluralRules(locale, { type });
+    const pluralRules = new (Intl as any).PluralRules(locale, { type });
     return pluralRules.select(count);
   } catch (error) {
     console.warn('Plural formatting failed:', error);
@@ -345,7 +370,7 @@ export const localizedSort = <T>(
   } = options;
   
   try {
-    const collator = new Intl.Collator(locale, { sensitivity, numeric });
+    const collator = new (Intl as any).Collator(locale, { sensitivity, numeric });
     return [...items].sort((a, b) => 
       collator.compare(keyExtractor(a), keyExtractor(b))
     );
@@ -364,7 +389,7 @@ export const getWeekdayNames = (
   locale: SupportedLanguage = getCurrentLanguage(),
   format: 'long' | 'short' | 'narrow' = 'long'
 ): string[] => {
-  const formatter = new Intl.DateTimeFormat(locale, { weekday: format });
+  const formatter = new (Intl as any).DateTimeFormat(locale, { weekday: format });
   const names: string[] = [];
   
   // 从周日开始
@@ -383,7 +408,7 @@ export const getMonthNames = (
   locale: SupportedLanguage = getCurrentLanguage(),
   format: 'long' | 'short' | 'narrow' = 'long'
 ): string[] => {
-  const formatter = new Intl.DateTimeFormat(locale, { month: format });
+  const formatter = new (Intl as any).DateTimeFormat(locale, { month: format });
   const names: string[] = [];
   
   for (let i = 0; i < 12; i++) {

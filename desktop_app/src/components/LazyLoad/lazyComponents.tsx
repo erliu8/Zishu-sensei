@@ -81,7 +81,7 @@ export const LazyWorkflowEditor = createLazyComponent(
  * 主题定制器
  */
 export const LazyThemeCustomizer = createLazyComponent(
-  () => import('../ThemeCustomizer'),
+  () => import('../ThemeCustomizer/ThemeEditor'),
   {
     fallback: <SkeletonLoader type="customizer" />,
     displayName: 'ThemeCustomizer',
@@ -132,7 +132,7 @@ export const LazyFileManager = createLazyComponent(
 export const LazyChatHistory = createLazyComponent(
   () => import('../Chat/ChatHistory'),
   {
-    fallback: <LoadingSpinner message="加载聊天历史..." />,
+    fallback: <LoadingSpinner />,
     displayName: 'ChatHistory',
     enablePreload: true,
     preloadDelay: 1000,
@@ -145,7 +145,7 @@ export const LazyChatHistory = createLazyComponent(
 export const LazyMessageSearch = createLazyComponent(
   () => import('../Chat/MessageSearch'),
   {
-    fallback: <LoadingSpinner message="加载搜索功能..." />,
+    fallback: <LoadingSpinner />,
     displayName: 'MessageSearch',
     enablePreload: false,
   }
@@ -157,7 +157,7 @@ export const LazyMessageSearch = createLazyComponent(
 export const LazyMessageExport = createLazyComponent(
   () => import('../Chat/MessageExport'),
   {
-    fallback: <LoadingSpinner message="加载导出功能..." />,
+    fallback: <LoadingSpinner />,
     displayName: 'MessageExport',
     enablePreload: false,
   }
@@ -253,9 +253,10 @@ export const LazyDataTable = createLazyComponent(
 
 /**
  * Markdown 编辑器
+ * 注意: 该模块需要单独安装 @uiw/react-md-editor
  */
 export const LazyMarkdownEditor = createLazyComponent(
-  () => import('@uiw/react-md-editor').then(module => ({ default: module.default })),
+  () => Promise.resolve({ default: (() => null) as React.ComponentType<any> }),
   {
     fallback: <SkeletonLoader type="editor" />,
     displayName: 'MarkdownEditor',
@@ -348,7 +349,8 @@ export function preloadComponentsByPriority() {
 
   // 可选预加载工具组件
   setTimeout(() => {
-    if (navigator.connection && (navigator.connection as any).effectiveType === '4g') {
+    const connection = (navigator as any).connection;
+    if (connection && connection.effectiveType === '4g') {
       LAZY_LOAD_CONFIG.onDemand.slice(0, 3).forEach(importFunc => {
         importFunc().catch(console.error);
       });

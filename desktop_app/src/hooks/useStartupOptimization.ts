@@ -1,7 +1,7 @@
 /**
  * 启动优化相关 React Hooks
  */
-import { useState, useEffect, useCallback, useRef } from 'react';
+import { useState, useEffect, useCallback } from 'react';
 import {
   StartupConfig,
   StartupPhase,
@@ -440,8 +440,8 @@ export function useStartupPhaseExecution() {
  * 启动上下文 Hook
  */
 export function useStartupContext(): StartupContext {
-  const { progress, currentPhase } = useStartupProgress();
-  const { stats } = useStartupStats();
+  const { currentPhase } = useStartupProgress();
+  const { } = useStartupStats();
   const { config } = useStartupConfig();
   const { metrics } = useStartupPerformanceMonitoring();
   const { phaseResults } = useStartupPhaseExecution();

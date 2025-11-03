@@ -12,8 +12,9 @@ import {
   useDeleteCharacter,
   useCloneCharacter,
   useArchiveCharacter,
+  useCharacterDownload,
 } from '@/features/character/hooks';
-import { useSession } from 'next-auth/react';
+import { useAuth } from '@/features/auth/hooks';
 import {
   Button,
   Badge,
@@ -65,7 +66,16 @@ export default function CharacterDetailPage({ params }: CharacterDetailPageProps
   const characterId = parseInt(resolvedParams.id, 10);
   const router = useRouter();
   const { toast } = useToast();
-  const { data: session } = useSession();
+  const { user, isAuthenticated, isLoading: authLoading } = useAuth();
+  
+  // 调试信息
+  console.log('[角色详情页] 认证状态:', {
+    isAuthenticated,
+    authLoading,
+    hasUser: !!user,
+    userId: user?.id,
+    userEmail: user?.email
+  });
   
   const [showDeleteDialog, setShowDeleteDialog] = useState(false);
   const [showArchiveDialog, setShowArchiveDialog] = useState(false);
@@ -77,9 +87,12 @@ export default function CharacterDetailPage({ params }: CharacterDetailPageProps
   const deleteCharacter = useDeleteCharacter();
   const cloneCharacter = useCloneCharacter();
   const archiveCharacter = useArchiveCharacter();
+  
+  // 下载功能
+  const { downloadCharacter, isPackaging, progress } = useCharacterDownload();
 
   // 检查是否是角色创建者
-  const isOwner = session?.user?.id === character?.creatorId;
+  const isOwner = user?.id === character?.creatorId;
 
   // 处理编辑
   const handleEdit = () => {
@@ -160,11 +173,8 @@ export default function CharacterDetailPage({ params }: CharacterDetailPageProps
 
   // 处理下载
   const handleDownload = async () => {
-    // TODO: 实现下载逻辑
-    toast({
-      title: '提示',
-      description: '下载功能开发中',
-    });
+    if (!character) return;
+    await downloadCharacter(character);
   };
 
   // 渲染加载状态
@@ -323,9 +333,16 @@ export default function CharacterDetailPage({ params }: CharacterDetailPageProps
                   </>
                 ) : (
                   <>
-                    <Button onClick={handleDownload} className="gap-2">
+                    <Button 
+                      onClick={handleDownload} 
+                      className="gap-2"
+                      disabled={isPackaging || authLoading || !isAuthenticated}
+                      title={!isAuthenticated ? '请先登录后下载' : undefined}
+                    >
                       <Download className="h-4 w-4" />
-                      下载使用
+                      {authLoading ? '加载中...' : 
+                       !isAuthenticated ? '登录后下载' : 
+                       (isPackaging ? `打包中 ${progress}%` : '下载使用')}
                     </Button>
                     <Button variant="outline" onClick={handleClone} className="gap-2">
                       <Copy className="h-4 w-4" />

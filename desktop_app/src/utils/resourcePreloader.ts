@@ -50,7 +50,7 @@ export class ResourcePreloader {
     resource: PreloadResource,
     options: PreloadOptions = {}
   ): Promise<void> {
-    const { url, type, priority, crossOrigin, integrity, media } = resource;
+    const { url } = resource;
     const {
       timeout = 10000,
       retryCount = 2,

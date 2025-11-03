@@ -10,7 +10,7 @@
  * - 配置管理
  */
 
-import React, { useState } from 'react';
+import { useState } from 'react';
 import {
   usePerformanceMonitor,
   usePerformanceMetrics,

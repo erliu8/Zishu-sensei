@@ -5,6 +5,11 @@
         "useDefineForClassFields": true,
         "lib": [
             "ES2020",
+            "ES2018.Intl",
+            "ES2019.Intl", 
+            "ES2020.Intl",
+            "ES2021.Intl",
+            "ES2022.Intl",
             "DOM",
             "DOM.Iterable"
         ],
@@ -81,11 +86,20 @@
     },
     "include": [
         "src"
-, "src/tests/InputBox.test.tsx"    ],
+    ],
     "exclude": [
         "node_modules",
         "dist",
-        "src-tauri"
+        "src-tauri",
+        "**/*.test.ts",
+        "**/*.test.tsx",
+        "**/*.spec.ts",
+        "**/*.spec.tsx",
+        "**/*.example.tsx",
+        "**/*.example.ts",
+        "**/tests/**",
+        "**/__tests__/**",
+        "**/__mocks__/**"
     ],
     "references": [
         {

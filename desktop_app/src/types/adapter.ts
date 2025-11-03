@@ -167,6 +167,8 @@ export interface AdapterMetadata {
  * 适配器信息（用于API响应）
  */
 export interface AdapterInfo {
+  /** 适配器ID */
+  id: string;
   /** 适配器名称 */
   name: string;
   /** 适配器路径 */
@@ -185,6 +187,8 @@ export interface AdapterInfo {
   memory_usage?: number;
   /** 配置 */
   config: Record<string, any>;
+  /** 元数据 */
+  metadata?: AdapterMetadata;
 }
 
 // ================================

@@ -227,11 +227,61 @@ export const Button = forwardRef<HTMLButtonElement, ButtonProps>(({
         onClick: handleClick,
         'aria-disabled': isDisabled,
         'aria-busy': showLoading,
-        ...props
+        ...(props as any)
     }, ...buttonContent)
 })
 
 Button.displayName = 'Button'
+
+// ============================================================================
+// ButtonGroup 组件
+// ============================================================================
+
+export interface ButtonGroupProps {
+    /** 子元素 */
+    children: ReactNode
+    /** 排列方向 */
+    orientation?: 'horizontal' | 'vertical'
+    /** 自定义类名 */
+    className?: string
+    /** 自定义样式 */
+    style?: React.CSSProperties
+}
+
+/**
+ * 按钮组组件
+ * 
+ * 特性：
+ * - 支持水平和垂直排列
+ * - 自动处理按钮间距和圆角
+ */
+export const ButtonGroup = forwardRef<HTMLDivElement, ButtonGroupProps>(({
+    children,
+    orientation = 'horizontal',
+    className,
+    style,
+    ...props
+}, ref) => {
+    const baseClasses = combineClasses(
+        'inline-flex',
+        orientation === 'horizontal' ? 'flex-row' : 'flex-col',
+        '[&>*:not(:first-child):not(:last-child)]:rounded-none',
+        orientation === 'horizontal' && '[&>*:not(:first-child)]:border-l-0 [&>*:not(:first-child)]:ml-0',
+        orientation === 'horizontal' && '[&>*:first-child]:rounded-r-none [&>*:last-child]:rounded-l-none',
+        orientation === 'vertical' && '[&>*:not(:first-child)]:border-t-0 [&>*:not(:first-child)]:mt-0',
+        orientation === 'vertical' && '[&>*:first-child]:rounded-b-none [&>*:last-child]:rounded-t-none'
+    )
+
+    return React.createElement('div', {
+        ref,
+        className: combineClasses(baseClasses, className),
+        style,
+        role: 'group',
+        ...props
+    }, children)
+})
+
+ButtonGroup.displayName = 'ButtonGroup'
 
 // 导出按钮组件和相关类型
 export default Button

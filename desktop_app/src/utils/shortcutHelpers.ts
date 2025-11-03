@@ -4,8 +4,8 @@
  * 提供快捷键字符串转换、验证等实用工具
  */
 
-import type { ShortcutConfig, ShortcutString, ModifierKeys, Platform } from '@/types/shortcuts'
-import { getCurrentPlatform, getPlatformModifierName } from '@/config/shortcutPresets'
+import type { ShortcutConfig, ShortcutString, ModifierKeys } from '@/types/shortcuts'
+import { getPlatformModifierName } from '@/config/shortcutPresets'
 import { RESERVED_SHORTCUTS } from '@/types/shortcuts'
 
 /**

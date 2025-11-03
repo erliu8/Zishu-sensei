@@ -39,7 +39,7 @@ export const ModelLoader: React.FC<ModelLoaderProps> = ({
     onError,
 }) => {
     const [currentCharacter, setCurrentCharacter] = useState<CharacterInfo | null>(null)
-    const [isLoading, setIsLoading] = useState(true)
+    const [, setIsLoading] = useState(true)
 
     /**
      * 从后端获取角色列表
@@ -54,7 +54,7 @@ export const ModelLoader: React.FC<ModelLoaderProps> = ({
             }
 
             // 找到当前激活的角色
-            const activeCharacter = response.data.find(c => c.is_active)
+            const activeCharacter = response.data.find((c: any) => c.is_active)
             if (activeCharacter) {
                 setCurrentCharacter(activeCharacter)
                 onCharacterLoaded?.(activeCharacter)
@@ -102,24 +102,25 @@ export const ModelLoader: React.FC<ModelLoaderProps> = ({
     /**
      * 获取角色详细信息
      */
-    const getCharacterInfo = useCallback(async (characterId: string) => {
-        try {
-            const response = await invoke<ApiResponse<CharacterInfo>>('get_character_info', {
-                characterId,
-            })
+    // 注释掉未使用的函数
+    // const getCharacterInfo = useCallback(async (characterId: string) => {
+    //     try {
+    //         const response = await invoke<ApiResponse<CharacterInfo>>('get_character_info', {
+    //             characterId,
+    //         })
 
-            if (!response.success || !response.data) {
-                throw new Error(response.error || '获取角色信息失败')
-            }
+    //         if (!response.success || !response.data) {
+    //             throw new Error(response.error || '获取角色信息失败')
+    //         }
 
-            return response.data
-        } catch (error) {
-            console.error('❌ 获取角色信息失败:', error)
-            const errorMsg = error instanceof Error ? error.message : '未知错误'
-            onError?.(errorMsg)
-            return null
-        }
-    }, [onError])
+    //         return response.data
+    //     } catch (error) {
+    //         console.error('❌ 获取角色信息失败:', error)
+    //         const errorMsg = error instanceof Error ? error.message : '未知错误'
+    //         onError?.(errorMsg)
+    //         return null
+    //     }
+    // }, [onError])
 
     // 监听角色切换事件（从其他地方触发）
     useEffect(() => {
@@ -127,7 +128,7 @@ export const ModelLoader: React.FC<ModelLoaderProps> = ({
             old_character: string | null
             new_character: string
             character_info: CharacterInfo
-        }>('character-changed', (event) => {
+        }>('character-changed', (event: any) => {
             console.log('🔄 收到角色切换事件:', event.payload)
             setCurrentCharacter(event.payload.character_info)
             onCharacterChanged?.(
@@ -137,7 +138,7 @@ export const ModelLoader: React.FC<ModelLoaderProps> = ({
         })
 
         return () => {
-            unlistenCharacterChanged.then(fn => fn())
+            unlistenCharacterChanged.then((fn: any) => fn())
         }
     }, [onCharacterChanged])
 
@@ -163,7 +164,7 @@ export const useModelLoader = () => {
         }
 
         // 更新当前角色
-        const activeCharacter = response.data.find(c => c.is_active)
+        const activeCharacter = response.data.find((c: any) => c.is_active)
         if (activeCharacter) {
             setCurrentCharacter(activeCharacter)
         }

@@ -179,8 +179,8 @@ export const ButtonExamples: React.FC = () => {
                 className: 'space-y-4'
             }, [
                 React.createElement(ButtonGroup, {
-                    key: 'horizontal-group'
-                }, [
+                    key: 'horizontal-group',
+                    children: [
                     React.createElement(Button, {
                         key: 'left',
                         variant: 'outline'
@@ -193,11 +193,11 @@ export const ButtonExamples: React.FC = () => {
                         key: 'right',
                         variant: 'outline'
                     }, '右侧')
-                ]),
+                ]}),
                 React.createElement(ButtonGroup, {
                     key: 'vertical-group',
-                    orientation: 'vertical'
-                }, [
+                    orientation: 'vertical',
+                    children: [
                     React.createElement(Button, {
                         key: 'top',
                         variant: 'ghost'
@@ -210,7 +210,7 @@ export const ButtonExamples: React.FC = () => {
                         key: 'bottom',
                         variant: 'ghost'
                     }, '底部')
-                ])
+                ]})
             ])
         ])
     ])

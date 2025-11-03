@@ -289,21 +289,6 @@ export const ColorPicker: React.FC<ColorPickerProps> = ({
         background: `linear-gradient(to right, transparent, ${color.hex})`
     }), [color.hex])
     
-    // ==================== 格式化颜色显示 ====================
-    
-    const formattedColor = useMemo(() => {
-        switch (activeFormat) {
-            case 'hex':
-                return color.hex
-            case 'rgb':
-                return `rgb(${color.rgb.r}, ${color.rgb.g}, ${color.rgb.b})`
-            case 'hsl':
-                return `hsl(${color.hsl.h}, ${color.hsl.s}%, ${color.hsl.l}%)`
-            default:
-                return color.hex
-        }
-    }, [color, activeFormat])
-    
     // ==================== 渲染 ====================
     
     return (

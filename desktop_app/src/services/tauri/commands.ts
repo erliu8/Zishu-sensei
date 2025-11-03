@@ -66,7 +66,7 @@ export class TauriCommandService {
     /**
      * 关闭窗口
      */
-    public async closeWindow(label: string) {
+    public async closeWindow(_label?: string) {
         return this.execute('close_window')
     }
 
@@ -94,35 +94,35 @@ export class TauriCommandService {
     /**
      * 最小化窗口
      */
-    public async minimizeWindow(label: string) {
+    public async minimizeWindow(_label?: string) {
         return this.execute('minimize_window')
     }
 
     /**
      * 最大化窗口
      */
-    public async maximizeWindow(label: string) {
+    public async maximizeWindow(_label?: string) {
         return this.execute('maximize_window')
     }
 
     /**
      * 设置窗口位置
      */
-    public async setWindowPosition(label: string, x: number, y: number) {
+    public async setWindowPosition(_label: string, x: number, y: number) {
         return this.execute('set_window_position', { x, y })
     }
 
     /**
      * 设置窗口大小
      */
-    public async setWindowSize(label: string, width: number, height: number) {
+    public async setWindowSize(_label: string, width: number, height: number) {
         return this.execute('set_window_size', { width, height })
     }
 
     /**
      * 设置窗口标题
      */
-    public async setWindowTitle(label: string, title: string) {
+    public async setWindowTitle(title: string) {
         return this.execute('set_window_title', { title })
     }
 

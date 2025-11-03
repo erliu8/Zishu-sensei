@@ -71,7 +71,8 @@ export const isCommandAvailable = async (command: string): Promise<boolean> => {
             return false
         }
 
-        await invoke('ping') // 测试基础连接
+        // 尝试调用指定命令来测试是否可用
+        await invoke(command, {})
         return true
     } catch (error) {
         return false

@@ -11,7 +11,7 @@
 
 import React, { useMemo } from 'react'
 import clsx from 'clsx'
-import type { ThemeDetail, ThemeColors } from '@/types/theme'
+import type { ThemeDetail } from '@/types/theme'
 
 /**
  * 组件属性

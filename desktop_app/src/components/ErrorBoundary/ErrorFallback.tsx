@@ -6,7 +6,7 @@
 import React from 'react'
 import { 
   ErrorBoundaryFallbackProps, 
-  ErrorDetails, 
+  ErrorDetails as ErrorDetailsType, 
   ErrorSeverity,
   RecoveryStrategy,
 } from '../../types/error'
@@ -65,7 +65,7 @@ const ErrorIcon: React.FC<{ severity: ErrorSeverity }> = ({ severity }) => {
 // 错误详情组件
 // ================================
 
-const ErrorDetails: React.FC<{ error: Error; errorDetails?: ErrorDetails | null }> = ({ 
+const ErrorDetails: React.FC<{ error: Error; errorDetails?: ErrorDetailsType | null }> = ({ 
   error, 
   errorDetails 
 }) => {
@@ -137,9 +137,9 @@ const ErrorDetails: React.FC<{ error: Error; errorDetails?: ErrorDetails | null 
 
 const RecoverySuggestions: React.FC<{ 
   error: Error
-  errorDetails?: ErrorDetails | null
+  errorDetails?: ErrorDetailsType | null
   recoveryStrategy?: RecoveryStrategy 
-}> = ({ error, errorDetails, recoveryStrategy }) => {
+}> = ({ error, recoveryStrategy }) => {
   const getSuggestions = () => {
     const suggestions: string[] = []
 
@@ -202,8 +202,7 @@ const ActionButtons: React.FC<{
   reportError, 
   resetError, 
   canRetry, 
-  isRecovering,
-  recoveryStrategy 
+  isRecovering
 }) => {
   return (
     <div className="error-actions">

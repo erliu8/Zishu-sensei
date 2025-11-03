@@ -10,8 +10,7 @@ import {
   MoreVertical,
   Eye,
   Copy,
-  FileText,
-  Calendar,
+  FileText
 } from 'lucide-react';
 import { useFileManager } from '../../hooks/useFileManager';
 import { FileDropZone } from './FileDropZone';
@@ -22,7 +21,7 @@ import './FileManagerPanel.css';
 type ViewMode = 'grid' | 'list';
 type SortBy = 'name' | 'date' | 'size' | 'type';
 
-interface FileManagerPanelProps {
+export interface FileManagerPanelProps {
   conversationId?: string;
   onFileSelect?: (file: FileInfo) => void;
   allowUpload?: boolean;

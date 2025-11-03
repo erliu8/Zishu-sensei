@@ -11,7 +11,7 @@
  */
 
 import { useRef, useCallback, useEffect, useMemo } from 'react'
-import { useVirtualizer, VirtualItem } from '@tanstack/react-virtual'
+import { useVirtualizer } from '@tanstack/react-virtual'
 import type { ChatMessage } from '@/types/chat'
 import { useMessageHeight } from './useMessageHeight'
 
@@ -44,7 +44,17 @@ export interface VirtualScrollConfig {
 /**
  * 虚拟滚动项数据
  */
-export interface VirtualScrollItem extends VirtualItem {
+export interface VirtualScrollItem {
+  /** 索引 */
+  index: number
+  /** 起始位置 */
+  start: number
+  /** 大小 */
+  size: number
+  /** 结束位置 */
+  end: number
+  /** 键值 */
+  key: string | number
   /** 消息数据 */
   message: ChatMessage
 }
@@ -165,7 +175,7 @@ export const useVirtualScroll = (
     // 启用动态高度测量
     measureElement:
       typeof window !== 'undefined' && navigator.userAgent.indexOf('Firefox') === -1
-        ? (element) => element?.getBoundingClientRect().height
+        ? (element: HTMLElement) => element?.getBoundingClientRect().height
         : undefined,
     // 滚动边距
     scrollMargin: 0,
@@ -179,7 +189,7 @@ export const useVirtualScroll = (
    * 增强的虚拟项列表（包含消息数据）
    */
   const virtualItems = useMemo((): VirtualScrollItem[] => {
-    return virtualizer.getVirtualItems().map((virtualItem) => ({
+    return virtualizer.getVirtualItems().map((virtualItem: any) => ({
       ...virtualItem,
       message: messages[virtualItem.index],
     }))
@@ -195,10 +205,11 @@ export const useVirtualScroll = (
       const align = options.align || fullConfig.scrollAlignment
       const behavior = options.behavior || fullConfig.scrollBehavior
       
-      virtualizer.scrollToIndex(index, {
-        align,
-        behavior,
-      })
+      const scrollOptions: any = { align }
+      if (behavior) {
+        scrollOptions.behavior = behavior
+      }
+      virtualizer.scrollToIndex(index, scrollOptions)
     },
     [virtualizer, fullConfig.scrollAlignment, fullConfig.scrollBehavior]
   )

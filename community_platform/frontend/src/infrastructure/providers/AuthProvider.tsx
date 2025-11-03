@@ -1,12 +1,13 @@
 /**
  * 认证提供者组件
  * @module infrastructure/providers
+ * 
+ * 使用自定义 JWT 认证系统
  */
 
 'use client';
 
 import React, { useEffect, useState } from 'react';
-import { SessionProvider } from 'next-auth/react';
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
 import { useAuthStore } from '@/features/auth/store';
 
@@ -92,24 +93,16 @@ interface AuthProviderProps {
  * 认证提供者组件
  * 
  * 提供以下功能：
- * 1. NextAuth SessionProvider
- * 2. TanStack Query Provider
- * 3. Zustand 认证状态初始化
+ * 1. TanStack Query Provider
+ * 2. Zustand 认证状态初始化
  */
 export function AuthProvider({ children }: AuthProviderProps) {
   return (
-    <SessionProvider
-      // 会话刷新间隔
-      refetchInterval={5 * 60} // 5 分钟
-      // 窗口焦点时刷新
-      refetchOnWindowFocus={true}
-    >
-      <QueryClientProvider client={queryClient}>
-        <AuthInitializer>
-          {children}
-        </AuthInitializer>
-      </QueryClientProvider>
-    </SessionProvider>
+    <QueryClientProvider client={queryClient}>
+      <AuthInitializer>
+        {children}
+      </AuthInitializer>
+    </QueryClientProvider>
   );
 }
 

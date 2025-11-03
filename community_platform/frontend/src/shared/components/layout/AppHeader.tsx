@@ -58,16 +58,22 @@ export function AppHeader({ className }: AppHeaderProps) {
             帖子
           </Link>
           <Link
+            href="/adapters"
+            className="text-sm font-medium transition-colors hover:text-primary"
+          >
+            适配器
+          </Link>
+          <Link
             href="/packaging"
             className="text-sm font-medium transition-colors hover:text-primary"
           >
             打包
           </Link>
           <Link
-            href="/adapters"
+            href="/downloads"
             className="text-sm font-medium transition-colors hover:text-primary"
           >
-            适配器
+            下载
           </Link>
         </nav>
 

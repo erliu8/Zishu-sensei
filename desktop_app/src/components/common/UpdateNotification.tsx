@@ -1,8 +1,8 @@
 import { AnimatePresence, motion } from 'framer-motion';
 import React, { useEffect, useState, useCallback } from 'react';
-import { Download, RefreshCw, AlertCircle, Check, X, Rocket, Settings } from 'lucide-react';
+import { Download, RefreshCw, AlertCircle, Check, X, Rocket } from 'lucide-react';
 import { useUpdateCheck, useUpdateDownload, useUpdateInstall, useUpdateFlow } from '../../hooks/useUpdate';
-import { UpdateStatus, UpdateType, UpdateTypeColor, formatFileSize, formatRelativeTime } from '../../types/update';
+import { UpdateStatus, formatFileSize, formatRelativeTime } from '../../types/update';
 
 interface UpdateNotificationProps {
   /** 是否自动检查更新 */
@@ -40,8 +40,7 @@ export const UpdateNotification: React.FC<UpdateNotificationProps> = ({
     checkError, 
     checkForUpdates,
     isUpdateAvailable,
-    isUpdateInProgress,
-    isUpdateFailed 
+    isUpdateInProgress 
   } = useUpdateCheck();
   
   const { 

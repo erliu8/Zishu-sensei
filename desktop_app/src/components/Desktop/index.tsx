@@ -11,7 +11,7 @@
  * @module Desktop
  */
 
-import React, { useState, useCallback, useEffect, useMemo } from 'react'
+import React, { useState, useCallback, useEffect } from 'react'
 import { motion, AnimatePresence } from 'framer-motion'
 import { Button } from '../common/Button/index'
 import { WorkflowEditor } from './WorkflowEditor/index'
@@ -60,7 +60,7 @@ export const Desktop: React.FC<DesktopProps> = ({
 
   // ==================== Hooks ====================
   const desktop = useDesktop()
-  const { appState, operationState } = useDesktopStore()
+  const { appState } = useDesktopStore()
 
   // ==================== 数据获取 ====================
 

@@ -25,7 +25,7 @@ export function authRequestInterceptor(
 
   // 从 localStorage 获取令牌
   if (typeof window !== 'undefined') {
-    const token = localStorage.getItem('auth_token');
+    const token = localStorage.getItem('auth_access_token');
     if (token) {
       config.headers = config.headers || {};
       config.headers.Authorization = `Bearer ${token}`;

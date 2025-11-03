@@ -12,7 +12,6 @@ import { useState, useEffect, useCallback, useRef } from 'react'
 import { listen } from '@tauri-apps/api/event'
 import monitorService from '@/services/monitorService'
 import type { DesktopInfo, MonitorInfo } from '@/types/monitor'
-import { createEmptyDesktopInfo } from '@/types/monitor'
 
 /**
  * Hook 配置选项

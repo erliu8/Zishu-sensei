@@ -31,9 +31,25 @@ export function useCreatePackage() {
       return response.data;
     },
     onError: (error: any) => {
+      console.error('Packaging error:', error);
+      
+      // 提取错误信息
+      let errorMessage = '操作失败，请稍后重试';
+      
+      if (error?.response?.data?.error?.message) {
+        // 后端返回的具体错误信息
+        errorMessage = error.response.data.error.message;
+      } else if (error?.response?.status === 401) {
+        // 401认证错误
+        errorMessage = '请先登录后再使用打包功能';
+      } else if (error?.message) {
+        // axios错误信息
+        errorMessage = error.message;
+      }
+      
       toast({
         title: '创建打包任务失败',
-        description: error?.message || '操作失败，请稍后重试',
+        description: errorMessage,
         variant: 'destructive',
       });
     },

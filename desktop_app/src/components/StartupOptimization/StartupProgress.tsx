@@ -7,7 +7,7 @@ import { useStartupOptimization } from '../../hooks/useStartupOptimization';
 import { StartupPhase, PhaseResult } from '../../types/startup';
 import './StartupProgress.css';
 
-interface StartupProgressProps {
+export interface StartupProgressProps {
   showDetails?: boolean;
   showTips?: boolean;
   onStartupComplete?: () => void;

@@ -5,7 +5,7 @@ import React, { Suspense, lazy, ComponentType, ReactNode } from 'react';
 import { ErrorBoundary } from '../common/ErrorBoundary';
 import { LoadingSpinner } from '../common/LoadingSpinner';
 
-interface LazyComponentProps {
+export interface LazyComponentProps {
   /** 懒加载组件的导入函数 */
   importFunc: () => Promise<{ default: ComponentType<any> }>;
   /** 加载中组件 */
@@ -19,6 +19,12 @@ interface LazyComponentProps {
   /** 传递给懒加载组件的 props */
   componentProps?: Record<string, any>;
   /** 组件名称（用于调试） */
+  displayName?: string;
+}
+
+export interface LazyComponentOptions {
+  fallback?: ReactNode;
+  errorBoundary?: boolean;
   displayName?: string;
 }
 
@@ -193,7 +199,7 @@ export function createLazyComponent<P = {}>(
     return (
       <LazyComponent
         importFunc={importFunc}
-        componentProps={props}
+        componentProps={props as Record<string, any>}
         {...options}
       />
     );
@@ -219,7 +225,7 @@ export function enhancedLazy<P = {}>(
   const EnhancedLazy: React.FC<P> = (props) => {
     const content = (
       <Suspense fallback={options.fallback || <LoadingSpinner />}>
-        <LazyComponent {...props} />
+        <LazyComponent {...(props as any)} />
       </Suspense>
     );
 

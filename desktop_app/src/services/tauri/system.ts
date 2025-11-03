@@ -161,3 +161,57 @@ export const restartApp = async (): Promise<void> => {
         throw error
     }
 }
+
+/**
+ * Tauri 系统服务类
+ */
+export class TauriSystemService {
+    /**
+     * 获取系统信息
+     */
+    static async getSystemInfo(): Promise<TauriEnvironment> {
+        return getSystemInfo();
+    }
+
+    /**
+     * 获取应用信息
+     */
+    static async getAppInfo(): Promise<TauriAppInfo> {
+        return getAppInfo();
+    }
+
+    /**
+     * 获取系统语言
+     */
+    static async getSystemLocale(): Promise<string> {
+        return getSystemLocale();
+    }
+
+    /**
+     * 打开URL
+     */
+    static async openUrl(url: string): Promise<void> {
+        return openUrl(url);
+    }
+
+    /**
+     * 在文件管理器中显示文件
+     */
+    static async showInFolder(path: string): Promise<void> {
+        return showInFolder(path);
+    }
+
+    /**
+     * 退出应用
+     */
+    static async exitApp(): Promise<void> {
+        return exitApp();
+    }
+
+    /**
+     * 重启应用
+     */
+    static async restartApp(): Promise<void> {
+        return restartApp();
+    }
+}

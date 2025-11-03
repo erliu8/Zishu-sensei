@@ -3,7 +3,7 @@
 """
 from typing import List
 from fastapi import APIRouter, Depends, Query
-from sqlalchemy.orm import Session
+from sqlalchemy.ext.asyncio import AsyncSession
 
 from app.core.deps import get_db, get_current_user
 from app.core.response import create_response, ApiResponse
@@ -18,14 +18,14 @@ from app.services.adapter import PackagingService
 router = APIRouter()
 
 
-@router.post("/", response_model=ApiResponse[PackagingTaskInDB])
+@router.post("", response_model=ApiResponse[PackagingTaskInDB])
 async def create_packaging_task(
     task_data: PackagingTaskCreate,
-    db: Session = Depends(get_db),
+    db: AsyncSession = Depends(get_db),
     current_user: User = Depends(get_current_user)
 ):
     """创建打包任务"""
-    task = PackagingService.create_task(db, task_data, current_user)
+    task = await PackagingService.create_task(db, task_data, current_user)
     return create_response(
         data=PackagingTaskInDB.model_validate(task),
         message="打包任务已创建"
@@ -35,22 +35,22 @@ async def create_packaging_task(
 @router.get("/{task_id}", response_model=ApiResponse[PackagingTaskInDB])
 async def get_packaging_task(
     task_id: str,
-    db: Session = Depends(get_db),
+    db: AsyncSession = Depends(get_db),
     current_user: User = Depends(get_current_user)
 ):
     """获取打包任务详情"""
-    task = PackagingService.get_task(db, task_id, user=current_user)
+    task = await PackagingService.get_task(db, task_id, user=current_user)
     return create_response(data=PackagingTaskInDB.model_validate(task))
 
 
 @router.get("/{task_id}/status", response_model=ApiResponse[PackagingTaskStatus])
 async def get_packaging_task_status(
     task_id: str,
-    db: Session = Depends(get_db),
+    db: AsyncSession = Depends(get_db),
     current_user: User = Depends(get_current_user)
 ):
     """获取打包任务状态（轮询使用）"""
-    task = PackagingService.get_task(db, task_id, user=current_user)
+    task = await PackagingService.get_task(db, task_id, user=current_user)
     
     status = PackagingTaskStatus(
         id=task.id,
@@ -67,11 +67,11 @@ async def get_packaging_task_status(
 async def get_user_packaging_tasks(
     page: int = Query(1, ge=1),
     size: int = Query(20, ge=1, le=100),
-    db: Session = Depends(get_db),
+    db: AsyncSession = Depends(get_db),
     current_user: User = Depends(get_current_user)
 ):
     """获取用户的打包任务列表"""
-    tasks, total = PackagingService.get_user_tasks(db, current_user, page, size)
+    tasks, total = await PackagingService.get_user_tasks(db, current_user, page, size)
     
     items = [PackagingTaskInDB.model_validate(task) for task in tasks]
     
@@ -81,11 +81,11 @@ async def get_user_packaging_tasks(
 @router.delete("/{task_id}")
 async def cancel_packaging_task(
     task_id: str,
-    db: Session = Depends(get_db),
+    db: AsyncSession = Depends(get_db),
     current_user: User = Depends(get_current_user)
 ):
     """取消打包任务"""
-    PackagingService.cancel_task(db, task_id, current_user)
+    await PackagingService.cancel_task(db, task_id, current_user)
     return create_response(message="打包任务已取消")
 
 

@@ -241,7 +241,7 @@ export class ErrorRecoveryService {
       }
 
       try {
-        const fallbackResult = await fallback.action()
+        await fallback.action()
         return {
           success: true,
           strategy: RecoveryStrategy.FALLBACK,
@@ -305,7 +305,7 @@ export class ErrorRecoveryService {
    */
   private async executeRetryStep(
     step: RecoveryStep,
-    error: ErrorDetails,
+    _error: ErrorDetails,
     context: RecoveryContext
   ): Promise<RecoveryResult> {
     const retryConfig = step.retryConfig || {
@@ -337,7 +337,7 @@ export class ErrorRecoveryService {
 
     // 执行重试
     try {
-      const result = await step.action()
+      await step.action()
       return {
         success: true,
         strategy: RecoveryStrategy.RETRY,
@@ -362,7 +362,7 @@ export class ErrorRecoveryService {
   private async executeFallbackStep(
     step: RecoveryStep,
     error: ErrorDetails,
-    context: RecoveryContext
+    _context: RecoveryContext
   ): Promise<RecoveryResult> {
     try {
       const result = await step.action()
@@ -393,9 +393,9 @@ export class ErrorRecoveryService {
    * 执行刷新步骤
    */
   private async executeRefreshStep(
-    step: RecoveryStep,
-    error: ErrorDetails,
-    context: RecoveryContext
+    _step: RecoveryStep,
+    _error: ErrorDetails,
+    _context: RecoveryContext
   ): Promise<RecoveryResult> {
     try {
       // 延迟刷新，给用户提示
@@ -425,9 +425,9 @@ export class ErrorRecoveryService {
    * 执行重启步骤
    */
   private async executeRestartStep(
-    step: RecoveryStep,
-    error: ErrorDetails,
-    context: RecoveryContext
+    _step: RecoveryStep,
+    _error: ErrorDetails,
+    _context: RecoveryContext
   ): Promise<RecoveryResult> {
     try {
       // 调用 Tauri 重启应用
@@ -456,8 +456,8 @@ export class ErrorRecoveryService {
    */
   private async executeUserActionStep(
     step: RecoveryStep,
-    error: ErrorDetails,
-    context: RecoveryContext
+    _error: ErrorDetails,
+    _context: RecoveryContext
   ): Promise<RecoveryResult> {
     // 显示用户提示并等待用户操作
     return {
@@ -700,7 +700,7 @@ export class ErrorRecoveryService {
   /**
    * 恢复失败处理
    */
-  private onRecoveryFailure(errorKey: string, context: RecoveryContext, error?: string): void {
+  private onRecoveryFailure(errorKey: string, context: RecoveryContext, _error?: string): void {
     context.retryCount++
     context.lastAttempt = Date.now()
 

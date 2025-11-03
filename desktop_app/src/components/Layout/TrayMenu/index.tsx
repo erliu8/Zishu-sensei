@@ -12,14 +12,12 @@
  * - ♿ 完整的无障碍支持
  */
 
-import React, { useCallback, useEffect, useMemo, useState } from 'react'
-import toast from 'react-hot-toast'
+import React, { useCallback, useEffect, useState } from 'react'
 import clsx from 'clsx'
 
 // Hooks
 import { useTauri } from '@/hooks/useTauri'
 import { useSettings } from '@/hooks/useSettings'
-import { useWindowManager } from '@/hooks/useWindowManager'
 
 // 样式
 import styles from './TrayMenu.module.css'
@@ -261,8 +259,7 @@ export const TrayMenu: React.FC<TrayMenuProps> = ({
 
     // ==================== Hooks ====================
     const { isAvailable, invoke } = useTauri()
-    const { config, updateConfig } = useSettings()
-    const { showWindow, hideWindow, toggleWindow } = useWindowManager()
+    const { config } = useSettings()
 
     // ==================== 生命周期 ====================
 
@@ -418,47 +415,48 @@ export const TrayMenu: React.FC<TrayMenuProps> = ({
     /**
      * 处理托盘图标点击
      */
-    const handleTrayClick = useCallback(async () => {
-        try {
-            await toggleWindow()
-        } catch (error) {
-            console.error('切换窗口失败:', error)
-            toast.error('操作失败')
-        }
-    }, [toggleWindow])
+    // const handleTrayClick = useCallback(async () => {
+    //     try {
+    //         await windowManager.toggleWindowMode()
+    //     } catch (error) {
+    //         console.error('切换窗口失败:', error)
+    //         toast.error('操作失败')
+    //     }
+    // }, [windowManager])
 
     /**
      * 处理托盘图标双击
      */
-    const handleTrayDoubleClick = useCallback(async () => {
-        try {
-            await showWindow()
-        } catch (error) {
-            console.error('显示窗口失败:', error)
-            toast.error('操作失败')
-        }
-    }, [showWindow])
+    // const handleTrayDoubleClick = useCallback(async () => {
+    //     try {
+    //         await windowManager.show()
+    //     } catch (error) {
+    //         console.error('显示窗口失败:', error)
+    //         toast.error('操作失败')
+    //     }
+    // }, [windowManager])
 
     /**
      * 处理菜单项点击
      */
+    /* 
     const handleMenuClick = useCallback(async (itemId: string) => {
         try {
             switch (itemId) {
                 // 窗口操作
                 case 'show':
-                    await showWindow()
+                    await windowManager.show()
                     toast.success('窗口已显示')
                     break
 
                 case 'hide':
-                    await hideWindow()
+                    await windowManager.hide()
                     toast.success('窗口已隐藏')
                     break
 
                 // 对话
                 case 'chat':
-                    await showWindow()
+                    await windowManager.show()
                     // 触发打开聊天界面的事件
                     break
 
@@ -468,7 +466,7 @@ export const TrayMenu: React.FC<TrayMenuProps> = ({
                 case 'settings_character':
                 case 'settings_theme':
                 case 'settings_system':
-                    await showWindow()
+                    await windowManager.show()
                     // 触发打开设置界面的事件
                     const settingsTab = itemId.replace('settings_', '') || 'general'
                     console.log('打开设置:', settingsTab)
@@ -533,13 +531,13 @@ export const TrayMenu: React.FC<TrayMenuProps> = ({
 
                 // 适配器市场
                 case 'adapter_market':
-                    await showWindow()
+                    await windowManager.show()
                     console.log('打开适配器市场')
                     break
 
                 // 工作流编辑器
                 case 'workflow':
-                    await showWindow()
+                    await windowManager.show()
                     console.log('打开工作流编辑器')
                     break
 
@@ -575,7 +573,8 @@ export const TrayMenu: React.FC<TrayMenuProps> = ({
             console.error(`处理菜单项 ${itemId} 失败:`, error)
             toast.error('操作失败')
         }
-    }, [config, updateConfig, showWindow, hideWindow, isAvailable, invoke])
+    }, [config, updateConfig, windowManager, isAvailable, invoke])
+    */
 
     // ==================== 工具函数 ====================
 

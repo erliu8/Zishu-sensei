@@ -80,8 +80,7 @@ export const LogViewer: React.FC<LogViewerProps> = ({
     searchLogs,
     exportLogs,
     clearLogs,
-    uploadLogs,
-    getLogFiles
+    uploadLogs
   } = useLogging();
 
   // 搜索和过滤状态

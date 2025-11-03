@@ -4,10 +4,10 @@
  * 展示如何使用 useAdapter Hook 和 adapterStore 进行适配器管理
  */
 
-import React, { useEffect, useState } from 'react'
+import { useEffect, useState } from 'react'
 import { useAdapter } from '@/hooks/useAdapter'
 import { useAdapterStore } from '@/stores/adapterStore'
-import { AdapterStatus, AdapterType } from '@/services/adapter'
+import { AdapterStatus } from '@/services/adapter'
 
 // ==================== 基础使用示例 ====================
 
@@ -22,8 +22,8 @@ export function AdapterManagementExample() {
     loadAdapter,
     unloadAdapter,
     isAdapterInstalled,
-    isAdapterLoaded,
-    getAdapterById
+    isAdapterLoaded
+    // getAdapterById
   } = useAdapter({
     autoRefresh: true,
     refreshInterval: 30000
@@ -33,7 +33,7 @@ export function AdapterManagementExample() {
   const handleInstall = async (adapterId: string) => {
     try {
       const success = await installAdapter({
-        adapterId,
+        adapter_id: adapterId,
         source: 'market',
         force: false,
         options: {}
@@ -144,7 +144,7 @@ export function AdapterManagementExample() {
 export function AdvancedAdapterExample() {
   const adapterStore = useAdapterStore()
   const {
-    adapters,
+    adapters: _adapters,
     searchAdapters,
     getAdapterDetails,
     updateAdapterConfig,
@@ -222,7 +222,7 @@ export function AdvancedAdapterExample() {
   const handleUpdateConfig = async (adapterId: string, config: Record<string, any>) => {
     try {
       const success = await updateAdapterConfig({
-        adapterId,
+        adapter_id: adapterId,
         config,
         merge: true
       })

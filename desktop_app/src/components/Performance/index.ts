@@ -49,4 +49,5 @@ export {
 } from '../../hooks/usePerformanceIntegration';
 
 // 默认导出主组件
+import PerformanceMonitorPanel from './PerformanceMonitorPanel';
 export default PerformanceMonitorPanel;

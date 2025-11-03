@@ -57,7 +57,6 @@ class AnimationManager {
     const update = (currentTime: number) => {
       if (!isRunning || isPaused) return;
 
-      const elapsed = currentTime - startTime - pausedTime;
       progress = calculateProgress(startTime + pausedTime, config.duration, currentTime);
 
       if (progress >= 1) {

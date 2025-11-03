@@ -1,9 +1,10 @@
 """
 数据库会话管理
 """
-from typing import AsyncGenerator
+from typing import AsyncGenerator, Generator
 from sqlalchemy.ext.asyncio import create_async_engine, AsyncSession, async_sessionmaker
-from sqlalchemy.orm import declarative_base
+from sqlalchemy import create_engine
+from sqlalchemy.orm import declarative_base, sessionmaker, Session
 
 from app.core.config.settings import settings
 
@@ -16,10 +17,29 @@ engine = create_async_engine(
     max_overflow=20,
 )
 
+# 创建同步引擎（用于Celery任务）
+sync_database_url = settings.DATABASE_URL.replace("postgresql+asyncpg://", "postgresql://")
+sync_engine = create_engine(
+    sync_database_url,
+    echo=settings.DEBUG,
+    pool_pre_ping=True,
+    pool_size=10,
+    max_overflow=20,
+)
+
 # 创建会话工厂
 AsyncSessionLocal = async_sessionmaker(
     engine,
     class_=AsyncSession,
+    expire_on_commit=False,
+    autocommit=False,
+    autoflush=False,
+)
+
+# 创建同步会话工厂
+SyncSessionLocal = sessionmaker(
+    sync_engine,
+    class_=Session,
     expire_on_commit=False,
     autocommit=False,
     autoflush=False,
@@ -47,6 +67,26 @@ async def get_db() -> AsyncGenerator[AsyncSession, None]:
             raise
         finally:
             await session.close()
+
+
+def get_sync_db() -> Generator[Session, None, None]:
+    """
+    获取同步数据库会话（用于Celery任务）
+    
+    用法:
+        with get_sync_db() as db:
+            # 执行数据库操作
+            ...
+    """
+    with SyncSessionLocal() as session:
+        try:
+            yield session
+            session.commit()
+        except Exception:
+            session.rollback()
+            raise
+        finally:
+            session.close()
 
 
 async def init_db():

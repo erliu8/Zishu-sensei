@@ -348,31 +348,7 @@ export class Live2DPerformanceMonitor {
    */
   private applyQualitySettings(): void {
     // 根据质量等级调整渲染参数
-    const qualitySettings = {
-      low: {
-        pixelRatio: 0.5,
-        antialias: false,
-        shadowQuality: 'low'
-      },
-      medium: {
-        pixelRatio: 0.75,
-        antialias: false,
-        shadowQuality: 'medium'
-      },
-      high: {
-        pixelRatio: 1.0,
-        antialias: true,
-        shadowQuality: 'high'
-      },
-      ultra: {
-        pixelRatio: 1.0,
-        antialias: true,
-        shadowQuality: 'ultra'
-      }
-    }
-
-    const settings = qualitySettings[this.config.qualityLevel]
-    // 应用设置到渲染器
+    // TODO: 实现质量设置应用逻辑
   }
 
   /**

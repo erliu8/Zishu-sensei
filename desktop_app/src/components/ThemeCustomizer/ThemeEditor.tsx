@@ -30,8 +30,6 @@ export interface ThemeEditorProps {
     onSave?: (theme: Partial<ThemeDetail>) => void
     /** 取消回调 */
     onCancel?: () => void
-    /** 是否显示预览 */
-    showPreview?: boolean
     /** 自定义类名 */
     className?: string
 }
@@ -66,15 +64,15 @@ interface EditorState {
 function editorReducer(state: EditorState, action: EditorAction): EditorState {
     switch (action.type) {
         case 'SET_COLOR': {
-            const newTheme = {
+            const newTheme: Partial<ThemeDetail> = {
                 ...state.current,
                 variables: {
                     ...state.current.variables,
                     colors: {
                         ...state.current.variables?.colors,
                         [action.key]: colorUtils.createColorConfig(action.value)
-                    }
-                }
+                    } as ThemeColors
+                } as any
             }
             
             // 添加到历史记录
@@ -225,7 +223,6 @@ export const ThemeEditor: React.FC<ThemeEditorProps> = ({
     onChange,
     onSave,
     onCancel,
-    showPreview = true,
     className
 }) => {
     // ==================== 状态 ====================
@@ -256,15 +253,15 @@ export const ThemeEditor: React.FC<ThemeEditorProps> = ({
         
         // 通知父组件
         if (onChange) {
-            const updatedTheme = {
+            const updatedTheme: Partial<ThemeDetail> = {
                 ...state.current,
                 variables: {
                     ...state.current.variables,
                     colors: {
                         ...currentColors,
                         [key]: colorUtils.createColorConfig(value)
-                    }
-                }
+                    } as ThemeColors
+                } as any
             }
             onChange(updatedTheme)
         }

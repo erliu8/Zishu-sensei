@@ -19,7 +19,7 @@ import type {
  * 打包服务 API 客户端
  */
 export class PackagingApiClient {
-  private readonly baseUrl = '/packaging';
+  private readonly baseUrl = '/api/packaging';
 
   /**
    * 创建打包任务

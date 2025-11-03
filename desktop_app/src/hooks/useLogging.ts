@@ -11,7 +11,6 @@
 import { useState, useEffect, useCallback, useRef } from 'react';
 import { 
   loggingService, 
-  LogEntry, 
   LogFilter, 
   LogSearchRequest, 
   LogSearchResponse, 
@@ -20,7 +19,6 @@ import {
   RemoteLogConfig, 
   LogSystemStatus, 
   LogFileInfo,
-  LogLevel,
   LoggingError
 } from '../services/loggingService';
 
@@ -62,7 +60,7 @@ export interface UseLoggingReturn {
   // 查询和搜索
   searchLogs: (request: LogSearchRequest) => Promise<void>;
   refreshLogs: () => Promise<void>;
-  refreshStatistics: () => Promise<void>;
+  refreshStatistics: (filter?: LogFilter) => Promise<void>;
   
   // 导出和管理
   exportLogs: (format: 'json' | 'csv' | 'txt', filter?: LogFilter, filePath?: string) => Promise<void>;

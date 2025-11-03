@@ -242,7 +242,7 @@ export const PermissionManagementPanel: React.FC<PermissionManagementPanelProps>
           filteredPermissions.map((permission) => {
             const grant = grantMap.get(permission.permission_type.toString());
             const metadata = PERMISSION_METADATA[permission.permission_type];
-            const status = grant?.status || 'none';
+            // const status = grant?.status || 'none';
 
             return (
               <div key={permission.id} className="permission-item">

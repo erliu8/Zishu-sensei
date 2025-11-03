@@ -407,7 +407,7 @@ export class TauriWindowService {
         if (window) {
             await window.setTitle(title)
         } else {
-            await commandService.setWindowTitle(label, title)
+            await commandService.setWindowTitle(title)
         }
     }
 

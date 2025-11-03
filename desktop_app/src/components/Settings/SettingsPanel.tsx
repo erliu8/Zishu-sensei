@@ -1,5 +1,7 @@
 import { motion } from 'framer-motion'
-import React from 'react'
+import React, { useState, useCallback } from 'react'
+import { ModelSelector } from '@/components/Character/ModelSelector'
+import { useModelLoader } from '@/components/Character/ModelLoader'
 
 interface SettingsPanelProps {
     onClose: () => void
@@ -13,6 +15,31 @@ export const SettingsPanel: React.FC<SettingsPanelProps> = ({
     onClose,
     onReset,
 }) => {
+    // 使用模型加载器 Hook
+    const { currentCharacter, switchCharacter, loadCharacters } = useModelLoader()
+    const [isModelSwitching, setIsModelSwitching] = useState(false)
+
+    // 加载角色列表（获取当前激活的角色）
+    React.useEffect(() => {
+        loadCharacters().catch(err => {
+            console.error('❌ 加载角色列表失败:', err)
+        })
+    }, [loadCharacters])
+
+    // 处理模型切换
+    const handleModelSelect = useCallback(async (modelId: string) => {
+        try {
+            setIsModelSwitching(true)
+            console.log('🔄 正在切换模型:', modelId)
+            await switchCharacter(modelId)
+            console.log('✅ 模型切换成功:', modelId)
+        } catch (error) {
+            console.error('❌ 模型切换失败:', error)
+        } finally {
+            setIsModelSwitching(false)
+        }
+    }, [switchCharacter])
+
     return (
         <motion.div
             initial={{ opacity: 0, scale: 0.9 }}
@@ -25,7 +52,7 @@ export const SettingsPanel: React.FC<SettingsPanelProps> = ({
                 flexDirection: 'column',
                 backgroundColor: 'hsl(var(--color-background))',
                 color: 'hsl(var(--color-foreground))',
-            }}
+            } as React.CSSProperties}
         >
             {/* 标题栏 */}
             <div style={{
@@ -273,6 +300,67 @@ export const SettingsPanel: React.FC<SettingsPanelProps> = ({
                                         cursor: 'pointer',
                                     }}
                                 />
+                            </div>
+                        </div>
+                    </section>
+
+                    {/* Live2D模型设置 */}
+                    <section>
+                        <h2 style={{
+                            fontSize: '16px',
+                            fontWeight: 500,
+                            color: 'hsl(var(--color-foreground))',
+                            marginBottom: '12px',
+                        }}>
+                            Live2D模型设置
+                        </h2>
+                        <div style={{
+                            display: 'flex',
+                            flexDirection: 'column',
+                            gap: '12px',
+                        }}>
+                            <div>
+                                <label style={{
+                                    display: 'block',
+                                    fontSize: '14px',
+                                    color: 'hsl(var(--color-foreground))',
+                                    marginBottom: '8px',
+                                }}>
+                                    选择角色模型
+                                </label>
+                                <div style={{
+                                    position: 'relative',
+                                }}>
+                                    {isModelSwitching && (
+                                        <div style={{
+                                            position: 'absolute',
+                                            top: '50%',
+                                            left: '50%',
+                                            transform: 'translate(-50%, -50%)',
+                                            zIndex: 10,
+                                            background: 'rgba(255, 255, 255, 0.9)',
+                                            padding: '8px 16px',
+                                            borderRadius: '8px',
+                                            fontSize: '12px',
+                                            color: 'hsl(var(--color-foreground))',
+                                            boxShadow: '0 2px 8px rgba(0, 0, 0, 0.1)',
+                                        }}>
+                                            切换中...
+                                        </div>
+                                    )}
+                                    <ModelSelector
+                                        currentModelId={currentCharacter?.id || 'hiyori'}
+                                        onModelSelect={handleModelSelect}
+                                    />
+                                </div>
+                                <p style={{
+                                    fontSize: '12px',
+                                    color: 'hsl(var(--color-muted-foreground))',
+                                    marginTop: '8px',
+                                    lineHeight: '1.5',
+                                }}>
+                                    当前模型: {currentCharacter?.name || '未知'}
+                                </p>
                             </div>
                         </div>
                     </section>

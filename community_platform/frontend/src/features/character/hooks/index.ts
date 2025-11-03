@@ -7,6 +7,7 @@ export * from './use-personality';
 export * from './use-expressions';
 export * from './use-voices';
 export * from './use-models';
+export * from './useCharacterDownload';
 
 // 显式导出常用的 hooks
 export {
@@ -24,4 +25,6 @@ export {
   useCloneCharacter,
   characterKeys,
 } from './use-characters';
+
+export { useCharacterDownload } from './useCharacterDownload';
 

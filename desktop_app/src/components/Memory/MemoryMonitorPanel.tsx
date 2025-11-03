@@ -36,7 +36,7 @@ export const MemoryMonitorPanel: React.FC = () => {
   const { snapshots, createSnapshot } = useMemorySnapshots(50);
   const { leaks, detectLeaks, detecting } = useMemoryLeakDetection(true, 600000);
   const { cleanup, cleaning, lastResult } = useMemoryCleanup();
-  const { status, summary } = useMemoryStatus(5000);
+  const { status } = useMemoryStatus(5000);
   const { thresholds, updateThresholds } = useMemoryThresholds();
   const { optimizationEnabled, startOptimization, stopOptimization } = useMemoryOptimization();
 

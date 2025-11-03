@@ -18,6 +18,9 @@ const nextConfig: NextConfig = {
   // 压缩
   compress: true,
 
+  // 禁用自动末尾斜杠重定向（因为 FastAPI 需要末尾斜杠）
+  skipTrailingSlashRedirect: true,
+
   // 性能分析
   productionBrowserSourceMaps: false,
 
@@ -71,8 +74,9 @@ const nextConfig: NextConfig = {
 
   // 环境变量
   env: {
+    // NEXT_PUBLIC_API_URL 应该是浏览器访问的地址，默认使用 /api（通过 rewrites 代理到后端）
     NEXT_PUBLIC_API_URL:
-      process.env['NEXT_PUBLIC_API_URL'] || 'http://localhost:8001/api/v1',
+      process.env['NEXT_PUBLIC_API_URL'] || '/api',
     NEXT_PUBLIC_WS_URL:
       process.env['NEXT_PUBLIC_WS_URL'] || 'ws://localhost:8001/ws',
   },
@@ -86,12 +90,8 @@ const nextConfig: NextConfig = {
         destination: '/',
         permanent: true,
       },
-      // 处理尾部斜杠
-      {
-        source: '/:path+/',
-        destination: '/:path+',
-        permanent: true,
-      },
+      // 注意：移除了末尾斜杠重定向规则，因为会影响API代理
+      // FastAPI需要末尾斜杠，而重定向会干扰API请求
     ]
   },
 
@@ -102,14 +102,13 @@ const nextConfig: NextConfig = {
     const backendUrl = process.env['BACKEND_API_URL'] || 'http://localhost:8001/api/v1';
     
     return {
-      // 注意：不使用 beforeFiles，因为它会覆盖 app/api 路由
-      // 使用 afterFiles 让 Next.js API 路由优先匹配
+      // 使用 afterFiles 而不是 beforeFiles
+      // 这样 Next.js 的 API Routes (/app/api/*) 会优先处理
+      // 只有不存在的路由才会被代理到后端
       afterFiles: [
-        // 只有当 Next.js app/api 路由不存在时，才代理到后端
-        // 这样 app/api/* 会先被匹配，然后才是这个 rewrite
         {
           source: '/api/:path*',
-          destination: `${backendUrl}/:path*`,
+          destination: `${backendUrl}/:path*`,  // 不要添加末尾斜杠
         },
       ],
     }

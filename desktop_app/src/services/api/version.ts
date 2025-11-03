@@ -439,10 +439,10 @@ export class VersionManager {
   /**
    * 获取修订版本号
    */
-  private getPatchVersion(version: string): number {
-    const match = version.match(/^v?\d+\.\d+\.(\d+)/)
-    return match ? parseInt(match[1]) : 0
-  }
+  // private getPatchVersion(version: string): number {
+  //   const match = version.match(/^v?\d+\.\d+\.(\d+)/)
+  //   return match ? parseInt(match[1]) : 0
+  // }
 
   // ================================
   // 版本信息

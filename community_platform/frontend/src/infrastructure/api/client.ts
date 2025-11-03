@@ -69,12 +69,37 @@ export function createApiClient(config?: ApiClientConfig): AxiosInstance {
   const retryCount = config?.retryCount ?? 2;
   const retryDelay = config?.retryDelay ?? 1000;
   
+  // 规范化基础地址，避免把同源根路径（如 "/"）当作 API 根导致命中页面路由
+  const rawBaseURL = config?.baseURL ?? process.env['NEXT_PUBLIC_API_URL'];
+  let resolvedBaseURL = (typeof rawBaseURL === 'string' && rawBaseURL.trim() !== '')
+    ? rawBaseURL
+    : '/api';
+
+  // 若为同源相对路径且不是以 /api 开头，则强制改为 /api 以匹配 next.config.ts 的 rewrites
+  if (resolvedBaseURL.startsWith('/') && !resolvedBaseURL.startsWith('/api')) {
+    // 控制台提示一次，便于排查环境变量配置问题
+    try {
+      // eslint-disable-next-line no-console
+      console.warn(`[API 配置] 检测到 NEXT_PUBLIC_API_URL=\"${resolvedBaseURL}\" 可能错误，已自动使用 \"/api\" 以避免请求命中页面路由。`);
+    } catch {}
+    resolvedBaseURL = '/api';
+  }
+
+  // 去掉末尾多余斜杠，避免与请求 path 组合出现重复斜杠
+  if (resolvedBaseURL.length > 1 && resolvedBaseURL.endsWith('/')) {
+    resolvedBaseURL = resolvedBaseURL.replace(/\/+$/, '');
+  }
+
+  // 调试信息：显示实际使用的baseURL
+  console.log('[API Client] 创建客户端，baseURL:', resolvedBaseURL);
+  console.log('[API Client] 环境变量 NEXT_PUBLIC_API_URL:', process.env['NEXT_PUBLIC_API_URL']);
+
   const client = axios.create({
-    baseURL: config?.baseURL || process.env['NEXT_PUBLIC_API_URL'] || '/api',
+    baseURL: resolvedBaseURL,
     timeout: config?.timeout || 30000,
     withCredentials: config?.withCredentials ?? true,
-      headers: {
-        'Content-Type': 'application/json',
+    headers: {
+      'Content-Type': 'application/json',
     },
   });
 
@@ -88,6 +113,17 @@ export function createApiClient(config?: ApiClientConfig): AxiosInstance {
           config.headers.Authorization = `Bearer ${token}`;
         }
       }
+      
+      // 调试：打印完整请求 URL
+      const fullUrl = config.baseURL && config.url ? `${config.baseURL}${config.url}` : config.url;
+      console.log('[API Client Request]', {
+        method: config.method?.toUpperCase(),
+        baseURL: config.baseURL,
+        url: config.url,
+        fullUrl: fullUrl,
+        hasTrailingSlash: config.url?.endsWith('/'),
+      });
+      
       return config;
     },
     (error) => {

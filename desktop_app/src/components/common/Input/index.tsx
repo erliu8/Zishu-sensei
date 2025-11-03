@@ -37,7 +37,7 @@ export type ValidationStatus = 'success' | 'warning' | 'error'
 /**
  * Input 组件属性
  */
-export interface InputProps extends Omit<React.InputHTMLAttributes<HTMLInputElement>, 'size'> {
+export interface InputProps extends Omit<React.InputHTMLAttributes<HTMLInputElement>, 'size' | 'prefix'> {
   /** 输入框类型 */
   type?: InputType
   

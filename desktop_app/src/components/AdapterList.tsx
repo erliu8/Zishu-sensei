@@ -5,7 +5,7 @@
  */
 
 import React, { useState, useEffect } from 'react';
-import { AdapterService, AdapterInfo, AdapterStatus, AdapterType } from '../services/adapter';
+import { AdapterService, AdapterInfo, AdapterStatus } from '../services/adapter';
 
 interface AdapterListProps {
   onAdapterSelect?: (adapter: AdapterInfo) => void;
@@ -34,22 +34,23 @@ export const AdapterList: React.FC<AdapterListProps> = ({ onAdapterSelect }) => 
     }
   };
 
-  const handleInstallAdapter = async (adapterId: string) => {
-    try {
-      setLoading(true);
-      await AdapterService.installAdapter({
-        adapter_id: adapterId,
-        source: 'market',
-        force: false,
-        options: {},
-      });
-      await loadAdapters(); // Reload the list
-    } catch (err) {
-      setError(err instanceof Error ? err.message : 'Failed to install adapter');
-    } finally {
-      setLoading(false);
-    }
-  };
+  // 注释掉未使用的函数
+  // const handleInstallAdapter = async (adapterId: string) => {
+  //   try {
+  //     setLoading(true);
+  //     await AdapterService.installAdapter({
+  //       adapter_id: adapterId,
+  //       source: 'market',
+  //       force: false,
+  //       options: {},
+  //     });
+  //     await loadAdapters(); // Reload the list
+  //   } catch (err) {
+  //     setError(err instanceof Error ? err.message : 'Failed to install adapter');
+  //   } finally {
+  //     setLoading(false);
+  //   }
+  // };
 
   const handleUninstallAdapter = async (adapterId: string) => {
     try {

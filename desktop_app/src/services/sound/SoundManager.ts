@@ -17,7 +17,7 @@ import type {
   SoundManagerEventHandler,
   SoundFadeController,
 } from '@/types/sound'
-import { SoundState, SoundError, SoundPriority } from '@/types/sound'
+import { SoundState, SoundError } from '@/types/sound'
 import { DEFAULT_SOUND_MANAGER_CONFIG } from '@/constants/sounds'
 
 /**

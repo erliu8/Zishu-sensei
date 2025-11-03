@@ -80,6 +80,7 @@ export interface AdapterMetadata {
 }
 
 export interface AdapterInfo {
+  id: string;
   name: string;
   path?: string;
   size?: number;
@@ -89,6 +90,7 @@ export interface AdapterInfo {
   load_time?: string;
   memory_usage?: number;
   config: Record<string, any>;
+  metadata?: AdapterMetadata;
 }
 
 export interface AdapterInstallRequest {

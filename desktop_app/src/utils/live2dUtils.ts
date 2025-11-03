@@ -85,8 +85,8 @@ export class Live2DModelManager {
       animations: this.parseAnimations(modelData.FileReferences?.Motions, basePath),
       expressions: this.parseExpressions(modelData.FileReferences?.Expressions, basePath),
       physics: modelData.FileReferences?.Physics ? `${basePath}/${modelData.FileReferences.Physics}` : undefined,
-      pose: modelData.FileReferences?.Pose ? `${basePath}/${modelData.FileReferences.Pose}` : undefined,
-      userdata: modelData.FileReferences?.UserData ? `${basePath}/${modelData.FileReferences.UserData}` : undefined,
+      // pose: modelData.FileReferences?.Pose ? `${basePath}/${modelData.FileReferences.Pose}` : undefined, // 暂时注释掉不支持的属性
+      // userdata: modelData.FileReferences?.UserData ? `${basePath}/${modelData.FileReferences.UserData}` : undefined, // 暂时注释掉不支持的属性
       metadata: {
         modelSize: {
           width: modelData.Layout?.Width || 1024,
@@ -152,11 +152,11 @@ export class Live2DModelManager {
     const lowerName = groupName.toLowerCase()
     
     if (lowerName.includes('idle') || lowerName.includes('wait')) {
-      return 'idle'
+      return Live2DAnimationType.IDLE
     } else if (lowerName.includes('tap') || lowerName.includes('touch')) {
-      return 'tap'
+      return Live2DAnimationType.TAP
     } else {
-      return 'special'
+      return Live2DAnimationType.HAPPY // 使用HAPPY代替'special'
     }
   }
 
@@ -165,9 +165,9 @@ export class Live2DModelManager {
    */
   private getAnimationPriority(animationType: Live2DAnimationType): number {
     switch (animationType) {
-      case 'idle': return 1
-      case 'tap': return 2
-      case 'special': return 3
+      case Live2DAnimationType.IDLE: return 1
+      case Live2DAnimationType.TAP: return 2
+      case Live2DAnimationType.HAPPY: return 3
       default: return 1
     }
   }

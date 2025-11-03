@@ -81,12 +81,13 @@ export interface SearchFilters {
 /**
  * 高亮文本
  */
-const highlightText = (text: string, query: string, caseSensitive: boolean): string => {
-  if (!query) return text
-  const flags = caseSensitive ? 'g' : 'gi'
-  const regex = new RegExp(query.replace(/[.*+?^${}()|[\]\\]/g, '\\$&'), flags)
-  return text.replace(regex, '<mark>$&</mark>')
-}
+// 注释掉未使用的函数
+// const highlightText = (text: string, query: string, caseSensitive: boolean): string => {
+//   if (!query) return text
+//   const flags = caseSensitive ? 'g' : 'gi'
+//   const regex = new RegExp(query.replace(/[.*+?^${}()|[\]\\]/g, '\\$&'), flags)
+//   return text.replace(regex, '<mark>$&</mark>')
+// }
 
 /**
  * 提取匹配上下文

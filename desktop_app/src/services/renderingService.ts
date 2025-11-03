@@ -6,12 +6,7 @@
 
 import { invoke } from '@tauri-apps/api/tauri';
 import type {
-  RenderMetrics,
   PerformanceReport,
-  PerformanceConfig,
-  WebGLStats,
-  AnimationStats,
-  RenderOptimizationConfig,
 } from '../types/rendering';
 
 // ============================================================================
@@ -387,7 +382,8 @@ class RenderingService {
    */
   async getPerformanceReport(): Promise<PerformanceReport> {
     const stats = await this.getRenderStats();
-    const suggestions = await this.getOptimizationSuggestions();
+    // TODO: 集成优化建议到性能报告中
+    // const suggestions = await this.getOptimizationSuggestions();
     
     return {
       totalRenderTime: stats.totalRenders * stats.averageRenderTime,

@@ -1,6 +1,6 @@
 import React, { useState, useMemo } from 'react'
 import { AnimationConfig, AnimationType } from '../../../services/live2d/animation'
-import { Play, Clock, Filter, Search, RotateCcw, X } from 'lucide-react'
+import { Clock, Search, RotateCcw, X } from 'lucide-react'
 
 /**
  * 历史项属性

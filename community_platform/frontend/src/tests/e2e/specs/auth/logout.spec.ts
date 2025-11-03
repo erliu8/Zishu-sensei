@@ -28,7 +28,7 @@ test.describe('用户登出', () => {
     
     // 验证 localStorage 中的 token 已被清除
     const token = await page.evaluate(() => {
-      return localStorage.getItem('auth_token');
+      return localStorage.getItem('auth_access_token');
     });
     
     expect(token).toBeNull();
@@ -90,7 +90,7 @@ test.describe('登出边界情况', () => {
     
     // 即使网络错误，也应该清除本地状态
     const token = await page.evaluate(() => {
-      return localStorage.getItem('auth_token');
+      return localStorage.getItem('auth_access_token');
     });
     
     expect(token).toBeNull();

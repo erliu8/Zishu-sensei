@@ -5,12 +5,12 @@
  */
 
 import { 
-    AppConfig, 
+    // AppConfig, 
     DEFAULT_CONFIG,
     TypeGuards,
     TypeConverters 
 } from '../types/settings'
-import { ConfigValidator, ConfigValidationUtils } from '../utils/configValidator'
+import { /* ConfigValidator, */ ConfigValidationUtils } from '../utils/configValidator'
 import { 
     ConfigError, 
     ConfigErrorType, 
@@ -210,10 +210,11 @@ export function exampleSafeOperations() {
     const update = {
         window: {
             width: 500,
+            height: 700, // 添加缺少的 height 属性
             settings: {
                 advanced: {
-                    debug: false,
-                    verbose: true
+                    debug: false
+                    // 移除额外的 verbose 属性
                 }
             }
         }

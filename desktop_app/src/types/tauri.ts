@@ -186,9 +186,18 @@ export interface TauriInvokeOptions {
  * Tauri 文件系统操作选项
  */
 export interface TauriFsOptions {
-    dir?: 'audio' | 'cache' | 'config' | 'data' | 'document' | 'download' | 'executable' | 'font' | 'home' | 'log' | 'picture' | 'public' | 'runtime' | 'template' | 'video' | 'resource' | 'app' | 'appConfig' | 'appData' | 'appLocalData' | 'appCache' | 'appLog'
+    dir?: BaseDirectory
     recursive?: boolean
 }
+
+/**
+ * Tauri 基础目录类型
+ */
+export type BaseDirectory = 
+    | 'Audio' | 'Cache' | 'Config' | 'Data' | 'Document' | 'Download' 
+    | 'Executable' | 'Font' | 'Home' | 'Log' | 'Picture' | 'Public' 
+    | 'Runtime' | 'Template' | 'Video' | 'Resource' | 'App' 
+    | 'AppConfig' | 'AppData' | 'AppLocalData' | 'AppCache' | 'AppLog'
 
 /**
  * Tauri HTTP 请求选项
@@ -317,10 +326,13 @@ export type AppCommand =
 /**
  * 命令状态
  */
-export interface CommandState {
+export interface CommandState<T = any> {
     loading: boolean
     error: string | null
-    data: any
+    data: T
+    isReady: boolean
+    execute: () => Promise<T>
+    reset: () => void
 }
 
 /**

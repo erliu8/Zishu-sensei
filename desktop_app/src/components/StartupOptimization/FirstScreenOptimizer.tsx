@@ -8,7 +8,7 @@ import { useStartupOptimization } from '../../hooks/useStartupOptimization';
 import { StartupPhase } from '../../types/startup';
 import './FirstScreenOptimizer.css';
 
-interface FirstScreenOptimizerProps {
+export interface FirstScreenOptimizerProps {
   children: React.ReactNode;
   criticalResources?: PreloadResource[];
   enableImageOptimization?: boolean;

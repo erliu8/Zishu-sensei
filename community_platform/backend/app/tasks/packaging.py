@@ -12,7 +12,7 @@ from typing import Dict, Any
 from celery import Task
 
 from app.tasks.celery_app import celery_app
-from app.db.session import SessionLocal
+from app.db.session import get_sync_db
 from app.services.adapter import PackagingService
 from app.models.adapter import Adapter
 
@@ -27,18 +27,15 @@ class PackagingTask(Task):
         logger.error(f"打包任务 {task_id} 失败: {exc}")
         
         # 更新数据库状态
-        db = SessionLocal()
-        try:
-            packaging_task_id = args[0] if args else kwargs.get('task_id')
-            if packaging_task_id:
+        packaging_task_id = args[0] if args else kwargs.get('task_id')
+        if packaging_task_id:
+            with next(get_sync_db()) as db:
                 PackagingService.update_task_status(
                     db=db,
                     task_id=packaging_task_id,
                     status="failed",
                     error_message=str(exc)
                 )
-        finally:
-            db.close()
 
 
 @celery_app.task(
@@ -53,11 +50,9 @@ def create_package_task(self, task_id: str):
     Args:
         task_id: 打包任务ID
     """
-    db = SessionLocal()
-    
-    try:
-        # 获取任务信息
-        task = PackagingService.get_task(db, task_id, user=None)
+    # 获取任务信息
+    with next(get_sync_db()) as db:
+        task = PackagingService.get_task_sync(db, task_id, user=None)
         
         if not task:
             raise ValueError(f"打包任务 {task_id} 不存在")
@@ -75,16 +70,21 @@ def create_package_task(self, task_id: str):
         config = task.config
         platform = task.platform
         
+    # 定义一个辅助函数来更新任务状态
+    def update_progress(progress: int, status: str = "packaging", **kwargs):
+        self.update_state(state='PROGRESS', meta={'progress': progress, 'status': status})
+        with next(get_sync_db()) as db:
+            PackagingService.update_task_status(db, task_id, status=status, progress=progress, **kwargs)
+    
+    try:
         # 步骤1: 创建工作目录 (10%)
-        self.update_state(state='PROGRESS', meta={'progress': 10, 'status': '创建工作目录'})
-        PackagingService.update_task_status(db, task_id, status="packaging", progress=10)
+        update_progress(10, status="packaging")
         
         work_dir = tempfile.mkdtemp(prefix=f"packaging_{task_id}_")
         logger.info(f"工作目录: {work_dir}")
         
         # 步骤2: 复制基础应用 (30%)
-        self.update_state(state='PROGRESS', meta={'progress': 30, 'status': '准备基础应用'})
-        PackagingService.update_task_status(db, task_id, status="packaging", progress=30)
+        update_progress(30, status="packaging")
         
         base_app_dir = os.path.join(work_dir, "app")
         base_app_path = os.getenv("BASE_APP_PATH", "/opt/zishu-sensei/desktop_app")
@@ -100,7 +100,7 @@ def create_package_task(self, task_id: str):
         
         # 步骤3: 注入配置 (40%)
         self.update_state(state='PROGRESS', meta={'progress': 40, 'status': '注入配置'})
-        PackagingService.update_task_status(db, task_id, status="packaging", progress=40)
+        update_progress(40)
         
         config_dir = os.path.join(base_app_dir, "config")
         os.makedirs(config_dir, exist_ok=True)
@@ -113,7 +113,7 @@ def create_package_task(self, task_id: str):
         
         # 步骤4: 下载并安装适配器 (60%)
         self.update_state(state='PROGRESS', meta={'progress': 60, 'status': '安装适配器'})
-        PackagingService.update_task_status(db, task_id, status="packaging", progress=60)
+        update_progress(60)
         
         adapters_dir = os.path.join(base_app_dir, "adapters")
         os.makedirs(adapters_dir, exist_ok=True)
@@ -149,7 +149,7 @@ def create_package_task(self, task_id: str):
         
         # 步骤5: 添加角色资源 (70%)
         self.update_state(state='PROGRESS', meta={'progress': 70, 'status': '添加角色资源'})
-        PackagingService.update_task_status(db, task_id, status="packaging", progress=70)
+        update_progress(70)
         
         character_config = config.get("character", {})
         if character_config:
@@ -167,14 +167,14 @@ def create_package_task(self, task_id: str):
         
         # 步骤6: 构建安装包 (85%)
         self.update_state(state='PROGRESS', meta={'progress': 85, 'status': '构建安装包'})
-        PackagingService.update_task_status(db, task_id, status="packaging", progress=85)
+        update_progress(85)
         
         output_file = _build_installer(base_app_dir, platform, config, task_id)
         logger.info(f"安装包已构建: {output_file}")
         
         # 步骤7: 计算哈希和大小 (90%)
         self.update_state(state='PROGRESS', meta={'progress': 90, 'status': '计算文件信息'})
-        PackagingService.update_task_status(db, task_id, status="packaging", progress=90)
+        update_progress(90)
         
         file_hash = _calculate_hash(output_file)
         file_size = os.path.getsize(output_file)
@@ -183,22 +183,14 @@ def create_package_task(self, task_id: str):
         
         # 步骤8: 上传到存储 (95%)
         self.update_state(state='PROGRESS', meta={'progress': 95, 'status': '上传文件'})
-        PackagingService.update_task_status(db, task_id, status="packaging", progress=95)
+        update_progress(95)
         
         download_url = _upload_to_storage(output_file, task_id, platform)
         logger.info(f"下载链接: {download_url}")
         
         # 步骤9: 完成 (100%)
         self.update_state(state='PROGRESS', meta={'progress': 100, 'status': '完成'})
-        PackagingService.update_task_status(
-            db=db,
-            task_id=task_id,
-            status="completed",
-            progress=100,
-            download_url=download_url,
-            file_size=file_size,
-            file_hash=file_hash
-        )
+        update_progress(100, status="completed", download_url=download_url, file_size=file_size, file_hash=file_hash)
         
         # 清理工作目录
         shutil.rmtree(work_dir, ignore_errors=True)
@@ -216,21 +208,13 @@ def create_package_task(self, task_id: str):
         logger.exception(f"打包任务失败: {task_id}")
         
         # 更新状态为失败
-        PackagingService.update_task_status(
-            db=db,
-            task_id=task_id,
-            status="failed",
-            error_message=str(e)
-        )
+        update_progress(0, status="failed", error_message=str(e))
         
         # 清理工作目录
         if 'work_dir' in locals():
             shutil.rmtree(work_dir, ignore_errors=True)
         
         raise
-        
-    finally:
-        db.close()
 
 
 def _build_installer(

@@ -1,12 +1,13 @@
 /**
  * 认证相关 Hooks
  * @module features/auth/hooks
+ * 
+ * 使用自定义 JWT 认证系统
  */
 
 'use client';
 
 import { useCallback } from 'react';
-import { signIn, signOut, useSession } from 'next-auth/react';
 import { useRouter } from 'next/navigation';
 import { useAuthStore } from '../store';
 import { AuthApiClient } from '../api';
@@ -17,19 +18,16 @@ import type { LoginCredentials, RegisterInput } from '../types';
  */
 export function useAuth() {
   const router = useRouter();
-  const { data: session, status } = useSession();
   const {
     user,
     isAuthenticated,
-    isLoading: storeLoading,
+    isLoading,
     error,
     setSession,
     setLoading,
     setError,
     logout: storeLogout,
   } = useAuthStore();
-
-  const isLoading = status === 'loading' || storeLoading;
 
   /**
    * 登录
@@ -40,16 +38,9 @@ export function useAuth() {
         setLoading(true);
         setError(null);
 
-        // 直接调用后端API登录
+        // 调用后端API登录
         const session = await AuthApiClient.login(credentials);
         setSession(session);
-
-        // 同时使用NextAuth登录（用于SSR和OAuth场景）
-        await signIn('credentials', {
-          email: credentials.email,
-          password: credentials.password,
-          redirect: false,
-        });
 
         // 重定向
         router.push(redirectTo || '/');
@@ -99,13 +90,6 @@ export function useAuth() {
         const session = await AuthApiClient.register(input);
         setSession(session);
 
-        // 注册成功后自动使用NextAuth登录（用于SSR和OAuth场景）
-        await signIn('credentials', {
-          email: input.email,
-          password: input.password,
-          redirect: false,
-        });
-
         // 重定向
         router.push(redirectTo || '/');
         return { success: true };
@@ -149,7 +133,6 @@ export function useAuth() {
     try {
       setLoading(true);
       await storeLogout();
-      await signOut({ redirect: false });
       router.push('/');
     } catch (err) {
       console.error('Logout failed:', err);
@@ -158,41 +141,17 @@ export function useAuth() {
     }
   }, [router, storeLogout, setLoading]);
 
-  /**
-   * 使用 OAuth 登录
-   */
-  const loginWithOAuth = useCallback(
-    async (provider: 'github' | 'google', redirectTo?: string) => {
-      try {
-        setLoading(true);
-        setError(null);
-
-        await signIn(provider, {
-          callbackUrl: redirectTo || '/',
-        });
-      } catch (err: any) {
-        const errorMessage = err.message || 'OAuth 登录失败';
-        setError(errorMessage);
-      } finally {
-        setLoading(false);
-      }
-    },
-    [setLoading, setError]
-  );
-
   return {
     // 状态
-    user: user || session?.user,
-    isAuthenticated: isAuthenticated || !!session,
+    user,
+    isAuthenticated,
     isLoading,
     error,
-    session,
 
     // 方法
     login,
     register,
     logout,
-    loginWithOAuth,
   };
 }
 

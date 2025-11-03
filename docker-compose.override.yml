@@ -1,0 +1,74 @@
+# Docker Compose 开发环境覆盖配置
+# 此文件会自动与 docker-compose.yml 合并，用于开发环境的特殊配置
+version: '3.8'
+
+services:
+  # 核心 API 服务 - 开发模式配置
+  zishu-api:
+    # 覆盖启动命令，启用热重载
+    command: python -m zishu.api.server --host 0.0.0.0 --port 8000 --reload --debug
+    environment:
+      # 开发环境变量
+      - ENVIRONMENT=development
+      - DEBUG=True
+      - LOG_LEVEL=DEBUG
+      # 热重载相关配置
+      - PYTHONPATH=/app
+      - WATCHDOG_POLLING=true
+    volumes:
+      # 确保源代码挂载用于热重载
+      - .:/app
+      # 排除不需要监控的目录
+      - /app/__pycache__
+      - /app/.git
+      - /app/node_modules
+      - /app/.pytest_cache
+      - /app/logs
+    # 开发模式下的端口映射
+    ports:
+      - "8000:8000"
+    # 开发环境标签
+    labels:
+      - "dev.hotreload=enabled"
+      - "dev.environment=development"
+
+  # 社区平台前端 - 开发模式
+  community-frontend:
+    # 启用热重载
+    command: npm run dev
+    environment:
+      - NODE_ENV=development
+      - NEXT_PUBLIC_API_URL=http://localhost:8000
+      - WATCHPACK_POLLING=true
+    volumes:
+      # 源代码挂载
+      - ./community_platform/frontend:/app
+      # 保留 node_modules
+      - /app/node_modules
+      - /app/.next
+    labels:
+      - "dev.hotreload=enabled"
+      - "dev.framework=nextjs"
+
+  # 社区平台后端 - 开发模式
+  community-backend:
+    # 启用热重载
+    command: uvicorn main:app --host 0.0.0.0 --port 8000 --reload --log-level debug
+    environment:
+      - ENVIRONMENT=development
+      - DEBUG=True
+    volumes:
+      # 源代码挂载
+      - ./community_platform/backend:/app
+      # 排除缓存目录
+      - /app/__pycache__
+    labels:
+      - "dev.hotreload=enabled"
+      - "dev.framework=fastapi"
+
+# 开发环境网络配置
+networks:
+  zishu-network:
+    driver: bridge
+    labels:
+      - "dev.environment=development"

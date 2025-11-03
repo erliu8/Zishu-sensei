@@ -58,14 +58,7 @@ export const ChatWindow: React.FC<ChatWindowProps> = ({
             initial={{ opacity: 0, scale: 0.9 }}
             animate={{ opacity: 1, scale: 1 }}
             exit={{ opacity: 0, scale: 0.9 }}
-            style={{
-                width: '100%',
-                height: '100%',
-                display: 'flex',
-                flexDirection: 'column',
-                backgroundColor: 'hsl(var(--color-background))',
-                color: 'hsl(var(--color-foreground))',
-            }}
+            className="w-full h-full flex flex-col bg-background text-foreground"
         >
             {/* 标题栏 */}
             <div style={{

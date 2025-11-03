@@ -16,7 +16,6 @@ import type {
     ThemeCard,
     ThemeDetail,
     ThemeSearchOptions,
-    ThemeSearchResult,
     ThemeReview,
     ThemeStatistics,
     ThemeEvent
@@ -73,8 +72,7 @@ export interface UseThemeMarketOptions {
 export function useThemeMarket(options: UseThemeMarketOptions = {}): UseThemeMarketReturn {
     const {
         initialOptions = {},
-        autoLoad = true,
-        enableCache = true
+        autoLoad = true
     } = options
     
     // ==================== 状态 ====================

@@ -21,8 +21,7 @@ import type {
   TaskInfo, 
   TaskMonitorStats, 
   SystemResources,
-  DesktopEvent,
-  DesktopEventType 
+  DesktopEvent
 } from '@/services/api/desktop'
 import { 
   getTaskList, 
@@ -416,19 +415,19 @@ export const TaskMonitor: React.FC<TaskMonitorProps> = ({
           <Button
             onClick={() => setAutoRefresh(!autoRefresh)}
             variant={autoRefresh ? 'primary' : 'secondary'}
-            size="small"
+            size="sm"
           >
             {autoRefresh ? '⏸️ 暂停刷新' : '▶️ 自动刷新'}
           </Button>
           <Button
             onClick={refreshData}
             disabled={isLoading}
-            size="small"
+            size="sm"
           >
             🔄 {isLoading ? '刷新中...' : '刷新'}
           </Button>
           {onClose && (
-            <Button onClick={onClose} variant="ghost" size="small">
+            <Button onClick={onClose} variant="ghost" size="sm">
               ✕
             </Button>
           )}
@@ -690,8 +689,8 @@ export const TaskMonitor: React.FC<TaskMonitorProps> = ({
                       {task.status === 'running' && (
                         <Button
                           onClick={() => handleCancelTask(task.id)}
-                          variant="danger"
-                          size="small"
+                          variant="destructive"
+                          size="sm"
                         >
                           取消
                         </Button>
@@ -699,7 +698,7 @@ export const TaskMonitor: React.FC<TaskMonitorProps> = ({
                       <Button
                         onClick={() => handleViewTaskDetails(task)}
                         variant="ghost"
-                        size="small"
+                        size="sm"
                       >
                         详情
                       </Button>
@@ -769,7 +768,7 @@ export const TaskMonitor: React.FC<TaskMonitorProps> = ({
               initial={{ scale: 0.9, opacity: 0 }}
               animate={{ scale: 1, opacity: 1 }}
               exit={{ scale: 0.9, opacity: 0 }}
-              onClick={(e) => e.stopPropagation()}
+              onClick={(e: any) => e.stopPropagation()}
             >
               <div className={styles.taskDetailsHeader}>
                 <h3>任务详情</h3>
@@ -870,7 +869,7 @@ export const TaskMonitor: React.FC<TaskMonitorProps> = ({
                       handleCancelTask(selectedTask.id)
                       handleCloseTaskDetails()
                     }}
-                    variant="danger"
+                    variant="destructive"
                   >
                     取消任务
                   </Button>

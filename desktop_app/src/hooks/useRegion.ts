@@ -7,7 +7,6 @@
 import { useState, useEffect, useCallback, useRef } from 'react';
 import { 
   RegionPreferences, 
-  SystemRegionInfo, 
   RegionConfig, 
   RegionState, 
   RegionActions,

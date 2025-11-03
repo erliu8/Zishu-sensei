@@ -13,8 +13,7 @@ import {
   Monitor,
   RefreshCw,
   CheckCircle,
-  Copy,
-  ExternalLink
+  Copy
 } from 'lucide-react'
 import { ErrorDetails, ErrorSeverity } from '../../types/error'
 import './ErrorDetailsModal.css'

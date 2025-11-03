@@ -7,7 +7,7 @@ import { useStartupOptimization } from '../../hooks/useStartupOptimization';
 import { StartupMetrics, StartupPhase } from '../../types/startup';
 import './StartupMonitor.css';
 
-interface StartupMonitorProps {
+export interface StartupMonitorProps {
   showRealTime?: boolean;
   showCharts?: boolean;
   showRecommendations?: boolean;

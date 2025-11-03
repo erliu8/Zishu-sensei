@@ -270,7 +270,7 @@ class PackagingTaskCreate(BaseModel):
 class PackagingTaskInDB(BaseModel):
     """数据库中的打包任务"""
     id: str
-    user_id: str
+    user_id: int
     config: PackagingConfig
     platform: Platform
     status: PackagingStatus
@@ -279,7 +279,7 @@ class PackagingTaskInDB(BaseModel):
     file_size: Optional[int] = None
     file_hash: Optional[str] = None
     error_message: Optional[str] = None
-    created_at: datetime
+    created_at: Optional[datetime] = None
     started_at: Optional[datetime] = None
     completed_at: Optional[datetime] = None
     

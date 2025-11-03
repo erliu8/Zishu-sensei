@@ -58,10 +58,10 @@ export function useAnimationControl(
   )
   
   // 错误状态
-  const [lastError, setLastError] = useState<Error | null>(null)
+  const [, setLastError] = useState<Error | null>(null)
   
   // 避免重复监听的引用
-  const eventListenersRef = useRef<Map<string, Function>>(new Map())
+  const eventListenersRef = useRef<Map<string, (...args: any[]) => void>>(new Map())
 
   // 更新状态的辅助函数
   const updateState = useCallback(() => {
@@ -315,22 +315,30 @@ export function useAnimationPlayer(
 
   // 监听动画状态变化
   useEffect(() => {
-    const onAnimationStart = () => {
+    const onAnimationStart = (data?: { config?: AnimationConfig; duration?: number }) => {
       setIsPlaying(true)
       setIsPaused(false)
       setProgress(0)
+      if (data?.config) {
+        setCurrentAnimation(data.config)
+      }
+      if (data?.duration) {
+        setDuration(data.duration)
+      }
     }
 
     const onAnimationComplete = () => {
       setIsPlaying(false)
       setIsPaused(false)
       setProgress(100)
+      setCurrentAnimation(null)
     }
 
     const onAnimationStop = () => {
       setIsPlaying(false)
       setIsPaused(false)
       setProgress(0)
+      setCurrentAnimation(null)
     }
 
     const onAnimationPause = () => {
@@ -459,7 +467,7 @@ export function useAnimationPresets(
   const importPresets = useCallback((json: string) => {
     try {
       const presetsObject = JSON.parse(json)
-      const newPresets = new Map(Object.entries(presetsObject))
+      const newPresets = new Map<string, AnimationConfig>(Object.entries(presetsObject))
       setPresets(newPresets)
     } catch (error) {
       throw new Error('导入预设失败: 无效的JSON格式')

@@ -37,7 +37,7 @@ interface UseLanguageReturn {
 export const useLanguage = (): UseLanguageReturn => {
   const { t, i18n } = useTranslation();
   const { settings, updateSettings } = useSettings();
-  const { execute: saveLanguageToBackend } = useTauriCommand<void, { language: string }>('save_language_setting');
+  const { execute: saveLanguageToBackend } = useTauriCommand('save_language_setting');
   
   const [state, setState] = useState<LanguageState>({
     currentLanguage: getCurrentLanguage(),
@@ -65,10 +65,10 @@ export const useLanguage = (): UseLanguageReturn => {
 
   // 同步设置中的语言
   useEffect(() => {
-    if (settings.general?.language && settings.general.language !== state.currentLanguage) {
-      handleChangeLanguage(settings.general.language as SupportedLanguage);
+    if (settings.language && settings.language !== state.currentLanguage) {
+      handleChangeLanguage(settings.language as SupportedLanguage);
     }
-  }, [settings.general?.language]);
+  }, [settings.language]);
 
   // 切换语言
   const handleChangeLanguage = useCallback(async (language: SupportedLanguage) => {
@@ -88,10 +88,8 @@ export const useLanguage = (): UseLanguageReturn => {
       
       // 保存到设置
       await updateSettings({
-        general: {
-          ...settings.general,
-          language
-        }
+        ...settings,
+        language
       });
       
       // 保存到后端
@@ -117,7 +115,7 @@ export const useLanguage = (): UseLanguageReturn => {
       }));
       throw error;
     }
-  }, [state.currentLanguage, settings.general, updateSettings, saveLanguageToBackend]);
+  }, [state.currentLanguage, settings, updateSettings, saveLanguageToBackend]);
 
   // 重置为系统语言
   const resetToSystem = useCallback(async () => {

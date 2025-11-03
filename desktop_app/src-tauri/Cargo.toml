@@ -59,6 +59,8 @@ notify = "6.1"
 
 # 数据库 (PostgreSQL, Redis, Qdrant)
 # 注意: SQLite 依赖已移除，仅支持 PostgreSQL, Redis, Qdrant
+# SQLite 用于错误监控系统
+rusqlite = { version = "0.30", features = ["bundled"] }
 
 # PostgreSQL
 tokio-postgres = { version = "0.7", features = ["with-chrono-0_4", "with-serde_json-1"] }

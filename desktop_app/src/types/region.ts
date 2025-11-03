@@ -570,7 +570,7 @@ export function buildLocale(language: string, country: string): string {
 /**
  * 获取区域的本地化名称
  */
-export function getLocalizedRegionName(locale: string, targetLocale: string): string {
+export function getLocalizedRegionName(locale: string, _targetLocale: string): string {
   // 这里可以实现本地化名称映射
   // 简化实现，返回原始代码
   return locale;

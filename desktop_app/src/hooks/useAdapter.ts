@@ -499,8 +499,10 @@ export function useAdapter(options: UseAdapterOptions = {}): UseAdapterReturn {
     // 注意：AdapterInfo 中没有 type 字段，这里需要从 metadata 中获取
     // 或者需要扩展 AdapterInfo 接口
     return adapterStore.adapters.filter(adapter => {
-      // 这里需要根据实际的数据结构来实现
-      return true // 临时返回所有适配器
+      // 根据适配器的metadata或id来判断类型
+      // 这里使用适配器id或metadata中的type字段来过滤
+      return adapter.id.includes(type.toLowerCase()) || 
+             (adapter.metadata && (adapter.metadata as any).type === type)
     })
   }, [adapterStore.adapters])
 

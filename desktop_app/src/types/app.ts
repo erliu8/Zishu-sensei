@@ -27,7 +27,7 @@ export interface AppState {
 /**
  * 窗口模式
  */
-export type WindowMode = 'pet' | 'chat' | 'settings' | 'adapters' | 'minimized'
+export type WindowMode = 'pet' | 'chat' | 'settings' | 'adapters' | 'minimized' | 'windowed' | 'maximized' | 'fullscreen'
 
 /**
  * 窗口状态

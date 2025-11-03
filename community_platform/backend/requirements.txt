@@ -13,6 +13,9 @@ psycopg2-binary==2.9.9
 redis==5.0.1
 hiredis==2.3.2
 
+# Task Queue
+celery==5.3.4
+
 # Authentication
 python-jose[cryptography]==3.3.0
 passlib[bcrypt]==1.7.4

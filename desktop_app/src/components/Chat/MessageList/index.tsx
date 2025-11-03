@@ -158,7 +158,7 @@ export const MessageList: React.FC<MessageListProps> = memo(
   ({
     messages,
     isLoading = false,
-    isSending = false,
+    // isSending = false,
     isStreaming = false,
     streamingMessageId = null,
     hasMore = false,
@@ -190,7 +190,7 @@ export const MessageList: React.FC<MessageListProps> = memo(
     const observerRef = useRef<IntersectionObserver | null>(null)
     const loadMoreTriggerRef = useRef<HTMLDivElement>(null)
     const isUserScrollingRef = useRef(false)
-    const scrollTimeoutRef = useRef<NodeJS.Timeout>()
+    const scrollTimeoutRef = useRef<NodeJS.Timeout | null>(null)
 
     // ==================== 状态管理 ====================
     const [showScrollButton, setShowScrollButton] = useState(false)

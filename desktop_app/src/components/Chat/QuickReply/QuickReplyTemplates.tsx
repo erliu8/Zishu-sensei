@@ -18,7 +18,6 @@ import {
   Trash2, 
   Search, 
   X, 
-  FolderPlus,
   Hash,
   Copy,
   Check

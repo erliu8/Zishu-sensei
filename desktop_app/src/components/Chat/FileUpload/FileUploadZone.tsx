@@ -235,7 +235,7 @@ export const FileUploadZone: React.FC<FileUploadZoneProps> = ({
       }, 200)
 
       // 执行上传
-      const url = await onUpload(uploadedFile.file)
+      await onUpload(uploadedFile.file)
 
       clearInterval(progressInterval)
 

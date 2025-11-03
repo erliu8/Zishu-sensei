@@ -34,6 +34,13 @@ def get_available_routes(app: FastAPI) -> List[APIRouter]:
     except (ImportError, AttributeError):
         pass
 
+    try:
+        from .packaging import router as packaging_router
+
+        routers.append(packaging_router)
+    except (ImportError, AttributeError):
+        pass
+
     return routers
 
 

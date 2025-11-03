@@ -6,5 +6,6 @@ export { FileDropZone } from './FileDropZone';
 export { FileManagerPanel } from './FileManagerPanel';
 export { FilePreview } from './FilePreview';
 
+import FileManagerPanel from './FileManagerPanel';
 export default FileManagerPanel;
 

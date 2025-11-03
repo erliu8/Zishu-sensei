@@ -113,16 +113,11 @@ export const CharacterTransition: React.FC<CharacterTransitionProps> = ({
             <AnimatePresence mode="wait">
                 <motion.div
                     key={characterId}
-                    className={`character-transition-wrapper ${isTransitioning ? 'transitioning' : ''}`}
                     initial={variants.initial}
                     animate={variants.animate}
                     exit={variants.exit}
                     transition={variants.transition}
-                    style={{
-                        width: '100%',
-                        height: '100%',
-                        position: 'relative',
-                    }}
+                    className={`character-transition-wrapper w-full h-full relative ${isTransitioning ? 'transitioning' : ''}`}
                 >
                     {children}
                 </motion.div>

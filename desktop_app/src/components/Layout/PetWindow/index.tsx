@@ -160,7 +160,6 @@ export const PetWindow: React.FC<PetWindowProps> = ({
     draggable = true,
     showStatus = true,
     showHints = true,
-    animationConfig,
     onContextMenu,
     onModeChange,
     onDrag,
@@ -307,10 +306,10 @@ export const PetWindow: React.FC<PetWindowProps> = ({
                 }
             )}
             style={{
-                width: size.width,
-                height: size.height,
-                ...position && { left: position.x, top: position.y }
-            }}
+                width: `${size.width}px`,
+                height: `${size.height}px`,
+                ...position && { left: `${position.x}px`, top: `${position.y}px` }
+            } as React.CSSProperties}
             variants={containerVariants}
             initial="initial"
             animate="animate"

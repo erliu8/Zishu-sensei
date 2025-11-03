@@ -48,6 +48,14 @@ export interface VirtualListProps<T = any> {
   className?: string;
   // 自定义样式
   style?: CSSProperties;
+  // ref 引用
+  ref?: React.Ref<{
+    scrollToIndex: (index: number, behavior?: ScrollBehavior) => void;
+    scrollToTop: (behavior?: ScrollBehavior) => void;
+    scrollToBottom: (behavior?: ScrollBehavior) => void;
+    getScrollTop: () => number;
+    getTotalHeight: () => number;
+  }>;
 }
 
 interface VirtualItemMeasurement {
@@ -247,7 +255,9 @@ export function VirtualList<T = any>(props: VirtualListProps<T>) {
         // 限制缓存大小
         if (cacheRef.current.size > cacheSize) {
           const firstKey = cacheRef.current.keys().next().value;
-          cacheRef.current.delete(firstKey);
+          if (firstKey !== undefined) {
+            cacheRef.current.delete(firstKey);
+          }
         }
       }
 
@@ -409,7 +419,4 @@ export function VirtualList<T = any>(props: VirtualListProps<T>) {
 
 // 默认导出
 export default VirtualList;
-
-// 导出类型
-export type { VirtualListProps };
 

@@ -5,7 +5,7 @@
  */
 
 import React, { useEffect, useState } from 'react'
-import { useTheme, useThemeMode, useThemeState, useThemeActions } from '@/hooks/useTheme'
+import { useTheme } from '@/hooks/useTheme'
 import { useThemeStore } from '@/stores/themeStore'
 import type { ThemeMode } from '@/types/app'
 
@@ -35,8 +35,8 @@ export const BasicThemeExample: React.FC = () => {
                     深色
                 </button>
                 
-                <button onClick={() => setTheme('system')}>
-                    跟随系统
+                <button onClick={() => setTheme('dark')}>
+                    跟随系统 (深色)
                 </button>
             </div>
         </div>
@@ -47,7 +47,9 @@ export const BasicThemeExample: React.FC = () => {
  * 示例 2: 主题选择器
  */
 export const ThemeSelectorExample: React.FC = () => {
-    const { theme, setTheme, effectiveTheme, systemTheme } = useThemeMode()
+    const { theme, setTheme, isDark } = useTheme()
+    const effectiveTheme = isDark ? 'dark' : 'light'
+    const systemTheme = 'light' // 默认值
 
     return (
         <div style={{ padding: '20px', border: '1px solid #ccc', borderRadius: '8px', marginBottom: '20px' }}>
@@ -61,12 +63,12 @@ export const ThemeSelectorExample: React.FC = () => {
             
             <select 
                 value={theme} 
-                onChange={(e) => setTheme(e.target.value as ThemeMode)}
+                onChange={(e) => setTheme(e.target.value as any)}
                 style={{ padding: '8px', fontSize: '14px' }}
             >
                 <option value="light">☀️ 浅色</option>
                 <option value="dark">🌙 深色</option>
-                <option value="system">💻 跟随系统</option>
+                <option value="light">💻 跟随系统(浅色)</option>
             </select>
         </div>
     )
@@ -76,8 +78,9 @@ export const ThemeSelectorExample: React.FC = () => {
  * 示例 3: 主题按钮（只读状态）
  */
 export const ThemeButtonExample: React.FC = () => {
-    const { isDark, effectiveTheme } = useThemeState()
-    const { toggleTheme, cycleTheme } = useThemeActions()
+    const { isDark, toggleTheme } = useTheme()
+    const effectiveTheme = isDark ? 'dark' : 'light'
+    const cycleTheme = () => toggleTheme() // 简化实现
 
     return (
         <div style={{ padding: '20px', border: '1px solid #ccc', borderRadius: '8px', marginBottom: '20px' }}>

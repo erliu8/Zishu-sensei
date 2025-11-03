@@ -13,9 +13,9 @@ import { create } from 'zustand'
 import { subscribeWithSelector } from 'zustand/middleware'
 import { immer } from 'zustand/middleware/immer'
 import { persist } from 'zustand/middleware'
-import type { AppSettings, ApiResponse } from '@/types/app'
+import type { AppSettings } from '@/types/app'
 import type { AppConfig } from '@/types/settings'
-import type { TauriEnvironment } from '@/types/tauri'
+// import type { TauriEnvironment } from '@/types/tauri'
 
 /**
  * 桌面应用状态
@@ -562,7 +562,7 @@ export const useDesktopStore = create<DesktopStoreState>()(
                 removeFromRetryQueue: (id: string) => {
                     set((state) => {
                         state.operationState.retryQueue = state.operationState.retryQueue.filter(
-                            item => item.id !== id
+                            (item: { id: string; operation: string; timestamp: number; attempts: number; maxAttempts: number; error: string }) => item.id !== id
                         )
                     })
                 },
@@ -645,7 +645,7 @@ export const useDesktopStore = create<DesktopStoreState>()(
                 unregisterShortcut: (id: string) => {
                     set((state) => {
                         state.shortcutState.registered = state.shortcutState.registered.filter(
-                            shortcut => shortcut.id !== id
+                            (shortcut: { id: string; key: string; ctrl?: boolean; alt?: boolean; shift?: boolean; global: boolean; description: string; callback: () => void }) => shortcut.id !== id
                         )
                     })
                 },
@@ -675,7 +675,7 @@ export const useDesktopStore = create<DesktopStoreState>()(
                 addRecentFile: (file) => {
                     set((state) => {
                         const existingIndex = state.fileOperationState.recentFiles.findIndex(
-                            f => f.path === file.path
+                            (f: { path: string; name: string; lastAccessed: number; size: number; type: string }) => f.path === file.path
                         )
                         
                         const recentFile = {
@@ -699,7 +699,7 @@ export const useDesktopStore = create<DesktopStoreState>()(
                 removeRecentFile: (path: string) => {
                     set((state) => {
                         state.fileOperationState.recentFiles = state.fileOperationState.recentFiles.filter(
-                            file => file.path !== path
+                            (file: { path: string; name: string; lastAccessed: number; size: number; type: string }) => file.path !== path
                         )
                     })
                 },
@@ -713,7 +713,7 @@ export const useDesktopStore = create<DesktopStoreState>()(
                 openFile: (file) => {
                     set((state) => {
                         const existingIndex = state.fileOperationState.openFiles.findIndex(
-                            f => f.path === file.path
+                            (f: { path: string; content?: string; isModified: boolean; lastModified: number }) => f.path === file.path
                         )
                         
                         const openFile = {
@@ -732,14 +732,14 @@ export const useDesktopStore = create<DesktopStoreState>()(
                 closeFile: (path: string) => {
                     set((state) => {
                         state.fileOperationState.openFiles = state.fileOperationState.openFiles.filter(
-                            file => file.path !== path
+                            (file: { path: string; content?: string; isModified: boolean; lastModified: number }) => file.path !== path
                         )
                     })
                 },
 
                 updateFileContent: (path: string, content: string) => {
                     set((state) => {
-                        const file = state.fileOperationState.openFiles.find(f => f.path === path)
+                        const file = state.fileOperationState.openFiles.find((f: { path: string; content?: string; isModified: boolean; lastModified: number }) => f.path === path)
                         if (file) {
                             file.content = content
                             file.isModified = true
@@ -750,7 +750,7 @@ export const useDesktopStore = create<DesktopStoreState>()(
 
                 setFileModified: (path: string, modified: boolean) => {
                     set((state) => {
-                        const file = state.fileOperationState.openFiles.find(f => f.path === path)
+                        const file = state.fileOperationState.openFiles.find((f: { path: string; content?: string; isModified: boolean; lastModified: number }) => f.path === path)
                         if (file) {
                             file.isModified = modified
                         }
@@ -791,14 +791,14 @@ export const useDesktopStore = create<DesktopStoreState>()(
                 removeNotification: (id: string) => {
                     set((state) => {
                         state.notificationState.queue = state.notificationState.queue.filter(
-                            notification => notification.id !== id
+                            (notification: { id: string; title: string; body?: string; icon?: string; timestamp: number; read: boolean; actions?: Array<{ label: string; action: string }> }) => notification.id !== id
                         )
                     })
                 },
 
                 markNotificationRead: (id: string) => {
                     set((state) => {
-                        const notification = state.notificationState.queue.find(n => n.id === id)
+                        const notification = state.notificationState.queue.find((n: { id: string; title: string; body?: string; icon?: string; timestamp: number; read: boolean; actions?: Array<{ label: string; action: string }> }) => n.id === id)
                         if (notification) {
                             notification.read = true
                         }
@@ -993,10 +993,10 @@ export type DesktopEvent =
 /**
  * 桌面应用事件监听器
  */
-export const useDesktopEvent = (eventType: DesktopEvent['type'], callback: (event: DesktopEvent) => void) => {
+export const useDesktopEvent = (_eventType: DesktopEvent['type'], _callback: (event: DesktopEvent) => void) => {
     const unsubscribe = useDesktopStore.subscribe(
         (state) => state,
-        (state, prevState) => {
+        (_state, _prevState) => {
             // 这里可以根据状态变化触发相应的事件
             // 简化实现，实际项目中可能需要更复杂的事件系统
         }

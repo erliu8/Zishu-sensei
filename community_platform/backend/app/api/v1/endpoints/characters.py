@@ -96,7 +96,7 @@ async def get_trending_characters(
         )
 
 
-@router.get("/", response_model=ApiResponse[CharacterListResponse])
+@router.get("", response_model=ApiResponse[CharacterListResponse])
 async def get_characters(
     page: int = Query(1, ge=1),
     pageSize: int = Query(20, ge=1, le=100),
@@ -255,7 +255,7 @@ async def get_character(
         )
 
 
-@router.post("/", response_model=ApiResponse[CharacterResponse])
+@router.post("", response_model=ApiResponse[CharacterResponse])
 async def create_character(
     character_data: CharacterCreate,
     current_user: User = Depends(get_current_user),

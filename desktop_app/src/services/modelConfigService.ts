@@ -7,7 +7,6 @@
 import { invoke } from '@tauri-apps/api/tauri';
 import type {
   ModelConfigData,
-  ModelConfigHistory,
   ValidationResult,
   GetConfigInput,
   DeleteConfigInput,

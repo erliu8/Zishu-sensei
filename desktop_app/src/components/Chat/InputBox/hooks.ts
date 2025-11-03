@@ -697,7 +697,7 @@ export function useInputBox(options: {
   })
   
   // 粘贴处理
-  const handlePaste = usePaste((text, files) => {
+  const handlePaste = usePaste((_text, files) => {
     if (files.length > 0 && onAttachmentAdd) {
       attachments.addMultiple(files, onAttachmentAdd)
     }

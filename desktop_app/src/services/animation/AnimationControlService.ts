@@ -3,7 +3,6 @@ import {
   Live2DAnimationManager, 
   AnimationType, 
   AnimationConfig, 
-  AnimationState, 
   AnimationPlayInfo 
 } from '../live2d/animation'
 

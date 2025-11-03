@@ -274,6 +274,30 @@ async fn app_setup(app: &tauri::AppHandle) -> Result<(), Box<dyn std::error::Err
         .map_err(|e| format!("初始化审计日志失败: {}", e))?;
     info!("安全审计日志系统已初始化");
     
+    // 初始化日志数据库（PostgreSQL）
+    {
+        use deadpool_postgres::{Config, Runtime};
+        use tokio_postgres::NoTls;
+        
+        let mut cfg = Config::new();
+        cfg.dbname = Some("zishu_sensei".to_string());
+        cfg.host = Some("localhost".to_string());
+        cfg.user = Some("zishu".to_string());
+        cfg.password = Some("zishu".to_string());
+        let pool = cfg.create_pool(Some(Runtime::Tokio1), NoTls)
+            .map_err(|e| format!("创建数据库连接池失败: {}", e))?;
+        
+        let log_db = database::logging::LogDatabase::new(pool);
+        
+        // 初始化日志表
+        if let Err(e) = log_db.init_tables().await {
+            tracing::warn!("初始化日志表失败: {}", e);
+        }
+        
+        app.manage(log_db);
+        info!("日志数据库系统已初始化");
+    }
+    
     // 初始化数据库
     database::init_database(app.clone()).await?;
     
@@ -376,12 +400,31 @@ async fn main() {
         .on_window_event(events::window::handle_window_event)
         .setup(|app| {
             let app_handle = app.handle();
+            
+            // 处理 deep link
+            let app_handle_clone = app_handle.clone();
+            tauri::async_runtime::spawn(async move {
+                // 检查启动参数中是否有 deep link
+                let args: Vec<String> = std::env::args().collect();
+                for arg in args {
+                    if arg.starts_with("zishu://") {
+                        info!("检测到 deep link: {}", arg);
+                        if let Err(e) = commands::deeplink::handle_deep_link(arg, app_handle_clone.clone()).await {
+                            error!("处理 deep link 失败: {}", e);
+                        }
+                        break;
+                    }
+                }
+            });
+            
+            // 应用初始化
             tauri::async_runtime::spawn(async move {
                 if let Err(e) = app_setup(&app_handle).await {
                     error!("应用初始化失败: {}", e);
                     std::process::exit(1);
                 }
             });
+            
             Ok(())
         })
         .invoke_handler(tauri::generate_handler![
@@ -740,6 +783,10 @@ async fn main() {
             commands::logging::get_log_files,
             commands::logging::delete_log_file,
             commands::logging::compress_log_files,
+            
+            // Deep Link 命令
+            commands::deeplink::handle_deep_link,
+            commands::deeplink::is_launched_from_community,
         ])
         .manage(commands::shortcuts::ShortcutRegistry::new())
         .manage(commands::memory::MemoryManagerState::new())
@@ -754,33 +801,6 @@ async fn main() {
             });
             let db_path = format!("{}/zishu-sensei/performance.db", app_data_dir);
             commands::performance::PerformanceMonitorState::new(&db_path).expect("初始化性能监控状态失败")
-        })
-        .manage({
-            // 初始化 LogDatabase 使用 PostgreSQL
-            use deadpool_postgres::{Config, Runtime};
-            use tokio_postgres::NoTls;
-            
-            let database_url = std::env::var("DATABASE_URL")
-                .unwrap_or_else(|_| "postgresql://zishu:zishu@localhost/zishu_sensei".to_string());
-            
-            tauri::async_runtime::block_on(async {
-                let mut cfg = Config::new();
-                cfg.dbname = Some("zishu_sensei".to_string());
-                cfg.host = Some("localhost".to_string());
-                cfg.user = Some("zishu".to_string());
-                cfg.password = Some("zishu".to_string());
-                let pool = cfg.create_pool(Some(Runtime::Tokio1), NoTls)
-                    .expect("创建数据库连接池失败");
-                
-                let log_db = database::logging::LogDatabase::new(pool);
-                
-                // 初始化日志表
-                if let Err(e) = log_db.init_tables().await {
-                    eprintln!("初始化日志表失败: {}", e);
-                }
-                
-                log_db
-            })
         })
         .build(tauri::generate_context!());
     

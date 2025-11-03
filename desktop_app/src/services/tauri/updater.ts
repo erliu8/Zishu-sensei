@@ -64,7 +64,7 @@ export const onUpdateAvailable = (callback: (updateInfo: TauriUpdateInfo) => voi
         }
 
         // 这里需要使用 Tauri 的事件监听 API
-        console.log('监听更新事件...')
+        console.log('监听更新事件...', callback)
 
         // 返回取消监听的函数
         return () => {
@@ -86,7 +86,7 @@ export const onUpdateDownloadProgress = (callback: (progress: number) => void): 
         }
 
         // 这里需要使用 Tauri 的事件监听 API
-        console.log('监听更新下载进度...')
+        console.log('监听更新下载进度...', callback)
 
         // 返回取消监听的函数
         return () => {

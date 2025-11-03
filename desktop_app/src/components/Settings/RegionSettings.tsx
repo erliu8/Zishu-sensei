@@ -4,15 +4,10 @@
  * 提供完整的区域适配设置界面
  */
 
-import React, { useState, useEffect } from 'react';
+import React, { useState } from 'react';
 import { 
   RegionPreferences, 
-  RegionConfig, 
   SystemRegionInfo,
-  TemperatureUnit,
-  DistanceUnit,
-  WeightUnit,
-  SUPPORTED_LOCALES,
   SUPPORTED_CURRENCIES,
   SUPPORTED_TIMEZONES
 } from '../../types/region';
@@ -42,7 +37,6 @@ export const RegionSettings: React.FC<RegionSettingsProps> = ({
   const {
     preferences,
     systemRegion,
-    availableRegions,
     loading: regionLoading,
     error: regionError,
     saveUserPreferences,
@@ -50,7 +44,7 @@ export const RegionSettings: React.FC<RegionSettingsProps> = ({
     clearError,
   } = useRegion();
 
-  const { configs, loading: configsLoading } = useRegionConfigs();
+  const { loading: configsLoading } = useRegionConfigs();
   
   const {
     preferences: formPreferences,

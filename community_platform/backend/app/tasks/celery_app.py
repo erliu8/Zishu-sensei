@@ -6,10 +6,14 @@ from celery import Celery
 from app.core.config import settings
 
 # 创建Celery实例
+redis_password = os.getenv("REDIS_PASSWORD", "redis123")
+redis_host = os.getenv("REDIS_HOST", "redis")
+redis_port = os.getenv("REDIS_PORT", "6379")
+
 celery_app = Celery(
     "zishu_tasks",
-    broker=os.getenv("CELERY_BROKER_URL", "redis://localhost:6379/0"),
-    backend=os.getenv("CELERY_RESULT_BACKEND", "redis://localhost:6379/1"),
+    broker=os.getenv("CELERY_BROKER_URL", f"redis://:{redis_password}@{redis_host}:{redis_port}/0"),
+    backend=os.getenv("CELERY_RESULT_BACKEND", f"redis://:{redis_password}@{redis_host}:{redis_port}/1"),
 )
 
 # Celery配置

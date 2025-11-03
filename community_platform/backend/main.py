@@ -68,6 +68,7 @@ app = FastAPI(
     docs_url="/docs",
     redoc_url="/redoc",
     lifespan=lifespan,
+    redirect_slashes=True,  # 启用自动斜杠重定向，统一路由风格
 )
 
 # ==================== 注册异常处理器 ====================
@@ -82,6 +83,8 @@ app.add_middleware(
     allow_credentials=True,
     allow_methods=["*"],
     allow_headers=["*"],
+    expose_headers=["*"],  # 暴露所有响应头
+    max_age=600,  # preflight 请求缓存时间（秒）
 )
 
 # 2. 请求日志中间件

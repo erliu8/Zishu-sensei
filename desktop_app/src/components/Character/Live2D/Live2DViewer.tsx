@@ -97,7 +97,7 @@ export const Live2DViewer = forwardRef<Live2DViewerRef, Live2DViewerProps>(({
   }), [finalConfig.renderConfig, renderConfig])
 
   // ==================== 使用自定义Hook ====================
-  const viewerApi = useLive2DViewer(canvasRef, finalConfig)
+  const viewerApi = useLive2DViewer(canvasRef as React.RefObject<HTMLCanvasElement>, finalConfig)
 
   const {
     isReady,
