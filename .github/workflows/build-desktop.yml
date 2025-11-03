@@ -62,11 +62,13 @@ jobs:
             patchelf
 
       - name: 清理并安装依赖
+        working-directory: desktop_app
         run: |
-          # 清理缓存
+          # 清理缓存和旧文件
           npm cache clean --force
-          # 安装根工作区依赖（这会自动安装所有 workspaces）
-          npm install --force
+          rm -rf node_modules package-lock.json
+          # 只安装 desktop_app 依赖，不使用 workspaces
+          npm install --legacy-peer-deps
           
       - name: 验证安装
         working-directory: desktop_app
