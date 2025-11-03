@@ -76,7 +76,20 @@ jobs:
             librsvg2-dev \
             patchelf
 
-      - name: 清理并安装依赖
+      - name: 清理并安装依赖（Windows）
+        if: runner.os == 'Windows'
+        working-directory: desktop_app
+        run: |
+          # 清理缓存和旧文件
+          npm cache clean --force
+          if (Test-Path "node_modules") { Remove-Item "node_modules" -Recurse -Force }
+          if (Test-Path "package-lock.json") { Remove-Item "package-lock.json" -Force }
+          # 只安装 desktop_app 依赖，不使用 workspaces
+          npm install --legacy-peer-deps
+        shell: pwsh
+
+      - name: 清理并安装依赖（Unix）
+        if: runner.os != 'Windows'
         working-directory: desktop_app
         run: |
           # 清理缓存和旧文件
