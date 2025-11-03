@@ -40,16 +40,6 @@ jobs:
         with:
           node-version: '20'
 
-      - name: 缓存 Node.js 依赖
-        uses: actions/cache@v4
-        with:
-          path: |
-            desktop_app/node_modules
-            ~/.npm
-          key: ${{ runner.os }}-node-${{ hashFiles('desktop_app/package.json') }}
-          restore-keys: |
-            ${{ runner.os }}-node-
-
       - name: 设置 Rust
         uses: dtolnay/rust-toolchain@stable
         with:
@@ -71,9 +61,15 @@ jobs:
             librsvg2-dev \
             patchelf
 
-      - name: 安装前端依赖
+      - name: 清理并安装前端依赖
         working-directory: desktop_app
-        run: npm install
+        run: |
+          # 清理可能存在的问题文件/目录
+          rm -rf node_modules package-lock.json
+          # 清理npm缓存
+          npm cache clean --force
+          # 重新安装依赖
+          npm install
 
       - name: 构建 Tauri 应用
         working-directory: desktop_app
