@@ -169,15 +169,6 @@
         "@tailwindcss/forms": "^0.5.7",
         "@tailwindcss/typography": "^0.5.10",
         "@tauri-apps/cli": "^1.6.0",
-        "@tauri-apps/cli-darwin-arm64": "^1.6.0",
-        "@tauri-apps/cli-darwin-x64": "^1.6.0",
-        "@tauri-apps/cli-linux-arm64-gnu": "^1.6.0",
-        "@tauri-apps/cli-linux-arm64-musl": "^1.6.0",
-        "@tauri-apps/cli-linux-x64-gnu": "^1.6.0",
-        "@tauri-apps/cli-linux-x64-musl": "^1.6.0",
-        "@tauri-apps/cli-win32-arm64-msvc": "^1.6.0",
-        "@tauri-apps/cli-win32-ia32-msvc": "^1.6.0",
-        "@tauri-apps/cli-win32-x64-msvc": "^1.6.0",
         "@testing-library/jest-dom": "^6.1.5",
         "@testing-library/react": "^14.1.2",
         "@testing-library/user-event": "^14.5.1",
@@ -215,6 +206,17 @@
         "typescript": "^5.2.2",
         "vite": "^5.0.0",
         "vitest": "^1.0.0"
+    },
+    "optionalDependencies": {
+        "@tauri-apps/cli-darwin-arm64": "^1.6.0",
+        "@tauri-apps/cli-darwin-x64": "^1.6.0",
+        "@tauri-apps/cli-linux-arm64-gnu": "^1.6.0",
+        "@tauri-apps/cli-linux-arm64-musl": "^1.6.0",
+        "@tauri-apps/cli-linux-x64-gnu": "^1.6.0",
+        "@tauri-apps/cli-linux-x64-musl": "^1.6.0",
+        "@tauri-apps/cli-win32-arm64-msvc": "^1.6.0",
+        "@tauri-apps/cli-win32-ia32-msvc": "^1.6.0",
+        "@tauri-apps/cli-win32-x64-msvc": "^1.6.0"
     },
     "lint-staged": {
         "*.{ts,tsx,js,jsx}": [
