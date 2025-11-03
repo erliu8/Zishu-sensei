@@ -2895,14 +2895,14 @@ export class Live2DModelLoader {
     }
     
     // 🔧 [DEBUG] 输出最终位置信息
-    console.log('🎯 [DEBUG] 模型最终定位:', {
-      position: { x: (model as any).x, y: (model as any).y },
-      anchor: (model as any).anchor ? { x: (model as any).anchor.x, y: (model as any).anchor.y } : 'N/A',
-      pivot: { x: (model as any).pivot.x, y: (model as any).pivot.y }
-    })
+    // console.log('🎯 [DEBUG] 模型最终定位:', {
+    //   position: { x: (model as any).x, y: (model as any).y },
+    //   anchor: (model as any).anchor ? { x: (model as any).anchor.x, y: (model as any).anchor.y } : 'N/A',
+    //   pivot: { x: (model as any).pivot.x, y: (model as any).pivot.y }
+    // })
     
     // 设置透明度
-    (model as any).alpha = renderConfig.opacity
+    (model as any).alpha = +(renderConfig.opacity);
     console.log(`🎨 [DEBUG] 模型透明度设置: ${renderConfig.opacity}`)
 
     // 配置内部模型设置
@@ -3051,24 +3051,24 @@ export class Live2DModelLoader {
       })
 
       // 确保舞台可见
-      this.app.stage.visible = true
-      this.app.stage.alpha = 1
+      this.app.stage.visible = (true as boolean);
+      this.app.stage.alpha = (1.0 as number);
 
       // 🔧 [FIX] 不要重新设置位置！位置已经在 loadModel 中设置好了
       // renderConfig.position 已经是正确的值，模型位置也已经设置好了
       // 这里只需要确保模型可见性和交互性
       
-      console.log('🎨 [FINALIZE] 保持当前位置，不重新计算:', { x: (model as any).x, y: (model as any).y })
+      // console.log('🎨 [FINALIZE] 保持当前位置，不重新计算:', { x: (model as any).x, y: (model as any).y })
 
       // 🔧 [FIX] 强制确保模型完全可见和正确定位
-      (model as any).alpha = renderConfig.opacity
-      (model as any).visible = true
-      (model as any).renderable = true
-      ;(model as any).interactive = true
+      (model as any).alpha = +(renderConfig.opacity);
+      (model as any).visible = (true as boolean);
+      (model as any).renderable = (true as boolean);
+      (model as any).interactive = (true as boolean);
 
       // 🔧 [FIX] 验证模型在stage中（不再重复添加）
-      const isInStage = this.app.stage.children.indexOf(model as any) !== -1
-      console.log('🔍 [DEBUG] 模型在 stage 中:', isInStage, ', stage children 数量:', this.app.stage.children.length)
+      // const isInStage = this.app.stage.children.indexOf(model as any) !== -1
+      // console.log('🔍 [DEBUG] 模型在 stage 中:', isInStage, ', stage children 数量:', this.app.stage.children.length)
 
       // 🔧 [FIX] 强制更新变换矩阵
       (model as any).updateTransform()
@@ -3732,7 +3732,7 @@ export class Live2DModelLoader {
     }
 
     // 显示目标模型
-    modelInstance.(model as any).visible = true
+    (modelInstance.model as any).visible = true
     this.currentModel = modelInstance
 
     return modelInstance

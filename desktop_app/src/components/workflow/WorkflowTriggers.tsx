@@ -18,6 +18,7 @@ import {
   FormControlLabel,
   IconButton,
   Chip,
+  SelectChangeEvent,
   List,
   ListItem,
   ListItemText,
@@ -428,7 +429,7 @@ const WorkflowTriggers: React.FC<WorkflowTriggersProps> = ({ workflowId }) => {
             <InputLabel>事件类型</InputLabel>
             <Select
               value={newEventTrigger.event_type}
-              onChange={(e: React.ChangeEvent<HTMLInputElement>) =>
+              onChange={(e: SelectChangeEvent<EventType>) =>
                 setNewEventTrigger({
                   ...newEventTrigger,
                   event_type: e.target.value as EventType,
@@ -575,7 +576,7 @@ const WorkflowTriggers: React.FC<WorkflowTriggersProps> = ({ workflowId }) => {
             <InputLabel>事件类型</InputLabel>
             <Select
               value={manualEventType}
-              onChange={(e: React.ChangeEvent<HTMLInputElement>) => setManualEventType(e.target.value as EventType)}
+              onChange={(e: SelectChangeEvent<EventType>) => setManualEventType(e.target.value as EventType)}
               label="事件类型"
             >
               {eventTypes.map((type) => (
