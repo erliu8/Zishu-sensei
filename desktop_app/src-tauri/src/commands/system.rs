@@ -403,7 +403,16 @@ fn configure_auto_launch(
     
     info!("配置自启动: 应用={}, 路径={:?}", app_name, app_path);
     
-    // 创建 AutoLaunch 实例
+    // 创建 AutoLaunch 实例 - 不同平台的API不同
+    #[cfg(target_os = "macos")]
+    let auto = AutoLaunch::new(
+        &app_name,
+        app_path.to_str().ok_or("无效的应用路径")?,
+        false, // 不使用 launch agent
+        &[] as &[&str], // 启动参数
+    );
+    
+    #[cfg(not(target_os = "macos"))]
     let auto = AutoLaunch::new(
         &app_name,
         app_path.to_str().ok_or("无效的应用路径")?,
@@ -461,6 +470,16 @@ fn check_auto_launch_status(
     let app_name = app_handle.package_info().name.clone();
     let app_path = env::current_exe()?;
     
+    // 创建 AutoLaunch 实例 - 不同平台的API不同
+    #[cfg(target_os = "macos")]
+    let auto = AutoLaunch::new(
+        &app_name,
+        app_path.to_str().ok_or("无效的应用路径")?,
+        false, // 不使用 launch agent
+        &[] as &[&str],
+    );
+    
+    #[cfg(not(target_os = "macos"))]
     let auto = AutoLaunch::new(
         &app_name,
         app_path.to_str().ok_or("无效的应用路径")?,
