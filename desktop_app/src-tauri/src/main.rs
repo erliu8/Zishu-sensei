@@ -2,7 +2,7 @@
 #![cfg_attr(not(debug_assertions), windows_subsystem = "windows")]
 
 use tauri::{api::shell, AppHandle, Manager, WindowBuilder, WindowUrl};
-use tracing::{error, info};
+use tracing::{error, info, warn};
 use serde::{Deserialize, Serialize};
 
 // 导入模块
