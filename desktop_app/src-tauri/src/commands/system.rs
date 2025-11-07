@@ -407,8 +407,8 @@ fn configure_auto_launch(
     let auto = AutoLaunch::new(
         &app_name,
         app_path.to_str().ok_or("无效的应用路径")?,
-        &[] as &[&str], // 启动参数
         false, // 不需要管理员权限
+        &[] as &[&str], // 启动参数
     );
     
     if enabled {
@@ -465,8 +465,8 @@ fn check_auto_launch_status(
     let auto = AutoLaunch::new(
         &app_name,
         app_path.to_str().ok_or("无效的应用路径")?,
-        &[] as &[&str],
         false, // 不需要管理员权限
+        &[] as &[&str],
     );
     
     Ok(auto.is_enabled()?)
