@@ -71,6 +71,12 @@ jobs:
         if: runner.os != 'Windows'
         working-directory: desktop_app/src-tauri
         run: |
+          echo "=== 诊断信息 ==="
+          echo "当前工作目录: $(pwd)"
+          echo "目录内容:"
+          ls -la
+          echo ""
+          
           echo "检查 target 的状态..."
           if [ -e "target" ]; then
             if [ -f "target" ]; then
@@ -83,14 +89,36 @@ jobs:
           else
             echo "target 不存在"
           fi
+          
+          # 检查父目录权限
+          echo "父目录权限:"
+          ls -ld . || true
+          
           # 创建干净的 target 目录
-          mkdir -p target
+          echo "尝试创建 target 目录..."
+          mkdir -p target 2>&1 || {
+            echo "❌ mkdir 失败，错误码: $?"
+            echo "尝试检查是否有同名的符号链接或特殊文件..."
+            ls -l target 2>&1 || true
+            file target 2>&1 || true
+            # 强制删除任何类型的文件
+            rm -rf target 2>&1 || true
+            # 再次尝试创建
+            mkdir -p target
+          }
           echo "✓ target 目录已就绪"
+          ls -ld target
 
       - name: 清理 Rust target 目录（缓存后）- Windows
         if: runner.os == 'Windows'
         working-directory: desktop_app/src-tauri
         run: |
+          Write-Host "=== 诊断信息 ==="
+          Write-Host "当前工作目录: $(Get-Location)"
+          Write-Host "目录内容:"
+          Get-ChildItem -Force
+          Write-Host ""
+          
           Write-Host "检查 target 的状态..."
           if (Test-Path "target") {
             if (Test-Path "target" -PathType Leaf) {
@@ -103,9 +131,24 @@ jobs:
           } else {
             Write-Host "target 不存在"
           }
+          
+          # 检查父目录权限
+          Write-Host "父目录信息:"
+          Get-Item . | Format-List
+          
           # 创建干净的 target 目录
-          New-Item -ItemType Directory -Force -Path "target" | Out-Null
-          Write-Host "✓ target 目录已就绪"
+          Write-Host "尝试创建 target 目录..."
+          try {
+            New-Item -ItemType Directory -Force -Path "target" -ErrorAction Stop | Out-Null
+            Write-Host "✓ target 目录已就绪"
+          } catch {
+            Write-Host "❌ 创建目录失败: $_"
+            Write-Host "尝试强制删除并重新创建..."
+            Remove-Item "target" -Force -Recurse -ErrorAction SilentlyContinue
+            New-Item -ItemType Directory -Force -Path "target" | Out-Null
+            Write-Host "✓ target 目录已就绪（第二次尝试）"
+          }
+          Get-Item "target" | Format-List
         shell: pwsh
 
       - name: 安装 Linux 依赖
