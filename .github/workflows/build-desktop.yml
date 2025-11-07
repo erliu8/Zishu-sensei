@@ -67,6 +67,47 @@ jobs:
           key: ${{ matrix.platform.rust_target }}
           shared-key: ${{ matrix.platform.os }}
 
+      - name: 清理 Rust target 目录（缓存后）- Unix
+        if: runner.os != 'Windows'
+        working-directory: desktop_app/src-tauri
+        run: |
+          echo "检查 target 的状态..."
+          if [ -e "target" ]; then
+            if [ -f "target" ]; then
+              echo "❌ 错误: target 是一个文件而不是目录！正在删除..."
+              rm -f target
+            elif [ -d "target" ]; then
+              echo "✓ target 是一个目录"
+              ls -la target/ || true
+            fi
+          else
+            echo "target 不存在"
+          fi
+          # 创建干净的 target 目录
+          mkdir -p target
+          echo "✓ target 目录已就绪"
+
+      - name: 清理 Rust target 目录（缓存后）- Windows
+        if: runner.os == 'Windows'
+        working-directory: desktop_app/src-tauri
+        run: |
+          Write-Host "检查 target 的状态..."
+          if (Test-Path "target") {
+            if (Test-Path "target" -PathType Leaf) {
+              Write-Host "❌ 错误: target 是一个文件而不是目录！正在删除..."
+              Remove-Item "target" -Force
+            } elseif (Test-Path "target" -PathType Container) {
+              Write-Host "✓ target 是一个目录"
+              Get-ChildItem "target" -ErrorAction SilentlyContinue
+            }
+          } else {
+            Write-Host "target 不存在"
+          }
+          # 创建干净的 target 目录
+          New-Item -ItemType Directory -Force -Path "target" | Out-Null
+          Write-Host "✓ target 目录已就绪"
+        shell: pwsh
+
       - name: 安装 Linux 依赖
         if: matrix.platform.os == 'ubuntu-latest'
         run: |
@@ -112,37 +153,6 @@ jobs:
           # 验证Tauri CLI安装
           echo "验证Tauri CLI版本:"
           npx tauri --version
-
-      - name: 清理 Rust target 目录（Unix）
-        if: runner.os != 'Windows'
-        working-directory: desktop_app/src-tauri
-        run: |
-          # 确保 target 是一个目录而不是文件
-          if [ -f "target" ]; then
-            echo "警告: target 是一个文件，正在删除..."
-            rm -f target
-          fi
-          # 清理特定架构的 target 目录，避免缓存冲突
-          if [ -d "target/${{ matrix.platform.rust_target }}" ]; then
-            echo "清理现有的 target/${{ matrix.platform.rust_target }} 目录..."
-            rm -rf "target/${{ matrix.platform.rust_target }}"
-          fi
-
-      - name: 清理 Rust target 目录（Windows）
-        if: runner.os == 'Windows'
-        working-directory: desktop_app/src-tauri
-        run: |
-          # 确保 target 是一个目录而不是文件
-          if (Test-Path "target" -PathType Leaf) {
-            Write-Host "警告: target 是一个文件，正在删除..."
-            Remove-Item "target" -Force
-          }
-          # 清理特定架构的 target 目录，避免缓存冲突
-          if (Test-Path "target/${{ matrix.platform.rust_target }}") {
-            Write-Host "清理现有的 target/${{ matrix.platform.rust_target }} 目录..."
-            Remove-Item "target/${{ matrix.platform.rust_target }}" -Recurse -Force
-          }
-        shell: pwsh
 
       - name: 构建 Tauri 应用
         working-directory: desktop_app
