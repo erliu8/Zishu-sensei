@@ -269,7 +269,7 @@
             "title": "Zishu Sensei"
         },
         "updater": {
-            "active": true,
+            "active": false,
             "endpoints": [
                 "https://update.zishu.dev/{{target}}/{{arch}}/{{current_version}}"
             ],
