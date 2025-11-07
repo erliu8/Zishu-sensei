@@ -24,8 +24,7 @@ tauri = { version = "1.5", features = [ "window-set-focus", "window-set-always-o
     "devtools",
     "icon-ico",
     "icon-png",
-    "system-tray",
-    "updater"] }
+    "system-tray"] }
 
 # 序列化和反序列化
 serde = { version = "1.0", features = ["derive"] }

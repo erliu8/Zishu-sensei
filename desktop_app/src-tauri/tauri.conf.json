@@ -273,8 +273,7 @@
             "endpoints": [
                 "https://update.zishu.dev/{{target}}/{{arch}}/{{current_version}}"
             ],
-            "dialog": true,
-            "pubkey": "dW50cnVzdGVkIGNvbW1lbnQ6IG1pbmlzaWduIHB1YmxpYyBrZXkgRUYwNTQzMzc5RkNGMkNGNQpSV1QxTE0rZk4wTUY3MHQxVUhkTVZwdG5pdWpaMUNYb3pvdDZQWTR4QkcxclNjZWxrQ0JlRVpVeAo="
+            "dialog": true
         },
         "cli": {
             "description": "Zishu Sensei - 智能桌面宠物AI助手",

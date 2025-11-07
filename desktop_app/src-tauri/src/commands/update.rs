@@ -186,40 +186,13 @@ pub async fn install_update(
     }
 }
 
-/// 使用 Tauri 内置更新器安装更新
+/// 使用 Tauri 内置更新器安装更新（已禁用）
 #[tauri::command]
 pub async fn install_update_with_tauri(
-    app_handle: AppHandle,
+    _app_handle: AppHandle,
 ) -> Result<bool, String> {
-    info!("Installing update using Tauri updater");
-
-    // 使用 Tauri 内置更新器
-    match tauri::updater::builder(app_handle.clone()).check().await {
-        Ok(update) => {
-            if update.is_update_available() {
-                info!("Update available, starting download and install");
-                
-                // 下载并安装更新
-                match update.download_and_install().await {
-                    Ok(_) => {
-                        info!("Update installed successfully");
-                        Ok(true) // 需要重启
-                    }
-                    Err(e) => {
-                        error!("Failed to download and install update: {}", e);
-                        Err(format!("Failed to install update: {}", e))
-                    }
-                }
-            } else {
-                info!("No update available");
-                Ok(false) // 不需要重启
-            }
-        }
-        Err(e) => {
-            error!("Failed to check for updates: {}", e);
-            Err(format!("Failed to check for updates: {}", e))
-        }
-    }
+    warn!("Tauri updater is disabled in development mode");
+    Err("Tauri updater is disabled in development mode".to_string())
 }
 
 /// 取消下载
@@ -405,18 +378,13 @@ pub async fn listen_update_events(
     Ok(true)
 }
 
-/// 检查 Tauri 更新器是否可用
+/// 检查 Tauri 更新器是否可用（已禁用）
 #[tauri::command]
 pub async fn check_tauri_updater_available(
-    app_handle: AppHandle,
+    _app_handle: AppHandle,
 ) -> Result<bool, String> {
-    match tauri::updater::builder(app_handle).check().await {
-        Ok(_) => Ok(true),
-        Err(e) => {
-            warn!("Tauri updater not available: {}", e);
-            Ok(false)
-        }
-    }
+    warn!("Tauri updater is disabled in development mode");
+    Ok(false)
 }
 
 /// 获取当前应用版本
