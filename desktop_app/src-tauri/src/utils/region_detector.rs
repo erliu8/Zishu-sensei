@@ -323,7 +323,8 @@ impl RegionDetector {
             .args(["/etc/localtime"])
             .output()
         {
-            let link_target = String::from_utf8_lossy(&output.stdout).trim();
+            let link_output = String::from_utf8_lossy(&output.stdout);
+            let link_target = link_output.trim();
             // 提取时区名称，如 /usr/share/zoneinfo/Asia/Shanghai -> Asia/Shanghai
             if let Some(tz) = link_target.strip_prefix("/usr/share/zoneinfo/") {
                 return Some(tz.to_string());

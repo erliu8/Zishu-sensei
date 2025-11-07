@@ -199,7 +199,7 @@ impl DatabaseBackend for RedisBackend {
             return Err(DatabaseError::Duplicate(format!("键 {} 已存在", key)));
         }
 
-        conn.set(&full_key, json_str)
+        conn.set::<_, _, ()>(&full_key, json_str)
             .await
             .map_err(|e| DatabaseError::QueryError(e.to_string()))?;
 
@@ -222,7 +222,7 @@ impl DatabaseBackend for RedisBackend {
             pipe.set(&full_key, json_str);
         }
 
-        pipe.query_async(&mut conn)
+        pipe.query_async::<_, ()>(&mut conn)
             .await
             .map_err(|e| DatabaseError::QueryError(e.to_string()))?;
 
@@ -276,7 +276,7 @@ impl DatabaseBackend for RedisBackend {
 
         let json_str = serde_json::to_string(data)?;
 
-        conn.set(&full_key, json_str)
+        conn.set::<_, _, ()>(&full_key, json_str)
             .await
             .map_err(|e| DatabaseError::QueryError(e.to_string()))?;
 
@@ -489,7 +489,7 @@ impl CacheDatabaseBackend for RedisBackend {
 
         let json_str = serde_json::to_string(value)?;
 
-        conn.set_ex(key, json_str, ttl_seconds)
+        conn.set_ex::<_, _, ()>(key, json_str, ttl_seconds)
             .await
             .map_err(|e| DatabaseError::QueryError(e.to_string()))?;
 
@@ -518,7 +518,7 @@ impl CacheDatabaseBackend for RedisBackend {
         let manager = self.get_manager()?;
         let mut conn = manager.clone();
 
-        conn.del(key)
+        conn.del::<_, ()>(key)
             .await
             .map_err(|e| DatabaseError::QueryError(e.to_string()))?;
 
@@ -541,7 +541,7 @@ impl CacheDatabaseBackend for RedisBackend {
         let manager = self.get_manager()?;
         let mut conn = manager.clone();
 
-        conn.expire(key, ttl_seconds as i64)
+        conn.expire::<_, ()>(key, ttl_seconds as i64)
             .await
             .map_err(|e| DatabaseError::QueryError(e.to_string()))?;
 
