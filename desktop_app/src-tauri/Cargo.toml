@@ -68,7 +68,7 @@ postgres = { version = "0.19", features = ["with-chrono-0_4", "with-serde_json-1
 deadpool-postgres = "0.11"
 
 # Redis
-redis = { version = "0.25", features = ["tokio-comp", "connection-manager", "json"] }
+redis = { version = "0.26", features = ["tokio-comp", "connection-manager", "json"] }
 deadpool-redis = "0.14"
 
 # Qdrant Vector Database
