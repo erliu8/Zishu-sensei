@@ -64,6 +64,8 @@ jobs:
         uses: Swatinem/rust-cache@v2
         with:
           workspaces: desktop_app/src-tauri
+          key: ${{ matrix.platform.rust_target }}
+          shared-key: ${{ matrix.platform.os }}
 
       - name: 安装 Linux 依赖
         if: matrix.platform.os == 'ubuntu-latest'
@@ -110,6 +112,37 @@ jobs:
           # 验证Tauri CLI安装
           echo "验证Tauri CLI版本:"
           npx tauri --version
+
+      - name: 清理 Rust target 目录（Unix）
+        if: runner.os != 'Windows'
+        working-directory: desktop_app/src-tauri
+        run: |
+          # 确保 target 是一个目录而不是文件
+          if [ -f "target" ]; then
+            echo "警告: target 是一个文件，正在删除..."
+            rm -f target
+          fi
+          # 清理特定架构的 target 目录，避免缓存冲突
+          if [ -d "target/${{ matrix.platform.rust_target }}" ]; then
+            echo "清理现有的 target/${{ matrix.platform.rust_target }} 目录..."
+            rm -rf "target/${{ matrix.platform.rust_target }}"
+          fi
+
+      - name: 清理 Rust target 目录（Windows）
+        if: runner.os == 'Windows'
+        working-directory: desktop_app/src-tauri
+        run: |
+          # 确保 target 是一个目录而不是文件
+          if (Test-Path "target" -PathType Leaf) {
+            Write-Host "警告: target 是一个文件，正在删除..."
+            Remove-Item "target" -Force
+          }
+          # 清理特定架构的 target 目录，避免缓存冲突
+          if (Test-Path "target/${{ matrix.platform.rust_target }}") {
+            Write-Host "清理现有的 target/${{ matrix.platform.rust_target }} 目录..."
+            Remove-Item "target/${{ matrix.platform.rust_target }}" -Recurse -Force
+          }
+        shell: pwsh
 
       - name: 构建 Tauri 应用
         working-directory: desktop_app
