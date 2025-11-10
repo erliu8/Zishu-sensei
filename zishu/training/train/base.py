@@ -11,6 +11,11 @@ import logging
 from pathlib import Path
 from typing import Dict, Any, Optional, Union, List
 
+try:
+    import yaml
+except ImportError:
+    yaml = None
+
 import torch
 from transformers import (
     AutoTokenizer,
@@ -55,10 +60,20 @@ class ModelManager:
         self._ensure_model_dir()
 
     def load_config(self, config_path: Union[str, Path]) -> Dict[str, Any]:
-        """加载模型配置文件"""
+        """加载模型配置文件，支持JSON和YAML格式"""
+        config_path = Path(config_path)
+        if not config_path.exists():
+            raise FileNotFoundError(f"配置文件不存在: {config_path}")
+        
         try:
             with open(config_path, "r", encoding="utf-8") as f:
-                config = json.load(f)
+                # 根据文件扩展名选择加载方式
+                if config_path.suffix.lower() in ['.yml', '.yaml']:
+                    if yaml is None:
+                        raise ImportError("需要安装PyYAML来加载YAML配置文件: pip install pyyaml")
+                    config = yaml.safe_load(f)
+                else:
+                    config = json.load(f)
             return config
         except Exception as e:
             self.logger.error(f"加载配置文件失败: {e}")
@@ -189,7 +204,7 @@ class ModelManager:
                     self.logger.info(f"使用8位量化")
 
             # 加载模型配置和模型
-            model_config = AutoConfig.from_pretrained(model_path)
+            model_config = AutoConfig.from_pretrained(model_path, trust_remote_code=True)
 
             self.logger.info(f"开始加载模型，参数: {model_kwargs}")
             self._model = AutoModelForCausalLM.from_pretrained(
@@ -212,7 +227,7 @@ class ModelManager:
 
     def _get_model_layer_count(self, model_path):
         """获取模型层数"""
-        config = AutoConfig.from_pretrained(model_path)
+        config = AutoConfig.from_pretrained(model_path, trust_remote_code=True)
         if hasattr(config, "num_hidden_layers"):
             return config.num_hidden_layers
         elif hasattr(config, "n_layer"):

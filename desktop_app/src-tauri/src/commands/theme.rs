@@ -17,7 +17,6 @@ use tauri::State;
 use chrono::Utc;
 use std::fs;
 use std::sync::Mutex;
-use uuid::Uuid;
 
 /**
  * 主题搜索选项

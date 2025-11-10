@@ -1,6 +1,6 @@
 use crate::database::file::{
     add_file_history, batch_delete_files, cleanup_deleted_files, delete_file_permanently,
-    find_file_by_hash, get_file_history, get_file_info, get_file_stats, init_file_tables,
+    find_file_by_hash, get_file_history, get_file_info, get_file_stats,
     list_files, mark_file_deleted, save_file_info, search_files, update_file_info, FileHistory,
     FileInfo, FileStats,
 };
@@ -10,7 +10,7 @@ use sha2::{Digest, Sha256};
 use std::fs;
 use std::io::{Read, Write};
 use std::path::{Path, PathBuf};
-use tauri::{AppHandle, Manager};
+use tauri::AppHandle;
 use uuid::Uuid;
 
 const MAX_FILE_SIZE: u64 = 100 * 1024 * 1024; // 100MB

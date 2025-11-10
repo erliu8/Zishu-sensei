@@ -29,6 +29,7 @@ import {
  */
 export function createMockAdapterInfo(overrides?: Partial<AdapterInfo>): AdapterInfo {
   return {
+    id: 'test-adapter-001',
     name: 'test-adapter',
     path: '/path/to/adapter',
     size: 1024000,

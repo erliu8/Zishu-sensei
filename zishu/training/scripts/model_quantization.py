@@ -15,10 +15,11 @@ from tqdm import tqdm
 import shutil
 
 #添加项目根目录到Python路径
-sys.path.append(os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
+project_root = os.path.dirname(os.path.dirname(os.path.dirname(os.path.dirname(os.path.abspath(__file__)))))
+sys.path.insert(0, project_root)
 
-from src.model.quantization import AdvanceQuantizationManager
-from src.utils.logger import setup_logger
+from zishu.training.train.quantization import AdvanceQuantizationManager
+from zishu.utils.logger import setup_logger
 
 logger = setup_logger(__name__,logging.INFO)
 
@@ -140,7 +141,11 @@ def quantize_gptq(
         )
         
         #保存量化后的模型
-        model.save_pretrained(output_dir,use_safetensors=True)
+        os.makedirs(output_dir, exist_ok=True)
+        model.save_pretrained(output_dir, use_safetensors=True)
+        
+        #保存tokenizer
+        tokenizer.save_pretrained(output_dir)
         
         logger.info(f"GPTQ量化完成，保存到: {output_dir}")
         
@@ -219,6 +224,10 @@ def quantize_bnb(
 )->None:
     """量化bnb方法
     
+    注意：BNB量化是运行时量化，不支持预先保存量化后的权重。
+    此函数只保存量化配置，模型文件大小不会减小。
+    如需获得更小的模型文件，请使用GPTQ或AWQ量化方法。
+    
     Args:
         model_path (str): 模型路径
         output_dir (str): 输出目录
@@ -226,6 +235,12 @@ def quantize_bnb(
     """
     try:
         from transformers import AutoConfig
+        
+        logger.warning(
+            "BNB量化是运行时量化，不支持预先保存量化后的权重。"
+            "模型文件大小不会减小，量化在加载模型时动态进行。"
+            "如需获得更小的模型文件，请使用GPTQ或AWQ量化方法。"
+        )
         
         logger.info(f"开始量化bnb方法: {model_path}")
         
@@ -263,7 +278,8 @@ def quantize_bnb(
             with open(config_path,"w",encoding="utf-8") as f:
                 json.dump(config,f,indent=2)
                 
-            logger.info(f"添加BNB量化配置已添加,模型已保存到: {output_dir}")
+            logger.info(f"BNB量化配置已添加,模型已保存到: {output_dir}")
+            logger.info("注意：模型文件大小未减小，量化将在加载时动态进行")
             
         else:
             logger.warning(f"config.json文件不存在,无法添加量化配置")
@@ -313,11 +329,16 @@ def quantize_dynamic(
             
         if not module_types:
             module_types = [torch.nn.Linear]
+        
+        #构建量化配置字典
+        qconfig_dict = {}
+        for module_type in module_types:
+            qconfig_dict[module_type] = quantization.default_dynamic_qconfig
             
         #进行动态量化
         quantized_model = quantization.quantize_dynamic(
             model,
-            module_types,
+            qconfig_dict,
             dtype=dtype
         )
         
@@ -327,7 +348,7 @@ def quantize_dynamic(
         
         #复制其他文件
         from transformers import AutoConfig
-        config = AutoConfig.from_pretrained(model_path)
+        config = AutoConfig.from_pretrained(model_path, trust_remote_code=True)
         config.save_pretrained(output_dir)
         
         #复制tokenizer文件
@@ -336,9 +357,23 @@ def quantize_dynamic(
                 src_path = os.path.join(model_path,item)
                 dst_path = os.path.join(output_dir,item)
                 if os.path.isfile(src_path):
-                    shutil.copy2(src_path,dst_path,dst_path)
+                    shutil.copy2(src_path,dst_path)
                 else:
                     shutil.copytree(src_path,dst_path)
+        
+        #复制自定义代码文件（modeling_*.py, tokenization_*.py, configuration_*.py等）
+        #这些文件是模型加载所必需的
+        custom_code_patterns = ["modeling_", "tokenization_", "configuration_"]
+        for item in os.listdir(model_path):
+            # 检查是否是自定义代码文件
+            is_custom_code = any(item.startswith(pattern) and item.endswith(".py") 
+                                for pattern in custom_code_patterns)
+            if is_custom_code:
+                src_path = os.path.join(model_path, item)
+                dst_path = os.path.join(output_dir, item)
+                if os.path.isfile(src_path):
+                    shutil.copy2(src_path, dst_path)
+                    logger.info(f"已复制自定义代码文件: {item}")
                     
         logger.info(f"PyTorch动态量化完成,模型已保存到: {output_dir}")
         
@@ -362,19 +397,89 @@ def verify_quantized_model(model_path:str, tokenizer, method:str)->None:
                     return True
                 else:
                     raise ValueError("BNB量化配置未找到")
+        elif method == "dynamic":
+            # 对于动态量化，需要从原始模型加载并应用量化
+            import os, json
+            import torch.quantization as quantization
+            
+            # 读取量化配置
+            quant_config_path = os.path.join(model_path, "quantization_config.json")
+            if not os.path.exists(quant_config_path):
+                raise ValueError(f"量化配置文件不存在: {quant_config_path}")
+            
+            with open(quant_config_path, "r", encoding="utf-8") as f:
+                quant_config = json.load(f)
+            
+            # 支持两种拼写（orginal_model 是历史拼写错误，但为了兼容性保留）
+            original_model_path = quant_config.get("original_model") or quant_config.get("orginal_model")
+            if not original_model_path or not os.path.exists(original_model_path):
+                raise ValueError(f"原始模型路径不存在: {original_model_path}")
+            
+            dynamic_config = quant_config.get("config", {})
+            
+            # 从原始模型加载
+            from transformers import AutoModelForCausalLM
+            logger.info(f"从原始模型加载: {original_model_path}")
+            model = AutoModelForCausalLM.from_pretrained(
+                original_model_path, 
+                trust_remote_code=True,
+                device_map="cpu",
+                low_cpu_mem_usage=True
+            )
+            
+            # 应用量化
+            dtype_str = dynamic_config.get("dtype", "qint8")
+            if dtype_str == "qint8":
+                dtype = torch.qint8
+            elif dtype_str == "quint8":
+                dtype = torch.quint8
+            else:
+                dtype = torch.qint8
+            
+            target_modules = dynamic_config.get("target_modules", ["Linear"])
+            module_types = []
+            if "Linear" in target_modules:
+                module_types.append(torch.nn.Linear)
+            if "Conv1d" in target_modules:
+                module_types.append(torch.nn.Conv1d)
+            if "Conv2d" in target_modules:
+                module_types.append(torch.nn.Conv2d)
+            
+            if not module_types:
+                module_types = [torch.nn.Linear]
+            
+            qconfig_dict = {}
+            for module_type in module_types:
+                qconfig_dict[module_type] = quantization.default_dynamic_qconfig
+            
+            logger.info("应用动态量化...")
+            quantized_model = quantization.quantize_dynamic(
+                model,
+                qconfig_dict,
+                dtype=dtype
+            )
+            
+            # 简单推理测试
+            test_input = "叫主人~"
+            inputs = tokenizer(test_input, return_tensors="pt")
+            with torch.no_grad():
+                outputs = quantized_model.generate(inputs.input_ids, max_new_tokens=10)
+            decoded = tokenizer.decode(outputs[0], skip_special_tokens=True)
+            
+            logger.info(f"女仆:{decoded}~")
         else:
             # 其他量化方法保持原有逻辑
             if method == "gptq":
                 from auto_gptq import AutoGPTQForCausalLM, BaseQuantizeConfig
                 # 创建量化配置
                 quantize_config = BaseQuantizeConfig(bits=4, group_size=128)
-                model = AutoGPTQForCausalLM.from_pretrained(model_path, quantize_config=quantize_config)
+                model = AutoGPTQForCausalLM.from_pretrained(model_path, quantize_config=quantize_config, trust_remote_code=True)
             elif method == "awq":
                 from awq import AutoAWQForCausalLM
-                model = AutoAWQForCausalLM.from_pretrained(model_path)
-            elif method == "dynamic":
+                model = AutoAWQForCausalLM.from_pretrained(model_path, trust_remote_code=True)
+            else:
                 from transformers import AutoModelForCausalLM
-                model = AutoModelForCausalLM.from_pretrained(model_path)
+                model = AutoModelForCausalLM.from_pretrained(model_path, trust_remote_code=True)
                 
             # 简单推理测试
             test_input = "叫主人~"
@@ -412,6 +517,9 @@ def main():
     methods_config = manager.methods_config
     calibration_config = manager.calibration_config
     
+    #获取项目根目录（在函数开始处定义，确保后续代码可以使用）
+    project_root = os.path.dirname(os.path.dirname(os.path.dirname(os.path.dirname(os.path.abspath(__file__)))))
+    
     #获取模型路径
     model_path = manager.get_model_path()
     logger.info(f"模型路径: {model_path}")
@@ -430,13 +538,18 @@ def main():
         logger.info(f"可用的量化方法: {available_methods}")
         return
     
-    #确定输出目录
+    #确定输出目录 - 量化后的模型保存到data/disk/models/quantized目录
     if args.output_dir:
         output_dir = args.output_dir
     else:
-        output_dir = os.path.join(model_path,f"{method}_quantized")
+        # 从模型路径提取模型名称
+        model_name = os.path.basename(model_path.rstrip('/'))
+        if not model_name or model_name == '.':
+            model_name = os.path.basename(os.path.dirname(model_path.rstrip('/')))
+        # 构建输出目录：data/disk/models/quantized/{model_name}_{method}_quantized
+        output_dir = os.path.join("/data/disk/models/quantized", f"{model_name}_{method}_quantized")
         
-    os.makedirs(output_dir,exist_ok=True)
+    os.makedirs(output_dir, exist_ok=True)
     logger.info(f"输出目录: {output_dir}")
     
     #加载分词器
@@ -445,8 +558,14 @@ def main():
     #获取校准数据路径
     if args.calibration_file:
         calibration_path = args.calibration_file
+        # 如果是相对路径，基于项目根目录
+        if not os.path.isabs(calibration_path):
+            calibration_path = os.path.join(project_root, calibration_path)
     else:
         calibration_path = calibration_config.get("dataset_path","data/train/calibration.json")
+        # 如果是相对路径，基于项目根目录
+        if not os.path.isabs(calibration_path):
+            calibration_path = os.path.join(project_root, calibration_path)
         
     #加载校准数据(对于GPTQ和AWQ)
     if method in ["gptq","awq"]:

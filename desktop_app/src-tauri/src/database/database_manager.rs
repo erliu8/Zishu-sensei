@@ -6,8 +6,6 @@ use std::sync::Arc;
 use tokio::sync::RwLock;
 use tracing::{info, warn, error};
 use deadpool_postgres::Pool as PostgresPool;
-use redis::aio::ConnectionManager as RedisConnectionManager;
-use qdrant_client::prelude::*;
 
 use super::backends::{DatabaseConfig, DatabaseError, DatabaseResult};
 use super::redis_backend::RedisBackend;

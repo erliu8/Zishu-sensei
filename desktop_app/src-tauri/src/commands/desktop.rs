@@ -2,14 +2,11 @@
 //!
 //! This module provides commands for desktop-related operations
 
-use tauri::{AppHandle, Manager, Monitor, PhysicalPosition, PhysicalSize, State};
+use tauri::{AppHandle, Manager, Monitor};
 use serde::{Deserialize, Serialize};
 use tracing::{error, info, warn};
 
-use crate::{
-    commands::*,
-    state::AppState,
-};
+use crate::commands::*;
 
 // ================================
 // Data Types

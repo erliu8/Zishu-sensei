@@ -5,7 +5,7 @@
 use serde::{Deserialize, Serialize};
 use chrono::{DateTime, Utc};
 use std::collections::HashMap;
-use tracing::{info, error, warn, debug};
+use tracing::{info, debug};
 use crate::database::DbPool;
 use tokio::runtime::Handle;
 

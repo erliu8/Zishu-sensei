@@ -1,7 +1,7 @@
 use crate::commands::{CommandMetadata, PermissionLevel};
 use crate::database::update::{UpdateInfo, UpdateConfig, VersionHistory};
 use crate::utils::update_manager::{UpdateManager, UpdateEvent};
-use anyhow::{Result, Context};
+use anyhow::Result;
 use serde::{Deserialize, Serialize};
 use std::collections::HashMap;
 use std::sync::{Arc, Mutex};

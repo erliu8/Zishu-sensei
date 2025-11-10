@@ -1,7 +1,6 @@
-use crate::utils::startup_manager::{StartupConfig, StartupManager, StartupPhase, StartupStats, STARTUP_MANAGER};
+use crate::utils::startup_manager::{StartupConfig, StartupPhase, StartupStats, STARTUP_MANAGER};
 use serde_json::Value as JsonValue;
 use std::collections::HashMap;
-use tauri::State;
 
 /// 更新启动配置
 #[tauri::command]
@@ -79,7 +78,7 @@ pub async fn reset_startup_manager() -> Result<(), String> {
 /// 预加载资源
 #[tauri::command]
 pub async fn preload_resources(resources: Vec<String>) -> Result<(), String> {
-    use tokio::time::{sleep, Duration};
+    
     use tracing::{info, warn};
 
     info!("开始预加载资源: {:?}", resources);
@@ -121,8 +120,8 @@ pub async fn preload_resources(resources: Vec<String>) -> Result<(), String> {
 
 /// 预加载单个资源
 async fn preload_single_resource(resource: &str) -> Result<(), String> {
-    use std::path::Path;
-    use tokio::fs;
+    
+    
 
     // 根据资源类型进行不同的预加载策略
     if resource.ends_with(".png") || resource.ends_with(".jpg") || resource.ends_with(".jpeg") {
@@ -308,7 +307,7 @@ pub async fn optimize_startup() -> Result<String, String> {
 /// 清理临时文件
 async fn cleanup_temp_files() -> Result<(), String> {
     use tokio::fs;
-    use std::path::PathBuf;
+    
 
     let temp_dirs = vec![
         dirs::cache_dir().map(|d| d.join("zishu-sensei")),

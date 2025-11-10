@@ -3,7 +3,6 @@
 //! Provides persistent storage and management for Live2D characters
 
 use serde::{Deserialize, Serialize};
-use std::sync::Arc;
 use chrono::Utc;
 use tracing::{info, error};
 use crate::database::DbPool;

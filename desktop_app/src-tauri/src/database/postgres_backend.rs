@@ -3,9 +3,8 @@
 use async_trait::async_trait;
 use deadpool_postgres::{Config, Pool, Runtime};
 use serde_json;
-use std::collections::HashMap;
 use tokio_postgres::{NoTls, Row};
-use tracing::{error, info, warn};
+use tracing::info;
 
 use super::backends::*;
 

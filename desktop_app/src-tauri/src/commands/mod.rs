@@ -38,10 +38,8 @@
 //! ```
 
 use serde::{Deserialize, Serialize};
-use tauri::{AppHandle, State, Window};
 use std::collections::HashMap;
 
-use crate::state::AppState;
 
 /// Simplified result type for command handlers
 pub type ZishuResult<T> = Result<T, String>;
@@ -130,6 +128,12 @@ pub mod error_monitoring;
 
 /// 主题管理命令
 pub mod theme;
+
+/// 本地LLM模型管理命令
+pub mod local_llm;
+
+/// Prompt管理命令
+pub mod prompt;
 
 // ================================
 // 公共命令类型定义
@@ -533,6 +537,12 @@ pub fn get_command_metadata() -> HashMap<String, CommandMetadata> {
     // 模型配置命令
     metadata.extend(model_config::get_command_metadata());
     
+    // 本地LLM模型命令
+    metadata.extend(local_llm::get_command_metadata());
+    
+    // Prompt命令
+    metadata.extend(prompt::get_command_metadata());
+    
     metadata
 }
 
@@ -644,43 +654,39 @@ pub use system::*;
 pub use window::*;
 
 // 数据库命令
-pub use database::*;
 
 // 工作流命令
-pub use workflow::*;
 
 // 市场命令
 pub use market::*;
 
 // 更新命令
-pub use update::*;
 
 // 快捷键命令
-pub use shortcuts::*;
 
 // 模型配置命令
 pub use model_config::*;
 
+// 本地LLM模型命令
+pub use local_llm::*;
+
+// Prompt命令
+pub use prompt::*;
+
 // 加密命令
-pub use encryption::*;
 
 // 权限命令
 pub use permission::*;
 
 // 隐私命令
-pub use privacy::*;
 
 // 语言命令
-pub use language::*;
 
 // 区域命令
-pub use region::*;
 
 // 日志命令
-pub use logging::*;
 
 // Deep Link 命令
-pub use deeplink::*;
 
 // ================================
 // 测试模块

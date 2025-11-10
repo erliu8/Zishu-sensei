@@ -1,7 +1,6 @@
-use chrono::{DateTime, Utc, TimeZone, NaiveDateTime};
-use chrono_tz::{Tz, Asia, America, Europe};
+use chrono::{DateTime, Utc, NaiveDateTime};
+use chrono_tz::Tz;
 use serde::{Deserialize, Serialize};
-use std::collections::HashMap;
 
 /// 格式化选项
 #[derive(Debug, Clone, Serialize, Deserialize)]

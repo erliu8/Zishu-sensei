@@ -2,7 +2,7 @@
 #![cfg_attr(not(debug_assertions), windows_subsystem = "windows")]
 
 use tauri::{api::shell, AppHandle, Manager, WindowBuilder, WindowUrl};
-use tracing::{error, info, warn};
+use tracing::{error, info};
 use serde::{Deserialize, Serialize};
 
 // 导入模块
@@ -261,10 +261,6 @@ fn init_logging() -> Result<(), Box<dyn std::error::Error>> {
 async fn app_setup(app: &tauri::AppHandle) -> Result<(), Box<dyn std::error::Error + Send + Sync>> {
     info!("开始应用初始化");
     
-    // 初始化应用状态
-    let app_state = AppState::new(app.clone()).await?;
-    app.manage(app_state);
-    
     // 初始化安全审计日志
     let app_data_dir = app.path_resolver()
         .app_data_dir()
@@ -283,7 +279,7 @@ async fn app_setup(app: &tauri::AppHandle) -> Result<(), Box<dyn std::error::Err
         cfg.dbname = Some("zishu_sensei".to_string());
         cfg.host = Some("localhost".to_string());
         cfg.user = Some("zishu".to_string());
-        cfg.password = Some("zishu".to_string());
+        cfg.password = Some("zishu123".to_string());
         let pool = cfg.create_pool(Some(Runtime::Tokio1), NoTls)
             .map_err(|e| format!("创建数据库连接池失败: {}", e))?;
         
@@ -298,8 +294,12 @@ async fn app_setup(app: &tauri::AppHandle) -> Result<(), Box<dyn std::error::Err
         info!("日志数据库系统已初始化");
     }
     
-    // 初始化数据库
+    // 初始化数据库 - 移动到前面，确保在应用状态初始化之前完成
     database::init_database(app.clone()).await?;
+    
+    // 初始化应用状态 - 移动到数据库初始化之后
+    let app_state = AppState::new(app.clone()).await?;
+    app.manage(app_state);
     
     // 加载配置
     let config = load_config(app).await.unwrap_or_default();
@@ -787,6 +787,24 @@ async fn main() {
             // Deep Link 命令
             commands::deeplink::handle_deep_link,
             commands::deeplink::is_launched_from_community,
+            
+            // 本地LLM模型管理命令
+            commands::local_llm::get_local_llm_models,
+            commands::local_llm::upload_local_llm_model,
+            commands::local_llm::register_local_llm_model,
+            commands::local_llm::download_local_llm_model,
+            commands::local_llm::delete_local_llm_model,
+            commands::local_llm::verify_local_llm_model,
+            commands::local_llm::get_local_llm_model,
+            
+            // Prompt管理命令
+            commands::prompt::get_prompts,
+            commands::prompt::create_prompt,
+            commands::prompt::update_prompt,
+            commands::prompt::delete_prompt,
+            commands::prompt::apply_prompt,
+            commands::prompt::get_prompt,
+            commands::prompt::get_current_prompt,
         ])
         .manage(commands::shortcuts::ShortcutRegistry::new())
         .manage(commands::memory::MemoryManagerState::new())

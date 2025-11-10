@@ -2,15 +2,12 @@
 //! 加密相关的 Tauri 命令
 
 use serde::{Deserialize, Serialize};
-use tauri::State;
-use std::path::PathBuf;
-use parking_lot::Mutex;
 
 use crate::utils::{
     encryption::{EncryptedData, KeyDerivationParams, quick_encrypt, quick_decrypt},
-    key_manager::{KeyManager, StoredKeyInfo, GLOBAL_KEY_MANAGER},
-    security_audit::{log_audit_success, log_audit_failure, AuditEventType, AuditEvent, AuditLevel, AuditEventFilter},
-    data_masking::{quick_mask, MaskingStrategy, SensitiveDataType, DataMasker},
+    key_manager::{StoredKeyInfo, GLOBAL_KEY_MANAGER},
+    security_audit::{log_audit_success, log_audit_failure, AuditEventType, AuditEvent, AuditEventFilter},
+    data_masking::{quick_mask, SensitiveDataType, DataMasker},
 };
 
 use crate::database::encrypted_storage::{EncryptedStorage, EncryptedFieldType};

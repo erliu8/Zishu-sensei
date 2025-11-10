@@ -16,8 +16,8 @@ use serde::{Deserialize, Serialize};
 use std::collections::HashMap;
 use std::sync::{Arc, Mutex};
 use std::time::{SystemTime, UNIX_EPOCH};
-use tauri::{AppHandle, Manager, State};
-use tracing::{debug, error, info, warn};
+use tauri::{Manager, State};
+use tracing::{debug, info};
 
 // ============================================================================
 // 性能监控状态管理

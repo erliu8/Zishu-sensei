@@ -11,18 +11,9 @@ pub mod app_state;
 pub mod character_state;
 pub mod settings;
 
-pub use chat_state::{ChatState, ChatSession, ModelConfig};
+pub use chat_state::{ChatState, ModelConfig};
 pub use tray_state::{
-    TrayState, TrayIconState, RecentConversation, SystemResources,
-    TrayNotification, NotificationType,
-};
-pub use character_state::{
-    CharacterState, Character, CharacterConfig, ExpressionState, CharacterAction, 
-    ActionType, CharacterStateSnapshot, CharacterStateError, CharacterStateStatistics,
-};
-pub use settings::{
-    SettingsState, UiSettings, SystemSettings, PrivacySettings, NotificationSettings,
-    AdvancedSettings, SettingValue, SettingChangeEvent, SettingChangeRecord, SettingsError,
+    TrayState, TrayIconState,
 };
 
 /// Global application state stored in Tauri managed state

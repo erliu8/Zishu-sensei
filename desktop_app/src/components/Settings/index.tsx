@@ -25,6 +25,7 @@ import { useTauri } from '@/hooks/useTauri'
 import { GeneralSettings } from './GeneralSettings'
 import { CharacterSettings } from './CharacterSettings'
 import { ThemeSettings } from './ThemeSettings'
+import { AISettings } from './AISettings'
 
 // 类型
 import type { AppConfig } from '@/types/settings'
@@ -32,7 +33,7 @@ import type { AppConfig } from '@/types/settings'
 /**
  * 设置标签页类型
  */
-export type SettingsTab = 'general' | 'character' | 'theme' | 'system' | 'advanced'
+export type SettingsTab = 'general' | 'character' | 'theme' | 'ai' | 'system' | 'advanced'
 
 /**
  * 标签页配置
@@ -135,6 +136,13 @@ export const Settings: React.FC<SettingsProps> = ({
             icon: '🎨',
             description: '界面主题和自定义样式',
             component: ThemeSettings,
+        },
+        {
+            id: 'ai',
+            label: 'AI设置',
+            icon: '🤖',
+            description: '本地LLM模型和Prompt管理',
+            component: AISettings,
         },
         {
             id: 'system',
@@ -349,12 +357,14 @@ export const Settings: React.FC<SettingsProps> = ({
             {/* 头部 */}
             {showHeader && (
                 <motion.header
+                    data-tauri-drag-region
                     className="settings-header flex items-center justify-between px-6 py-4 border-b border-gray-200 dark:border-gray-800"
                     variants={ANIMATION_VARIANTS.header}
                     initial="initial"
                     animate="animate"
+                    style={{ cursor: 'move' }}
                 >
-                    <div className="flex items-center space-x-3">
+                    <div className="flex items-center space-x-3" data-tauri-drag-region>
                         <h1 className="text-2xl font-bold text-gray-900 dark:text-white">
                             设置
                         </h1>
@@ -371,10 +381,11 @@ export const Settings: React.FC<SettingsProps> = ({
                         )}
                     </div>
 
-                    <div className="flex items-center space-x-2">
+                    <div className="flex items-center space-x-2" data-tauri-drag-region={false}>
                         {/* 导入导出按钮 */}
                         <button
                             onClick={handleImport}
+                            data-tauri-drag-region={false}
                             className="px-3 py-1.5 text-sm text-gray-700 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-800 rounded-lg transition-colors"
                             title="导入设置"
                         >
@@ -382,6 +393,7 @@ export const Settings: React.FC<SettingsProps> = ({
                         </button>
                         <button
                             onClick={handleExport}
+                            data-tauri-drag-region={false}
                             className="px-3 py-1.5 text-sm text-gray-700 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-800 rounded-lg transition-colors"
                             title="导出设置"
                         >
@@ -391,6 +403,7 @@ export const Settings: React.FC<SettingsProps> = ({
                         {/* 重置按钮 */}
                         <button
                             onClick={handleReset}
+                            data-tauri-drag-region={false}
                             className="px-3 py-1.5 text-sm text-gray-700 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-800 rounded-lg transition-colors"
                             title="重置为默认设置"
                         >
@@ -401,6 +414,7 @@ export const Settings: React.FC<SettingsProps> = ({
                         <button
                             onClick={handleSave}
                             disabled={isSaving || !hasUnsavedChanges}
+                            data-tauri-drag-region={false}
                             className={clsx(
                                 'px-4 py-1.5 text-sm font-medium rounded-lg transition-colors',
                                 isSaving || !hasUnsavedChanges
@@ -415,6 +429,7 @@ export const Settings: React.FC<SettingsProps> = ({
                         {onClose && (
                             <button
                                 onClick={handleClose}
+                                data-tauri-drag-region={false}
                                 className="p-2 text-gray-500 hover:text-gray-700 dark:text-gray-400 dark:hover:text-gray-200 hover:bg-gray-100 dark:hover:bg-gray-800 rounded-lg transition-colors"
                                 title="关闭设置"
                             >
@@ -426,7 +441,7 @@ export const Settings: React.FC<SettingsProps> = ({
             )}
 
             {/* 主体内容区 */}
-            <div className="settings-body flex flex-1 overflow-hidden">
+            <div className="settings-body flex flex-1 overflow-hidden" style={{ minHeight: 0 }}>
                 {/* 侧边栏导航 */}
                 {showSidebar && (
                     <motion.aside
@@ -434,6 +449,7 @@ export const Settings: React.FC<SettingsProps> = ({
                         variants={ANIMATION_VARIANTS.sidebar}
                         initial="initial"
                         animate="animate"
+                        style={{ minHeight: 0 }}
                     >
                         <nav className="p-4 space-y-1">
                             {tabs.map(tab => (
@@ -465,7 +481,7 @@ export const Settings: React.FC<SettingsProps> = ({
                 )}
 
                 {/* 内容区域 */}
-                <main className="settings-content flex-1 overflow-y-auto">
+                <main className="settings-content flex-1 overflow-y-auto" style={{ minHeight: 0 }}>
                     <AnimatePresence mode="wait">
                         <motion.div
                             key={activeTab}
@@ -474,7 +490,6 @@ export const Settings: React.FC<SettingsProps> = ({
                             animate="animate"
                             exit="exit"
                             transition={{ duration: 0.2 }}
-                            className="h-full"
                         >
                             {ActiveTabComponent && (
                                 <ActiveTabComponent

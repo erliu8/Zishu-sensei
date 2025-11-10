@@ -9,7 +9,7 @@ use anyhow::{Result, anyhow};
 use std::sync::Arc;
 use tokio::sync::RwLock;
 use std::collections::HashMap;
-use tracing::{info, error, warn, debug};
+use tracing::info;
 use uuid::Uuid;
 
 /// 工作流注册表（业务逻辑层）
@@ -156,7 +156,7 @@ impl WorkflowRegistry {
         category: Option<&str>,
     ) -> Result<Vec<Workflow>> {
         // 从数据库获取所有工作流
-        let mut db_workflows = if let Some(keyword) = keyword {
+        let db_workflows = if let Some(keyword) = keyword {
             self.db_registry.search_workflows(keyword)
                 .map_err(|e| anyhow!("数据库错误: {}", e))?
         } else if let Some(category) = category {

@@ -1,8 +1,8 @@
-use crate::workflow::{WorkflowEngine, WorkflowExecution};
+use crate::workflow::WorkflowEngine;
 use serde::{Deserialize, Serialize};
 use std::collections::HashMap;
 use std::sync::Arc;
-use tauri::{AppHandle, Manager};
+use tauri::AppHandle;
 use tokio::sync::RwLock;
 use tracing::{debug, error, info, warn};
 

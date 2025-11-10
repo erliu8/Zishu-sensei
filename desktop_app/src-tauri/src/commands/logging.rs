@@ -9,10 +9,9 @@
  * - 远程日志上传
  */
 
-use crate::database::logging::{LogDatabase, LogFilter, LogStatistics};
-use crate::utils::logger::{global_logger, init_global_logger, LogEntry, LogLevel, LoggerConfig, LoggerError, LoggerResult};
+use crate::database::logging::{LogDatabase, LogFilter};
+use crate::utils::logger::{global_logger, init_global_logger, LogEntry, LogLevel, LoggerConfig};
 use serde::{Deserialize, Serialize};
-use std::collections::HashMap;
 use std::path::PathBuf;
 use tauri::State;
 

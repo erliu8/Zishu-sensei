@@ -4,7 +4,6 @@
 use serde::{Deserialize, Serialize};
 use crate::database::DbPool;
 use tokio_postgres::Row;
-use chrono::{DateTime, Utc};
 
 #[derive(Debug, Clone, Serialize, Deserialize)]
 pub struct RegionSettings {

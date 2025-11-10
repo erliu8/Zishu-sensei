@@ -22,7 +22,7 @@
     display: flex;
     align-items: center;
     justify-content: center;
-    overflow: hidden;
+    overflow: visible;
     user-select: none;
     -webkit-user-select: none;
     

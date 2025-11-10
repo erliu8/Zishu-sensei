@@ -8,7 +8,6 @@ use tracing::{info, error, warn};
 use std::collections::HashMap;
 use chrono::{DateTime, Utc};
 use reqwest::Client;
-use tokio::fs;
 
 use crate::{
     commands::*,
@@ -516,7 +515,7 @@ pub async fn get_adapter_status(
 // ================================
 
 use crate::database::get_database;
-use crate::database::adapter::{InstalledAdapter, AdapterInstallStatus, AdapterVersion, AdapterDependency, AdapterPermission};
+use crate::database::adapter::{InstalledAdapter, AdapterVersion, AdapterDependency, AdapterPermission};
 
 /// 获取本地已安装的适配器列表
 #[tauri::command]

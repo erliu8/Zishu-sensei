@@ -1,8 +1,8 @@
 use tauri::{command, State};
-use serde::{Deserialize, Serialize};
+use serde::Serialize;
 use std::collections::HashMap;
 use std::sync::Mutex;
-use chrono::{DateTime, Utc, NaiveDateTime};
+use chrono::DateTime;
 
 use crate::database::region::{RegionDatabase, RegionPreferences, RegionConfig, build_default_region_configs};
 use crate::utils::region_detector::{RegionDetector, SystemRegionInfo};

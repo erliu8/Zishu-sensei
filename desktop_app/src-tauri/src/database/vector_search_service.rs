@@ -9,9 +9,9 @@
 use std::sync::Arc;
 use tokio::sync::RwLock;
 use serde::{Deserialize, Serialize};
-use tracing::{info, warn, error};
+use tracing::warn;
 
-use super::backends::{VectorDatabaseBackend, DatabaseResult, DatabaseError, VectorSearchResult};
+use super::backends::{VectorDatabaseBackend, DatabaseResult, VectorSearchResult};
 use super::qdrant_backend::QdrantBackend;
 
 /// 向量搜索服务

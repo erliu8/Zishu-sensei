@@ -2,13 +2,11 @@
 //! 
 //! 提供应用状态的高级操作和管理功能
 
-use std::sync::Arc;
-use parking_lot::Mutex;
 use serde::{Deserialize, Serialize};
 use chrono::{DateTime, Utc};
 
 use crate::AppConfig;
-use super::{AppState, ChatState, TrayState};
+use super::AppState;
 
 /// 应用状态快照
 #[derive(Debug, Clone, Serialize, Deserialize)]
@@ -70,7 +68,7 @@ impl AppState {
 
     /// 获取应用状态健康检查
     pub fn health_check(&self) -> AppHealthStatus {
-        let mut issues = Vec::new();
+        let issues = Vec::new();
         let mut warnings = Vec::new();
 
         // 检查聊天状态

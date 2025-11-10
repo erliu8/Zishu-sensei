@@ -1,10 +1,23 @@
- # 下载Chinese-Mistral-7B-v0.1模型
+#!/usr/bin/env python3
+# -*- coding: utf-8 -*-
+"""
+下载Chinese-Mistral-7B-v0.1模型
+
+使用方法:
+    # 激活虚拟环境（依赖在 /data/disk/zishu-sensei/venv）
+    source /data/disk/zishu-sensei/venv/bin/activate
+    python tools/download_models_mistral.py
+    
+    或者直接使用虚拟环境的Python:
+    /data/disk/zishu-sensei/venv/bin/python tools/download_models_mistral.py
+"""
 import os
+import sys
 import torch
 from modelscope import snapshot_download
 from transformers import AutoTokenizer, AutoModelForCausalLM
 
-local_model_path = "/root/autodl-tmp/zishu-sensei/models/base/Chinese-Mistral-7B-v0.1"
+local_model_path = "/data/models/Chinese-Mistral-7B-v0.1"
 model_id = "itpossible/Chinese-Mistral-7B-v0.1"
 os.makedirs(local_model_path, exist_ok=True)
 print(f"正在从ModelScope下载Chinese-Mistral-7B-v0.1到 {local_model_path}")

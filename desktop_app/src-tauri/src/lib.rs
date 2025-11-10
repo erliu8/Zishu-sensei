@@ -14,8 +14,15 @@ pub mod workflow;
 
 // 重新导出常用类型供测试使用
 pub use state::{
-    AppState, ChatState, ChatSession, ModelConfig,
-    TrayState, TrayIconState, RecentConversation, SystemResources, 
+    AppState, ChatState, TrayState,
+};
+
+// 重新导出聊天相关类型
+pub use state::chat_state::{ChatSession, ModelConfig};
+
+// 重新导出托盘相关类型
+pub use state::tray_state::{
+    TrayIconState, RecentConversation, SystemResources, 
     TrayNotification, NotificationType,
 };
 

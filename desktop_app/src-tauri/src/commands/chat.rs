@@ -6,12 +6,13 @@ use crate::create_command;
 use tauri::{AppHandle, State};
 use serde::{Deserialize, Serialize};
 use std::collections::HashMap;
+use tracing::{info, warn};
 
 use crate::{commands::*, AppState, ZishuResult};
 use crate::utils::bridge::{
     PythonApiBridge, ChatRequest, ChatMessage, MessageRole,
-    ChatCompletionResponse, HistoryResponse, ClearHistoryResponse,
 };
+use crate::commands::prompt;
 
 // ================================
 // 命令元数据
@@ -243,6 +244,34 @@ pub async fn send_message_handler(
     
     // 构建消息列表
     let mut messages = Vec::new();
+    
+    // 检查是否使用本地LLM模型，如果是，添加Prompt作为系统消息
+    let use_local_llm = input.model.as_ref()
+        .map(|m| m.starts_with("local_llm_") || m == "local_llm")
+        .unwrap_or(false);
+    
+    if use_local_llm {
+        // 获取当前使用的Prompt
+        match get_current_prompt_internal(&app).await {
+            Ok(Some(prompt)) => {
+                // 将Prompt内容作为系统消息添加
+                messages.push(ChatMessage {
+                    role: MessageRole::System,
+                    content: format!("{}\n\n{}", 
+                        prompt.content,
+                        prompt.character_setting.as_ref().unwrap_or(&"".to_string())
+                    ),
+                });
+                info!("已应用Prompt: {}", prompt.name);
+            }
+            Ok(None) => {
+                warn!("未找到当前使用的Prompt，将使用默认行为");
+            }
+            Err(e) => {
+                warn!("获取Prompt失败: {}，将使用默认行为", e);
+            }
+        }
+    }
     
     // 添加上下文消息
     if let Some(context_messages) = input.context_messages {
@@ -498,6 +527,34 @@ create_command!(set_chat_model, SetModelInput, set_chat_model_handler);
 // ================================
 // 辅助函数
 // ================================
+
+/// 获取当前使用的Prompt（内部函数）
+async fn get_current_prompt_internal(app: &AppHandle) -> Result<Option<prompt::Prompt>, String> {
+    use tauri::State;
+    use crate::state::AppState;
+    
+    // 这里我们需要访问AppState，但由于我们在命令处理器中，可以直接调用命令
+    // 为了简化，我们直接读取存储
+    let prompts_dir = app.path_resolver()
+        .app_data_dir()
+        .ok_or("无法获取应用数据目录")?
+        .join("prompts");
+    
+    let index_file = prompts_dir.join("prompts_index.json");
+    if !index_file.exists() {
+        return Ok(None);
+    }
+    
+    let content = std::fs::read_to_string(&index_file).map_err(|e| {
+        format!("读取Prompt索引失败: {}", e)
+    })?;
+    
+    let prompts: Vec<prompt::Prompt> = serde_json::from_str(&content).map_err(|e| {
+        format!("解析Prompt索引失败: {}", e)
+    })?;
+    
+    Ok(prompts.into_iter().find(|p| p.is_default && p.is_enabled))
+}
 
 /// 生成会话 ID
 pub fn generate_session_id() -> String {

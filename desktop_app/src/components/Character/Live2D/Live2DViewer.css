@@ -10,6 +10,7 @@
   font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', 'Roboto', sans-serif;
   z-index: 10; /* ensure above base layout */
   min-height: 400px !important; /* 🔧 确保有最小高度 */
+  isolation: isolate; /* 🔧 创建新的堆叠上下文 */
 }
 
 .live2d-viewer--fullscreen {
@@ -27,7 +28,7 @@
   display: block !important;
   width: 100% !important;
   height: 100% !important;
-  background: rgba(255, 0, 0, 0.1); /* 临时红色背景，用于调试 */
+  background: transparent; /* 透明背景 */
   transition: cursor 0.2s ease;
   position: relative !important;
   z-index: 1 !important;

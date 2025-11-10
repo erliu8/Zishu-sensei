@@ -61,13 +61,17 @@ export const ChatWindow: React.FC<ChatWindowProps> = ({
             className="w-full h-full flex flex-col bg-background text-foreground"
         >
             {/* 标题栏 */}
-            <div style={{
-                display: 'flex',
-                alignItems: 'center',
-                justifyContent: 'space-between',
-                padding: '16px',
-                borderBottom: '1px solid hsl(var(--color-border))',
-            }}>
+            <div 
+                data-tauri-drag-region
+                style={{
+                    display: 'flex',
+                    alignItems: 'center',
+                    justifyContent: 'space-between',
+                    padding: '16px',
+                    borderBottom: '1px solid hsl(var(--color-border))',
+                    cursor: 'move',
+                }}
+            >
                 <h1 style={{
                     fontSize: '18px',
                     fontWeight: 600,
@@ -75,9 +79,10 @@ export const ChatWindow: React.FC<ChatWindowProps> = ({
                 }}>
                     对话
                 </h1>
-                <div style={{ display: 'flex', gap: '8px' }}>
+                <div style={{ display: 'flex', gap: '8px' }} data-tauri-drag-region={false}>
                     <button
                         onClick={onMinimize}
+                        data-tauri-drag-region={false}
                         style={{
                             padding: '8px',
                             color: 'hsl(var(--color-muted-foreground))',
@@ -97,6 +102,7 @@ export const ChatWindow: React.FC<ChatWindowProps> = ({
                     </button>
                     <button
                         onClick={onClose}
+                        data-tauri-drag-region={false}
                         style={{
                             padding: '8px',
                             color: 'hsl(var(--color-muted-foreground))',

@@ -1,11 +1,24 @@
-# 用ModelScope下载Qwen-7B模型
+#!/usr/bin/env python3
+# -*- coding: utf-8 -*-
+"""
+用ModelScope下载Qwen-7B模型
+
+使用方法:
+    # 激活虚拟环境（依赖在 /data/disk/zishu-sensei/venv）
+    source /data/disk/zishu-sensei/venv/bin/activate
+    python tools/download_models_qwen.py
+    
+    或者直接使用虚拟环境的Python:
+    /data/disk/zishu-sensei/venv/bin/python tools/download_models_qwen.py
+"""
 import os
+import sys
 import torch
 from modelscope import snapshot_download
 from transformers import AutoTokenizer, AutoModelForCausalLM
 
 qwen_model_id = "qwen/Qwen2.5-7B-Instruct"
-qwen_local_path = "/root/autodl-tmp/zishu-sensei/models/base/Qwen2.5-7B-Instruct"
+qwen_local_path = "/data/models/Qwen2.5-7B-Instruct"
 os.makedirs(qwen_local_path, exist_ok=True)
 print(f"正在从ModelScope下载Qwen2.5-7B-Instruct到 {qwen_local_path}")
 qwen_model_dir = snapshot_download(

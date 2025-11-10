@@ -10,7 +10,6 @@ use tauri::{AppHandle, State};
 use serde::{Deserialize, Serialize};
 use tracing::{info, error, warn};
 use reqwest::Client;
-use std::path::PathBuf;
 use tokio::fs;
 
 use crate::{

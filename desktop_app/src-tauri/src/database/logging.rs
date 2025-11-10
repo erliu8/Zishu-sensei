@@ -4,7 +4,7 @@
 
 use serde::{Deserialize, Serialize};
 use crate::database::DbPool;
-use tracing::{info, error, warn, debug};
+use tracing::{info, warn, debug};
 use chrono::Utc;
 use std::collections::HashMap;
 

@@ -580,3 +580,30 @@ def get_health_checker():
     )
 
     return checker
+
+
+# 适配器管理器相关依赖
+_adapter_manager = None
+_adapter_manager_lock = threading.Lock()
+
+
+def get_adapter_manager():
+    """获取适配器管理器实例"""
+    global _adapter_manager
+    
+    with _adapter_manager_lock:
+        if _adapter_manager is None:
+            from zishu.adapters.core import AdapterManager, AdapterManagerConfig
+            
+            config = AdapterManagerConfig(
+                max_adapters=100,
+                enable_validation=True,
+                enable_metrics=True,
+            )
+            _adapter_manager = AdapterManager(config)
+            
+            # 注意：适配器管理器的初始化和启动应该在应用启动时完成
+            # 这里只返回实例，实际的初始化和启动应该在 FastAPI 的 lifespan 事件中处理
+            # 如果管理器未初始化，API 端点会处理这个情况
+        
+        return _adapter_manager

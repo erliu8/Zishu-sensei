@@ -4,7 +4,7 @@
 use serde::{Deserialize, Serialize};
 use std::collections::HashMap;
 use std::sync::{Arc, Mutex};
-use std::time::{Duration, SystemTime, UNIX_EPOCH};
+use std::time::{SystemTime, UNIX_EPOCH};
 use sysinfo::{System, SystemExt, ProcessExt, Pid};
 
 /// 内存使用信息
@@ -339,7 +339,7 @@ impl MemoryManager {
     /// 执行内存清理
     pub fn cleanup_memory(&self) -> Result<MemoryCleanupResult, String> {
         let start = SystemTime::now();
-        let mut cleaned_bytes: u64 = 0;
+        let cleaned_bytes: u64 = 0;
         let mut cleaned_objects: usize = 0;
         let mut details = HashMap::new();
 

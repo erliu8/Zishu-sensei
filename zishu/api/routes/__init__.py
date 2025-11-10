@@ -41,20 +41,41 @@ def get_available_routes(app: FastAPI) -> List[APIRouter]:
     except (ImportError, AttributeError):
         pass
 
+    try:
+        from .models import router as models_router
+
+        routers.append(models_router)
+    except (ImportError, AttributeError):
+        pass
+
+    try:
+        from .marketplace import router as marketplace_router
+
+        routers.append(marketplace_router)
+    except (ImportError, AttributeError):
+        pass
+
     return routers
 
 
-def register_routes(app: FastAPI, prefix: str = "/api/v1") -> None:
+def register_routes(
+    app: FastAPI,
+    prefixes: List[str] | None = None,
+) -> None:
     """注册路由
 
     Args:
         app (FastAPI): FastAPI实例
-        prefix (str, optional): 路由前缀. Defaults to "/api/v1".
+        prefixes (List[str], optional): 路由前缀列表. Defaults to ["/api", "/api/v1"].
     """
+    if prefixes is None:
+        prefixes = ["/api", "/api/v1"]
+
     routers = get_available_routes(app)
 
     for router in routers:
-        app.include_router(router, prefix=prefix)
+        for prefix in prefixes:
+            app.include_router(router, prefix=prefix)
 
 
 def get_router_info(app: FastAPI = None) -> dict:

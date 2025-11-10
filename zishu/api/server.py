@@ -134,7 +134,9 @@ async def lifespan(app: FastAPI):
         try:
             characters_config = CharacterConfig(
                 name="紫舒老师",
-                personality="温柔、耐心、害羞、有责任心",
+                display_name="紫舒老师",
+                description="温柔、耐心、害羞、有责任心的AI老师",
+                personality_traits=["温柔", "耐心", "害羞", "有责任心"],
             )
             dependencies.register_character_config(characters_config)
         except Exception as e:
@@ -259,16 +261,26 @@ def create_app(
             },
         )
 
-    # 健康检查端点
-    @app.get("/health", tags=["System"])
+    # 根端点
+    @app.get("/", tags=["System"])
     async def root():
         """根端点"""
         return {
-            "status": "healthy",
             "message": "Welcome to Zishu-sensei API",
             "version": "0.1.0",
             "docs": "/docs" if debug else "Documentation not available in production",
             "health": "/health",
+            "system_info": "/system/info",
+        }
+
+    # 健康检查端点
+    @app.get("/health", tags=["System"])
+    async def health_check():
+        """健康检查端点"""
+        return {
+            "status": "healthy",
+            "message": "Zishu-sensei API is running",
+            "version": "0.1.0",
         }
 
     # 系统信息端点

@@ -1266,20 +1266,12 @@ export class Live2DModelLoader {
         //   }
         // }
 
-        // 🔧 [CRITICAL FIX] 如果Canvas已经有上下文，先清理它
-        // 同一个Canvas不能创建两种不同类型的上下文
+        // 🔧 [STABLE FIX] 如果Canvas已经有上下文，直接使用它
         const existingContext = (this as any).__currentWebGLContext
-        if (existingContext && existingContext !== contextType) {
-          console.warn(`🔄 [DEBUG] Canvas已有${existingContext}上下文，需要重新创建${contextType}`)
-          // 标记需要重新创建
-          // 但我们不能真正删除旧上下文，所以如果类型不匹配，返回null
-          if ((existingContext === 'webgl' && contextType === 'webgl2') || 
-              (existingContext === 'webgl2' && contextType === 'webgl')) {
-            // 返回已存在的上下文，而不是null
-            const ctx = originalGetContext.call(this, existingContext, safeAttributes)
-            if (ctx && (ctx instanceof WebGLRenderingContext || ctx instanceof WebGL2RenderingContext)) {
-              return self.patchWebGLContext(ctx)
-            }
+        if (existingContext) {
+          const ctx = originalGetContext.call(this, existingContext, safeAttributes)
+          if (ctx && (ctx instanceof WebGLRenderingContext || ctx instanceof WebGL2RenderingContext)) {
+            return self.patchWebGLContext(ctx)
           }
         }
         
@@ -2871,9 +2863,38 @@ export class Live2DModelLoader {
     // 🔧 [FIX] 只在用户未手动调整且位置为(0,0)时才自动居中
     if (!userAdjustedPosition && targetX === 0 && targetY === 0 && this.app && this.app.renderer) {
       const rendererAny = this.app.renderer as any
-      targetX = rendererAny.width / 2
-      targetY = rendererAny.height / 2
-      console.log(`🎯 [DEBUG] 自动居中计算: x=${targetX}, y=${targetY}`)
+      const canvasCenterX = rendererAny.width / 2
+      const canvasCenterY = rendererAny.height / 2
+      
+      // 🔧 [FIX] 获取模型边界和pivot，计算正确的居中位置
+      try {
+        const modelBounds = (model as any).getBounds()
+        const pivotX = (model as any).pivot?.x || 0
+        const pivotY = (model as any).pivot?.y || 0
+        
+        // 计算模型中心相对于pivot的偏移
+        const modelCenterOffsetX = modelBounds.width / 2 - pivotX
+        const modelCenterOffsetY = modelBounds.height / 2 - pivotY
+        
+        // 计算正确的居中位置（考虑pivot和缩放）
+        const scaleX = (model as any).scale?.x || finalScale
+        const scaleY = (model as any).scale?.y || finalScale
+        
+        targetX = canvasCenterX - (modelBounds.x + modelCenterOffsetX) * scaleX
+        targetY = canvasCenterY - (modelBounds.y + modelCenterOffsetY) * scaleY
+        
+        console.log(`🎯 [FIX] 自动居中计算（考虑pivot）:`)
+        console.log(`   - 画布中心: (${canvasCenterX}, ${canvasCenterY})`)
+        console.log(`   - 模型边界: x=${modelBounds.x.toFixed(1)}, y=${modelBounds.y.toFixed(1)}, w=${modelBounds.width.toFixed(1)}, h=${modelBounds.height.toFixed(1)}`)
+        console.log(`   - 模型pivot: (${pivotX.toFixed(1)}, ${pivotY.toFixed(1)})`)
+        console.log(`   - 模型中心偏移: (${modelCenterOffsetX.toFixed(1)}, ${modelCenterOffsetY.toFixed(1)})`)
+        console.log(`   - 计算位置: (${targetX.toFixed(1)}, ${targetY.toFixed(1)})`)
+      } catch (e) {
+        // 如果获取边界失败，使用简单的居中方式
+        console.warn('⚠️ [FIX] 无法获取模型边界，使用简单居中:', e)
+        targetX = canvasCenterX
+        targetY = canvasCenterY
+      }
     } else if (userAdjustedPosition) {
       // 如果用户调整过位置，使用模型当前位置而不是配置中的位置
       targetX = (model as any).position.x
@@ -3054,11 +3075,47 @@ export class Live2DModelLoader {
       this.app.stage.visible = (true as boolean);
       this.app.stage.alpha = (1.0 as number);
 
-      // 🔧 [FIX] 不要重新设置位置！位置已经在 loadModel 中设置好了
-      // renderConfig.position 已经是正确的值，模型位置也已经设置好了
-      // 这里只需要确保模型可见性和交互性
+      // 🔧 [FIX] 验证并修正模型位置，确保模型真正居中
+      const rendererAny = this.app.renderer as any
+      const canvasCenterX = rendererAny.width / 2
+      const canvasCenterY = rendererAny.height / 2
       
-      // console.log('🎨 [FINALIZE] 保持当前位置，不重新计算:', { x: (model as any).x, y: (model as any).y })
+      try {
+        // 获取模型的实际边界（考虑所有变换）
+        const modelBounds = (model as any).getBounds()
+        const modelCenterX = modelBounds.x + modelBounds.width / 2
+        const modelCenterY = modelBounds.y + modelBounds.height / 2
+        
+        // 计算偏移量
+        const offsetX = canvasCenterX - modelCenterX
+        const offsetY = canvasCenterY - modelCenterY
+        
+        // 如果偏移量超过阈值（5像素），调整模型位置
+        if (Math.abs(offsetX) > 5 || Math.abs(offsetY) > 5) {
+          const currentX = (model as any).position.x || 0
+          const currentY = (model as any).position.y || 0
+          const newX = currentX + offsetX
+          const newY = currentY + offsetY
+          
+          console.log(`🎯 [FINALIZE] 修正模型位置:`)
+          console.log(`   - 模型边界: x=${modelBounds.x.toFixed(1)}, y=${modelBounds.y.toFixed(1)}, w=${modelBounds.width.toFixed(1)}, h=${modelBounds.height.toFixed(1)}`)
+          console.log(`   - 模型中心: (${modelCenterX.toFixed(1)}, ${modelCenterY.toFixed(1)})`)
+          console.log(`   - 画布中心: (${canvasCenterX.toFixed(1)}, ${canvasCenterY.toFixed(1)})`)
+          console.log(`   - 偏移量: (${offsetX.toFixed(1)}, ${offsetY.toFixed(1)})`)
+          console.log(`   - 当前位置: (${currentX.toFixed(1)}, ${currentY.toFixed(1)})`)
+          const newXStr = newX.toFixed(1)
+          const newYStr = newY.toFixed(1)
+          ;(console as any).log('   - 新位置: (' + newXStr + ', ' + newYStr + ')')
+          
+          // 更新模型位置
+          (model as any).position.set(newX, newY)
+          renderConfig.position = { x: newX, y: newY }
+        } else {
+          console.log(`✅ [FINALIZE] 模型位置已正确，无需调整`)
+        }
+      } catch (e) {
+        console.warn(`⚠️ [FINALIZE] 无法计算模型边界，保持当前位置:`, e)
+      }
 
       // 🔧 [FIX] 强制确保模型完全可见和正确定位
       (model as any).alpha = +(renderConfig.opacity);

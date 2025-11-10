@@ -4,8 +4,7 @@ use crate::database::privacy::PrivacySettings;
 use crate::utils::anonymizer::{
     AnonymizationOptions, Anonymizer, AnonymousStatistics, UsageStatistics,
 };
-use crate::utils::data_cleanup::{CleanupResult, CleanupType, DataCleanupManager};
-use std::sync::{Arc, Mutex};
+use crate::utils::data_cleanup::{CleanupResult, CleanupType};
 use tauri::{AppHandle, State};
 
 /// 隐私管理器状态

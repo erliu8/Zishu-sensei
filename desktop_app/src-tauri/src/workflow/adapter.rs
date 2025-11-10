@@ -4,8 +4,7 @@
 
 use super::models::*;
 use crate::database::workflow::{WorkflowDefinition as DbWorkflowDefinition, WorkflowStatus as DbWorkflowStatus};
-use anyhow::{Result, anyhow};
-use serde_json::Value as JsonValue;
+use anyhow::Result;
 
 /// 将业务层 Workflow 转换为数据库层 WorkflowDefinition
 pub fn workflow_to_db(workflow: &Workflow) -> Result<DbWorkflowDefinition> {

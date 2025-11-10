@@ -1,4 +1,4 @@
-from fastapi import APIRouter, Depends, HTTPException, status, BackgroundTasks
+from fastapi import APIRouter, Depends, HTTPException, status, BackgroundTasks, Body
 from typing import Dict, Any, List, Optional
 import asyncio
 import time
@@ -11,12 +11,15 @@ import json
 from pathlib import Path
 import logging
 
-from ..dependencies import get_model_manager, get_config, get_logger
+from ..dependencies import get_model_manager, get_config, get_logger, get_adapter_manager
 from ..schemas.request import (
     ModelLoadRequest,
     ModelUnloadRequest,
     ModelSwitchRequest,
     ModelManagementRequest,
+    LLMModelRegisterRequest,
+    AdapterExecutionRequest,
+    AdapterConfigUpdateRequest,
 )
 from ..schemas.responses import (
     AdapterInfo,
@@ -549,29 +552,32 @@ async def get_adapter_info(
     config=Depends(get_config),
     logger=Depends(get_logger),
 ):
-    """获取指定适配器信息"""
+    """获取指定适配器信息（支持 adapter_id 和 adapter_name）"""
     try:
-        if not await validate_adapter_name(adapter_name):
+        # 支持 adapter_id 和 adapter_name
+        adapter_id = adapter_name
+        
+        if not await validate_adapter_name(adapter_id):
             raise HTTPException(
                 status_code=status.HTTP_400_BAD_REQUEST,
                 detail=create_error_response(
                     error_type="VALIDATION_ERROR",
                     error_code="E011",  # VALIDATION_ERROR
-                    message=f"Invalid adapter name: {adapter_name}",
+                    message=f"Invalid adapter name: {adapter_id}",
                 ).dict(),
             )
 
-        logger.info(f"Getting adapter info for: {adapter_name}")
+        logger.info(f"Getting adapter info for: {adapter_id}")
 
         # 尝试从已加载的适配器获取信息
         if hasattr(model_manager, "get_adapter_info"):
-            adapter_info = model_manager.get_adapter_info(adapter_name)
+            adapter_info = model_manager.get_adapter_info(adapter_id)
             if adapter_info:
                 return AdapterInfo(**adapter_info)
 
         # 从文件系统中获取信息
         adapter_dir = getattr(config, "ADAPTERS_DIR", "./adapters")
-        adapter_path = os.path.join(adapter_dir, adapter_name)
+        adapter_path = os.path.join(adapter_dir, adapter_id)
 
         file_info = await get_adapter_file_info(adapter_path)
 
@@ -581,12 +587,12 @@ async def get_adapter_info(
                 detail=create_error_response(
                     error_type="NOT_FOUND",
                     error_code="E012",  # NOT_FOUND
-                    message=f"Adapter '{adapter_name}' not found",
+                    message=f"Adapter '{adapter_id}' not found",
                 ).dict(),
             )
 
         return AdapterInfo(
-            name=adapter_name,
+            name=adapter_id,
             path=adapter_path,
             size=file_info.get("size"),
             status=AdapterStatus.UNLOADED,
@@ -604,6 +610,240 @@ async def get_adapter_info(
                 message=f"Failed to get adapter info: {str(e)}",
             ).dict(),
         )
+
+
+@router.put("/adapter/{adapter_id}/config", response_model=Dict[str, Any])
+async def update_adapter_config(
+    adapter_id: str,
+    config: Dict[str, Any] = Body(...),
+    adapter_manager=Depends(get_adapter_manager),
+    model_manager=Depends(get_model_manager),
+    logger=Depends(get_logger),
+):
+    """更新适配器配置"""
+    try:
+        if not await validate_adapter_name(adapter_id):
+            raise HTTPException(
+                status_code=status.HTTP_400_BAD_REQUEST,
+                detail=create_error_response(
+                    error_type="VALIDATION_ERROR",
+                    error_code="E018",
+                    message=f"Invalid adapter ID: {adapter_id}",
+                ).dict(),
+            )
+
+        logger.info(f"Updating adapter config for: {adapter_id}")
+
+        # 确保适配器管理器已初始化
+        from zishu.adapters.core.services.base import ServiceStatus
+        if not adapter_manager._initialized:
+            await adapter_manager.initialize()
+        if adapter_manager._status != ServiceStatus.RUNNING:
+            await adapter_manager.start()
+
+        # 获取适配器注册信息
+        registration = await adapter_manager.registry_service.get_adapter_registration(adapter_id)
+        if not registration:
+            raise HTTPException(
+                status_code=status.HTTP_404_NOT_FOUND,
+                detail=create_error_response(
+                    error_type="NOT_FOUND",
+                    error_code="E019",
+                    message=f"Adapter '{adapter_id}' not found",
+                ).dict(),
+            )
+
+        # 更新配置（默认合并）
+        current_config = registration.config.config or {}
+        updated_config = {**current_config, **config}
+
+        # 更新适配器配置
+        from zishu.adapters.core.types import AdapterConfiguration
+        updated_adapter_config = AdapterConfiguration(
+            identity=registration.config.identity,
+            name=registration.config.name,
+            version=registration.config.version,
+            adapter_type=registration.config.adapter_type,
+            description=registration.config.description,
+            author=registration.config.author,
+            tags=registration.config.tags,
+            config=updated_config,
+            security_level=registration.config.security_level,
+            priority=registration.config.priority,
+        )
+
+        # 重新注册适配器以更新配置
+        success = await adapter_manager.register_adapter(updated_adapter_config)
+        
+        if success:
+            logger.info(f"Successfully updated adapter config for: {adapter_id}")
+            return {
+                "success": True,
+                "adapter_id": adapter_id,
+                "config": updated_config,
+                "message": f"Adapter config updated successfully",
+            }
+        else:
+            raise HTTPException(
+                status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
+                detail=create_error_response(
+                    error_type="CONFIG_UPDATE_ERROR",
+                    error_code="E020",
+                    message=f"Failed to update adapter config: {adapter_id}",
+                ).dict(),
+            )
+    except HTTPException:
+        raise
+    except Exception as e:
+        logger.error(f"Failed to update adapter config for {adapter_id}: {str(e)}")
+        raise HTTPException(
+            status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
+            detail=create_error_response(
+                error_type="CONFIG_UPDATE_ERROR",
+                error_code="E020",
+                message=f"Failed to update adapter config: {str(e)}",
+            ).dict(),
+        )
+
+
+@router.post("/execute", response_model=Dict[str, Any])
+async def execute_adapter(
+    request: AdapterExecutionRequest,
+    adapter_manager=Depends(get_adapter_manager),
+    model_manager=Depends(get_model_manager),
+    logger=Depends(get_logger),
+):
+    """执行适配器操作"""
+    try:
+        if not await validate_adapter_name(request.adapter_id):
+            raise HTTPException(
+                status_code=status.HTTP_400_BAD_REQUEST,
+                detail=create_error_response(
+                    error_type="VALIDATION_ERROR",
+                    error_code="E021",
+                    message=f"Invalid adapter ID: {request.adapter_id}",
+                ).dict(),
+            )
+
+        logger.info(f"Executing adapter action: {request.adapter_id} - {request.action}")
+
+        # 确保适配器管理器已初始化
+        from zishu.adapters.core.services.base import ServiceStatus
+        if not adapter_manager._initialized:
+            await adapter_manager.initialize()
+        if adapter_manager._status != ServiceStatus.RUNNING:
+            await adapter_manager.start()
+
+        # 检查适配器是否存在
+        registration = await adapter_manager.registry_service.get_adapter_registration(request.adapter_id)
+        if not registration:
+            raise HTTPException(
+                status_code=status.HTTP_404_NOT_FOUND,
+                detail=create_error_response(
+                    error_type="NOT_FOUND",
+                    error_code="E022",
+                    message=f"Adapter '{request.adapter_id}' not found",
+                ).dict(),
+            )
+
+        # 确保适配器已启动
+        if request.adapter_id not in adapter_manager._adapters:
+            # 尝试启动适配器
+            started = await adapter_manager.start_adapter(request.adapter_id)
+            if not started:
+                raise HTTPException(
+                    status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
+                    detail=create_error_response(
+                        error_type="ADAPTER_START_ERROR",
+                        error_code="E023",
+                        message=f"Failed to start adapter: {request.adapter_id}",
+                    ).dict(),
+                )
+
+        # 获取适配器实例
+        adapter = adapter_manager._adapters.get(request.adapter_id)
+        if not adapter:
+            raise HTTPException(
+                status_code=status.HTTP_404_NOT_FOUND,
+                detail=create_error_response(
+                    error_type="NOT_FOUND",
+                    error_code="E024",
+                    message=f"Adapter instance '{request.adapter_id}' not found",
+                ).dict(),
+            )
+
+        # 执行操作
+        from zishu.adapters.base.adapter import ExecutionContext
+        import uuid
+        
+        exec_context = ExecutionContext(
+            execution_id=str(uuid.uuid4()),
+            timeout=float(request.timeout) if request.timeout else None,
+            metadata={
+                "action": request.action,
+                "adapter_id": request.adapter_id,
+            },
+            data=request.params,
+        )
+
+        # 执行适配器处理
+        if request.timeout:
+            result = await asyncio.wait_for(
+                adapter.process(request.params, exec_context),
+                timeout=request.timeout,
+            )
+        else:
+            result = await adapter.process(request.params, exec_context)
+
+        logger.info(f"Successfully executed adapter action: {request.adapter_id} - {request.action}")
+        
+        return {
+            "success": True,
+            "adapter_id": request.adapter_id,
+            "action": request.action,
+            "result": result.output if hasattr(result, "output") else result,
+            "execution_time": result.execution_time if hasattr(result, "execution_time") else None,
+            "execution_id": exec_context.execution_id,
+        }
+    except asyncio.TimeoutError:
+        logger.error(f"Adapter execution timeout: {request.adapter_id} - {request.action}")
+        raise HTTPException(
+            status_code=status.HTTP_408_REQUEST_TIMEOUT,
+            detail=create_error_response(
+                error_type="EXECUTION_TIMEOUT",
+                error_code="E025",
+                message=f"Adapter execution timeout: {request.adapter_id} - {request.action}",
+            ).dict(),
+        )
+    except HTTPException:
+        raise
+    except Exception as e:
+        logger.error(f"Failed to execute adapter action: {request.adapter_id} - {request.action} - {str(e)}")
+        raise HTTPException(
+            status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
+            detail=create_error_response(
+                error_type="EXECUTION_ERROR",
+                error_code="E026",
+                message=f"Failed to execute adapter action: {str(e)}",
+            ).dict(),
+        )
+
+
+@router.delete("/unload", response_model=ModelListResponse)
+async def delete_unload_adapter(
+    adapter_name: str,
+    force_unload: bool = False,
+    background_tasks: BackgroundTasks = None,
+    model_manager=Depends(get_model_manager),
+    logger=Depends(get_logger),
+):
+    """卸载指定适配器（DELETE 方法）"""
+    # 复用 POST /unload 的逻辑
+    request = ModelUnloadRequest(
+        adapter_name=adapter_name,
+        force_unload=force_unload,
+    )
+    return await unload_adapter(request, background_tasks, model_manager, logger)
 
 
 # 新增的辅助端点
@@ -728,5 +968,153 @@ async def get_metrics(
                 error_type="METRICS_ERROR",
                 error_code="E015",  # METRICS_ERROR
                 message=f"Failed to get metrics: {str(e)}",
+            ).dict(),
+        )
+
+
+@router.post("/register-llm", response_model=Dict[str, Any])
+async def register_llm_model(
+    request: LLMModelRegisterRequest,
+    adapter_manager=Depends(get_adapter_manager),
+    logger=Depends(get_logger),
+):
+    """
+    注册 LLM 模型作为智能硬适配器
+    
+    将 LLM 模型 + prompt 注册为 INTELLIGENT 类型的适配器，
+    通过 zishu 后端核心服务进行管理。
+    """
+    try:
+        logger.info(f"Registering LLM model as intelligent adapter: {request.name}")
+        start_time = time.time()
+        
+        # 确保适配器管理器已初始化和启动（带超时保护）
+        from zishu.adapters.core.services.base import ServiceStatus
+        try:
+            if not adapter_manager._initialized:
+                logger.info("Initializing adapter manager...")
+                await asyncio.wait_for(
+                    adapter_manager.initialize(),
+                    timeout=10.0  # 10秒超时
+                )
+            if adapter_manager._status != ServiceStatus.RUNNING:
+                logger.info("Starting adapter manager...")
+                await asyncio.wait_for(
+                    adapter_manager.start(),
+                    timeout=10.0  # 10秒超时
+                )
+        except asyncio.TimeoutError:
+            logger.error("Adapter manager initialization/startup timeout")
+            raise HTTPException(
+                status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
+                detail=create_error_response(
+                    error_type="INITIALIZATION_TIMEOUT",
+                    error_code="E018",
+                    message="适配器管理器初始化或启动超时，请稍后重试",
+                ).dict(),
+            )
+        
+        # 验证模型路径是否存在
+        model_path = Path(request.model_path)
+        if not model_path.exists():
+            raise HTTPException(
+                status_code=status.HTTP_400_BAD_REQUEST,
+                detail=create_error_response(
+                    error_type="VALIDATION_ERROR",
+                    error_code="E016",
+                    message=f"Model path does not exist: {request.model_path}",
+                ).dict(),
+            )
+        
+        # 生成适配器 ID（基于模型名称和路径）
+        import hashlib
+        adapter_id = f"llm_{hashlib.md5(f'{request.name}_{request.model_path}'.encode()).hexdigest()[:16]}"
+        
+        # 创建适配器配置
+        from zishu.adapters.core.types import (
+            AdapterConfiguration,
+            AdapterType,
+            SecurityLevel,
+            Priority,
+        )
+        
+        # 构建适配器配置
+        adapter_config = AdapterConfiguration(
+            identity=adapter_id,
+            name=request.name,
+            version=request.version or "1.0.0",
+            adapter_type=AdapterType.INTELLIGENT,  # LLM + prompt 作为智能适配器
+            description=request.description or f"LLM model: {request.name}",
+            author=request.author,
+            tags=set(request.tags or []),
+            config={
+                "model_path": str(model_path.resolve()),
+                "model_type": request.model_type,
+                "parameter_count": request.parameter_count,
+                "size_bytes": request.size_bytes,
+                "prompt_template": request.prompt_template,
+                "system_prompt": request.system_prompt,
+                "metadata": request.metadata,
+            },
+            security_level=SecurityLevel.INTERNAL,
+            priority=Priority.HIGH,  # LLM 模型优先级较高
+        )
+        
+        # 注册适配器（带超时保护）
+        try:
+            success = await asyncio.wait_for(
+                adapter_manager.register_adapter(adapter_config),
+                timeout=15.0  # 15秒超时
+            )
+        except asyncio.TimeoutError:
+            logger.error(f"Adapter registration timeout for: {request.name}")
+            raise HTTPException(
+                status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
+                detail=create_error_response(
+                    error_type="REGISTRATION_TIMEOUT",
+                    error_code="E019",
+                    message=f"注册适配器超时（15秒），模型 '{request.name}' 可能过大或后端服务繁忙",
+                ).dict(),
+            )
+        
+        execution_time = time.time() - start_time
+        
+        if success:
+            logger.info(
+                f"Successfully registered LLM model as adapter: {adapter_id} in {execution_time:.2f} seconds"
+            )
+            
+            return {
+                "success": True,
+                "adapter_id": adapter_id,
+                "name": request.name,
+                "model_path": str(model_path.resolve()),
+                "adapter_type": AdapterType.INTELLIGENT.value,
+                "message": f"LLM model '{request.name}' registered as intelligent adapter successfully",
+                "execution_time": execution_time,
+                "timestamp": datetime.now(timezone.utc).isoformat(),
+            }
+        else:
+            raise HTTPException(
+                status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
+                detail=create_error_response(
+                    error_type="REGISTRATION_ERROR",
+                    error_code="E017",
+                    message=f"Failed to register LLM model as adapter: {request.name}",
+                ).dict(),
+            )
+            
+    except HTTPException:
+        raise
+    except Exception as e:
+        execution_time = time.time() - start_time
+        logger.error(f"Failed to register LLM model: {request.name} - {str(e)}")
+        
+        raise HTTPException(
+            status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
+            detail=create_error_response(
+                error_type="REGISTRATION_ERROR",
+                error_code="E017",
+                message=f"Failed to register LLM model: {str(e)}",
             ).dict(),
         )

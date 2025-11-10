@@ -2,7 +2,6 @@
 //!
 //! 统一的数据库错误处理
 
-pub use super::backends::{DatabaseError, DatabaseResult};
 
 use serde::{Deserialize, Serialize};
 use std::collections::HashMap;

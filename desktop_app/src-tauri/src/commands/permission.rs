@@ -9,7 +9,7 @@
 
 use tauri::{AppHandle, Manager, State};
 use serde::{Deserialize, Serialize};
-use tracing::{info, error, warn};
+use tracing::{info, error};
 use std::collections::HashMap;
 use chrono::{DateTime, Utc};
 
@@ -20,7 +20,7 @@ use crate::{
         get_database,
         permission::{
             Permission, PermissionGrant, PermissionUsageLog, PermissionGroup,
-            PermissionStats, PermissionType, PermissionLevel, PermissionStatus,
+            PermissionStats, PermissionType, PermissionLevel,
         },
     },
 };

@@ -157,16 +157,25 @@ export const useModelLoader = () => {
     const [currentCharacter, setCurrentCharacter] = useState<CharacterInfo | null>(null)
 
     const loadCharacters = useCallback(async (): Promise<CharacterInfo[]> => {
+        console.log('[useModelLoader] 🔄 开始加载角色列表...')
         const response = await invoke<ApiResponse<CharacterInfo[]>>('get_characters')
+        console.log('[useModelLoader] 📡 get_characters 响应:', response)
         
         if (!response.success || !response.data) {
+            console.error('[useModelLoader] ❌ 响应失败:', response)
             throw new Error(response.error || '获取角色列表失败')
         }
 
+        console.log('[useModelLoader] ✅ 获取到角色数据:', response.data)
+
         // 更新当前角色
         const activeCharacter = response.data.find((c: any) => c.is_active)
+        console.log('[useModelLoader] 🎯 当前激活的角色:', activeCharacter)
         if (activeCharacter) {
             setCurrentCharacter(activeCharacter)
+            console.log('[useModelLoader] ✅ 设置当前角色:', activeCharacter.name)
+        } else {
+            console.warn('[useModelLoader] ⚠️ 没有找到激活的角色')
         }
 
         return response.data

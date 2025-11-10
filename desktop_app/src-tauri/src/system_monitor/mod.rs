@@ -11,7 +11,7 @@ use parking_lot::Mutex;
 use serde::{Deserialize, Serialize};
 use std::sync::Arc;
 use std::time::{Duration, Instant};
-use sysinfo::{CpuExt, Disk, DiskExt, NetworkExt, ProcessExt, System, SystemExt};
+use sysinfo::{CpuExt, DiskExt, NetworkExt, ProcessExt, System, SystemExt};
 use tauri::{AppHandle, Manager};
 use tokio::time::interval;
 use tracing::{debug, error, info, warn};

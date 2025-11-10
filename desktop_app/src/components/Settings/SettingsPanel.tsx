@@ -2,6 +2,8 @@ import { motion } from 'framer-motion'
 import React, { useState, useCallback } from 'react'
 import { ModelSelector } from '@/components/Character/ModelSelector'
 import { useModelLoader } from '@/components/Character/ModelLoader'
+import { AISettings } from './AISettings'
+import styles from './SettingsPanel.module.css'
 
 interface SettingsPanelProps {
     onClose: () => void
@@ -31,11 +33,25 @@ export const SettingsPanel: React.FC<SettingsPanelProps> = ({
         try {
             setIsModelSwitching(true)
             console.log('🔄 正在切换模型:', modelId)
-            await switchCharacter(modelId)
+            
+            // 添加超时机制，10秒后强制结束
+            const timeoutPromise = new Promise((_, reject) => {
+                setTimeout(() => reject(new Error('切换超时，请检查网络连接或重试')), 10000)
+            })
+            
+            await Promise.race([
+                switchCharacter(modelId),
+                timeoutPromise
+            ])
+            
             console.log('✅ 模型切换成功:', modelId)
         } catch (error) {
             console.error('❌ 模型切换失败:', error)
+            const errorMsg = error instanceof Error ? error.message : '未知错误'
+            // 可以在这里添加用户提示
+            alert(`模型切换失败: ${errorMsg}`)
         } finally {
+            // 确保无论如何都会重置状态
             setIsModelSwitching(false)
         }
     }, [switchCharacter])
@@ -48,20 +64,31 @@ export const SettingsPanel: React.FC<SettingsPanelProps> = ({
             style={{
                 width: '100%',
                 height: '100%',
+                maxHeight: '100vh',
                 display: 'flex',
                 flexDirection: 'column',
                 backgroundColor: 'hsl(var(--color-background))',
                 color: 'hsl(var(--color-foreground))',
+                overflow: 'hidden',
+                position: 'relative',
             } as React.CSSProperties}
         >
             {/* 标题栏 */}
-            <div style={{
-                display: 'flex',
-                alignItems: 'center',
-                justifyContent: 'space-between',
-                padding: '16px',
-                borderBottom: '1px solid hsl(var(--color-border))',
-            }}>
+            <div 
+                data-tauri-drag-region
+                style={{
+                    display: 'flex',
+                    alignItems: 'center',
+                    justifyContent: 'space-between',
+                    padding: '16px',
+                    borderBottom: '1px solid hsl(var(--color-border))',
+                    cursor: 'move',
+                    flexShrink: 0,
+                    backgroundColor: 'hsl(var(--color-background))',
+                    position: 'relative',
+                    zIndex: 1,
+                }}
+            >
                 <h1 style={{
                     fontSize: '18px',
                     fontWeight: 600,
@@ -71,6 +98,7 @@ export const SettingsPanel: React.FC<SettingsPanelProps> = ({
                 </h1>
                 <button
                     onClick={onClose}
+                    data-tauri-drag-region={false}
                     style={{
                         padding: '8px',
                         color: 'hsl(var(--color-muted-foreground))',
@@ -91,11 +119,7 @@ export const SettingsPanel: React.FC<SettingsPanelProps> = ({
             </div>
 
             {/* 设置内容 */}
-            <div style={{
-                flex: 1,
-                overflowY: 'auto',
-                padding: '16px',
-            }}>
+            <div className={styles.settingsScrollContainer}>
                 <div style={{
                     display: 'flex',
                     flexDirection: 'column',
@@ -364,6 +388,23 @@ export const SettingsPanel: React.FC<SettingsPanelProps> = ({
                             </div>
                         </div>
                     </section>
+
+                    {/* AI设置 */}
+                    <section>
+                        <h2 style={{
+                            fontSize: '16px',
+                            fontWeight: 500,
+                            color: 'hsl(var(--color-foreground))',
+                            marginBottom: '12px',
+                        }}>
+                            AI设置
+                        </h2>
+                        <div style={{
+                            marginTop: '12px',
+                        }}>
+                            <AISettings />
+                        </div>
+                    </section>
                 </div>
             </div>
 
@@ -374,6 +415,10 @@ export const SettingsPanel: React.FC<SettingsPanelProps> = ({
                 justifyContent: 'space-between',
                 padding: '16px',
                 borderTop: '1px solid hsl(var(--color-border))',
+                backgroundColor: 'hsl(var(--color-background))',
+                flexShrink: 0,
+                position: 'relative',
+                zIndex: 1,
             }}>
                 <button
                     onClick={onReset}

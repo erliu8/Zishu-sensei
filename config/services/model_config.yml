@@ -1,6 +1,6 @@
 base_model:
-  id: Qwen/Qwen2.5-7B-Instruct
-  path: /root/autodl-tmp/zishu-sensei/models/base/Qwen2.5-7B-Instruct/qwen/Qwen2.5-7B-Instruct
+  id: IndexTeam/Index-1.9B-Character
+  path: /data/disk/models/Index-1.9B-character/IndexTeam/Index-1___9B-Character
   tokenizer: auto
   torch_dtype: bfloat16
 student_model:
@@ -20,8 +20,10 @@ quantization:
     gptq:
       enabled: true
       bits: 4
-      group_size: 128
+      group_size: 64
       use_triton: false
+      desc_act: false
+      sym: true
     awq:
       enabled: true
       bits: 4
@@ -31,7 +33,7 @@ quantization:
       enabled: true
       dtype: qint8
 calibration:
-  dataset_path: ./data/train/calibration.json
+  dataset_path: ./zishu/training/data/train/train_06082025/calibration.json
   num_samples: 128
   sequence_length: 1024
 inference:

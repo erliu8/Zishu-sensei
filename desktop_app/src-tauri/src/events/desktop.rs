@@ -7,7 +7,7 @@
 //! - 系统集成功能
 
 use tauri::{AppHandle, Manager};
-use tracing::{debug, error, info, warn};
+use tracing::{debug, info, warn};
 
 /// 桌面事件处理器
 pub struct DesktopEventHandler {

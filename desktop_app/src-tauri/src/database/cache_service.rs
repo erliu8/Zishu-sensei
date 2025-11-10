@@ -9,9 +9,9 @@
 use std::sync::Arc;
 use tokio::sync::RwLock;
 use serde::{Deserialize, Serialize};
-use tracing::{info, warn, error};
+use tracing::{info, warn};
 
-use super::backends::{CacheDatabaseBackend, DatabaseResult, DatabaseError};
+use super::backends::{CacheDatabaseBackend, DatabaseResult};
 use super::redis_backend::RedisBackend;
 
 /// 缓存服务

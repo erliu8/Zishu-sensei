@@ -4,7 +4,7 @@ use async_trait::async_trait;
 use redis::aio::ConnectionManager;
 use redis::{AsyncCommands, Client};
 use serde_json;
-use tracing::{error, info, warn};
+use tracing::info;
 
 use super::backends::*;
 
@@ -222,7 +222,7 @@ impl DatabaseBackend for RedisBackend {
             pipe.set(&full_key, json_str);
         }
 
-        pipe.query_async(&mut conn)
+        pipe.query_async::<()>(&mut conn)
             .await
             .map_err(|e| DatabaseError::QueryError(e.to_string()))?;
 

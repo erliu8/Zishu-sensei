@@ -7,11 +7,9 @@
 //! - Application state
 //! - Integrated support for PostgreSQL, Redis, and Qdrant
 
-use serde::{Deserialize, Serialize};
-use std::path::PathBuf;
 use std::sync::Arc;
 use tauri::AppHandle;
-use tracing::{info, error, warn};
+use tracing::{info, warn};
 use deadpool_postgres::Pool;
 
 /// Database connection pool type (PostgreSQL)
@@ -71,12 +69,7 @@ use theme::ThemeRegistry;
 use logging::LoggingRegistry;
 use encrypted_storage::EncryptedStorageRegistry;
 
-pub use database_manager::{DatabaseManager, DatabaseManagerConfig, HealthCheckResult};
-pub use cache_service::{CacheService, CacheDecorator};
-pub use vector_search_service::{
-    VectorSearchService, VectorEmbedding,
-    ConversationMessage, Document, Knowledge,
-};
+pub use database_manager::{DatabaseManager, DatabaseManagerConfig};
 
 /// Database manager (Legacy - 兼容旧代码)
 /// 
@@ -118,7 +111,7 @@ impl Database {
         cfg.dbname = Some("zishu_sensei".to_string());
         cfg.host = Some("localhost".to_string());
         cfg.user = Some("zishu".to_string());
-        cfg.password = Some("zishu".to_string());
+        cfg.password = Some("zishu123".to_string());
         let pool = cfg.create_pool(Some(Runtime::Tokio1), NoTls)?;
         
         // Initialize schema
@@ -319,7 +312,7 @@ pub async fn init_database(app: AppHandle) -> Result<(), Box<dyn std::error::Err
     let database_url = std::env::var("DATABASE_URL")
         .unwrap_or_else(|_| {
             warn!("DATABASE_URL 未设置，使用默认配置");
-            "postgresql://zishu:zishu@localhost/zishu_sensei".to_string()
+            "postgresql://zishu:zishu123@localhost/zishu_sensei".to_string()
         });
     
     // Create database connection
@@ -327,7 +320,7 @@ pub async fn init_database(app: AppHandle) -> Result<(), Box<dyn std::error::Err
     let db = Arc::new(db);
     
     // Load characters from models.json
-    if let Err(e) = load_characters_from_models(&db).await {
+    if let Err(e) = load_characters_from_models(&app, &db).await {
         warn!("加载角色模型失败: {}", e);
     }
     
@@ -402,15 +395,80 @@ pub fn get_database() -> Option<Arc<Database>> {
 }
 
 /// Load characters from models.json into database
-async fn load_characters_from_models(db: &Database) -> Result<(), Box<dyn std::error::Error + Send + Sync>> {
+async fn load_characters_from_models(app: &AppHandle, db: &Database) -> Result<(), Box<dyn std::error::Error + Send + Sync>> {
     use std::fs;
     
     info!("从 models.json 加载角色数据");
     
-    // Read models.json
-    let models_path = "public/live2d_models/models.json";
-    let content = fs::read_to_string(models_path)
-        .map_err(|e| format!("无法读取 models.json: {}", e))?;
+    // 获取应用资源目录路径
+    let resource_dir = app.path_resolver()
+        .resource_dir()
+        .ok_or("无法获取应用资源目录")?;
+    
+    // 构建 models.json 的完整路径
+    let models_path = resource_dir.join("public").join("live2d_models").join("models.json");
+    
+    info!("尝试从以下路径加载 models.json: {:?}", models_path);
+    
+    // 如果资源目录中不存在，尝试相对路径（用于开发环境）
+    let content = if models_path.exists() {
+        fs::read_to_string(&models_path)
+            .map_err(|e| format!("无法读取 models.json (资源目录): {}", e))?
+    } else {
+            // 开发环境回退路径 - 尝试多个可能的路径
+        let mut dev_paths = vec![
+            "public/live2d_models/models.json".to_string(),
+            "../public/live2d_models/models.json".to_string(), 
+            "../../public/live2d_models/models.json".to_string(),
+            "../../../public/live2d_models/models.json".to_string(),
+        ];
+        
+        // 尝试使用当前工作目录来构建绝对路径
+        if let Ok(current_dir) = std::env::current_dir() {
+            info!("当前工作目录: {:?}", current_dir);
+            
+            // 查找项目根目录（包含 Cargo.toml 或 package.json）
+            let mut search_dir = current_dir.clone();
+            loop {
+                if search_dir.join("package.json").exists() || search_dir.join("Cargo.toml").exists() {
+                    let project_models_path = search_dir.join("public/live2d_models/models.json");
+                    dev_paths.insert(0, project_models_path.to_string_lossy().to_string());
+                    info!("找到项目根目录: {:?}", search_dir);
+                    break;
+                }
+                if let Some(parent) = search_dir.parent() {
+                    search_dir = parent.to_path_buf();
+                } else {
+                    break;
+                }
+            }
+        }
+        
+        let mut last_error = None;
+        let mut found_content = None;
+        
+        for dev_path in dev_paths.iter() {
+            info!("尝试开发路径: {}", dev_path);
+            match fs::read_to_string(dev_path) {
+                Ok(content) => {
+                    info!("成功从路径加载: {}", dev_path);
+                    found_content = Some(content);
+                    break;
+                },
+                Err(e) => {
+                    last_error = Some(format!("路径 {} 失败: {}", dev_path, e));
+                }
+            }
+        }
+        
+        match found_content {
+            Some(content) => content,
+            None => return Err(format!(
+                "无法在任何路径找到 models.json。尝试了资源目录: {:?} 和开发路径: {:?}。最后错误: {:?}", 
+                models_path, dev_paths, last_error
+            ).into())
+        }
+    };
     
     let models_data: serde_json::Value = serde_json::from_str(&content)
         .map_err(|e| format!("解析 models.json 失败: {}", e))?;

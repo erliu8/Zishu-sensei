@@ -7,7 +7,7 @@ use serde::{Deserialize, Serialize};
 use std::collections::HashMap;
 use std::fs;
 use std::io::Write;
-use std::path::{Path, PathBuf};
+use std::path::PathBuf;
 use std::sync::{Arc, Mutex};
 use std::time::Duration;
 use tokio::sync::broadcast;
@@ -220,7 +220,7 @@ impl UpdateManager {
 
         // 检查配置
         let config = {
-            let mut db = self.db.lock().unwrap();
+            let db = self.db.lock().unwrap();
             db.get_or_create_update_config().map_err(|e| anyhow::anyhow!("Failed to get update config: {}", e))?
         };
 
@@ -243,7 +243,7 @@ impl UpdateManager {
 
         // 更新最后检查时间
         {
-            let mut db = self.db.lock().unwrap();
+            let db = self.db.lock().unwrap();
             let mut updated_config = config.clone();
             updated_config.last_check_time = Some(Utc::now());
             db.save_update_config(&mut updated_config).map_err(|e| anyhow::anyhow!(e.to_string()))?;
@@ -325,7 +325,7 @@ impl UpdateManager {
 
                                     // 保存到数据库
                                     {
-                                        let mut db = self.db.lock().unwrap();
+                                        let db = self.db.lock().unwrap();
                                         db.save_update_info(&mut update_info).map_err(|e| anyhow::anyhow!(e.to_string()))?;
                                     }
 
@@ -412,7 +412,7 @@ impl UpdateManager {
         update_info.status = UpdateStatus::Downloading;
         update_info.download_progress = 0.0;
         {
-            let mut db = self.db.lock().unwrap();
+            let db = self.db.lock().unwrap();
             db.save_update_info(&mut update_info).map_err(|e| anyhow::anyhow!(e.to_string()))?;
         }
 
@@ -434,7 +434,7 @@ impl UpdateManager {
             update_info.status = UpdateStatus::Failed;
             update_info.error_message = Some(error_msg.clone());
             {
-                let mut db = self.db.lock().unwrap();
+                let db = self.db.lock().unwrap();
                 db.save_update_info(&mut update_info).map_err(|e| anyhow::anyhow!(e.to_string()))?;
             }
             self.emit_event(UpdateEvent::DownloadFailed {
@@ -476,7 +476,7 @@ impl UpdateManager {
                     // 更新进度
                     update_info.download_progress = percentage;
                     {
-                        let mut db = self.db.lock().unwrap();
+                        let db = self.db.lock().unwrap();
                         db.save_update_info(&mut update_info).map_err(|e| anyhow::anyhow!(e.to_string()))?;
                     }
 
@@ -496,7 +496,7 @@ impl UpdateManager {
                     update_info.error_message = Some(e.to_string());
                     update_info.retry_count += 1;
                     {
-                        let mut db = self.db.lock().unwrap();
+                        let db = self.db.lock().unwrap();
                         db.save_update_info(&mut update_info).map_err(|e| anyhow::anyhow!(e.to_string()))?;
                     }
                     self.emit_event(UpdateEvent::DownloadFailed {
@@ -521,7 +521,7 @@ impl UpdateManager {
                 update_info.status = UpdateStatus::Failed;
                 update_info.error_message = Some(error_msg.to_string());
                 {
-                    let mut db = self.db.lock().unwrap();
+                    let db = self.db.lock().unwrap();
                     db.save_update_info(&mut update_info).map_err(|e| anyhow::anyhow!(e.to_string()))?;
                 }
                 self.emit_event(UpdateEvent::DownloadFailed {
@@ -536,7 +536,7 @@ impl UpdateManager {
         update_info.status = UpdateStatus::Downloaded;
         update_info.download_progress = 100.0;
         {
-            let mut db = self.db.lock().unwrap();
+            let db = self.db.lock().unwrap();
             db.save_update_info(&mut update_info).map_err(|e| anyhow::anyhow!(e.to_string()))?;
         }
 
@@ -571,7 +571,7 @@ impl UpdateManager {
         update_info.status = UpdateStatus::Installing;
         update_info.install_progress = 0.0;
         {
-            let mut db = self.db.lock().unwrap();
+            let db = self.db.lock().unwrap();
             db.save_update_info(&mut update_info).map_err(|e| anyhow::anyhow!(e.to_string()))?;
         }
 
@@ -581,7 +581,7 @@ impl UpdateManager {
 
         // 检查是否需要备份
         let config = {
-            let mut db = self.db.lock().unwrap();
+            let db = self.db.lock().unwrap();
             db.get_or_create_update_config()
                 .map_err(|e| anyhow::anyhow!("Database operation failed: {}", e))?
         };
@@ -600,7 +600,7 @@ impl UpdateManager {
 
             update_info.install_progress = 20.0;
             {
-                let mut db = self.db.lock().unwrap();
+                let db = self.db.lock().unwrap();
                 db.save_update_info(&mut update_info).map_err(|e| anyhow::anyhow!(e.to_string()))?;
             }
         }
@@ -621,7 +621,7 @@ impl UpdateManager {
                 update_info.status = UpdateStatus::Installed;
                 update_info.install_progress = 100.0;
                 {
-                    let mut db = self.db.lock().unwrap();
+                    let db = self.db.lock().unwrap();
                     db.save_update_info(&mut update_info).map_err(|e| anyhow::anyhow!(e.to_string()))?;
                 }
 
@@ -637,7 +637,7 @@ impl UpdateManager {
                 };
 
                 {
-                    let mut db = self.db.lock().unwrap();
+                    let db = self.db.lock().unwrap();
                     db.save_version_history(&history)
                         .map_err(|e| anyhow::anyhow!("Database operation failed: {}", e))?;
                 }
@@ -656,7 +656,7 @@ impl UpdateManager {
                 update_info.error_message = Some(e.to_string());
                 update_info.retry_count += 1;
                 {
-                    let mut db = self.db.lock().unwrap();
+                    let db = self.db.lock().unwrap();
                     db.save_update_info(&mut update_info).map_err(|e| anyhow::anyhow!(e.to_string()))?;
                 }
 
@@ -742,7 +742,7 @@ impl UpdateManager {
         };
 
         {
-            let mut db = self.db.lock().unwrap();
+            let db = self.db.lock().unwrap();
             db.save_version_history(&rollback_history)
                 .map_err(|e| anyhow::anyhow!("Database operation failed: {}", e))?;
         }
@@ -770,7 +770,7 @@ impl UpdateManager {
         if update_info.status == UpdateStatus::Downloading {
             update_info.status = UpdateStatus::Cancelled;
             {
-                let mut db = self.db.lock().unwrap();
+                let db = self.db.lock().unwrap();
                 db.save_update_info(&mut update_info).map_err(|e| anyhow::anyhow!(e.to_string()))?;
             }
 
@@ -866,13 +866,13 @@ impl UpdateManager {
 
     /// 获取更新配置
     pub fn get_config(&self) -> Result<UpdateConfig> {
-        let mut db = self.db.lock().unwrap();
+        let db = self.db.lock().unwrap();
         db.get_or_create_update_config().map_err(|e| anyhow::anyhow!(e.to_string()))
     }
 
     /// 保存更新配置
     pub fn save_config(&self, config: &mut UpdateConfig) -> Result<()> {
-        let mut db = self.db.lock().unwrap();
+        let db = self.db.lock().unwrap();
         db.save_update_config(config).map_err(|e| anyhow::anyhow!(e.to_string()))?;
         Ok(())
     }

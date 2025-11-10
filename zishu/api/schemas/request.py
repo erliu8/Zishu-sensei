@@ -1,4 +1,4 @@
-from pydantic import BaseModel, Field, field_validator
+from pydantic import BaseModel, Field, field_validator, ConfigDict
 from typing import Optional, List, Any, Dict, Union, Literal
 from datetime import datetime
 from enum import Enum
@@ -184,6 +184,8 @@ class ModelLoadRequest(BaseModel):
     )  # auto/float16/bfloat16/float32
     low_memory: Optional[bool] = Field(False, description="是否低内存模式")
 
+    model_config = ConfigDict(protected_namespaces=())
+
 
 class ModelManagementRequest(BaseModel):
     adapter_name: str = Field(..., description="适配器ID")
@@ -210,6 +212,21 @@ class ModelSwitchRequest(BaseModel):
     from_adapter: Optional[str] = Field(None, description="当前适配器ID")
     to_adapter: Optional[str] = Field(None, description="目标适配器ID")
     keep_cache: Optional[bool] = Field(default=True, description="是否保留缓存")
+
+
+class AdapterExecutionRequest(BaseModel):
+    """适配器执行请求"""
+    adapter_id: str = Field(..., description="适配器ID")
+    action: str = Field(..., description="要执行的操作")
+    params: Dict[str, Any] = Field(default_factory=dict, description="操作参数")
+    timeout: Optional[int] = Field(None, ge=1, description="执行超时时间（秒）")
+
+
+class AdapterConfigUpdateRequest(BaseModel):
+    """适配器配置更新请求"""
+    adapter_id: str = Field(..., description="适配器ID")
+    config: Dict[str, Any] = Field(..., description="要更新的配置")
+    merge: Optional[bool] = Field(default=True, description="是否与现有配置合并")
 
 
 # 角色配置请求
@@ -307,3 +324,32 @@ def validate_character_name(adapter_name: str) -> bool:
     if not adapter_name.replace("-", "").replace("_", "").isalnum():
         return False
     return True
+
+
+# LLM 模型注册请求（作为智能硬适配器）
+class LLMModelRegisterRequest(BaseModel):
+    """LLM 模型注册请求 - 将模型注册为智能硬适配器"""
+    
+    name: str = Field(..., min_length=1, max_length=100, description="模型名称")
+    model_path: str = Field(..., description="模型文件或文件夹路径")
+    description: Optional[str] = Field(None, max_length=500, description="模型描述")
+    
+    # 模型元数据
+    model_type: Optional[str] = Field(None, description="模型类型（如 gguf, safetensors 等）")
+    parameter_count: Optional[int] = Field(None, ge=0, description="模型参数量")
+    size_bytes: Optional[int] = Field(None, ge=0, description="模型大小（字节）")
+    
+    # 适配器配置
+    version: Optional[str] = Field(default="1.0.0", description="适配器版本")
+    author: Optional[str] = Field(None, description="作者")
+    tags: Optional[List[str]] = Field(default_factory=list, description="标签列表")
+    
+    # 提示词配置（LLM + prompt 作为智能硬适配器）
+    prompt_template: Optional[str] = Field(None, description="提示词模板")
+    system_prompt: Optional[str] = Field(None, description="系统提示词")
+    
+    # 其他元数据
+    metadata: Optional[Dict[str, Any]] = Field(default_factory=dict, description="额外元数据")
+    auto_verify: Optional[bool] = Field(default=True, description="是否自动验证模型")
+
+    model_config = ConfigDict(protected_namespaces=())

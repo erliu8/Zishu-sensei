@@ -14,7 +14,7 @@ from transformers import AutoModelForCausalLM, AutoTokenizer, BitsAndBytesConfig
 from pathlib import Path
 
 from .base import ModelManager
-from ..utils.logger import setup_logger
+from zishu.utils.logger import setup_logger
 
 
 class AdvanceQuantizationManager(ModelManager):

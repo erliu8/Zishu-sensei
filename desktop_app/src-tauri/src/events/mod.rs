@@ -9,9 +9,5 @@ pub mod character;
 pub mod desktop;
 
 // 重新导出常用的事件处理函数
-pub use window::{handle_window_event, create_window_event_handler, WindowEventHandler};
-pub use tray::{handle_system_tray_event, create_system_tray, TrayEventHandler};
 
 // 导出辅助函数
-pub use window::helpers as window_helpers;
-pub use tray::helpers as tray_helpers;

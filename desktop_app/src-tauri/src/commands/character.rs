@@ -88,30 +88,45 @@ pub struct CharacterConfigData {
 pub async fn get_characters(
     state: State<'_, AppState>,
 ) -> Result<CommandResponse<Vec<CharacterInfo>>, String> {
-    info!("获取可用角色列表");
+    info!("🔍 [get_characters] 开始获取可用角色列表");
     
     // Get database instance
     let db = crate::database::get_database()
-        .ok_or_else(|| "数据库未初始化".to_string())?;
+        .ok_or_else(|| {
+            error!("❌ [get_characters] 数据库未初始化");
+            "数据库未初始化".to_string()
+        })?;
+    
+    info!("✅ [get_characters] 数据库实例获取成功");
     
     // Load characters from database
     let characters_data = db.character_registry.get_all_characters()
-        .map_err(|e| format!("获取角色列表失败: {}", e))?;
+        .map_err(|e| {
+            error!("❌ [get_characters] 获取角色列表失败: {}", e);
+            format!("获取角色列表失败: {}", e)
+        })?;
+    
+    info!("📊 [get_characters] 从数据库获取到 {} 个角色", characters_data.len());
     
     // Convert to CharacterInfo
     let characters: Vec<CharacterInfo> = characters_data
         .into_iter()
-        .map(|c| CharacterInfo {
-            id: c.id,
-            name: c.name,
-            description: Some(c.description),
-            preview_image: c.preview_image,
-            motions: c.motions,
-            expressions: c.expressions,
-            is_active: c.is_active,
+        .map(|c| {
+            info!("  - 角色: {} ({}), motions: {}, expressions: {}", 
+                c.id, c.name, c.motions.len(), c.expressions.len());
+            CharacterInfo {
+                id: c.id,
+                name: c.name,
+                description: Some(c.description),
+                preview_image: c.preview_image,
+                motions: c.motions,
+                expressions: c.expressions,
+                is_active: c.is_active,
+            }
         })
         .collect();
     
+    info!("✅ [get_characters] 成功返回 {} 个角色", characters.len());
     Ok(CommandResponse::success(characters))
 }
 

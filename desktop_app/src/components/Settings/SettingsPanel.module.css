@@ -1,0 +1,42 @@
+/* 设置面板滚动容器 */
+.settingsScrollContainer {
+    flex: 1;
+    overflow-y: auto;
+    overflow-x: hidden;
+    padding: 16px;
+    min-height: 0;
+    position: relative;
+    /* 确保滚动条可见 */
+    scrollbar-gutter: stable;
+}
+
+/* 自定义滚动条样式 - Webkit (Chrome, Safari, Edge) */
+.settingsScrollContainer::-webkit-scrollbar {
+    width: 8px;
+}
+
+.settingsScrollContainer::-webkit-scrollbar-track {
+    background: transparent;
+}
+
+.settingsScrollContainer::-webkit-scrollbar-thumb {
+    background: hsl(var(--color-muted));
+    border-radius: 4px;
+}
+
+.settingsScrollContainer::-webkit-scrollbar-thumb:hover {
+    background: hsl(var(--color-muted-foreground) / 0.5);
+}
+
+/* Firefox 滚动条 */
+.settingsScrollContainer {
+    scrollbar-width: thin;
+    scrollbar-color: hsl(var(--color-muted)) transparent;
+}
+
+/* 加载动画 */
+@keyframes spin {
+    0% { transform: rotate(0deg); }
+    100% { transform: rotate(360deg); }
+}
+

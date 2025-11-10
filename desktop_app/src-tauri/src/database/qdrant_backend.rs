@@ -4,13 +4,13 @@ use async_trait::async_trait;
 use qdrant_client::Qdrant;
 use qdrant_client::qdrant::{
     CreateCollection, Distance, PointStruct, SearchPoints, VectorParams, VectorsConfig,
-    PointId, PointsSelector, ReadConsistency, WriteOrdering, Filter, GetPoints, SetPayloadPoints, DeletePoints, ScrollPoints,
+    PointId, PointsSelector, Filter, GetPoints, SetPayloadPoints, DeletePoints,
 };
 use qdrant_client::qdrant::UpsertPointsBuilder;
 use qdrant_client::Payload;
 use serde_json;
 use std::collections::HashMap;
-use tracing::{error, info, warn};
+use tracing::info;
 
 use super::backends::*;
 
