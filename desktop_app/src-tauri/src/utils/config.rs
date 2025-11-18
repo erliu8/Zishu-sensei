@@ -1,7 +1,7 @@
 use std::path::PathBuf;
 use tauri::AppHandle;
 use tokio::fs;
-use tracing::{info, warn, error};
+use tracing::{debug, error, info, trace, warn};
 
 use crate::AppConfig;
 
@@ -126,7 +126,7 @@ pub async fn save_config(_app_handle: &AppHandle, config: &AppConfig) -> Result<
         if let Err(e) = fs::copy(&config_path, &backup_path).await {
             warn!("备份配置文件失败: {}", e);
         } else {
-            info!("配置文件已备份到: {:?}", backup_path);
+            trace!("配置文件已备份到: {:?}", backup_path);
         }
     }
     
@@ -134,7 +134,7 @@ pub async fn save_config(_app_handle: &AppHandle, config: &AppConfig) -> Result<
     fs::write(&config_path, json).await
         .map_err(|e| format!("写入配置文件失败: {}", e))?;
     
-    info!("配置已保存到: {:?}", config_path);
+    debug!("配置已保存到: {:?}", config_path);
     Ok(())
 }
 

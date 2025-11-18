@@ -57,7 +57,7 @@ impl CharacterRegistry {
         })
     }
     
-    async fn register_character_async(&self, character: CharacterData) -> Result<(), Box<dyn std::error::Error + Send + Sync>> {
+    pub async fn register_character_async(&self, character: CharacterData) -> Result<(), Box<dyn std::error::Error + Send + Sync>> {
         let client = self.pool.get().await?;
         let timestamp = Utc::now().timestamp();
         
@@ -129,7 +129,7 @@ impl CharacterRegistry {
         })
     }
     
-    async fn get_character_async(&self, character_id: &str) -> Result<Option<CharacterData>, Box<dyn std::error::Error + Send + Sync>> {
+    pub async fn get_character_async(&self, character_id: &str) -> Result<Option<CharacterData>, Box<dyn std::error::Error + Send + Sync>> {
         let client = self.pool.get().await?;
         
         let row_opt = client.query_opt(
@@ -155,7 +155,7 @@ impl CharacterRegistry {
         })
     }
     
-    async fn get_all_characters_async(&self) -> Result<Vec<CharacterData>, Box<dyn std::error::Error + Send + Sync>> {
+    pub async fn get_all_characters_async(&self) -> Result<Vec<CharacterData>, Box<dyn std::error::Error + Send + Sync>> {
         let client = self.pool.get().await?;
         
         let rows = client.query(
@@ -182,7 +182,7 @@ impl CharacterRegistry {
         })
     }
     
-    async fn get_active_character_async(&self) -> Result<Option<CharacterData>, Box<dyn std::error::Error + Send + Sync>> {
+    pub async fn get_active_character_async(&self) -> Result<Option<CharacterData>, Box<dyn std::error::Error + Send + Sync>> {
         let client = self.pool.get().await?;
         
         let row_opt = client.query_opt(
@@ -208,7 +208,7 @@ impl CharacterRegistry {
         })
     }
     
-    async fn set_active_character_async(&self, character_id: &str) -> Result<(), Box<dyn std::error::Error + Send + Sync>> {
+    pub async fn set_active_character_async(&self, character_id: &str) -> Result<(), Box<dyn std::error::Error + Send + Sync>> {
         let client = self.pool.get().await?;
         
         // Deactivate all characters
@@ -299,7 +299,7 @@ impl CharacterRegistry {
         })
     }
     
-    async fn get_character_config_async(&self, character_id: &str) -> Result<Option<CharacterConfig>, Box<dyn std::error::Error + Send + Sync>> {
+    pub async fn get_character_config_async(&self, character_id: &str) -> Result<Option<CharacterConfig>, Box<dyn std::error::Error + Send + Sync>> {
         let client = self.pool.get().await?;
         
         let row_opt = client.query_opt(
@@ -332,7 +332,7 @@ impl CharacterRegistry {
         })
     }
     
-    async fn save_character_config_async(&self, config: CharacterConfig) -> Result<(), Box<dyn std::error::Error + Send + Sync>> {
+    pub async fn save_character_config_async(&self, config: CharacterConfig) -> Result<(), Box<dyn std::error::Error + Send + Sync>> {
         let client = self.pool.get().await?;
         let timestamp = Utc::now().timestamp();
         

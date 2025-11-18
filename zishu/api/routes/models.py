@@ -257,7 +257,7 @@ async def list_adapters(
                 error_type="MODEL_LIST_ERROR",
                 error_code="E001",  # MODEL_LIST_ERROR
                 message=f"Failed to list adapters: {str(e)}",
-            ).dict(),
+            ),
         )
 
 
@@ -277,7 +277,7 @@ async def load_adapter(
                     error_type="VALIDATION_ERROR",
                     error_code="E002",  # VALIDATION_ERROR
                     message=f"Invalid adapter name: {request.adapter_name}",
-                ).dict(),
+                ),
             )
 
         logger.info(f"Loading adapter: {request.adapter_name}")
@@ -334,7 +334,7 @@ async def load_adapter(
                     error_type="NOT_IMPLEMENTED",
                     error_code="E003",  # NOT_IMPLEMENTED
                     message=f"Model manager does not support load_adapter method",
-                ).dict(),
+                ),
             )
     except HTTPException:
         raise
@@ -369,7 +369,7 @@ async def unload_adapter(
                     error_type="VALIDATION_ERROR",
                     error_code="E005",  # VALIDATION_ERROR
                     message=f"Invalid adapter name: {request.adapter_name}",
-                ).dict(),
+                ),
             )
 
         logger.info(f"Unloading adapter: {request.adapter_name}")
@@ -419,7 +419,7 @@ async def unload_adapter(
                     error_type="NOT_IMPLEMENTED",
                     error_code="E006",  # NOT_IMPLEMENTED
                     message=f"Model manager does not support unload_adapter method",
-                ).dict(),
+                ),
             )
     except HTTPException:
         raise
@@ -483,7 +483,7 @@ async def switch_adapter(
                     error_type="NOT_IMPLEMENTED",
                     error_code="E008",  # NOT_IMPLEMENTED
                     message=f"Model manager does not support switch_adapter method",
-                ).dict(),
+                ),
             )
     except HTTPException:
         raise
@@ -541,7 +541,7 @@ async def get_model_status(
                 error_type="STATUS_ERROR",
                 error_code="E010",  # STATUS_ERROR
                 message=f"Failed to get model status: {str(e)}",
-            ).dict(),
+            ),
         )
 
 
@@ -564,7 +564,7 @@ async def get_adapter_info(
                     error_type="VALIDATION_ERROR",
                     error_code="E011",  # VALIDATION_ERROR
                     message=f"Invalid adapter name: {adapter_id}",
-                ).dict(),
+                ),
             )
 
         logger.info(f"Getting adapter info for: {adapter_id}")
@@ -588,7 +588,7 @@ async def get_adapter_info(
                     error_type="NOT_FOUND",
                     error_code="E012",  # NOT_FOUND
                     message=f"Adapter '{adapter_id}' not found",
-                ).dict(),
+                ),
             )
 
         return AdapterInfo(
@@ -608,7 +608,7 @@ async def get_adapter_info(
                 error_type="ADAPTER_INFO_ERROR",
                 error_code="E013",  # ADAPTER_INFO_ERROR
                 message=f"Failed to get adapter info: {str(e)}",
-            ).dict(),
+            ),
         )
 
 
@@ -629,7 +629,7 @@ async def update_adapter_config(
                     error_type="VALIDATION_ERROR",
                     error_code="E018",
                     message=f"Invalid adapter ID: {adapter_id}",
-                ).dict(),
+                ),
             )
 
         logger.info(f"Updating adapter config for: {adapter_id}")
@@ -650,7 +650,7 @@ async def update_adapter_config(
                     error_type="NOT_FOUND",
                     error_code="E019",
                     message=f"Adapter '{adapter_id}' not found",
-                ).dict(),
+                ),
             )
 
         # 更新配置（默认合并）
@@ -690,7 +690,7 @@ async def update_adapter_config(
                     error_type="CONFIG_UPDATE_ERROR",
                     error_code="E020",
                     message=f"Failed to update adapter config: {adapter_id}",
-                ).dict(),
+                ),
             )
     except HTTPException:
         raise
@@ -702,7 +702,7 @@ async def update_adapter_config(
                 error_type="CONFIG_UPDATE_ERROR",
                 error_code="E020",
                 message=f"Failed to update adapter config: {str(e)}",
-            ).dict(),
+            ),
         )
 
 
@@ -722,7 +722,7 @@ async def execute_adapter(
                     error_type="VALIDATION_ERROR",
                     error_code="E021",
                     message=f"Invalid adapter ID: {request.adapter_id}",
-                ).dict(),
+                ),
             )
 
         logger.info(f"Executing adapter action: {request.adapter_id} - {request.action}")
@@ -743,7 +743,7 @@ async def execute_adapter(
                     error_type="NOT_FOUND",
                     error_code="E022",
                     message=f"Adapter '{request.adapter_id}' not found",
-                ).dict(),
+                ),
             )
 
         # 确保适配器已启动
@@ -757,7 +757,7 @@ async def execute_adapter(
                         error_type="ADAPTER_START_ERROR",
                         error_code="E023",
                         message=f"Failed to start adapter: {request.adapter_id}",
-                    ).dict(),
+                    ),
                 )
 
         # 获取适配器实例
@@ -769,7 +769,7 @@ async def execute_adapter(
                     error_type="NOT_FOUND",
                     error_code="E024",
                     message=f"Adapter instance '{request.adapter_id}' not found",
-                ).dict(),
+                ),
             )
 
         # 执行操作
@@ -813,7 +813,7 @@ async def execute_adapter(
                 error_type="EXECUTION_TIMEOUT",
                 error_code="E025",
                 message=f"Adapter execution timeout: {request.adapter_id} - {request.action}",
-            ).dict(),
+            ),
         )
     except HTTPException:
         raise
@@ -825,7 +825,7 @@ async def execute_adapter(
                 error_type="EXECUTION_ERROR",
                 error_code="E026",
                 message=f"Failed to execute adapter action: {str(e)}",
-            ).dict(),
+            ),
         )
 
 
@@ -926,7 +926,7 @@ async def maintenance_mode(
                 error_type="MAINTENANCE_ERROR",
                 error_code="E014",  # MAINTENANCE_ERROR
                 message=f"Failed to set maintenance mode: {str(e)}",
-            ).dict(),
+            ),
         )
 
 
@@ -968,7 +968,7 @@ async def get_metrics(
                 error_type="METRICS_ERROR",
                 error_code="E015",  # METRICS_ERROR
                 message=f"Failed to get metrics: {str(e)}",
-            ).dict(),
+            ),
         )
 
 
@@ -1011,7 +1011,7 @@ async def register_llm_model(
                     error_type="INITIALIZATION_TIMEOUT",
                     error_code="E018",
                     message="适配器管理器初始化或启动超时，请稍后重试",
-                ).dict(),
+                ),
             )
         
         # 验证模型路径是否存在
@@ -1023,7 +1023,7 @@ async def register_llm_model(
                     error_type="VALIDATION_ERROR",
                     error_code="E016",
                     message=f"Model path does not exist: {request.model_path}",
-                ).dict(),
+                ),
             )
         
         # 生成适配器 ID（基于模型名称和路径）
@@ -1074,7 +1074,7 @@ async def register_llm_model(
                     error_type="REGISTRATION_TIMEOUT",
                     error_code="E019",
                     message=f"注册适配器超时（15秒），模型 '{request.name}' 可能过大或后端服务繁忙",
-                ).dict(),
+                ),
             )
         
         execution_time = time.time() - start_time
@@ -1101,7 +1101,7 @@ async def register_llm_model(
                     error_type="REGISTRATION_ERROR",
                     error_code="E017",
                     message=f"Failed to register LLM model as adapter: {request.name}",
-                ).dict(),
+                ),
             )
             
     except HTTPException:
@@ -1116,5 +1116,5 @@ async def register_llm_model(
                 error_type="REGISTRATION_ERROR",
                 error_code="E017",
                 message=f"Failed to register LLM model: {str(e)}",
-            ).dict(),
+            ),
         )

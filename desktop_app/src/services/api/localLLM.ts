@@ -138,16 +138,16 @@ export async function selectAndUploadModel(
  */
 export async function registerLocalLLMModel(request: RegisterModelRequest): Promise<LocalLLMModel> {
   try {
-    // 添加超时处理（70秒，略短于 Rust 端60秒以留出余量）
+    // 添加超时处理（30秒，给后端足够时间处理首次初始化）
     const timeoutPromise = new Promise<never>((_, reject) => {
       setTimeout(
         () =>
           reject(
             new Error(
-              '注册模型超时（70秒）。可能原因：\n1) 后端服务未启动或不可达\n2) 首次初始化或磁盘/网络较慢\n3) 模型体积较大或后端繁忙\n请确认后端运行并稍后重试'
+              '注册模型超时（30秒）。可能原因：\n1) 后端服务未启动或不可达\n2) 首次初始化或适配器启动较慢\n3) 模型体积较大或后端繁忙\n请确认后端运行并稍后重试'
             )
           ),
-        70000
+        30000
       );
     });
     

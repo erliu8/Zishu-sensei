@@ -30,6 +30,7 @@ import { Live2DControlPanel } from './Live2DControlPanel'
 import { Live2DLoadingIndicator } from './Live2DLoadingIndicator'
 import { useLive2DViewer } from '@/hooks/useLive2DViewer'
 import { printWebGLDiagnostics, checkTauriWebGLIssues } from '@/utils/webgl-diagnostics'
+import { appWindow, LogicalPosition } from '@tauri-apps/api/window'
 import './Live2DViewer.css'
 
 /**
@@ -72,11 +73,10 @@ export const Live2DViewer = forwardRef<Live2DViewerRef, Live2DViewerProps>(({
   const [showControls, setShowControls] = useState(true)
   const [controlsAutoHideTimer, setControlsAutoHideTimer] = useState<NodeJS.Timeout | null>(null)
   
-  // 拖动状态
+  // 拖动状态（用于窗口拖动）
   const [isDragging, setIsDragging] = useState(false)
   const [dragStart, setDragStart] = useState({ x: 0, y: 0 })
-  const [dragInitialPosition, setDragInitialPosition] = useState({ x: 0, y: 0 }) // 拖拽开始时的模型位置
-  const [modelPosition, setModelPosition] = useState({ x: 0, y: 0 })
+  const [windowInitialPosition, setWindowInitialPosition] = useState({ x: 0, y: 0 }) // 拖拽开始时的窗口位置
 
   // ==================== 合并配置 ====================
   const finalConfig = useMemo((): Live2DViewerConfig => ({
@@ -252,12 +252,6 @@ export const Live2DViewer = forwardRef<Live2DViewerRef, Live2DViewerProps>(({
           await loadModel(modelConfig, finalRenderConfig)
           if (cancelledRef.current) return
           initialModelLoadedRef.current = true
-          
-          // 🔧 [FIX] 模型加载完成后，同步模型位置到组件状态
-          const transform = viewerApi.service?.getModelTransform?.(modelConfig.id)
-          if (transform) {
-            setModelPosition({ x: transform.x, y: transform.y })
-          }
           
           ;(emitEvent as any)?.(Live2DViewerEvent.VIEWER_READY, { viewerId: 'live2d-viewer' })
         }
@@ -462,84 +456,92 @@ export const Live2DViewer = forwardRef<Live2DViewerRef, Live2DViewerProps>(({
   }, [controlsAutoHideTimer])
 
   /**
-   * 初始化模型位置 - 当模型加载完成时
+   * 初始化窗口位置 - 获取当前窗口位置用于拖动
    */
   useEffect(() => {
-    if (modelState.loaded && viewerApi.isReady && viewerApi.getCurrentModel && viewerApi.service) {
-      const currentModel = viewerApi.getCurrentModel()
-      if (currentModel && currentModel.config?.id) {
-        const transform = viewerApi.service.getModelTransform(currentModel.config.id)
-        if (transform) {
-          setModelPosition({ x: transform.x, y: transform.y })
-        }
+    const initWindowPosition = async () => {
+      try {
+        const position = await appWindow.outerPosition()
+        setWindowInitialPosition({ x: position.x, y: position.y })
+      } catch (error) {
+        console.error('获取窗口位置失败:', error)
       }
     }
-  }, [modelState.loaded, viewerApi.isReady])
+    initWindowPosition()
+  }, [])
 
   // ==================== 拖动和缩放事件处理 ====================
   
   /**
-   * 鼠标按下 - 开始拖动
+   * 鼠标按下 - 开始拖动窗口
    */
-  const handleMouseDown = useCallback((event: React.MouseEvent) => {
+  const handleMouseDown = useCallback(async (event: React.MouseEvent) => {
     console.log('🖱️ [DRAG] 鼠标按下:', { button: event.button, clientX: event.clientX, clientY: event.clientY })
     
-    // 🔧 [FIX] 只处理左键，右键和中键直接忽略（不阻止默认行为，让右键菜单正常显示）
+    // 只处理左键
     if (event.button !== 0) {
       console.log('🖱️ [DRAG] 忽略非左键事件，button =', event.button)
       return
     }
     
-    console.log('🖱️ [DRAG] 开始拖拽，当前模型位置:', modelPosition)
-    setIsDragging(true)
-    setDragStart({ x: event.clientX, y: event.clientY })
-    setDragInitialPosition({ x: modelPosition.x, y: modelPosition.y }) // 保存开始拖拽时的模型位置
-    event.preventDefault()
-    event.stopPropagation() // 阻止事件冒泡，避免触发点击
-  }, [modelPosition])
+    try {
+      // 获取当前窗口位置
+      const position = await appWindow.outerPosition()
+      console.log('🖱️ [DRAG] 开始拖拽窗口，当前窗口位置:', position)
+      
+      setIsDragging(true)
+      setDragStart({ x: event.clientX, y: event.clientY })
+      setWindowInitialPosition({ x: position.x, y: position.y })
+      
+      event.preventDefault()
+      event.stopPropagation()
+    } catch (error) {
+      console.error('获取窗口位置失败:', error)
+    }
+  }, [])
 
   /**
-   * 鼠标移动 - 拖动中
+   * 鼠标移动 - 拖动窗口
    */
-  const handleMouseMoveForDrag = useCallback((event: React.MouseEvent) => {
+  const handleMouseMoveForDrag = useCallback(async (event: React.MouseEvent) => {
     if (!isDragging) {
       return
     }
-    
-    if (!viewerApi.isReady) return
 
-    // 🔧 [FIX] 使用拖拽开始时的初始位置 + 累积偏移量，而不是每次基于当前位置累加
-    const dx = event.clientX - dragStart.x
-    const dy = event.clientY - dragStart.y
+    try {
+      // 计算鼠标移动的偏移量
+      const dx = event.clientX - dragStart.x
+      const dy = event.clientY - dragStart.y
 
-    // 获取当前模型
-    const currentModel = viewerApi.getCurrentModel?.()
-    if (!currentModel) return
-
-    const service = (viewerApi as any).service
-    if (!service) return
-
-    // 获取模型ID
-    const modelId = currentModel.config?.id
-    if (!modelId) return
-
-    // 🔧 [FIX] 基于拖拽开始时的初始位置计算新位置
-    const newX = dragInitialPosition.x + dx
-    const newY = dragInitialPosition.y + dy
-    
-    service.updateModelPosition(modelId, newX, newY)
-    setModelPosition({ x: newX, y: newY })
-  }, [isDragging, dragStart, dragInitialPosition, viewerApi])
+      // 计算新的窗口位置
+      const newX = windowInitialPosition.x + dx
+      const newY = windowInitialPosition.y + dy
+      
+      // 移动窗口 - 使用 LogicalPosition
+      await appWindow.setPosition(new LogicalPosition(Math.round(newX), Math.round(newY)))
+    } catch (error) {
+      console.error('移动窗口失败:', error)
+    }
+  }, [isDragging, dragStart, windowInitialPosition])
 
   /**
    * 鼠标松开 - 结束拖动
    */
-  const handleMouseUp = useCallback(() => {
+  const handleMouseUp = useCallback(async () => {
+    if (isDragging) {
+      try {
+        // 更新窗口位置状态
+        const position = await appWindow.outerPosition()
+        setWindowInitialPosition({ x: position.x, y: position.y })
+      } catch (error) {
+        console.error('更新窗口位置失败:', error)
+      }
+    }
     setIsDragging(false)
   }, [isDragging])
 
   /**
-   * 鼠标滚轮 - 缩放
+   * 鼠标滚轮 - 缩放模型
    * 注意：使用 useEffect 添加原生监听器，因为 React 的 onWheel 是 passive 的
    */
   useEffect(() => {
@@ -547,7 +549,6 @@ export const Live2DViewer = forwardRef<Live2DViewerRef, Live2DViewerProps>(({
     if (!canvas) return
 
     const handleWheel = (event: WheelEvent) => {
-      // 先阻止默认行为
       event.preventDefault()
       event.stopPropagation()
       
@@ -559,11 +560,9 @@ export const Live2DViewer = forwardRef<Live2DViewerRef, Live2DViewerProps>(({
       const service = (viewerApi as any).service
       if (!service) return
 
-      // 获取模型ID
       const modelId = currentModel.config?.id
       if (!modelId) return
 
-      // 获取当前缩放
       const transform = service.getModelTransform(modelId)
       if (!transform) return
 
@@ -574,7 +573,6 @@ export const Live2DViewer = forwardRef<Live2DViewerRef, Live2DViewerProps>(({
       service.updateModelScale(modelId, newScale)
     }
 
-    // 添加非 passive 的滚轮监听器到 canvas
     canvas.addEventListener('wheel', handleWheel, { passive: false })
 
     return () => {

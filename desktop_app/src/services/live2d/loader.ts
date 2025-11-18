@@ -2762,23 +2762,16 @@ export class Live2DModelLoader {
       modelInstance = this.loadedModels.get(modelId)
     }
     
-    // 设置锚点，默认居中
+    // 🔧 [FIX] 设置锚点为中心，确保正确居中
+    // 注意：使用anchor而不是pivot，因为anchor更适合定位
     if ((model as any).anchor && typeof (model as any).anchor.set === 'function') {
       ;(model as any).anchor.set(0.5, 0.5)
-      console.log('✅ [DEBUG] 模型锚点设置完成')
+      console.log('✅ [DEBUG] 模型锚点设置为中心 (0.5, 0.5)')
     }
     
-    // 🔧 强制设置pivot为模型中心（确保模型正确居中）
-    try {
-      const modelBounds = (model as any).getBounds()
-      const pivotX = modelBounds.width / 2
-      const pivotY = modelBounds.height / 2
-      ;(model as any).pivot.set(pivotX, pivotY)
-      console.log(`✅ [DEBUG] 模型pivot设置完成: (${pivotX}, ${pivotY})`)
-      console.log(`✅ [DEBUG] 模型边界: x=${modelBounds.x}, y=${modelBounds.y}, w=${modelBounds.width}, h=${modelBounds.height}`)
-    } catch (e) {
-      console.log(`⚠️ [DEBUG] 无法设置模型pivot:`, e)
-    }
+    // 🔧 [FIX] 不设置pivot，避免与anchor冲突
+    // pivot主要用于旋转中心，而anchor用于定位参考点
+    // 使用anchor足以实现居中效果
 
     // 设置缩放 - 如果配置的缩放为1.0且用户未手动调整，则自动计算最佳缩放
     let finalScale = renderConfig.scale
@@ -2866,32 +2859,50 @@ export class Live2DModelLoader {
       const canvasCenterX = rendererAny.width / 2
       const canvasCenterY = rendererAny.height / 2
       
-      // 🔧 [FIX] 获取模型边界和pivot，计算正确的居中位置
+      // 🔧 [FIX] 获取模型的真实尺寸信息，自动计算居中位置
       try {
-        const modelBounds = (model as any).getBounds()
-        const pivotX = (model as any).pivot?.x || 0
-        const pivotY = (model as any).pivot?.y || 0
+        // 优先尝试从模型的原始属性获取宽高（更准确）
+        let modelWidth = (model as any).width
+        let modelHeight = (model as any).height
         
-        // 计算模型中心相对于pivot的偏移
-        const modelCenterOffsetX = modelBounds.width / 2 - pivotX
-        const modelCenterOffsetY = modelBounds.height / 2 - pivotY
+        // 如果模型没有直接的width/height属性，尝试从internalModel获取
+        if (!modelWidth || !modelHeight) {
+          const internalModel = (model as any).internalModel
+          if (internalModel) {
+            modelWidth = internalModel.width || internalModel._modelSetting?.layout?.width
+            modelHeight = internalModel.height || internalModel._modelSetting?.layout?.height
+          }
+        }
         
-        // 计算正确的居中位置（考虑pivot和缩放）
+        // 如果还是没有，使用getBounds()作为后备方案
+        if (!modelWidth || !modelHeight) {
+          const modelBounds = (model as any).getBounds()
+          modelWidth = modelBounds.width
+          modelHeight = modelBounds.height
+          console.log('⚠️ 使用getBounds()获取模型尺寸（可能不准确）')
+        }
+        
         const scaleX = (model as any).scale?.x || finalScale
         const scaleY = (model as any).scale?.y || finalScale
         
-        targetX = canvasCenterX - (modelBounds.x + modelCenterOffsetX) * scaleX
-        targetY = canvasCenterY - (modelBounds.y + modelCenterOffsetY) * scaleY
+        // 计算缩放后的模型尺寸
+        const scaledWidth = modelWidth * scaleX
+        const scaledHeight = modelHeight * scaleY
         
-        console.log(`🎯 [FIX] 自动居中计算（考虑pivot）:`)
+        // 直接将模型中心对齐到画布中心
+        // 由于anchor已设置为(0.5, 0.5)，模型的中心点在其锚点位置
+        targetX = canvasCenterX
+        targetY = canvasCenterY
+        
+        console.log(`🎯 [AUTO] 自动居中计算:`)
         console.log(`   - 画布中心: (${canvasCenterX}, ${canvasCenterY})`)
-        console.log(`   - 模型边界: x=${modelBounds.x.toFixed(1)}, y=${modelBounds.y.toFixed(1)}, w=${modelBounds.width.toFixed(1)}, h=${modelBounds.height.toFixed(1)}`)
-        console.log(`   - 模型pivot: (${pivotX.toFixed(1)}, ${pivotY.toFixed(1)})`)
-        console.log(`   - 模型中心偏移: (${modelCenterOffsetX.toFixed(1)}, ${modelCenterOffsetY.toFixed(1)})`)
+        console.log(`   - 模型原始尺寸: ${modelWidth?.toFixed(1)} x ${modelHeight?.toFixed(1)}`)
+        console.log(`   - 模型缩放: (${scaleX.toFixed(3)}, ${scaleY.toFixed(3)})`)
+        console.log(`   - 缩放后尺寸: ${scaledWidth.toFixed(1)} x ${scaledHeight.toFixed(1)}`)
         console.log(`   - 计算位置: (${targetX.toFixed(1)}, ${targetY.toFixed(1)})`)
       } catch (e) {
         // 如果获取边界失败，使用简单的居中方式
-        console.warn('⚠️ [FIX] 无法获取模型边界，使用简单居中:', e)
+        console.warn('⚠️ [FIX] 无法获取模型尺寸信息，使用简单居中:', e)
         targetX = canvasCenterX
         targetY = canvasCenterY
       }

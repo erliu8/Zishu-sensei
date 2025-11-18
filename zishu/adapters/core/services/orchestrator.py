@@ -694,7 +694,6 @@ class AdapterServiceOrchestrator:
         except Exception as e:
             return HealthCheckResult(
                 is_healthy=False,
-                status=ServiceHealth.UNHEALTHY,
                 message=f"Health check failed: {str(e)}",
             )
     

@@ -144,6 +144,74 @@ async def lifespan(app: FastAPI):
 
         logger.info("Zishu Server dependencies initialized successfully")
 
+        # 初始化 AdapterManager（提前初始化避免请求时超时）
+        try:
+            from zishu.api.dependencies import get_adapter_manager
+            logger.info("Initializing AdapterManager...")
+            adapter_manager = get_adapter_manager()
+            if not adapter_manager._initialized:
+                await adapter_manager.initialize()
+                logger.info("AdapterManager initialized")
+            from zishu.adapters.core.services.base import ServiceStatus
+            if adapter_manager._status != ServiceStatus.RUNNING:
+                await adapter_manager.start()
+                logger.info("AdapterManager started")
+            
+            # 从数据库加载并注册适配器配置
+            try:
+                from zishu.adapters.core.persistence import AdapterPersistenceService
+                from zishu.adapters.core.types import AdapterConfiguration, AdapterType
+                from zishu.adapters.soft.third_party_api_adapter import ThirdPartyAPIAdapter
+                
+                persistence_service = AdapterPersistenceService()
+                saved_configs = await persistence_service.load_all_adapter_configs()
+                
+                logger.info(f"Found {len(saved_configs)} saved adapter configurations")
+                
+                for config_dict in saved_configs:
+                    try:
+                        adapter_id = config_dict['adapter_id']
+                        
+                        # 重建配置对象
+                        adapter_config = AdapterConfiguration(
+                            identity=adapter_id,
+                            name=config_dict['name'],
+                            version=config_dict['version'],
+                            adapter_type=AdapterType(config_dict['adapter_type']) if isinstance(config_dict['adapter_type'], str) else config_dict['adapter_type'],
+                            adapter_class=ThirdPartyAPIAdapter,  # 目前只支持第三方API适配器
+                            config=config_dict['config'],
+                            dependencies=config_dict.get('dependencies', []),
+                            description=config_dict.get('description'),
+                            author=config_dict.get('author'),
+                            tags=config_dict.get('tags', []),
+                        )
+                        
+                        # 注册适配器
+                        success = await adapter_manager.register_adapter(adapter_config)
+                        if success:
+                            # 尝试启动适配器
+                            start_success = await adapter_manager.start_adapter(adapter_id)
+                            if start_success:
+                                logger.info(f"✅ Restored and started adapter: {adapter_id}")
+                            else:
+                                logger.warning(f"⚠️ Restored adapter but failed to start: {adapter_id}")
+                        else:
+                            logger.warning(f"❌ Failed to restore adapter: {adapter_id}")
+                            
+                    except Exception as e:
+                        logger.error(f"Failed to restore adapter {config_dict.get('adapter_id', 'unknown')}: {e}")
+                        continue
+                
+                logger.info(f"Adapter restoration completed: {len(adapter_manager._adapters)} adapters running")
+                
+            except Exception as e:
+                logger.warning(f"Failed to load adapters from database: {e}")
+                # 不阻塞应用启动
+                
+        except Exception as e:
+            logger.warning(f"Failed to initialize AdapterManager: {e}")
+            # 不阻塞应用启动，允许稍后初始化
+
         # 注册信号处理器
         def signal_handler(signum, frame):
             logger.info(f"Received signal {signum}, initiating graceful shutdown...")
@@ -164,6 +232,16 @@ async def lifespan(app: FastAPI):
 
     finally:
         logger.info("Zishu Server shutdown completed...")
+
+        # 停止 AdapterManager
+        try:
+            from zishu.api.dependencies import get_adapter_manager
+            adapter_manager = get_adapter_manager()
+            if adapter_manager and adapter_manager._initialized:
+                await adapter_manager.stop()
+                logger.info("AdapterManager stopped")
+        except Exception as e:
+            logger.warning(f"Error stopping AdapterManager: {e}")
 
         try:
             if server_state.dependencies:
@@ -199,6 +277,9 @@ def create_app(
             "http://localhost:8080",
             "http://localhost:3000",
             "http://127.0.0.1:3000",
+            "http://localhost:1420",  # Tauri开发服务器
+            "tauri://localhost",  # Tauri应用
+            "*",  # 开发模式允许所有来源
         ],  # TODO: 生产环境使用具体域名
         allow_credentials=True,
         allow_methods=["*"],

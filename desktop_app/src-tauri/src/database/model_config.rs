@@ -142,7 +142,7 @@ impl ModelConfigRegistry {
         rt.block_on(async { self.save_config_async(config).await })
     }
 
-    async fn save_config_async(&self, config: ModelConfigData) -> Result<(), Box<dyn std::error::Error + Send + Sync>> {
+    pub async fn save_config_async(&self, config: ModelConfigData) -> Result<(), Box<dyn std::error::Error + Send + Sync>> {
         let client = self.pool.get().await?;
         let timestamp = Utc::now().timestamp();
 
@@ -210,7 +210,7 @@ impl ModelConfigRegistry {
         rt.block_on(async { self.get_config_async(config_id).await })
     }
 
-    async fn get_config_async(&self, config_id: &str) -> Result<Option<ModelConfigData>, Box<dyn std::error::Error + Send + Sync>> {
+    pub async fn get_config_async(&self, config_id: &str) -> Result<Option<ModelConfigData>, Box<dyn std::error::Error + Send + Sync>> {
         let client = self.pool.get().await?;
         
         let row_opt = client.query_opt(
@@ -231,7 +231,7 @@ impl ModelConfigRegistry {
         rt.block_on(async { self.get_all_configs_async().await })
     }
 
-    async fn get_all_configs_async(&self) -> Result<Vec<ModelConfigData>, Box<dyn std::error::Error + Send + Sync>> {
+    pub async fn get_all_configs_async(&self) -> Result<Vec<ModelConfigData>, Box<dyn std::error::Error + Send + Sync>> {
         let client = self.pool.get().await?;
         
         let rows = client.query(
@@ -252,7 +252,7 @@ impl ModelConfigRegistry {
         rt.block_on(async { self.delete_config_async(config_id).await })
     }
 
-    async fn delete_config_async(&self, config_id: &str) -> Result<(), Box<dyn std::error::Error + Send + Sync>> {
+    pub async fn delete_config_async(&self, config_id: &str) -> Result<(), Box<dyn std::error::Error + Send + Sync>> {
         let client = self.pool.get().await?;
         
         client.execute(

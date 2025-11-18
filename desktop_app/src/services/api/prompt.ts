@@ -46,7 +46,7 @@ export async function getPrompts(): Promise<Prompt[]> {
 export async function createPrompt(request: CreatePromptRequest): Promise<Prompt> {
   try {
     const response = await invoke<CommandResponse<Prompt>>('create_prompt', {
-      input: request,
+      request: request,
     });
     
     if (!response.success || !response.data) {
@@ -65,7 +65,7 @@ export async function createPrompt(request: CreatePromptRequest): Promise<Prompt
 export async function updatePrompt(request: UpdatePromptRequest): Promise<Prompt> {
   try {
     const response = await invoke<CommandResponse<Prompt>>('update_prompt', {
-      input: request,
+      request: request,
     });
     
     if (!response.success || !response.data) {
@@ -84,7 +84,7 @@ export async function updatePrompt(request: UpdatePromptRequest): Promise<Prompt
 export async function deletePrompt(request: DeletePromptRequest): Promise<boolean> {
   try {
     const response = await invoke<CommandResponse<boolean>>('delete_prompt', {
-      input: request,
+      request: request,
     });
     
     if (!response.success) {
@@ -103,7 +103,7 @@ export async function deletePrompt(request: DeletePromptRequest): Promise<boolea
 export async function applyPrompt(request: ApplyPromptRequest): Promise<boolean> {
   try {
     const response = await invoke<CommandResponse<boolean>>('apply_prompt', {
-      input: request,
+      request: request,
     });
     
     if (!response.success) {
@@ -122,7 +122,7 @@ export async function applyPrompt(request: ApplyPromptRequest): Promise<boolean>
 export async function getPrompt(promptId: string): Promise<Prompt> {
   try {
     const response = await invoke<CommandResponse<Prompt>>('get_prompt', {
-      input: promptId,
+      promptId: promptId,
     });
     
     if (!response.success || !response.data) {

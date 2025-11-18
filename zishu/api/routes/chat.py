@@ -18,6 +18,7 @@ from zishu.api.dependencies import (
     get_character_config,
     submit_task,
     get_task_result,
+    get_adapter_manager,
 )
 from zishu.api.schemas.chat import (
     Message,
@@ -28,7 +29,7 @@ from zishu.api.schemas.chat import (
     ChatModel,
 )
 from zishu.api.schemas.request import ChatCompletionRequest
-from zishu.models.inference import get_inference_engine
+# from zishu.training.train.inference import get_inference_engine  # 延迟导入，避免启动时失败
 from zishu.utils.cache_manager import ModelResponseCache
 
 
@@ -40,6 +41,7 @@ class ChatRequest(BaseModel):
     model: Optional[str] = Field(None, description="模型ID")
     adapter: Optional[str] = Field(None, description="适配器ID")
     character_id: Optional[str] = Field(None, description="角色ID")
+    system_prompt: Optional[str] = Field(None, description="系统提示词（角色设定）")
     max_tokens: Optional[int] = Field(None, ge=1, le=8192, description="最大token数量")
     temperature: Optional[float] = Field(0.7, ge=0.0, le=2.0, description="温度参数")
     top_p: Optional[float] = Field(0.9, ge=0.0, le=1.0, description="top-p采样参数")
@@ -253,11 +255,13 @@ class EmotionAnalyzer:
 async def get_inference_engine_dep():
     """获取推理引擎依赖"""
     try:
+        from zishu.training.train.inference import get_inference_engine
         return get_inference_engine()
     except Exception as e:
-        raise HTTPException(
-            status_code=500, detail=f"Failed to get inference engine: {str(e)}"
-        )
+        # 推理引擎不可用时返回None，允许使用第三方适配器
+        import logging
+        logging.getLogger(__name__).warning(f"推理引擎不可用: {e}")
+        return None
 
 
 async def get_session_manager() -> ChatSessionManager:
@@ -297,6 +301,7 @@ async def chat_completions(
     session_manager: ChatSessionManager = Depends(get_session_manager),
     response_cache: ModelResponseCache = Depends(get_response_cache),
     logger: Logger = Depends(get_logger),
+    adapter_manager=Depends(get_adapter_manager),
 ):
     """
     对话完成接口(兼容OpenAI)
@@ -321,6 +326,21 @@ async def chat_completions(
             # 从会话历史获取消息
             context_messages = await session_manager.get_context_messages(session_id)
             messages = context_messages
+        
+        # 🎯 如果有角色ID，添加角色的system prompt
+        if request.character_id:
+            # 检查是否已有system消息
+            has_system_msg = any(msg.get("role") == "system" for msg in messages)
+            
+            if not has_system_msg and request.system_prompt:
+                # 在消息列表开头插入system prompt
+                messages.insert(0, {
+                    "role": "system",
+                    "content": request.system_prompt
+                })
+                logger.info(f"已添加角色system prompt: {request.system_prompt[:50]}...")
+            elif not has_system_msg:
+                logger.warning(f"角色 {request.character_id} 没有提供system_prompt")
 
         # cache检查
         cache_key = f"chat:{hash(str(messages))}:{request.model}:{request.character_id}"
@@ -349,7 +369,7 @@ async def chat_completions(
         # 非流式响应
         start_time = time.time()
         response_text = await _generate_chat_response(
-            messages, request, inference_engine, logger
+            messages, request, inference_engine, logger, adapter_manager
         )
 
         # 构建响应消息
@@ -583,10 +603,96 @@ async def _generate_chat_response(
     request: ChatCompletionRequest,
     inference_engine,
     logger: Logger,
+    adapter_manager=None,
 ) -> str:
     """生成普通对话响应"""
     try:
-        # 调用推理引擎
+        # 如果指定了适配器，使用适配器进行响应
+        if request.adapter and adapter_manager:
+            try:
+                adapter = adapter_manager._adapters.get(request.adapter)
+                
+                # 如果适配器不在运行列表中，尝试启动它
+                if not adapter:
+                    logger.info(f"适配器 {request.adapter} 未在运行列表中，尝试启动...")
+                    try:
+                        start_success = await adapter_manager.start_adapter(request.adapter)
+                        if start_success:
+                            adapter = adapter_manager._adapters.get(request.adapter)
+                            logger.info(f"适配器 {request.adapter} 启动成功")
+                        else:
+                            logger.warning(f"适配器 {request.adapter} 启动失败")
+                    except Exception as start_error:
+                        logger.error(f"启动适配器失败: {start_error}")
+                
+                if adapter:
+                    logger.info(f"使用适配器生成响应: {request.adapter}")
+                    from zishu.adapters.base import ExecutionContext
+                    from zishu.adapters.soft import SoftAdapterRequest, SoftAdapterMode
+                    
+                    # 构建软适配器请求
+                    soft_request = SoftAdapterRequest(
+                        query="",  # query在messages中
+                        mode=SoftAdapterMode.CONVERSATION,
+                        context={"messages": messages},
+                        temperature=request.temperature,
+                        max_tokens=request.max_tokens,
+                    )
+                    
+                    exec_context = ExecutionContext(
+                        request_id=f"chat_{datetime.now().strftime('%Y%m%d_%H%M%S')}",
+                        user_id=request.user or "default_user",
+                    )
+                    
+                    result = await adapter.process(soft_request, exec_context)
+                    
+                    # 检查执行状态
+                    if hasattr(result, 'status') and result.status != 'success':
+                        error_msg = result.error or "未知错误"
+                        logger.error(f"适配器执行失败: {error_msg}")
+                        raise Exception(f"适配器执行失败: {error_msg}")
+                    
+                    # ExecutionResult 使用 output 属性，而不是 content
+                    if hasattr(result, 'output') and result.output:
+                        output = result.output
+                        
+                        # 如果 output 是字符串，直接返回
+                        if isinstance(output, str):
+                            return output.strip()
+                        
+                        # 如果 output 有 content 属性（如 SoftAdapterResponse）
+                        if hasattr(output, 'content'):
+                            return str(output.content).strip()
+                        
+                        # 如果 output 是字典，尝试获取 content
+                        if isinstance(output, dict):
+                            content = output.get('content', output.get('text', ''))
+                            if content:
+                                return str(content).strip()
+                            return str(output).strip()
+                        
+                        # 其他情况，尝试转换为字符串
+                        logger.warning(f"未知的 output 类型: {type(output)}, 尝试转换为字符串")
+                        return str(output).strip()
+                    
+                    # 兼容旧版本的 content 属性
+                    elif hasattr(result, 'content'):
+                        return result.content.strip()
+                    else:
+                        logger.error(f"适配器返回结果格式异常: {type(result)}, status={getattr(result, 'status', 'unknown')}")
+                        return "抱歉，适配器返回结果格式异常"
+                else:
+                    logger.warning(f"适配器未找到或无法启动: {request.adapter}，使用默认推理引擎")
+            except Exception as e:
+                logger.error(f"适配器调用失败: {e}，回退到默认推理引擎")
+                import traceback
+                logger.error(f"详细错误: {traceback.format_exc()}")
+        
+        # 使用默认推理引擎
+        if inference_engine is None:
+            logger.error("没有可用的推理引擎且未指定适配器")
+            return "抱歉，当前未配置推理引擎。请在角色模板中配置 API 适配器（如 OpenAI、Claude 等）来使用聊天功能。"
+        
         response = inference_engine.chat_generate(
             messages=messages,
             model_id=request.model,

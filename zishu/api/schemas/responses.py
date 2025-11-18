@@ -1,4 +1,4 @@
-from pydantic import BaseModel, Field, field_validator
+from pydantic import BaseModel, Field, field_validator, ConfigDict
 from typing import Optional, List, Any, Dict, Union, Literal, TYPE_CHECKING
 from datetime import datetime
 from enum import Enum
@@ -73,6 +73,11 @@ class APIVersion(BaseModel):
 
 class BaseResponse(BaseModel):
     """基础响应模型"""
+    
+    model_config = ConfigDict(
+        json_encoders={datetime: lambda v: v.isoformat()},
+        use_enum_values=True
+    )
 
     success: bool = Field(..., description="操作是否成功")
     message: Optional[str] = Field(None, description="响应消息")
@@ -529,16 +534,23 @@ def create_error_response(
     message: str,
     details: Optional[List[ErrorDetail]] = None,
     request_id: Optional[str] = None,
-) -> ErrorResponse:
-    """创建错误响应"""
-    return ErrorResponse(
-        error=True,
-        error_type=error_type,
-        error_code=error_code,
-        message=message,
-        details=details or [],
-        request_id=request_id,
-    )
+) -> Dict[str, Any]:
+    """创建错误响应（返回可JSON序列化的字典）"""
+    # 如果 request_id 为 None，生成一个新的
+    if request_id is None:
+        request_id = str(uuid.uuid4())
+    
+    # 直接返回字典，确保所有值都可以被 JSON 序列化
+    return {
+        "success": False,
+        "error": True,
+        "error_type": error_type,
+        "error_code": error_code,
+        "message": message,
+        "details": [d.dict() if hasattr(d, 'dict') else d for d in (details or [])],
+        "request_id": request_id,
+        "timestamp": datetime.now().isoformat(),
+    }
 
 
 def create_success_response(

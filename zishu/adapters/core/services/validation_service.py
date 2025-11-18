@@ -226,7 +226,6 @@ class AdapterValidationService(AsyncService):
             if not self.is_running:
                 return HealthCheckResult(
                     is_healthy=False,
-                    status=ServiceHealth.UNHEALTHY,
                     message="Service is not running",
                 )
 
@@ -235,7 +234,6 @@ class AdapterValidationService(AsyncService):
             if rules_count == 0:
                 return HealthCheckResult(
                     is_healthy=False,
-                    status=ServiceHealth.UNHEALTHY,
                     message="No validation rules loaded",
                 )
 
@@ -244,13 +242,11 @@ class AdapterValidationService(AsyncService):
             if cache_size > self._max_cache_size:
                 return HealthCheckResult(
                     is_healthy=False,
-                    status=ServiceHealth.DEGRADED,
                     message=f"Cache size exceeded: {cache_size}/{self._max_cache_size}",
                 )
 
             return HealthCheckResult(
                 is_healthy=True,
-                status=ServiceHealth.HEALTHY,
                 message=f"Validation service healthy with {rules_count} rules",
                 details={
                     "service_name": self.name,
@@ -264,7 +260,6 @@ class AdapterValidationService(AsyncService):
         except Exception as e:
             return HealthCheckResult(
                 is_healthy=False,
-                status=ServiceHealth.UNHEALTHY,
                 message=f"Health check failed: {str(e)}",
             )
 

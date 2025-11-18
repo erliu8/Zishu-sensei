@@ -100,7 +100,7 @@ pub async fn get_characters(
     info!("✅ [get_characters] 数据库实例获取成功");
     
     // Load characters from database
-    let characters_data = db.character_registry.get_all_characters()
+    let characters_data = db.character_registry.get_all_characters_async().await
         .map_err(|e| {
             error!("❌ [get_characters] 获取角色列表失败: {}", e);
             format!("获取角色列表失败: {}", e)
@@ -143,7 +143,7 @@ pub async fn get_character_info(
         .ok_or_else(|| "数据库未初始化".to_string())?;
     
     // Load character from database
-    let character_data = db.character_registry.get_character(&character_id)
+    let character_data = db.character_registry.get_character_async(&character_id).await
         .map_err(|e| format!("获取角色信息失败: {}", e))?;
     
     match character_data {
@@ -179,7 +179,7 @@ pub async fn switch_character(
         .ok_or_else(|| "数据库未初始化".to_string())?;
     
     // Validate character exists in database
-    let character_data = db.character_registry.get_character(&character_id)
+    let character_data = db.character_registry.get_character_async(&character_id).await
         .map_err(|e| format!("查询角色失败: {}", e))?;
     
     let character_data = match character_data {
@@ -191,12 +191,12 @@ pub async fn switch_character(
     };
     
     // Get old active character
-    let old_character = db.character_registry.get_active_character()
+    let old_character = db.character_registry.get_active_character_async().await
         .map_err(|e| format!("获取当前角色失败: {}", e))?
         .map(|c| c.id);
     
     // Set new active character in database
-    db.character_registry.set_active_character(&character_id)
+    db.character_registry.set_active_character_async(&character_id).await
         .map_err(|e| format!("设置激活角色失败: {}", e))?;
     
     // Update config
@@ -514,7 +514,7 @@ pub async fn save_character_config(
     };
     
     // Save to database
-    db.character_registry.save_character_config(db_config)
+    db.character_registry.save_character_config_async(db_config).await
         .map_err(|e| format!("保存角色配置失败: {}", e))?;
     
     info!("角色配置保存成功: {}", config.character_id);
@@ -533,7 +533,7 @@ pub async fn get_character_config(
         .ok_or_else(|| "数据库未初始化".to_string())?;
     
     // Load from database
-    let db_config = db.character_registry.get_character_config(&character_id)
+    let db_config = db.character_registry.get_character_config_async(&character_id).await
         .map_err(|e| format!("获取角色配置失败: {}", e))?;
     
     match db_config {

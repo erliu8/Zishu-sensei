@@ -719,9 +719,37 @@ async def setup_metrics_system(config: MetricsConfig) -> MetricsService:
     await storage_manager.initialize_all()
 
     # 创建指标服务
-    from .core import MetricsServiceConfig
-    service_config = MetricsServiceConfig()
-    service = MetricsService(service_config)
+    # 注意：这里创建一个简化的服务对象来管理收集器和存储
+    # 实际的 AdapterMetricsService 在服务层使用
+    from .collectors import CollectorManager
+    
+    class SimpleMetricsService:
+        """简化的指标服务，用于 setup_metrics_system"""
+        def __init__(self):
+            self.storage_manager = storage_manager
+            self.collector_manager = CollectorManager()
+            self._collectors = []
+            self._running = False
+            
+        def register_collector(self, collector):
+            self._collectors.append(collector)
+            
+        async def start(self):
+            for collector in self._collectors:
+                if hasattr(collector, 'start'):
+                    await collector.start()
+            self._running = True
+            
+        async def stop(self):
+            for collector in self._collectors:
+                if hasattr(collector, 'stop'):
+                    await collector.stop()
+            self._running = False
+            
+        def get_status(self):
+            return {"running": self._running}
+    
+    service = SimpleMetricsService()
 
     # 添加收集器
     collectors = []
@@ -739,10 +767,9 @@ async def setup_metrics_system(config: MetricsConfig) -> MetricsService:
         collectors.append(adapter_collector)
 
     if config.enable_performance_metrics:
-        perf_collector = PerformanceMetricsCollector(
-            collection_interval=config.collection_interval
-        )
-        collectors.append(perf_collector)
+        # PerformanceMetricsCollector 暂未实现，跳过
+        logger.warning("PerformanceMetricsCollector not implemented, skipping")
+        pass
 
     # 注册收集器
     for collector in collectors:

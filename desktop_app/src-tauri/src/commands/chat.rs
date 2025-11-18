@@ -224,7 +224,6 @@ pub struct SetModelResponse {
 pub async fn send_message_handler(
     input: SendMessageInput,
     app: AppHandle,
-    state: State<'_, AppState>,
 ) -> ZishuResult<serde_json::Value> {
     log_command_execution("send_message", Some(&serde_json::to_string(&input).unwrap_or_default()));
     
@@ -246,9 +245,21 @@ pub async fn send_message_handler(
     let mut messages = Vec::new();
     
     // 检查是否使用本地LLM模型，如果是，添加Prompt作为系统消息
-    let use_local_llm = input.model.as_ref()
-        .map(|m| m.starts_with("local_llm_") || m == "local_llm")
-        .unwrap_or(false);
+    // 支持多种模型ID格式：
+    // 1. 以 "local_llm_" 开头的模型
+    // 2. 等于 "local_llm" 的模型  
+    // 3. 注册的本地LLM模型的adapter_id
+    let use_local_llm = if let Some(model_id) = input.model.as_ref() {
+        // 检查是否是本地LLM前缀格式
+        if model_id.starts_with("local_llm_") || model_id == "local_llm" {
+            true
+        } else {
+            // 检查是否是注册的本地LLM模型ID（从本地索引查询）
+            is_local_llm_model(model_id, &app).await.unwrap_or(false)
+        }
+    } else {
+        false
+    };
     
     if use_local_llm {
         // 获取当前使用的Prompt
@@ -342,7 +353,6 @@ pub async fn send_message_handler(
 pub async fn get_chat_history_handler(
     input: GetHistoryInput,
     app: AppHandle,
-    state: State<'_, AppState>,
 ) -> ZishuResult<serde_json::Value> {
     log_command_execution("get_chat_history", Some(&input.session_id));
     
@@ -385,7 +395,6 @@ pub async fn get_chat_history_handler(
 pub async fn clear_chat_history_handler(
     input: ClearHistoryInput,
     app: AppHandle,
-    state: State<'_, AppState>,
 ) -> ZishuResult<serde_json::Value> {
     log_command_execution("clear_chat_history", Some(&input.session_id));
     
@@ -512,21 +521,48 @@ pub async fn set_chat_model_handler(
 // 命令注册宏调用
 // ================================
 
-// 发送消息命令
-create_command!(send_message, SendMessageInput, send_message_handler);
+// 发送消息命令（不需要 state）
+create_command!(send_message, SendMessageInput, send_message_handler, no_state);
 
-// 获取聊天历史命令
-create_command!(get_chat_history, GetHistoryInput, get_chat_history_handler);
+// 获取聊天历史命令（不需要 state）
+create_command!(get_chat_history, GetHistoryInput, get_chat_history_handler, no_state);
 
-// 清空聊天历史命令
-create_command!(clear_chat_history, ClearHistoryInput, clear_chat_history_handler);
+// 清空聊天历史命令（不需要 state）
+create_command!(clear_chat_history, ClearHistoryInput, clear_chat_history_handler, no_state);
 
-// 设置聊天模型命令
+// 设置聊天模型命令（需要 state）
 create_command!(set_chat_model, SetModelInput, set_chat_model_handler);
 
 // ================================
 // 辅助函数
 // ================================
+
+/// 检查模型ID是否是本地LLM模型
+async fn is_local_llm_model(model_id: &str, app: &AppHandle) -> Result<bool, String> {
+    use crate::commands::local_llm::LocalLLMModel;
+    
+    // 读取本地LLM模型索引
+    let models_dir = app.path_resolver()
+        .app_data_dir()
+        .ok_or("无法获取应用数据目录")?
+        .join("local_llm_models");
+    
+    let index_file = models_dir.join("models_index.json");
+    if !index_file.exists() {
+        return Ok(false);
+    }
+    
+    let content = std::fs::read_to_string(&index_file).map_err(|e| {
+        format!("读取本地LLM模型索引失败: {}", e)
+    })?;
+    
+    let models: Vec<LocalLLMModel> = serde_json::from_str(&content).map_err(|e| {
+        format!("解析本地LLM模型索引失败: {}", e)
+    })?;
+    
+    // 检查模型ID是否在列表中
+    Ok(models.iter().any(|m| m.id == model_id))
+}
 
 /// 获取当前使用的Prompt（内部函数）
 async fn get_current_prompt_internal(app: &AppHandle) -> Result<Option<prompt::Prompt>, String> {

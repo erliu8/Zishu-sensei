@@ -252,7 +252,6 @@ class AdapterHealthService(AsyncService):
             if not self.is_running:
                 return HealthCheckResult(
                     is_healthy=False,
-                    status=ServiceHealth.UNHEALTHY,
                     service_name=self.name,
                     message="Service is not running",
                 )
@@ -268,7 +267,6 @@ class AdapterHealthService(AsyncService):
             if unhealthy_count > monitored_count * 0.5:  # 超过50%不健康
                 return HealthCheckResult(
                     is_healthy=False,
-                    status=ServiceHealth.DEGRADED,
                     service_name=self.name,
                     message=f"Too many unhealthy adapters: {unhealthy_count}/{monitored_count}",
                 )
@@ -280,7 +278,6 @@ class AdapterHealthService(AsyncService):
 
             return HealthCheckResult(
                 is_healthy=True,
-                status=ServiceHealth.HEALTHY,
                 service_name=self.name,
                 message=f"Health service monitoring {monitored_count} adapters",
                 details={
@@ -295,7 +292,6 @@ class AdapterHealthService(AsyncService):
         except Exception as e:
             return HealthCheckResult(
                 is_healthy=False,
-                status=ServiceHealth.UNHEALTHY,
                 service_name=self.name,
                 message=f"Health check failed: {str(e)}",
             )

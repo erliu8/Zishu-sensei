@@ -51,6 +51,9 @@ pub mod update;
 pub mod logging;
 pub mod conversation;
 pub mod config;
+pub mod prompt_registry;
+pub mod local_llm_registry;
+pub mod character_template_registry;
 
 // 导出错误类型
 pub mod error;
@@ -68,6 +71,9 @@ use update::UpdateRegistry;
 use theme::ThemeRegistry;
 use logging::LoggingRegistry;
 use encrypted_storage::EncryptedStorageRegistry;
+use prompt_registry::PromptRegistry;
+use local_llm_registry::LocalLLMRegistry;
+use character_template_registry::CharacterTemplateRegistry;
 
 pub use database_manager::{DatabaseManager, DatabaseManagerConfig};
 
@@ -96,6 +102,12 @@ pub struct Database {
     pub logging_registry: LoggingRegistry,
     /// Encrypted storage registry
     pub encrypted_storage_registry: EncryptedStorageRegistry,
+    /// Prompt registry
+    pub prompt_registry: PromptRegistry,
+    /// Local LLM registry
+    pub local_llm_registry: LocalLLMRegistry,
+    /// Character template registry
+    pub character_template_registry: CharacterTemplateRegistry,
 }
 
 impl Database {
@@ -126,6 +138,9 @@ impl Database {
         let theme_registry = ThemeRegistry::new(pool.clone());
         let logging_registry = LoggingRegistry::new(pool.clone());
         let encrypted_storage_registry = EncryptedStorageRegistry::new(pool.clone());
+        let prompt_registry = PromptRegistry::new(pool.clone());
+        let local_llm_registry = LocalLLMRegistry::new(pool.clone());
+        let character_template_registry = CharacterTemplateRegistry::new(pool.clone());
         
         // Initialize tables for all registries
         adapter_registry.init_tables().await?;
@@ -135,6 +150,9 @@ impl Database {
         theme_registry.init_tables().await?;
         logging_registry.init_tables().await?;
         encrypted_storage_registry.init_tables().await?;
+        prompt_registry.init_tables().await?;
+        local_llm_registry.init_tables().await?;
+        character_template_registry.init_tables().await?;
         
         Ok(Self {
             pool,
@@ -147,6 +165,9 @@ impl Database {
             theme_registry,
             logging_registry,
             encrypted_storage_registry,
+            prompt_registry,
+            local_llm_registry,
+            character_template_registry,
         })
     }
     
@@ -498,8 +519,8 @@ async fn load_characters_from_models(app: &AppHandle, db: &Database) -> Result<(
             })
             .unwrap_or_default();
         
-        // Check if character exists
-        if let Ok(Some(_)) = db.character_registry.get_character(id) {
+        // Check if character exists (使用异步方法避免嵌套运行时)
+        if let Ok(Some(_)) = db.character_registry.get_character_async(id).await {
             info!("角色已存在，跳过: {}", id);
             continue;
         }
@@ -520,15 +541,15 @@ async fn load_characters_from_models(app: &AppHandle, db: &Database) -> Result<(
             is_active: false,
         };
         
-        db.character_registry.register_character(character)?;
+        db.character_registry.register_character_async(character).await?;
         info!("成功注册角色: {} ({})", id, name);
     }
     
-    // Set default active character (hiyori) if no active character
-    let active_character = db.character_registry.get_active_character()?;
+    // Set default active character (hiyori) if no active character (使用异步方法避免嵌套运行时)
+    let active_character = db.character_registry.get_active_character_async().await?;
     if active_character.is_none() {
-        if let Ok(Some(_)) = db.character_registry.get_character("hiyori") {
-            db.character_registry.set_active_character("hiyori")?;
+        if let Ok(Some(_)) = db.character_registry.get_character_async("hiyori").await {
+            db.character_registry.set_active_character_async("hiyori").await?;
             info!("设置默认激活角色: hiyori");
         }
     }
@@ -543,8 +564,8 @@ async fn init_default_model_configs(db: &Database) -> Result<(), Box<dyn std::er
     
     info!("初始化默认模型配置");
     
-    // Check if any config exists
-    let existing_configs = db.model_config_registry.get_all_configs()?;
+    // Check if any config exists (使用异步方法避免嵌套运行时)
+    let existing_configs = db.model_config_registry.get_all_configs_async().await?;
     if !existing_configs.is_empty() {
         info!("模型配置已存在，跳过初始化");
         return Ok(());
@@ -558,7 +579,7 @@ async fn init_default_model_configs(db: &Database) -> Result<(), Box<dyn std::er
     ];
     
     for config in default_configs {
-        match db.model_config_registry.save_config(config.clone()) {
+        match db.model_config_registry.save_config_async(config.clone()).await {
             Ok(_) => info!("默认配置已创建: {}", config.name),
             Err(e) => warn!("创建默认配置失败 {}: {}", config.name, e),
         }

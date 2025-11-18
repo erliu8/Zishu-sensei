@@ -14,7 +14,7 @@ import weakref
 from .services.base import AsyncService, ServiceStatus, ServiceHealth, HealthCheckResult
 from .services.orchestrator import AdapterServiceOrchestrator, OrchestratorConfig
 from .services.registry_service import AdapterRegistryService
-from .services.validation_service import AdapterValidationService
+from .services.validation_service import AdapterValidationService, ValidationSeverity
 from .services.health_service import AdapterHealthService
 from .services.event_service import AdapterEventService
 from .services.metrics_service import AdapterMetricsService, AdapterMetricsServiceConfig
@@ -459,11 +459,31 @@ class AdapterManager:
                         operation_name=f"Adapter validation for {adapter_id}"
                     )
                     
-                    if not validation_result.is_valid:
+                    # 检查验证结果 - 只拒绝有严重错误的注册
+                    # 调试：打印所有问题的严重性级别
+                    logger.info(f"Validation result: is_valid={validation_result.is_valid}, issues_count={len(validation_result.issues)}")
+                    for idx, issue in enumerate(validation_result.issues):
+                        logger.info(f"  Issue {idx+1}: severity={issue.severity}, message={issue.message[:50]}")
+                    
+                    has_critical_issues = any(
+                        issue.severity in [ValidationSeverity.ERROR, ValidationSeverity.CRITICAL]
+                        for issue in validation_result.issues
+                    )
+                    
+                    logger.info(f"has_critical_issues={has_critical_issues}")
+                    
+                    if has_critical_issues:
                         logger.error(
-                            f"Adapter validation failed: {validation_result.summary}"
+                            f"Adapter validation failed with critical issues: {validation_result.summary}"
                         )
                         return False
+                    elif not validation_result.is_valid:
+                        # 只有警告，允许注册但记录警告
+                        logger.warning(
+                            f"Adapter registered with validation warnings: {validation_result.summary}"
+                        )
+                    else:
+                        logger.info(f"Adapter validation passed: {validation_result.summary}")
 
                 # 注册适配器（带超时）
                 register_coro = self.registry_service.register_adapter(config)

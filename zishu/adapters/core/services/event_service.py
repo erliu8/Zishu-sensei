@@ -241,7 +241,6 @@ class AdapterEventService(AsyncService):
             if not self.is_running:
                 return HealthCheckResult(
                     is_healthy=False,
-                    status=ServiceHealth.UNHEALTHY,
                     message="Service is not running",
                 )
 
@@ -250,7 +249,6 @@ class AdapterEventService(AsyncService):
             if queue_size > self._max_queue_size * 0.9:  # 90%满
                 return HealthCheckResult(
                     is_healthy=False,
-                    status=ServiceHealth.DEGRADED,
                     message=f"Event queue nearly full: {queue_size}/{self._max_queue_size}",
                 )
 
@@ -267,13 +265,11 @@ class AdapterEventService(AsyncService):
             if error_rate > 0.1:  # 10%错误率
                 return HealthCheckResult(
                     is_healthy=False,
-                    status=ServiceHealth.DEGRADED,
                     message=f"High error rate: {error_rate:.2%}",
                 )
 
             return HealthCheckResult(
                 is_healthy=True,
-                status=ServiceHealth.HEALTHY,
                 message=f"Event service healthy with {active_subscriptions} subscriptions",
                 details={
                     "queue_size": queue_size,
@@ -287,7 +283,6 @@ class AdapterEventService(AsyncService):
         except Exception as e:
             return HealthCheckResult(
                 is_healthy=False,
-                status=ServiceHealth.UNHEALTHY,
                 message=f"Health check failed: {str(e)}",
             )
 

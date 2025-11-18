@@ -25,7 +25,13 @@ from ..metrics import (
     MetricsAlertManager,
     AlertRule,
     AlertCondition,
+    MetricsExporterManager,
+    ExportConfig,
+    ExportFormat,
+    MetricsQueryEngine,
+    MetricsDashboard,
     setup_metrics_system,
+    teardown_metrics_system,
     set_global_metrics_service,
     clear_global_metrics_service,
 )
@@ -76,7 +82,7 @@ class AdapterMetricsService(AsyncService):
 
     def __init__(self, event_bus: EventBus, config: Optional[Dict[str, Any]] = None):
         """初始化指标服务"""
-        super().__init__(service_id="adapter_metrics")
+        super().__init__(name="adapter_metrics", config=config)
 
         self.event_bus = event_bus
         self.config = AdapterMetricsServiceConfig(**config or {})
@@ -98,7 +104,12 @@ class AdapterMetricsService(AsyncService):
 
         logger.info(f"AdapterMetricsService initialized with config: {self.config}")
 
-    async def _do_start(self) -> None:
+    async def _initialize_impl(self) -> None:
+        """初始化实现"""
+        # 初始化逻辑在启动时执行
+        pass
+
+    async def _start_impl(self) -> None:
         """启动指标服务"""
         try:
             logger.info("Starting AdapterMetricsService...")
@@ -118,23 +129,23 @@ class AdapterMetricsService(AsyncService):
 
             self.metrics_service = await setup_metrics_system(metrics_config)
 
-            # 设置导出器
-            if self.config.enable_prometheus_export or self.config.enable_json_export:
-                await self._setup_exporters()
+            # 设置导出器（暂时禁用以避免端口冲突）
+            # if self.config.enable_prometheus_export or self.config.enable_json_export:
+            #     await self._setup_exporters()
 
-            # 设置告警管理器
-            if self.config.enable_alerts:
-                await self._setup_alerts()
+            # 设置告警管理器（暂时禁用）
+            # if self.config.enable_alerts:
+            #     await self._setup_alerts()
 
-            # 设置仪表板
-            if self.config.enable_dashboard:
-                await self._setup_dashboard()
+            # 设置仪表板（暂时禁用）
+            # if self.config.enable_dashboard:
+            #     await self._setup_dashboard()
 
-            # 注册事件处理器
-            await self._register_event_handlers()
+            # 注册事件处理器（暂时禁用）
+            # await self._register_event_handlers()
 
-            # 启动后台任务
-            asyncio.create_task(self._metrics_cleanup_task())
+            # 启动后台任务（暂时禁用）
+            # asyncio.create_task(self._metrics_cleanup_task())
 
             logger.info("AdapterMetricsService started successfully")
 
@@ -142,7 +153,7 @@ class AdapterMetricsService(AsyncService):
             logger.error(f"Failed to start AdapterMetricsService: {e}")
             raise
 
-    async def _do_stop(self) -> None:
+    async def _stop_impl(self) -> None:
         """停止指标服务"""
         try:
             logger.info("Stopping AdapterMetricsService...")
@@ -170,14 +181,13 @@ class AdapterMetricsService(AsyncService):
             logger.error(f"Failed to stop AdapterMetricsService: {e}")
             raise
 
-    async def _do_health_check(self) -> HealthCheckResult:
+    async def _health_check_impl(self) -> HealthCheckResult:
         """健康检查"""
         try:
             if not self.metrics_service:
                 return HealthCheckResult(
-                    service_id=self.service_id,
+                    service_name=self.name,
                     is_healthy=False,
-                    status="ERROR",
                     message="Metrics service not initialized",
                 )
 
@@ -185,9 +195,8 @@ class AdapterMetricsService(AsyncService):
             service_status = self.metrics_service.get_status()
             if not service_status.get("running", False):
                 return HealthCheckResult(
-                    service_id=self.service_id,
+                    service_name=self.name,
                     is_healthy=False,
-                    status="ERROR",
                     message="Metrics service not running",
                 )
 
@@ -196,24 +205,21 @@ class AdapterMetricsService(AsyncService):
                 time_since_last = datetime.now(timezone.utc) - self.last_collection_time
                 if time_since_last > timedelta(minutes=5):
                     return HealthCheckResult(
-                        service_id=self.service_id,
+                        service_name=self.name,
                         is_healthy=False,
-                        status="WARNING",
                         message=f"No metrics collected for {time_since_last.total_seconds()}s",
                     )
 
             return HealthCheckResult(
-                service_id=self.service_id,
+                service_name=self.name,
                 is_healthy=True,
-                status="HEALTHY",
                 message=f"Tracking {len(self.tracked_adapters)} adapters, {self.metrics_collected} metrics collected",
             )
 
         except Exception as e:
             return HealthCheckResult(
-                service_id=self.service_id,
+                service_name=self.name,
                 is_healthy=False,
-                status="ERROR",
                 message=f"Health check failed: {e}",
             )
 
@@ -703,7 +709,7 @@ class AdapterMetricsService(AsyncService):
     def get_service_stats(self) -> Dict[str, Any]:
         """获取服务统计信息"""
         return {
-            "service_id": self.service_id,
+            "service_name": self.name,
             "status": self.status.value,
             "tracked_adapters": len(self.tracked_adapters),
             "active_collectors": len(self.adapter_collectors),

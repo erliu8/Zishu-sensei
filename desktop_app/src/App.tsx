@@ -652,7 +652,7 @@ const App: React.FC = () => {
                 alignItems: 'center',
                 justifyContent: 'center',
                 height: '100vh',
-                background: 'linear-gradient(135deg, hsl(var(--color-primary) / 0.05), hsl(var(--color-primary) / 0.15))',
+                background: 'transparent',
             }}>
                 <div style={{ textAlign: 'center' }}>
                     <LoadingSpinner size="lg" style={{ marginBottom: '16px' }} />
@@ -708,7 +708,7 @@ const App: React.FC = () => {
                     height: '100vh',
                     width: '100vw',
                     overflow: 'hidden',
-                    backgroundColor: 'hsl(var(--color-background))',
+                    backgroundColor: 'transparent',
                     transition: 'background-color 200ms',
                     cursor: appState.windowMode === WINDOW_MODES.PET ? 'move' : 'default',
                 }}
@@ -723,22 +723,34 @@ const App: React.FC = () => {
                         exit="exit"
                         variants={ANIMATION_VARIANTS}
                         transition={TRANSITION_CONFIG}
-                        className="h-full w-full"
+                        style={{
+                            height: '100%',
+                            width: '100%',
+                            display: 'flex',
+                            flexDirection: 'column',
+                        }}
                     >
-                        <Suspense
-                            fallback={
-                                <div style={{
-                                    display: 'flex',
-                                    alignItems: 'center',
-                                    justifyContent: 'center',
-                                    height: '100%',
-                                }}>
-                                    <LoadingSpinner size="md" />
-                                </div>
-                            }
-                        >
-                            {renderWindowContent()}
-                        </Suspense>
+                        <div style={{
+                            height: '100%',
+                            width: '100%',
+                            display: 'flex',
+                            flexDirection: 'column',
+                        }}>
+                            <Suspense
+                                fallback={
+                                    <div style={{
+                                        display: 'flex',
+                                        alignItems: 'center',
+                                        justifyContent: 'center',
+                                        height: '100%',
+                                    }}>
+                                        <LoadingSpinner size="md" />
+                                    </div>
+                                }
+                            >
+                                {renderWindowContent()}
+                            </Suspense>
+                        </div>
                     </motion.div>
                 </AnimatePresence>
 

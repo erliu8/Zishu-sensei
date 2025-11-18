@@ -29,6 +29,13 @@ from .core import (
     InfluxDBExporter,
 )
 
+from .exporters import (
+    # 导出器管理
+    MetricsExporterManager,
+    ExportConfig,
+    ExportFormat,
+)
+
 from .collectors import (
     # 收集器基类
     MetricsCollector,
@@ -59,6 +66,7 @@ from .dashboard import (
     DashboardConfig,
     # 查询接口
     MetricsQuery,
+    MetricsQueryEngine,
     QueryBuilder,
     # 可视化
     MetricsVisualizer,
@@ -83,6 +91,7 @@ from .utils import (
     MetricsService,  # 类型别名，指向AdapterMetricsService
     MetricsConfig,
     setup_metrics_system,
+    teardown_metrics_system,
     set_global_metrics_service,
     get_global_metrics_service,
     clear_global_metrics_service,
@@ -119,6 +128,9 @@ __all__ = [
     "MetricAggregator",
     "AggregationType",
     "MetricsExporter",
+    "MetricsExporterManager",
+    "ExportConfig",
+    "ExportFormat",
     "PrometheusExporter",
     "JsonExporter",
     "InfluxDBExporter",
@@ -133,6 +145,7 @@ __all__ = [
     "MetricsDashboard",
     "DashboardConfig",
     "MetricsQuery",
+    "MetricsQueryEngine",
     "QueryBuilder",
     "MetricsVisualizer",
     "ChartType",
@@ -146,11 +159,11 @@ __all__ = [
     "SlackNotifier",
     "WebhookNotifier",
     # 工具函数
-    "create_metrics_service",
-    "setup_default_collectors",
-    "register_prometheus_metrics",
-    "start_metrics_server",
-    "get_metrics_summary",
+    "setup_metrics_system",
+    "teardown_metrics_system",
+    "set_global_metrics_service",
+    "get_global_metrics_service",
+    "clear_global_metrics_service",
 ]
 
 # 版本信息

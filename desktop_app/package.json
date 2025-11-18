@@ -43,7 +43,7 @@
         "build:artifacts": "node ../scripts/build.js artifacts",
         "preview": "vite preview",
         "tauri": "tauri",
-        "tauri:dev": "tauri dev",
+        "tauri:dev": "cross-env ZISHU_BACKEND_URL=http://127.0.0.1:8000 tauri dev",
         "tauri:build": "tauri build",
         "tauri:build:debug": "tauri build --debug",
         "tauri:build:windows": "tauri build --target x86_64-pc-windows-msvc",

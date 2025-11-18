@@ -14,7 +14,7 @@ use std::time::{Duration, Instant};
 use sysinfo::{CpuExt, DiskExt, NetworkExt, ProcessExt, System, SystemExt};
 use tauri::{AppHandle, Manager};
 use tokio::time::interval;
-use tracing::{debug, error, info, warn};
+use tracing::{error, info, trace, warn};
 
 /// 系统监控器状态
 pub struct SystemMonitor {
@@ -300,7 +300,7 @@ impl SystemMonitor {
                     error!("发送系统监控更新事件失败: {}", e);
                 }
                 
-                debug!(
+                trace!(
                     "系统监控更新 - CPU: {:.2}%, 内存: {:.2}%, 网络: ↓{} ↑{}/s",
                     cpu_usage,
                     memory_usage,

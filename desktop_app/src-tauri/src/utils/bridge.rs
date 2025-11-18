@@ -364,7 +364,7 @@ impl PythonApiBridge {
         &self,
         request: ChatRequest,
     ) -> Result<ChatCompletionResponse> {
-        self.post_with_retry("/chat/completions", &request).await
+        self.post_with_retry("/api/chat/completions", &request).await
     }
 
     /// 获取聊天历史

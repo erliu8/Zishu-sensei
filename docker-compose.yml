@@ -30,6 +30,8 @@ services:
       - ./config:/app/config:ro
       - ./cache:/app/cache
       - ./logs:/app/logs
+      # 挂载宿主机模型目录（用于访问大模型文件）
+      - /data/disk/models:/data/disk/models:ro
     depends_on:
       redis:
         condition: service_healthy

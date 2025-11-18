@@ -135,6 +135,9 @@ pub mod local_llm;
 /// Prompt管理命令
 pub mod prompt;
 
+/// 角色模板管理命令
+pub mod character_template;
+
 // ================================
 // 公共命令类型定义
 // ================================
@@ -302,6 +305,19 @@ macro_rules! create_command {
             state: State<'_, AppState>,
         ) -> Result<CommandResponse<serde_json::Value>, String> {
             match $handler(input, app_handle, state).await {
+                Ok(data) => Ok(CommandResponse::success(data)),
+                Err(err) => Ok(CommandResponse::from_error(err)),
+            }
+        }
+    };
+    // 不需要 state 的命令变体
+    ($name:ident, $input:ty, $handler:expr, no_state) => {
+        #[tauri::command]
+        pub async fn $name(
+            input: $input,
+            app_handle: AppHandle,
+        ) -> Result<CommandResponse<serde_json::Value>, String> {
+            match $handler(input, app_handle).await {
                 Ok(data) => Ok(CommandResponse::success(data)),
                 Err(err) => Ok(CommandResponse::from_error(err)),
             }

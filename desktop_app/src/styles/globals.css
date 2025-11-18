@@ -36,7 +36,7 @@ body {
     font-family: var(--font-sans);
     font-size: var(--font-size-base);
     color: hsl(var(--color-foreground));
-    background-color: hsl(var(--color-background));
+    background-color: transparent;
     min-height: 100vh;
     overflow-x: hidden;
 }

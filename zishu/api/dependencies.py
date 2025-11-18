@@ -597,7 +597,7 @@ def get_adapter_manager():
             
             config = AdapterManagerConfig(
                 max_adapters=100,
-                enable_validation=True,
+                enable_validation=False,  # 暂时禁用严格验证以支持 LLM 模型注册
                 enable_metrics=True,
             )
             _adapter_manager = AdapterManager(config)

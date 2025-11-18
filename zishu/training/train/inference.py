@@ -111,6 +111,32 @@ class InferenceEngine:
     def _load_default_model(self):
         """加载默认模型"""
         try:
+            # 尝试加载本地Index-1.9B-Character模型
+            local_model_path = "/data/disk/models/Index-1.9B-character/IndexTeam/Index-1___9B-Character"
+            if os.path.exists(local_model_path):
+                self.logger.info(f"发现本地模型: {local_model_path}")
+                try:
+                    # 直接加载本地模型
+                    model_info = ModelInfo(
+                        model_id="index-1.9b-character",
+                        name="Index-1.9B-Character",
+                        model_type="causal_lm",
+                        version="1.9B",
+                        architecture="IndexForCausalLM",
+                        parameters=1900000000,  # 1.9B
+                        language=["zh", "en"],
+                        description="Index-1.9B Character Model for Chinese dialogue",
+                        model_path=local_model_path,
+                        config_path=f"{local_model_path}/config.json",
+                        tags=["character", "dialogue", "chinese"],
+                    )
+                    self.model_registry.register_model(model_info)
+                    self.load_model("index-1.9b-character")
+                    self.logger.info("本地模型加载成功!")
+                    return
+                except Exception as e:
+                    self.logger.warning(f"本地模型加载失败: {e}")
+            
             # 从配置获取默认模型ID
             if self.config:
                 try:
@@ -124,9 +150,8 @@ class InferenceEngine:
                 except Exception as config_error:
                     self.logger.warning(f"配置文件读取失败: {config_error}")
 
-            # 如果没有配置或配置读取失败，尝试加载一个测试模型
-            self.logger.info("未找到配置文件，使用测试模型")
-            # 这里不实际加载模型，只是标记为已初始化
+            # 如果没有配置或配置读取失败，使用测试模式
+            self.logger.info("未找到可用模型，将使用测试响应模式")
 
         except Exception as e:
             self.logger.error(f"加载默认模型失败: {e}")
@@ -173,11 +198,22 @@ class InferenceEngine:
 
             else:
                 # 无量化或其他量化方式
-                load_params.update({"device_map": "auto", "torch_dtype": torch.float16})
+                # CPU模式下使用float32避免精度问题，添加offload支持
+                if torch.cuda.is_available():
+                    load_params.update({"device_map": "auto", "torch_dtype": torch.float16})
+                else:
+                    # CPU模式：使用float32，启用offload到磁盘
+                    load_params.update({
+                        "device_map": "auto",
+                        "torch_dtype": torch.float32,
+                        "offload_folder": "/tmp/offload",
+                        "low_cpu_mem_usage": True,
+                    })
 
             # 加载模型
             model = AutoModelForCausalLM.from_pretrained(
                 model_path,
+                trust_remote_code=True,
                 **load_params,
             )
 
@@ -189,7 +225,7 @@ class InferenceEngine:
 
             # 加载分词器
             tokenizer = AutoTokenizer.from_pretrained(
-                model_path, trust_remote_code=True, padding_side="left"
+                model_path, use_fast=True, trust_remote_code=True
             )
 
             # 确保分词器具有pad_token

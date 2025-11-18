@@ -28,13 +28,26 @@ export const Character: React.FC<CharacterProps> = ({
     showModelSelector = false,
 }) => {
     // 状态管理
-    const [currentModelId, setCurrentModelId] = useState<string>('hiyori')
+    const [currentModelId, setCurrentModelId] = useState<string | null>(null)
     const [modelConfig, setModelConfig] = useState<Live2DModelConfig | null>(null)
     const [isLoadingModel, setIsLoadingModel] = useState(true)
     const [transitionType, setTransitionType] = useState<TransitionType>('fade')
 
     // 使用模型加载器 Hook
-    const { currentCharacter, switchCharacter } = useModelLoader()
+    const { currentCharacter, loadCharacters, switchCharacter } = useModelLoader()
+
+    // 初始化：加载当前激活的角色
+    useEffect(() => {
+        const initializeCharacter = async () => {
+            try {
+                console.log('🔄 初始化加载角色列表...')
+                await loadCharacters()
+            } catch (error) {
+                console.error('❌ 初始化加载角色失败:', error)
+            }
+        }
+        initializeCharacter()
+    }, [loadCharacters])
 
     // 当后端角色改变时，更新前端模型
     useEffect(() => {
@@ -50,6 +63,11 @@ export const Character: React.FC<CharacterProps> = ({
 
     // 加载模型配置
     useEffect(() => {
+        // 只有当 currentModelId 已设置时才加载
+        if (!currentModelId) {
+            return
+        }
+
         const loadModelConfig = async () => {
             try {
                 setIsLoadingModel(true)
@@ -61,6 +79,7 @@ export const Character: React.FC<CharacterProps> = ({
                 console.error('❌ 加载模型配置失败:', error)
                 // 回退到默认模型
                 if (currentModelId !== 'hiyori') {
+                    console.warn('⚠️ 回退到默认模型 hiyori')
                     setCurrentModelId('hiyori')
                 }
             } finally {
@@ -142,7 +161,8 @@ export const Character: React.FC<CharacterProps> = ({
     }, [character, onInteraction])
 
     return (
-        <div style={{
+        <div 
+            style={{
             position: 'relative',
             width: '100%',
             height: '100%',
@@ -153,7 +173,7 @@ export const Character: React.FC<CharacterProps> = ({
             {character && (
                 <>
                     {/* 模型选择器 */}
-                    {showModelSelector && (
+                    {showModelSelector && currentModelId && (
                         <div style={{
                             position: 'absolute',
                             top: '1rem',
@@ -175,31 +195,42 @@ export const Character: React.FC<CharacterProps> = ({
                         alignItems: 'center',
                         justifyContent: 'center',
                     }}>
-                        <CharacterTransitionWithLoading
-                            characterId={currentModelId}
-                            transitionType={transitionType}
-                            duration={600}
-                            isLoading={isLoadingModel || !modelConfig}
-                            loadingText={`加载 ${currentCharacter?.name || '角色'} 中...`}
-                            onTransitionComplete={() => {
-                                console.log('✅ 角色过渡动画完成:', currentModelId)
-                            }}
-                        >
-                            {modelConfig && (
-                                <Live2DViewer
-                                    key={currentModelId} // 强制重新挂载以切换模型
-                                    config={viewerConfig}
-                                    modelConfig={modelConfig}
-                                    onInteraction={handleLive2DInteraction}
-                                    onModelLoad={handleModelLoad}
-                                    onError={handleError}
-                                    className=""
-                                    style={{
-                                        background: 'transparent'
-                                    }}
-                                />
+                        {currentModelId ? (
+                            <CharacterTransitionWithLoading
+                                characterId={currentModelId}
+                                transitionType={transitionType}
+                                duration={600}
+                                isLoading={isLoadingModel || !modelConfig}
+                                loadingText={`加载 ${currentCharacter?.name || '角色'} 中...`}
+                                onTransitionComplete={() => {
+                                    console.log('✅ 角色过渡动画完成:', currentModelId)
+                                }}
+                            >
+                                {modelConfig && (
+                                    <Live2DViewer
+                                        key={currentModelId} // 强制重新挂载以切换模型
+                                        config={viewerConfig}
+                                        modelConfig={modelConfig}
+                                        onInteraction={handleLive2DInteraction}
+                                        onModelLoad={handleModelLoad}
+                                        onError={handleError}
+                                        className=""
+                                        style={{
+                                            background: 'transparent'
+                                        }}
+                                    />
                             )}
                         </CharacterTransitionWithLoading>
+                        ) : (
+                            <div style={{
+                                display: 'flex',
+                                alignItems: 'center',
+                                justifyContent: 'center',
+                                color: '#666',
+                            }}>
+                                加载角色中...
+                            </div>
+                        )}
                     </div>
                 </>
             )}

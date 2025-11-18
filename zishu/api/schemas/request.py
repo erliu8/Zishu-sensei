@@ -69,6 +69,8 @@ class ChatCompletionRequest(BaseModel):
     user: Optional[str] = Field(None, description="用户ID")
     session_id: Optional[str] = Field(None, description="会话ID")
     adapter: Optional[str] = Field(None, description="适配器ID")
+    character_id: Optional[str] = Field(None, description="角色模板ID")
+    system_prompt: Optional[str] = Field(None, description="系统提示词（角色设定）")
     chat_mode: Optional[str] = Field(default=ChatModel.NORMAL, description="对话模式")
 
     # 函数调用支持

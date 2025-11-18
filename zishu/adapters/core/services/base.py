@@ -292,7 +292,6 @@ class AsyncService(ABC):
 
             return HealthCheckResult(
                 is_healthy=False,
-                status=ServiceHealth.UNHEALTHY,
                 message=f"Health check error: {str(e)}",
                 details={"error": str(e)},
             )

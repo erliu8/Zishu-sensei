@@ -1,5 +1,6 @@
 import React from 'react'
 import { Character } from '@/components/Character'
+import { CharacterTemplateManager } from '@/components/CharacterTemplate'
 import type { CharacterModel } from '@/types/character'
 import type { ContextMenuOption } from '@/types/ui'
 import type { WindowMode } from '@/types/app'
@@ -19,6 +20,8 @@ export const PetWindow: React.FC<PetWindowProps> = ({
   onContextMenu,
   onModeChange,
 }) => {
+  const [showTemplateManager, setShowTemplateManager] = React.useState(false)
+
   const handleRightClick = (event: React.MouseEvent) => {
     console.log('🖱️ [PetWindow] 右键点击事件触发:', { button: event.button, clientX: event.clientX, clientY: event.clientY })
     event.preventDefault()
@@ -29,6 +32,12 @@ export const PetWindow: React.FC<PetWindowProps> = ({
         label: '打开聊天',
         icon: '💬',
         onClick: () => onModeChange('chat'),
+      },
+      {
+        id: 'character-templates',
+        label: '切换角色',
+        icon: '🎭',
+        onClick: () => setShowTemplateManager(true),
       },
       {
         id: 'settings',
@@ -54,27 +63,42 @@ export const PetWindow: React.FC<PetWindowProps> = ({
   }
 
   return (
-    <div 
-      style={{
-        height: '100%',
-        width: '100%',
-        display: 'flex',
-        alignItems: 'center',
-        justifyContent: 'center',
-        backgroundColor: 'transparent',
-      }}
-      onContextMenu={handleRightClick}
-    >
-      <Character
-        character={character}
-        onInteraction={(type, data) => {
-          console.log('角色交互:', type, data)
-          // 处理角色交互
-          if (type === 'click') {
-            // 点击角色时可以触发特定动画或对话
-          }
+    <>
+      <div 
+        data-tauri-drag-region
+        style={{
+          height: '100%',
+          width: '100%',
+          display: 'flex',
+          alignItems: 'center',
+          justifyContent: 'center',
+          backgroundColor: 'transparent',
+          cursor: 'move',
         }}
-      />
-    </div>
+        onContextMenu={handleRightClick}
+      >
+        <Character
+          character={character}
+          onInteraction={(type, data) => {
+            console.log('角色交互:', type, data)
+            // 处理角色交互
+            if (type === 'click') {
+              // 点击角色时可以触发特定动画或对话
+            }
+          }}
+        />
+      </div>
+
+      {/* 角色模板管理器 */}
+      {showTemplateManager && (
+        <CharacterTemplateManager
+          onClose={() => setShowTemplateManager(false)}
+          onSelect={(template) => {
+            console.log('选择了模板:', template)
+            setShowTemplateManager(false)
+          }}
+        />
+      )}
+    </>
   )
 }

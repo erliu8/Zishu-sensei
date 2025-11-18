@@ -8,7 +8,7 @@
 //! - 配置自动保存
 
 use tauri::{AppHandle, Manager, PhysicalPosition, PhysicalSize, Window, CloseRequestApi};
-use tracing::{debug, error, info, warn};
+use tracing::{debug, error, info, trace, warn};
 use std::sync::Arc;
 use parking_lot::Mutex;
 use chrono::Local;
@@ -113,7 +113,7 @@ impl WindowEventHandler {
     /// 处理窗口移动事件
     pub fn handle_moved(&self, window: &Window, position: PhysicalPosition<i32>) {
         let window_label = window.label();
-        debug!("窗口 '{}' 移动到位置: ({}, {})", window_label, position.x, position.y);
+        trace!("窗口 '{}' 移动到位置: ({}, {})", window_label, position.x, position.y);
 
         // 只保存主窗口的位置
         if window_label == "main" {
@@ -126,7 +126,7 @@ impl WindowEventHandler {
                 
                 // 如果位置发生变化，记录日志
                 if old_position != config.window.position {
-                    info!("主窗口位置更新: {:?} -> {:?}", old_position, config.window.position);
+                    trace!("主窗口位置更新: {:?} -> {:?}", old_position, config.window.position);
                     
                     // 防抖保存配置
                     drop(config); // 释放锁
@@ -144,7 +144,7 @@ impl WindowEventHandler {
     /// 处理窗口调整大小事件
     pub fn handle_resized(&self, window: &Window, size: PhysicalSize<u32>) {
         let window_label = window.label();
-        debug!("窗口 '{}' 大小改变: {} x {}", window_label, size.width, size.height);
+        trace!("窗口 '{}' 大小改变: {} x {}", window_label, size.width, size.height);
 
         // 只保存主窗口的大小
         if window_label == "main" {
@@ -159,7 +159,7 @@ impl WindowEventHandler {
                 
                 // 如果大小发生变化，记录日志
                 if old_width != config.window.width || old_height != config.window.height {
-                    info!("主窗口大小更新: {}x{} -> {}x{}", 
+                    debug!("主窗口大小更新: {}x{} -> {}x{}", 
                         old_width, old_height, 
                         config.window.width, config.window.height
                     );

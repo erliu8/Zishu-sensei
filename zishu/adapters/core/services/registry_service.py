@@ -130,7 +130,6 @@ class AdapterRegistryService(AsyncService):
             if not self.is_running:
                 return HealthCheckResult(
                     is_healthy=False,
-                    status=ServiceHealth.UNHEALTHY,
                     service_name="adapter_registry",
                     message="Service is not running",
                 )
@@ -140,7 +139,6 @@ class AdapterRegistryService(AsyncService):
             if registration_count > self._max_registrations:
                 return HealthCheckResult(
                     is_healthy=False,
-                    status=ServiceHealth.UNHEALTHY,
                     service_name="adapter_registry",
                     message=f"Too many registrations: {registration_count}/{self._max_registrations}",
                 )
@@ -152,14 +150,12 @@ class AdapterRegistryService(AsyncService):
             if memory_usage > max_memory:
                 return HealthCheckResult(
                     is_healthy=False,
-                    status=ServiceHealth.DEGRADED,
                     service_name="adapter_registry",
                     message=f"High memory usage: {memory_usage / 1024 / 1024:.1f}MB",
                 )
 
             return HealthCheckResult(
                 is_healthy=True,
-                status=ServiceHealth.HEALTHY,
                 service_name="adapter_registry",
                 message=f"Registry healthy with {registration_count} registrations",
                 details={
@@ -174,7 +170,6 @@ class AdapterRegistryService(AsyncService):
         except Exception as e:
             return HealthCheckResult(
                 is_healthy=False,
-                status=ServiceHealth.UNHEALTHY,
                 service_name="adapter_registry",
                 message=f"Health check failed: {str(e)}",
             )

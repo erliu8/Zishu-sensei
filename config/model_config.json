@@ -1,0 +1,14 @@
+{
+  "default_model_id": "index-1.9b-character",
+  "models": {
+    "index-1.9b-character": {
+      "name": "Index-1.9B-Character",
+      "path": "/data/disk/models/Index-1.9B-character/IndexTeam/Index-1___9B-Character",
+      "type": "local",
+      "format": "pytorch",
+      "device": "cuda",
+      "load_in_8bit": false,
+      "trust_remote_code": true
+    }
+  }
+}

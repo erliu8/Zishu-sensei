@@ -2,12 +2,13 @@
 //! 
 //! 提供Prompt的创建、编辑、删除、应用等功能
 //! Prompt用于角色扮演，与本地LLM模型配合使用
+//! 
+//! **已迁移到数据库存储**
 
 use tauri::{AppHandle, State};
 use serde::{Deserialize, Serialize};
 use tracing::{info, error, warn};
 use std::collections::HashMap;
-use std::path::{Path, PathBuf};
 use chrono::{DateTime, Utc};
 
 use crate::{
@@ -110,8 +111,26 @@ pub async fn get_prompts(
 ) -> Result<CommandResponse<Vec<Prompt>>, String> {
     info!("获取Prompt列表");
     
-    match get_prompts_from_storage(&app_handle).await {
-        Ok(prompts) => {
+    let db = crate::database::get_database()
+        .ok_or_else(|| "数据库未初始化".to_string())?;
+    
+    match db.prompt_registry.get_all_prompts().await {
+        Ok(db_prompts) => {
+            let prompts: Vec<Prompt> = db_prompts.into_iter().map(|p| Prompt {
+                id: p.id,
+                name: p.name,
+                content: p.content,
+                description: p.description,
+                model_id: p.model_id,
+                character_setting: p.character_setting,
+                is_enabled: p.is_enabled,
+                is_default: p.is_default,
+                created_at: p.created_at,
+                updated_at: p.updated_at,
+                usage_count: p.usage_count as u64,
+                metadata: p.metadata,
+            }).collect();
+            
             info!("成功获取 {} 个Prompt", prompts.len());
             Ok(CommandResponse::success(prompts))
         }
@@ -131,8 +150,57 @@ pub async fn create_prompt(
 ) -> Result<CommandResponse<Prompt>, String> {
     info!("创建Prompt: {}", request.name);
     
-    match create_prompt_internal(&request, &app_handle).await {
-        Ok(prompt) => {
+    // 验证输入
+    if request.name.trim().is_empty() {
+        return Ok(CommandResponse::error("Prompt名称不能为空".to_string()));
+    }
+    
+    if request.content.trim().is_empty() {
+        return Ok(CommandResponse::error("Prompt内容不能为空".to_string()));
+    }
+    
+    let db = crate::database::get_database()
+        .ok_or_else(|| "数据库未初始化".to_string())?;
+    
+    let prompt_id = uuid::Uuid::new_v4().to_string();
+    let now = chrono::Utc::now().timestamp();
+    
+    let db_prompt = crate::database::prompt_registry::PromptData {
+        id: prompt_id.clone(),
+        name: request.name.clone(),
+        content: request.content.clone(),
+        description: request.description.clone(),
+        model_id: request.model_id.clone(),
+        character_setting: request.character_setting.clone(),
+        is_enabled: true,
+        is_default: request.set_as_default,
+        created_at: now,
+        updated_at: now,
+        usage_count: 0,
+        metadata: HashMap::new(),
+    };
+    
+    match db.prompt_registry.create_prompt(db_prompt.clone()).await {
+        Ok(_) => {
+            if request.set_as_default {
+                let _ = db.prompt_registry.set_default_prompt(&prompt_id).await;
+            }
+            
+            let prompt = Prompt {
+                id: db_prompt.id,
+                name: db_prompt.name,
+                content: db_prompt.content,
+                description: db_prompt.description,
+                model_id: db_prompt.model_id,
+                character_setting: db_prompt.character_setting,
+                is_enabled: db_prompt.is_enabled,
+                is_default: db_prompt.is_default,
+                created_at: db_prompt.created_at,
+                updated_at: db_prompt.updated_at,
+                usage_count: db_prompt.usage_count as u64,
+                metadata: db_prompt.metadata,
+            };
+            
             info!("Prompt创建成功: {}", prompt.id);
             Ok(CommandResponse::success_with_message(
                 prompt,
@@ -155,8 +223,57 @@ pub async fn update_prompt(
 ) -> Result<CommandResponse<Prompt>, String> {
     info!("更新Prompt: {}", request.prompt_id);
     
-    match update_prompt_internal(&request, &app_handle).await {
-        Ok(prompt) => {
+    let db = crate::database::get_database()
+        .ok_or_else(|| "数据库未初始化".to_string())?;
+    
+    // 获取现有Prompt
+    let existing_prompt = match db.prompt_registry.get_prompt(&request.prompt_id).await {
+        Ok(Some(p)) => p,
+        Ok(None) => {
+            return Ok(CommandResponse::error(format!("Prompt不存在: {}", request.prompt_id)));
+        }
+        Err(e) => {
+            return Ok(CommandResponse::error(format!("获取Prompt失败: {}", e)));
+        }
+    };
+    
+    // 更新字段
+    let updated_prompt = crate::database::prompt_registry::PromptData {
+        id: existing_prompt.id.clone(),
+        name: request.name.unwrap_or(existing_prompt.name),
+        content: request.content.unwrap_or(existing_prompt.content),
+        description: request.description.or(existing_prompt.description),
+        model_id: existing_prompt.model_id,
+        character_setting: request.character_setting.or(existing_prompt.character_setting),
+        is_enabled: existing_prompt.is_enabled,
+        is_default: request.set_as_default.unwrap_or(existing_prompt.is_default),
+        created_at: existing_prompt.created_at,
+        updated_at: chrono::Utc::now().timestamp(),
+        usage_count: existing_prompt.usage_count,
+        metadata: existing_prompt.metadata.clone(),
+    };
+    
+    match db.prompt_registry.update_prompt(&request.prompt_id, updated_prompt.clone()).await {
+        Ok(_) => {
+            if request.set_as_default.unwrap_or(false) {
+                let _ = db.prompt_registry.set_default_prompt(&request.prompt_id).await;
+            }
+            
+            let prompt = Prompt {
+                id: updated_prompt.id,
+                name: updated_prompt.name,
+                content: updated_prompt.content,
+                description: updated_prompt.description,
+                model_id: updated_prompt.model_id,
+                character_setting: updated_prompt.character_setting,
+                is_enabled: updated_prompt.is_enabled,
+                is_default: updated_prompt.is_default,
+                created_at: updated_prompt.created_at,
+                updated_at: updated_prompt.updated_at,
+                usage_count: updated_prompt.usage_count as u64,
+                metadata: updated_prompt.metadata,
+            };
+            
             info!("Prompt更新成功: {}", prompt.id);
             Ok(CommandResponse::success_with_message(
                 prompt,
@@ -179,7 +296,10 @@ pub async fn delete_prompt(
 ) -> Result<CommandResponse<bool>, String> {
     info!("删除Prompt: {}", request.prompt_id);
     
-    match delete_prompt_internal(&request, &app_handle).await {
+    let db = crate::database::get_database()
+        .ok_or_else(|| "数据库未初始化".to_string())?;
+    
+    match db.prompt_registry.delete_prompt(&request.prompt_id).await {
         Ok(_) => {
             info!("Prompt删除成功: {}", request.prompt_id);
             Ok(CommandResponse::success_with_message(
@@ -203,17 +323,35 @@ pub async fn apply_prompt(
 ) -> Result<CommandResponse<bool>, String> {
     info!("应用Prompt: {}", request.prompt_id);
     
-    match apply_prompt_internal(&request, &app_handle, &state).await {
-        Ok(_) => {
-            info!("Prompt应用成功: {}", request.prompt_id);
-            Ok(CommandResponse::success_with_message(
-                true,
-                "Prompt应用成功".to_string(),
-            ))
+    let db = crate::database::get_database()
+        .ok_or_else(|| "数据库未初始化".to_string())?;
+    
+    // 验证Prompt是否存在
+    match db.prompt_registry.get_prompt(&request.prompt_id).await {
+        Ok(Some(_)) => {
+            // 设置为默认
+            match db.prompt_registry.set_default_prompt(&request.prompt_id).await {
+                Ok(_) => {
+                    // 增加使用次数
+                    let _ = db.prompt_registry.increment_usage(&request.prompt_id).await;
+                    
+                    info!("Prompt应用成功: {}", request.prompt_id);
+                    Ok(CommandResponse::success_with_message(
+                        true,
+                        "Prompt应用成功".to_string(),
+                    ))
+                }
+                Err(e) => {
+                    error!("应用Prompt失败: {}", e);
+                    Ok(CommandResponse::error(format!("应用Prompt失败: {}", e)))
+                }
+            }
+        }
+        Ok(None) => {
+            Ok(CommandResponse::error(format!("Prompt不存在: {}", request.prompt_id)))
         }
         Err(e) => {
-            error!("应用Prompt失败: {}", e);
-            Ok(CommandResponse::error(format!("应用Prompt失败: {}", e)))
+            Ok(CommandResponse::error(format!("获取Prompt失败: {}", e)))
         }
     }
 }
@@ -227,8 +365,26 @@ pub async fn get_prompt(
 ) -> Result<CommandResponse<Prompt>, String> {
     info!("获取Prompt详情: {}", prompt_id);
     
-    match get_prompt_by_id(&prompt_id, &app_handle).await {
-        Ok(Some(prompt)) => {
+    let db = crate::database::get_database()
+        .ok_or_else(|| "数据库未初始化".to_string())?;
+    
+    match db.prompt_registry.get_prompt(&prompt_id).await {
+        Ok(Some(db_prompt)) => {
+            let prompt = Prompt {
+                id: db_prompt.id,
+                name: db_prompt.name,
+                content: db_prompt.content,
+                description: db_prompt.description,
+                model_id: db_prompt.model_id,
+                character_setting: db_prompt.character_setting,
+                is_enabled: db_prompt.is_enabled,
+                is_default: db_prompt.is_default,
+                created_at: db_prompt.created_at,
+                updated_at: db_prompt.updated_at,
+                usage_count: db_prompt.usage_count as u64,
+                metadata: db_prompt.metadata,
+            };
+            
             info!("成功获取Prompt详情: {}", prompt.name);
             Ok(CommandResponse::success(prompt))
         }
@@ -251,279 +407,35 @@ pub async fn get_current_prompt(
 ) -> Result<CommandResponse<Option<Prompt>>, String> {
     info!("获取当前使用的Prompt");
     
-    match get_default_prompt(&app_handle).await {
-        Ok(prompt) => {
-            Ok(CommandResponse::success(prompt))
+    let db = crate::database::get_database()
+        .ok_or_else(|| "数据库未初始化".to_string())?;
+    
+    match db.prompt_registry.get_default_prompt().await {
+        Ok(Some(db_prompt)) => {
+            let prompt = Prompt {
+                id: db_prompt.id,
+                name: db_prompt.name,
+                content: db_prompt.content,
+                description: db_prompt.description,
+                model_id: db_prompt.model_id,
+                character_setting: db_prompt.character_setting,
+                is_enabled: db_prompt.is_enabled,
+                is_default: db_prompt.is_default,
+                created_at: db_prompt.created_at,
+                updated_at: db_prompt.updated_at,
+                usage_count: db_prompt.usage_count as u64,
+                metadata: db_prompt.metadata,
+            };
+            Ok(CommandResponse::success(Some(prompt)))
+        }
+        Ok(None) => {
+            Ok(CommandResponse::success(None))
         }
         Err(e) => {
             error!("获取当前Prompt失败: {}", e);
             Ok(CommandResponse::error(format!("获取当前Prompt失败: {}", e)))
         }
     }
-}
-
-// ================================
-// 内部实现函数
-// ================================
-
-/// 从存储中获取所有Prompt
-async fn get_prompts_from_storage(app_handle: &AppHandle) -> Result<Vec<Prompt>, String> {
-    let prompts_dir = get_prompts_directory(app_handle)?;
-    
-    if !prompts_dir.exists() {
-        std::fs::create_dir_all(&prompts_dir).map_err(|e| {
-            format!("创建Prompt目录失败: {}", e)
-        })?;
-        return Ok(vec![]);
-    }
-    
-    // 读取Prompt索引文件
-    let index_file = prompts_dir.join("prompts_index.json");
-    if !index_file.exists() {
-        return Ok(vec![]);
-    }
-    
-    let content = std::fs::read_to_string(&index_file).map_err(|e| {
-        format!("读取Prompt索引失败: {}", e)
-    })?;
-    
-    let prompts: Vec<Prompt> = serde_json::from_str(&content).map_err(|e| {
-        format!("解析Prompt索引失败: {}", e)
-    })?;
-    
-    Ok(prompts)
-}
-
-/// 创建Prompt
-async fn create_prompt_internal(
-    request: &CreatePromptRequest,
-    app_handle: &AppHandle,
-) -> Result<Prompt, String> {
-    // 验证输入
-    if request.name.trim().is_empty() {
-        return Err("Prompt名称不能为空".to_string());
-    }
-    
-    if request.content.trim().is_empty() {
-        return Err("Prompt内容不能为空".to_string());
-    }
-    
-    // 如果设为默认，先取消其他默认Prompt
-    if request.set_as_default {
-        unset_all_default_prompts(app_handle).await?;
-    }
-    
-    // 生成Prompt ID
-    let prompt_id = format!("prompt_{}", uuid::Uuid::new_v4().to_string().replace("-", "")[..16].to_string());
-    
-    // 创建Prompt
-    let prompt = Prompt {
-        id: prompt_id.clone(),
-        name: request.name.clone(),
-        content: request.content.clone(),
-        description: request.description.clone(),
-        model_id: request.model_id.clone(),
-        character_setting: request.character_setting.clone(),
-        is_enabled: true,
-        is_default: request.set_as_default,
-        created_at: chrono::Utc::now().timestamp(),
-        updated_at: chrono::Utc::now().timestamp(),
-        usage_count: 0,
-        metadata: HashMap::new(),
-    };
-    
-    // 保存Prompt
-    save_prompt_to_index(&prompt, app_handle)?;
-    
-    Ok(prompt)
-}
-
-/// 更新Prompt
-async fn update_prompt_internal(
-    request: &UpdatePromptRequest,
-    app_handle: &AppHandle,
-) -> Result<Prompt, String> {
-    let mut prompts = get_prompts_from_storage(app_handle).await?;
-    
-    let prompt = prompts.iter_mut()
-        .find(|p| p.id == request.prompt_id)
-        .ok_or("Prompt不存在")?;
-    
-    // 更新字段
-    if let Some(name) = &request.name {
-        prompt.name = name.clone();
-    }
-    
-    if let Some(content) = &request.content {
-        prompt.content = content.clone();
-    }
-    
-    if let Some(description) = &request.description {
-        prompt.description = Some(description.clone());
-    }
-    
-    if let Some(character_setting) = &request.character_setting {
-        prompt.character_setting = Some(character_setting.clone());
-    }
-    
-    if let Some(set_as_default) = request.set_as_default {
-        if set_as_default {
-            unset_all_default_prompts(app_handle).await?;
-        }
-        prompt.is_default = set_as_default;
-    }
-    
-    prompt.updated_at = chrono::Utc::now().timestamp();
-    
-    // 克隆prompt数据以便在保存后返回
-    let prompt_clone = prompt.clone();
-    
-    // 保存更新（现在可以安全地借用prompts，因为prompt的借用已经结束）
-    save_all_prompts_to_index(&prompts, app_handle)?;
-    
-    Ok(prompt_clone)
-}
-
-/// 删除Prompt
-async fn delete_prompt_internal(
-    request: &DeletePromptRequest,
-    app_handle: &AppHandle,
-) -> Result<(), String> {
-    let mut prompts = get_prompts_from_storage(app_handle).await?;
-    
-    prompts.retain(|p| p.id != request.prompt_id);
-    
-    save_all_prompts_to_index(&prompts, app_handle)?;
-    
-    Ok(())
-}
-
-/// 应用Prompt
-async fn apply_prompt_internal(
-    request: &ApplyPromptRequest,
-    app_handle: &AppHandle,
-    _state: &AppState,
-) -> Result<(), String> {
-    let mut prompts = get_prompts_from_storage(app_handle).await?;
-    
-    let prompt = prompts.iter_mut()
-        .find(|p| p.id == request.prompt_id)
-        .ok_or("Prompt不存在")?;
-    
-    // 取消所有默认Prompt
-    unset_all_default_prompts(app_handle).await?;
-    
-    // 设置为默认
-    prompt.is_default = true;
-    prompt.is_enabled = true;
-    prompt.usage_count += 1;
-    prompt.updated_at = chrono::Utc::now().timestamp();
-    
-    // 如果提供了模型ID，更新关联
-    if let Some(model_id) = &request.model_id {
-        prompt.model_id = Some(model_id.clone());
-    }
-    
-    // 重新加载所有Prompt以更新状态
-    let mut all_prompts = get_prompts_from_storage(app_handle).await?;
-    for p in all_prompts.iter_mut() {
-        if p.id == request.prompt_id {
-            p.is_default = true;
-            p.is_enabled = true;
-            p.usage_count += 1;
-            p.updated_at = chrono::Utc::now().timestamp();
-            if let Some(model_id) = &request.model_id {
-                p.model_id = Some(model_id.clone());
-            }
-        } else {
-            p.is_default = false;
-        }
-    }
-    
-    save_all_prompts_to_index(&all_prompts, app_handle)?;
-    
-    Ok(())
-}
-
-/// 根据ID获取Prompt
-async fn get_prompt_by_id(
-    prompt_id: &str,
-    app_handle: &AppHandle,
-) -> Result<Option<Prompt>, String> {
-    let prompts = get_prompts_from_storage(app_handle).await?;
-    Ok(prompts.into_iter().find(|p| p.id == prompt_id))
-}
-
-/// 获取默认Prompt
-async fn get_default_prompt(app_handle: &AppHandle) -> Result<Option<Prompt>, String> {
-    let prompts = get_prompts_from_storage(app_handle).await?;
-    Ok(prompts.into_iter().find(|p| p.is_default && p.is_enabled))
-}
-
-/// 取消所有默认Prompt
-async fn unset_all_default_prompts(app_handle: &AppHandle) -> Result<(), String> {
-    let mut prompts = get_prompts_from_storage(app_handle).await?;
-    
-    for prompt in prompts.iter_mut() {
-        prompt.is_default = false;
-    }
-    
-    save_all_prompts_to_index(&prompts, app_handle)?;
-    
-    Ok(())
-}
-
-/// 获取Prompt存储目录
-fn get_prompts_directory(app_handle: &AppHandle) -> Result<PathBuf, String> {
-    let app_data_dir = app_handle.path_resolver()
-        .app_data_dir()
-        .ok_or("无法获取应用数据目录")?;
-    
-    Ok(app_data_dir.join("prompts"))
-}
-
-/// 保存Prompt到索引
-fn save_prompt_to_index(prompt: &Prompt, app_handle: &AppHandle) -> Result<(), String> {
-    let prompts_dir = get_prompts_directory(app_handle)?;
-    let index_file = prompts_dir.join("prompts_index.json");
-    
-    let mut prompts = if index_file.exists() {
-        let content = std::fs::read_to_string(&index_file).map_err(|e| {
-            format!("读取Prompt索引失败: {}", e)
-        })?;
-        serde_json::from_str::<Vec<Prompt>>(&content).unwrap_or_default()
-    } else {
-        Vec::new()
-    };
-    
-    // 更新或添加Prompt
-    if let Some(existing) = prompts.iter_mut().find(|p| p.id == prompt.id) {
-        *existing = prompt.clone();
-    } else {
-        prompts.push(prompt.clone());
-    }
-    
-    save_all_prompts_to_index(&prompts, app_handle)
-}
-
-/// 保存所有Prompt到索引
-fn save_all_prompts_to_index(prompts: &[Prompt], app_handle: &AppHandle) -> Result<(), String> {
-    let prompts_dir = get_prompts_directory(app_handle)?;
-    std::fs::create_dir_all(&prompts_dir).map_err(|e| {
-        format!("创建Prompt目录失败: {}", e)
-    })?;
-    
-    let index_file = prompts_dir.join("prompts_index.json");
-    
-    let content = serde_json::to_string_pretty(prompts).map_err(|e| {
-        format!("序列化Prompt索引失败: {}", e)
-    })?;
-    
-    std::fs::write(&index_file, content).map_err(|e| {
-        format!("写入Prompt索引失败: {}", e)
-    })?;
-    
-    Ok(())
 }
 
 // ================================
@@ -575,7 +487,7 @@ pub fn get_command_metadata() -> HashMap<String, CommandMetadata> {
     
     metadata.insert("apply_prompt".to_string(), CommandMetadata {
         name: "apply_prompt".to_string(),
-        description: "应用Prompt".to_string(),
+        description: "应用Prompt（设置为当前使用的Prompt）".to_string(),
         input_type: Some("ApplyPromptRequest".to_string()),
         output_type: Some("bool".to_string()),
         required_permission: PermissionLevel::User,
@@ -605,4 +517,3 @@ pub fn get_command_metadata() -> HashMap<String, CommandMetadata> {
     
     metadata
 }
-

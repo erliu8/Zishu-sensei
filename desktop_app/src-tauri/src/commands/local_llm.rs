@@ -4,7 +4,7 @@
 //! 本地LLM模型 + prompt 是智能硬适配器的一种，但对用户隐藏这个技术细节
 //! 模型注册通过 zishu 后端核心服务进行管理
 
-use tauri::{AppHandle, State};
+use tauri::AppHandle;
 use serde::{Deserialize, Serialize};
 use tracing::{info, error, warn};
 use std::collections::HashMap;
@@ -12,10 +12,7 @@ use std::path::{Path, PathBuf};
 use chrono::{DateTime, Utc};
 use reqwest::Client;
 
-use crate::{
-    commands::*,
-    state::AppState,
-};
+use crate::commands::*;
 
 // ================================
 // 数据类型定义
@@ -122,12 +119,29 @@ pub struct VerifyModelResponse {
 #[tauri::command]
 pub async fn get_local_llm_models(
     app_handle: AppHandle,
-    state: State<'_, AppState>,
 ) -> Result<CommandResponse<Vec<LocalLLMModel>>, String> {
     info!("获取本地LLM模型列表");
     
-    match get_models_from_storage(&app_handle).await {
-        Ok(models) => {
+    let db = crate::database::get_database()
+        .ok_or_else(|| "数据库未初始化".to_string())?;
+    
+    match db.local_llm_registry.get_all_models().await {
+        Ok(db_models) => {
+            let models: Vec<LocalLLMModel> = db_models.into_iter().map(|m| LocalLLMModel {
+                id: m.id,
+                name: m.name,
+                model_path: m.model_path,
+                model_type: m.model_type,
+                size_bytes: m.size_bytes as u64,
+                parameter_count: m.parameter_count.map(|p| p as u64),
+                description: m.description,
+                supported_formats: m.supported_formats,
+                is_loaded: m.is_loaded,
+                created_at: m.created_at,
+                updated_at: m.updated_at,
+                metadata: m.metadata,
+            }).collect();
+            
             info!("成功获取 {} 个本地LLM模型", models.len());
             Ok(CommandResponse::success(models))
         }
@@ -143,7 +157,6 @@ pub async fn get_local_llm_models(
 pub async fn upload_local_llm_model(
     request: UploadModelRequest,
     app_handle: AppHandle,
-    state: State<'_, AppState>,
 ) -> Result<CommandResponse<LocalLLMModel>, String> {
     info!("上传本地LLM模型: {}", request.name);
     
@@ -167,7 +180,6 @@ pub async fn upload_local_llm_model(
 pub async fn register_local_llm_model(
     request: RegisterModelRequest,
     app_handle: AppHandle,
-    state: State<'_, AppState>,
 ) -> Result<CommandResponse<LocalLLMModel>, String> {
     info!("注册本地LLM模型路径: {}", request.name);
     
@@ -191,7 +203,6 @@ pub async fn register_local_llm_model(
 pub async fn download_local_llm_model(
     request: DownloadModelRequest,
     app_handle: AppHandle,
-    state: State<'_, AppState>,
 ) -> Result<CommandResponse<LocalLLMModel>, String> {
     info!("下载本地LLM模型: {}", request.name);
     
@@ -215,7 +226,6 @@ pub async fn download_local_llm_model(
 pub async fn delete_local_llm_model(
     request: DeleteModelRequest,
     app_handle: AppHandle,
-    state: State<'_, AppState>,
 ) -> Result<CommandResponse<bool>, String> {
     info!("删除本地LLM模型: {}", request.model_id);
     
@@ -239,7 +249,6 @@ pub async fn delete_local_llm_model(
 pub async fn verify_local_llm_model(
     request: VerifyModelRequest,
     app_handle: AppHandle,
-    state: State<'_, AppState>,
 ) -> Result<CommandResponse<VerifyModelResponse>, String> {
     info!("验证本地LLM模型: {}", request.model_id);
     
@@ -260,12 +269,29 @@ pub async fn verify_local_llm_model(
 pub async fn get_local_llm_model(
     model_id: String,
     app_handle: AppHandle,
-    state: State<'_, AppState>,
 ) -> Result<CommandResponse<LocalLLMModel>, String> {
     info!("获取本地LLM模型详情: {}", model_id);
     
-    match get_model_by_id(&model_id, &app_handle).await {
-        Ok(Some(model)) => {
+    let db = crate::database::get_database()
+        .ok_or_else(|| "数据库未初始化".to_string())?;
+    
+    match db.local_llm_registry.get_model(&model_id).await {
+        Ok(Some(db_model)) => {
+            let model = LocalLLMModel {
+                id: db_model.id,
+                name: db_model.name,
+                model_path: db_model.model_path,
+                model_type: db_model.model_type,
+                size_bytes: db_model.size_bytes as u64,
+                parameter_count: db_model.parameter_count.map(|p| p as u64),
+                description: db_model.description,
+                supported_formats: db_model.supported_formats,
+                is_loaded: db_model.is_loaded,
+                created_at: db_model.created_at,
+                updated_at: db_model.updated_at,
+                metadata: db_model.metadata,
+            };
+            
             info!("成功获取模型详情: {}", model.name);
             Ok(CommandResponse::success(model))
         }
@@ -322,8 +348,14 @@ async fn get_models_from_storage(app_handle: &AppHandle) -> Result<Vec<LocalLLMM
 
 /// 获取后端 URL
 fn get_backend_url() -> String {
-    std::env::var("ZISHU_BACKEND_URL")
-        .unwrap_or_else(|_| "http://localhost:8000".to_string())
+    let url = std::env::var("ZISHU_BACKEND_URL")
+        .unwrap_or_else(|_| "http://127.0.0.1:8000".to_string());
+    
+    // 如果使用localhost，替换为127.0.0.1以避免IPv6解析问题
+    let normalized_url = url.replace("localhost", "127.0.0.1");
+    
+    info!("后端 URL 配置: 原始={}, 规范化={}", url, normalized_url);
+    normalized_url
 }
 
 /// 注册模型路径（直接引用，不复制文件）
@@ -366,18 +398,49 @@ async fn register_model_path(
     
     info!("Registering LLM model via backend API: {}", api_url);
     
-    // 在正式请求前做一次后端健康检查（3秒超时，快速失败）
+    // 在正式请求前做一次后端健康检查（5秒超时，给一些buffer）
+    info!("开始健康检查: {}", health_url);
+    let health_start = std::time::Instant::now();
     let health_client = Client::builder()
-        .timeout(std::time::Duration::from_secs(3))
+        .timeout(std::time::Duration::from_secs(5))
+        .connect_timeout(std::time::Duration::from_secs(2))
         .build()
         .map_err(|e| format!("创建 HTTP 客户端失败: {}", e))?;
-    if let Err(e) = health_client.get(&health_url).send().await {
-        return Err(format!("后端服务不可用或未启动：{}；请检查 ZISHU_BACKEND_URL 与后端运行状态", e));
+    
+    match health_client.get(&health_url).send().await {
+        Ok(resp) => {
+            let elapsed = health_start.elapsed();
+            let status = resp.status();
+            info!("健康检查响应: status={}, 耗时: {:?}", status, elapsed);
+            
+            if !status.is_success() {
+                warn!("健康检查返回非成功状态: {}", status);
+                // 不阻止继续执行，只是警告
+            }
+        }
+        Err(e) => {
+            let elapsed = health_start.elapsed();
+            error!("健康检查失败: {}, 耗时: {:?}", e, elapsed);
+            
+            // 提供更详细的错误信息
+            let error_detail = if e.is_timeout() {
+                format!("健康检查超时（5秒）")
+            } else if e.is_connect() {
+                format!("无法连接到后端服务: {}", e)
+            } else {
+                format!("健康检查请求失败: {}", e)
+            };
+            
+            return Err(format!(
+                "后端服务不可用: {}\n\n请检查:\n1. 后端服务是否运行: docker ps | grep zishu-api\n2. 后端URL是否正确: {}\n3. 网络连接是否正常",
+                error_detail, backend_url
+            ));
+        }
     }
     
-    // 创建带超时的 HTTP 客户端（60秒整体超时）
+    // 创建带超时的 HTTP 客户端（120秒整体超时）
     let client = Client::builder()
-        .timeout(std::time::Duration::from_secs(60))
+        .timeout(std::time::Duration::from_secs(120))
         .build()
         .map_err(|e| format!("创建 HTTP 客户端失败: {}", e))?;
     
@@ -390,8 +453,13 @@ async fn register_model_path(
         "auto_verify": request.auto_verify,
     });
     
-    // 额外添加一层 Tokio 级整体超时（45秒），确保 Tauri 命令在后端较慢初始化时仍可完成
-    let response = tokio::time::timeout(std::time::Duration::from_secs(45), async {
+    // 发送注册请求（30秒超时，给首次初始化和大模型留足时间）
+    info!("开始发送注册请求到: {}", api_url);
+    info!("请求体内容: {}", serde_json::to_string_pretty(&request_body).unwrap_or_else(|_| "无法序列化".to_string()));
+    let request_start = std::time::Instant::now();
+    
+    info!("正在等待后端处理...");
+    let response = tokio::time::timeout(std::time::Duration::from_secs(30), async {
         client
             .post(&api_url)
             .json(&request_body)
@@ -400,19 +468,38 @@ async fn register_model_path(
     })
     .await
     .map_err(|_| {
-        "请求后端 API 超时（45秒）；请确认后端运行正常，或稍后重试".to_string()
+        let elapsed = request_start.elapsed();
+        error!("请求后端 API 超时（30秒），实际耗时: {:?}", elapsed);
+        format!(
+            "请求后端 API 超时（30秒），实际耗时: {:?}\n\n可能原因:\n1. 后端首次初始化适配器管理器较慢\n2. 模型体积较大\n3. 后端服务繁忙\n\n建议: 等待片刻后重试",
+            elapsed
+        )
     })?
     .map_err(|e| {
-        if e.is_timeout() {
-            "请求后端 API 超时（60秒）；请确认后端运行正常，或稍后重试".to_string()
+        let elapsed = request_start.elapsed();
+        error!("请求后端 API 失败: {}, 耗时: {:?}", e, elapsed);
+        
+        let error_detail = if e.is_timeout() {
+            format!("请求超时")
+        } else if e.is_connect() {
+            format!("连接失败: {}", e)
+        } else if e.is_request() {
+            format!("请求错误: {}", e)
         } else {
-            format!("请求后端 API 失败: {}", e)
-        }
+            format!("{}", e)
+        };
+        
+        format!("请求后端 API 失败: {}（耗时: {:?}）", error_detail, elapsed)
     })?;
     
-    if !response.status().is_success() {
+    let request_elapsed = request_start.elapsed();
+    let status = response.status();
+    info!("收到响应: status={}, 耗时: {:?}", status, request_elapsed);
+    
+    if !status.is_success() {
         let error_text = response.text().await.unwrap_or_else(|_| "未知错误".to_string());
-        return Err(format!("后端 API 返回错误: {}", error_text));
+        error!("后端 API 返回错误 (status: {}): {}", status, error_text);
+        return Err(format!("后端 API 返回错误 (status: {}): {}", status, error_text));
     }
     
     let api_response: serde_json::Value = response
@@ -798,66 +885,49 @@ fn detect_model_type(file_path: &Path) -> Result<String, String> {
     }
 }
 
-/// 保存模型到索引
+/// 保存模型到数据库
 fn save_model_to_index(model: &LocalLLMModel, app_handle: &AppHandle) -> Result<(), String> {
-    let models_dir = get_models_directory(app_handle)?;
-    let index_file = models_dir.join("models_index.json");
+    let db = crate::database::get_database()
+        .ok_or_else(|| "数据库未初始化".to_string())?;
     
-    let mut models = if index_file.exists() {
-        let content = std::fs::read_to_string(&index_file).map_err(|e| {
-            format!("读取模型索引失败: {}", e)
-        })?;
-        serde_json::from_str::<Vec<LocalLLMModel>>(&content).unwrap_or_default()
-    } else {
-        Vec::new()
+    let db_model = crate::database::local_llm_registry::LocalLLMModelData {
+        id: model.id.clone(),
+        name: model.name.clone(),
+        model_path: model.model_path.clone(),
+        model_type: model.model_type.clone(),
+        size_bytes: model.size_bytes as i64,
+        parameter_count: model.parameter_count.map(|p| p as i64),
+        description: model.description.clone(),
+        supported_formats: model.supported_formats.clone(),
+        is_loaded: model.is_loaded,
+        created_at: model.created_at,
+        updated_at: model.updated_at,
+        metadata: model.metadata.clone(),
     };
     
-    // 更新或添加模型
-    if let Some(existing) = models.iter_mut().find(|m| m.id == model.id) {
-        *existing = model.clone();
-    } else {
-        models.push(model.clone());
-    }
+    // 使用 tokio runtime 执行 async 代码
+    let rt = tokio::runtime::Handle::try_current()
+        .unwrap_or_else(|_| tokio::runtime::Runtime::new().unwrap().handle().clone());
     
-    let content = serde_json::to_string_pretty(&models).map_err(|e| {
-        format!("序列化模型索引失败: {}", e)
-    })?;
-    
-    std::fs::write(&index_file, content).map_err(|e| {
-        format!("写入模型索引失败: {}", e)
-    })?;
-    
-    Ok(())
+    rt.block_on(async {
+        db.local_llm_registry.register_model(db_model).await
+            .map_err(|e| format!("保存模型到数据库失败: {}", e))
+    })
 }
 
-/// 从索引中删除模型
+/// 从数据库中删除模型
 fn remove_model_from_index(model_id: &str, app_handle: &AppHandle) -> Result<(), String> {
-    let models_dir = get_models_directory(app_handle)?;
-    let index_file = models_dir.join("models_index.json");
+    let db = crate::database::get_database()
+        .ok_or_else(|| "数据库未初始化".to_string())?;
     
-    if !index_file.exists() {
-        return Ok(());
-    }
+    // 使用 tokio runtime 执行 async 代码
+    let rt = tokio::runtime::Handle::try_current()
+        .unwrap_or_else(|_| tokio::runtime::Runtime::new().unwrap().handle().clone());
     
-    let content = std::fs::read_to_string(&index_file).map_err(|e| {
-        format!("读取模型索引失败: {}", e)
-    })?;
-    
-    let mut models: Vec<LocalLLMModel> = serde_json::from_str(&content).map_err(|e| {
-        format!("解析模型索引失败: {}", e)
-    })?;
-    
-    models.retain(|m| m.id != model_id);
-    
-    let content = serde_json::to_string_pretty(&models).map_err(|e| {
-        format!("序列化模型索引失败: {}", e)
-    })?;
-    
-    std::fs::write(&index_file, content).map_err(|e| {
-        format!("写入模型索引失败: {}", e)
-    })?;
-    
-    Ok(())
+    rt.block_on(async {
+        db.local_llm_registry.delete_model(model_id).await
+            .map_err(|e| format!("从数据库删除模型失败: {}", e))
+    })
 }
 
 // ================================

@@ -23,6 +23,11 @@
 
 ### Fixed
 - 配置文件加载问题
+- **修复聊天无AI回复问题** (2024-11-17)
+  - 修正 `zishu/api/routes/chat.py` 推理引擎导入路径
+  - 修正 `desktop_app/src-tauri/src/utils/bridge.rs` API调用路径 (`/api/chat/completions`)
+  - 创建缺失的配置目录 `configs/prompts/models`
+  - 扩展本地LLM模型识别逻辑，支持从本地索引查询验证
 
 ### Security
 - 改进了模型推理的安全性

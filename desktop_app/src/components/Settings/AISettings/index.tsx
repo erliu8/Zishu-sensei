@@ -5,10 +5,11 @@
  */
 
 import React, { useState } from 'react'
-import { Bot, FileText } from 'lucide-react'
+import { Bot, FileText, Cloud } from 'lucide-react'
 
 import { LocalLLMSettings } from '../LocalLLMSettings'
 import { PromptSettings } from '../PromptSettings'
+import { ThirdPartyAPISettings } from '../ThirdPartyAPISettings'
 
 /**
  * 组件属性
@@ -21,7 +22,7 @@ export interface AISettingsProps {
  * AI设置组件
  */
 export const AISettings: React.FC<AISettingsProps> = ({ className }) => {
-    const [activeTab, setActiveTab] = useState<'llm' | 'prompt'>('llm')
+    const [activeTab, setActiveTab] = useState<'llm' | 'api' | 'prompt'>('llm')
 
     return (
         <div style={{
@@ -75,6 +76,43 @@ export const AISettings: React.FC<AISettingsProps> = ({ className }) => {
                     本地LLM模型
                 </button>
                 <button
+                    onClick={() => setActiveTab('api')}
+                    style={{
+                        display: 'flex',
+                        alignItems: 'center',
+                        gap: '6px',
+                        padding: '8px 16px',
+                        fontSize: '14px',
+                        fontWeight: 500,
+                        color: activeTab === 'api' 
+                            ? 'hsl(var(--color-foreground))' 
+                            : 'hsl(var(--color-muted-foreground))',
+                        backgroundColor: activeTab === 'api' 
+                            ? 'hsl(var(--color-muted) / 0.3)' 
+                            : 'transparent',
+                        border: 'none',
+                        borderBottom: activeTab === 'api' 
+                            ? '2px solid hsl(var(--color-primary))' 
+                            : '2px solid transparent',
+                        borderRadius: '6px 6px 0 0',
+                        cursor: 'pointer',
+                        transition: 'all 0.2s',
+                    }}
+                    onMouseEnter={(e) => {
+                        if (activeTab !== 'api') {
+                            e.currentTarget.style.backgroundColor = 'hsl(var(--color-muted) / 0.1)'
+                        }
+                    }}
+                    onMouseLeave={(e) => {
+                        if (activeTab !== 'api') {
+                            e.currentTarget.style.backgroundColor = 'transparent'
+                        }
+                    }}
+                >
+                    <Cloud size={16} />
+                    第三方API
+                </button>
+                <button
                     onClick={() => setActiveTab('prompt')}
                     style={{
                         display: 'flex',
@@ -118,6 +156,7 @@ export const AISettings: React.FC<AISettingsProps> = ({ className }) => {
                 marginTop: '8px',
             }}>
                 {activeTab === 'llm' && <LocalLLMSettings />}
+                {activeTab === 'api' && <ThirdPartyAPISettings />}
                 {activeTab === 'prompt' && <PromptSettings />}
             </div>
         </div>

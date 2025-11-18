@@ -1,0 +1,26 @@
+{
+  "models": [
+    {
+      "model_id": "index-1.9b-character",
+      "name": "Index-1.9B-Character",
+      "model_type": "causal_lm",
+      "version": "1.9B",
+      "architecture": "IndexForCausalLM",
+      "parameters": 1900000000,
+      "language": [
+        "zh",
+        "en"
+      ],
+      "description": "Index-1.9B Character Model for Chinese dialogue",
+      "config_path": "/data/disk/models/Index-1.9B-character/IndexTeam/Index-1___9B-Character/config.json",
+      "model_path": "/data/disk/models/Index-1.9B-character/IndexTeam/Index-1___9B-Character",
+      "quantization": null,
+      "tags": [
+        "character",
+        "dialogue",
+        "chinese"
+      ],
+      "metadata": {}
+    }
+  ]
+}

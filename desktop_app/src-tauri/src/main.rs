@@ -257,99 +257,8 @@ fn init_logging() -> Result<(), Box<dyn std::error::Error>> {
     Ok(())
 }
 
-/// 应用启动时的初始化
-async fn app_setup(app: &tauri::AppHandle) -> Result<(), Box<dyn std::error::Error + Send + Sync>> {
-    info!("开始应用初始化");
-    
-    // 初始化安全审计日志
-    let app_data_dir = app.path_resolver()
-        .app_data_dir()
-        .ok_or("无法获取应用数据目录")?;
-    let audit_db_path = app_data_dir.join("security_audit.db");
-    utils::security_audit::init_global_audit_logger(&audit_db_path)
-        .map_err(|e| format!("初始化审计日志失败: {}", e))?;
-    info!("安全审计日志系统已初始化");
-    
-    // 初始化日志数据库（PostgreSQL）
-    {
-        use deadpool_postgres::{Config, Runtime};
-        use tokio_postgres::NoTls;
-        
-        let mut cfg = Config::new();
-        cfg.dbname = Some("zishu_sensei".to_string());
-        cfg.host = Some("localhost".to_string());
-        cfg.user = Some("zishu".to_string());
-        cfg.password = Some("zishu123".to_string());
-        let pool = cfg.create_pool(Some(Runtime::Tokio1), NoTls)
-            .map_err(|e| format!("创建数据库连接池失败: {}", e))?;
-        
-        let log_db = database::logging::LogDatabase::new(pool);
-        
-        // 初始化日志表
-        if let Err(e) = log_db.init_tables().await {
-            tracing::warn!("初始化日志表失败: {}", e);
-        }
-        
-        app.manage(log_db);
-        info!("日志数据库系统已初始化");
-    }
-    
-    // 初始化数据库 - 移动到前面，确保在应用状态初始化之前完成
-    database::init_database(app.clone()).await?;
-    
-    // 初始化应用状态 - 移动到数据库初始化之后
-    let app_state = AppState::new(app.clone()).await?;
-    app.manage(app_state);
-    
-    // 加载配置
-    let config = load_config(app).await.unwrap_or_default();
-    
-    // 设置主窗口属性
-    if let Some(main_window) = app.get_window("main") {
-        // 应用窗口配置
-        let _ = main_window.set_size(tauri::Size::Physical(tauri::PhysicalSize {
-            width: config.window.width as u32,
-            height: config.window.height as u32,
-        }));
-        
-        if let Some((x, y)) = config.window.position {
-            let _ = main_window.set_position(tauri::Position::Physical(tauri::PhysicalPosition { x, y }));
-        }
-        
-        let _ = main_window.set_always_on_top(config.window.always_on_top);
-        let _ = main_window.set_resizable(config.window.resizable);
-        
-        // 设置窗口效果
-        #[cfg(target_os = "windows")]
-        {
-            use window_shadows::set_shadow;
-            if let Err(e) = set_shadow(&main_window, true) {
-                warn!("设置窗口阴影失败: {}", e);
-            }
-        }
-        
-        #[cfg(target_os = "macos")]
-        {
-            use window_vibrancy::{apply_vibrancy, NSVisualEffectMaterial};
-            if let Err(e) = apply_vibrancy(&main_window, NSVisualEffectMaterial::HudWindow, None, None) {
-                warn!("设置窗口毛玻璃效果失败: {}", e);
-            }
-        }
-        
-        info!("主窗口配置完成");
-    }
-    
-    // 初始化语言设置
-    if let Err(e) = commands::language::initialize_language_settings(app).await {
-        tracing::warn!("语言设置初始化失败: {}", e);
-    }
-    
-    // 启动后台任务
-    start_background_tasks(app.clone()).await?;
-    
-    info!("应用初始化完成");
-    Ok(())
-}
+// 注意：app_setup 函数已经被移除，其功能已整合到 main 函数中的 setup 闭包里
+// 这样可以确保在前端调用命令前，AppState 已经被正确注册
 
 /// 启动后台任务
 async fn start_background_tasks(app_handle: AppHandle) -> Result<(), Box<dyn std::error::Error + Send + Sync>> {
@@ -401,27 +310,160 @@ async fn main() {
         .setup(|app| {
             let app_handle = app.handle();
             
-            // 处理 deep link
+            // 关键：使用同步通道等待异步初始化完成
+            // 这样可以确保在前端调用命令前，AppState 已经被正确管理
+            info!("开始初始化关键组件");
+            
+            // 创建一个通道用于同步等待初始化完成
+            let (init_tx, init_rx) = std::sync::mpsc::channel::<Result<(), String>>();
+            
+            // 在异步任务中完成初始化
+            let app_handle_init = app_handle.clone();
+            tauri::async_runtime::spawn(async move {
+                // 初始化安全审计日志
+                let app_data_dir = app_handle_init.path_resolver()
+                    .app_data_dir()
+                    .expect("无法获取应用数据目录");
+                let audit_db_path = app_data_dir.join("security_audit.db");
+                if let Err(e) = utils::security_audit::init_global_audit_logger(&audit_db_path) {
+                    error!("初始化审计日志失败: {}", e);
+                } else {
+                    info!("安全审计日志系统已初始化");
+                }
+                
+                // 初始化日志数据库（PostgreSQL）
+                {
+                    use deadpool_postgres::{Config, Runtime};
+                    use tokio_postgres::NoTls;
+                    
+                    let mut cfg = Config::new();
+                    cfg.dbname = Some("zishu_sensei".to_string());
+                    cfg.host = Some("localhost".to_string());
+                    cfg.user = Some("zishu".to_string());
+                    cfg.password = Some("zishu123".to_string());
+                    
+                    match cfg.create_pool(Some(Runtime::Tokio1), NoTls) {
+                        Ok(pool) => {
+                            let log_db = database::logging::LogDatabase::new(pool);
+                            
+                            // 初始化日志表
+                            if let Err(e) = log_db.init_tables().await {
+                                tracing::warn!("初始化日志表失败: {}", e);
+                            }
+                            
+                            app_handle_init.manage(log_db);
+                            info!("日志数据库系统已初始化");
+                        }
+                        Err(e) => {
+                            error!("创建数据库连接池失败: {}", e);
+                        }
+                    }
+                }
+                
+                // 初始化主数据库
+                if let Err(e) = database::init_database(app_handle_init.clone()).await {
+                    error!("数据库初始化失败: {}", e);
+                    std::process::exit(1);
+                }
+                
+                // 初始化应用状态 - 这是最关键的，必须在这里完成
+                match AppState::new(app_handle_init.clone()).await {
+                    Ok(app_state) => {
+                        app_handle_init.manage(app_state);
+                        info!("✅ AppState 已成功注册到 Tauri 状态管理");
+                    }
+                    Err(e) => {
+                        error!("❌ 初始化 AppState 失败: {}", e);
+                        std::process::exit(1);
+                    }
+                }
+                
+                // 加载配置
+                let config = load_config(&app_handle_init).await.unwrap_or_default();
+                
+                // 设置主窗口属性
+                if let Some(main_window) = app_handle_init.get_window("main") {
+                    // 应用窗口配置
+                    let _ = main_window.set_size(tauri::Size::Physical(tauri::PhysicalSize {
+                        width: config.window.width as u32,
+                        height: config.window.height as u32,
+                    }));
+                    
+                    if let Some((x, y)) = config.window.position {
+                        let _ = main_window.set_position(tauri::Position::Physical(tauri::PhysicalPosition { x, y }));
+                    }
+                    
+                    let _ = main_window.set_always_on_top(config.window.always_on_top);
+                    let _ = main_window.set_resizable(config.window.resizable);
+                    
+                    // 设置窗口效果
+                    #[cfg(target_os = "windows")]
+                    {
+                        use window_shadows::set_shadow;
+                        if let Err(e) = set_shadow(&main_window, true) {
+                            tracing::warn!("设置窗口阴影失败: {}", e);
+                        }
+                    }
+                    
+                    #[cfg(target_os = "macos")]
+                    {
+                        use window_vibrancy::{apply_vibrancy, NSVisualEffectMaterial};
+                        if let Err(e) = apply_vibrancy(&main_window, NSVisualEffectMaterial::HudWindow, None, None) {
+                            tracing::warn!("设置窗口毛玻璃效果失败: {}", e);
+                        }
+                    }
+                    
+                    info!("主窗口配置完成");
+                }
+                
+                // 发送初始化完成信号
+                let _ = init_tx.send(Ok(()));
+            });
+            
+            // 同步等待初始化完成（使用超时避免死锁）
+            match init_rx.recv_timeout(std::time::Duration::from_secs(30)) {
+                Ok(Ok(())) => {
+                    info!("✅ 关键组件初始化完成，应用状态已就绪");
+                }
+                Ok(Err(e)) => {
+                    error!("❌ 初始化失败: {}", e);
+                    std::process::exit(1);
+                }
+                Err(_) => {
+                    error!("❌ 初始化超时");
+                    std::process::exit(1);
+                }
+            }
+            
+            // 非关键的初始化任务可以异步执行
             let app_handle_clone = app_handle.clone();
+            tauri::async_runtime::spawn(async move {
+                // 初始化语言设置
+                if let Err(e) = commands::language::initialize_language_settings(&app_handle_clone).await {
+                    tracing::warn!("语言设置初始化失败: {}", e);
+                }
+                
+                // 启动后台任务
+                if let Err(e) = start_background_tasks(app_handle_clone.clone()).await {
+                    error!("启动后台任务失败: {}", e);
+                }
+                
+                info!("✅ 后台任务初始化完成");
+            });
+            
+            // 处理 deep link
+            let app_handle_deeplink = app_handle.clone();
             tauri::async_runtime::spawn(async move {
                 // 检查启动参数中是否有 deep link
                 let args: Vec<String> = std::env::args().collect();
                 for arg in args {
                     if arg.starts_with("zishu://") {
                         info!("检测到 deep link: {}", arg);
-                        if let Err(e) = commands::deeplink::handle_deep_link(arg, app_handle_clone.clone()).await {
+                        if let Err(e) = commands::deeplink::handle_deep_link(arg, app_handle_deeplink.clone()).await {
                             error!("处理 deep link 失败: {}", e);
                         }
                         break;
                     }
-                }
-            });
-            
-            // 应用初始化
-            tauri::async_runtime::spawn(async move {
-                if let Err(e) = app_setup(&app_handle).await {
-                    error!("应用初始化失败: {}", e);
-                    std::process::exit(1);
                 }
             });
             
@@ -805,6 +847,12 @@ async fn main() {
             commands::prompt::apply_prompt,
             commands::prompt::get_prompt,
             commands::prompt::get_current_prompt,
+            
+            // 角色模板管理命令
+            commands::character_template::register_character_adapter,
+            commands::character_template::get_character_templates,
+            commands::character_template::save_character_template,
+            commands::character_template::delete_character_template,
         ])
         .manage(commands::shortcuts::ShortcutRegistry::new())
         .manage(commands::memory::MemoryManagerState::new())
