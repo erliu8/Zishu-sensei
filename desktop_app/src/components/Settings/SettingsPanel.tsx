@@ -18,7 +18,7 @@ export const SettingsPanel: React.FC<SettingsPanelProps> = ({
     onReset,
 }) => {
     // 使用模型加载器 Hook
-    const { currentCharacter, switchCharacter, loadCharacters } = useModelLoader()
+    const { currentCharacter, characterList, switchCharacter, loadCharacters } = useModelLoader()
     const [isModelSwitching, setIsModelSwitching] = useState(false)
 
     // 加载角色列表（获取当前激活的角色）
@@ -375,6 +375,8 @@ export const SettingsPanel: React.FC<SettingsPanelProps> = ({
                                     <ModelSelector
                                         currentModelId={currentCharacter?.id || 'hiyori'}
                                         onModelSelect={handleModelSelect}
+                                        models={characterList}
+                                        isLoading={!currentCharacter && characterList.length === 0}
                                     />
                                 </div>
                                 <p style={{

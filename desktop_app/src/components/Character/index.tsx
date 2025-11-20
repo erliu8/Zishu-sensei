@@ -51,13 +51,17 @@ export const Character: React.FC<CharacterProps> = ({
 
     // 当后端角色改变时，更新前端模型
     useEffect(() => {
+        console.log('[Character] 🔍 currentCharacter 变化:', currentCharacter)
         if (currentCharacter) {
-            console.log('🔄 后端角色切换到:', currentCharacter.id)
+            console.log('[Character] 🔄 后端角色切换到:', currentCharacter.id, '名称:', currentCharacter.name)
             setCurrentModelId(currentCharacter.id)
             // 根据角色特性选择不同的过渡动画
             const animations: TransitionType[] = ['fade', 'slide-left', 'zoom', 'dissolve']
             const randomAnimation = animations[Math.floor(Math.random() * animations.length)]
             setTransitionType(randomAnimation)
+            console.log('[Character] ✅ 已设置新的 modelId:', currentCharacter.id)
+        } else {
+            console.log('[Character] ⚠️ currentCharacter 为 null')
         }
     }, [currentCharacter])
 

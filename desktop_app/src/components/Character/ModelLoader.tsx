@@ -12,6 +12,7 @@ export interface CharacterInfo {
     name: string
     description?: string
     preview_image?: string
+    model_path: string
     motions: string[]
     expressions: string[]
     is_active: boolean
@@ -155,6 +156,25 @@ export const ModelLoader: React.FC<ModelLoaderProps> = ({
  */
 export const useModelLoader = () => {
     const [currentCharacter, setCurrentCharacter] = useState<CharacterInfo | null>(null)
+    const [characterList, setCharacterList] = useState<CharacterInfo[]>([])
+
+    // 监听后端角色切换事件
+    useEffect(() => {
+        console.log('[useModelLoader] 🎧 设置事件监听器: character-changed')
+        
+        const unlisten = listen('character-changed', (event: any) => {
+            console.log('[useModelLoader] 📡 收到 character-changed 事件:', event.payload)
+            const { character_info } = event.payload
+            if (character_info) {
+                console.log('[useModelLoader] ✅ 更新当前角色:', character_info.name)
+                setCurrentCharacter(character_info)
+            }
+        })
+
+        return () => {
+            unlisten.then(fn => fn())
+        }
+    }, [])
 
     const loadCharacters = useCallback(async (): Promise<CharacterInfo[]> => {
         console.log('[useModelLoader] 🔄 开始加载角色列表...')
@@ -167,6 +187,9 @@ export const useModelLoader = () => {
         }
 
         console.log('[useModelLoader] ✅ 获取到角色数据:', response.data)
+
+        // 保存角色列表
+        setCharacterList(response.data)
 
         // 更新当前角色
         const activeCharacter = response.data.find((c: any) => c.is_active)
@@ -208,6 +231,7 @@ export const useModelLoader = () => {
 
     return {
         currentCharacter,
+        characterList,
         loadCharacters,
         switchCharacter,
         getCharacterInfo,

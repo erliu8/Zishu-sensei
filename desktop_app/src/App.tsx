@@ -18,12 +18,12 @@ import { SettingsPanel } from '@/components/Settings/SettingsPanel'
 import AdapterManagement from '@/pages/AdapterManagement'
 
 // Hooks 导入
-import { useCharacter } from '@/hooks/useCharacter'
 import { useSettings } from '@/hooks/useSettings'
 import { useTauri } from '@/hooks/useTauri'
 import { useTheme } from '@/hooks/useTheme'
 import { useWindowManager } from '@/hooks/useWindowManager'
 import useKeyboardShortcuts from '@/hooks/useKeyboardShortcuts'
+import { useModelLoader } from '@/components/Character/ModelLoader'
 
 // 类型导入
 import type { AppState, WindowMode } from '@/types/app'
@@ -96,10 +96,17 @@ const App: React.FC = () => {
     // ==================== Hooks ====================
     const { theme, setTheme } = useTheme()
     const { settings, updateSettings, resetSettings } = useSettings()
-    const { currentCharacter, switchCharacter, characterList } = useCharacter()
+    const { currentCharacter, characterList, switchCharacter, loadCharacters } = useModelLoader()
     const { isTauriEnv, tauriVersion } = useTauri()
     const { minimizeWindow, closeWindow } = useWindowManager()
     const shortcuts = useKeyboardShortcuts()
+    
+    // 初始化加载角色列表
+    React.useEffect(() => {
+        loadCharacters().catch(err => {
+            console.error('[App] ❌ 加载角色列表失败:', err)
+        })
+    }, [loadCharacters])
 
     // ==================== 事件处理器 ====================
     const handleWindowModeChange = useCallback((mode: WindowMode) => {
@@ -342,7 +349,7 @@ const App: React.FC = () => {
                 children: characterList.map(char => ({
                     id: `character-${char.id}`,
                     label: char.name,
-                    icon: char.avatar,
+                    icon: '👤', // CharacterInfo 没有 avatar 字段，使用默认图标
                     onClick: () => switchCharacter(char.id),
                     checked: currentCharacter?.id === char.id,
                 })),
@@ -412,7 +419,6 @@ const App: React.FC = () => {
         }, 50)
     }, [
         theme,
-        characterList,
         currentCharacter,
         handleWindowModeChange,
         switchCharacter,
@@ -566,7 +572,15 @@ const App: React.FC = () => {
             case WINDOW_MODES.PET:
                 return currentCharacter ? (
                     <PetWindow
-                        character={currentCharacter}
+                        character={{
+                            id: currentCharacter.id,
+                            name: currentCharacter.name,
+                            avatar: '🎭',
+                            description: currentCharacter.description || '',
+                            type: 'live2d',
+                            modelPath: `/live2d_models/${currentCharacter.id}/${currentCharacter.id}.model3.json`,
+                            previewImage: currentCharacter.preview_image || ''
+                        }}
                         onContextMenu={handleContextMenu}
                         onModeChange={handleWindowModeChange}
                     />
@@ -581,7 +595,7 @@ const App: React.FC = () => {
                             textAlign: 'center',
                             color: 'hsl(var(--color-muted-foreground))',
                         }}>
-                            没有选择角色
+                            加载角色中...
                         </div>
                     </div>
                 )
@@ -791,24 +805,6 @@ const App: React.FC = () => {
                     }}
                 />
 
-                {/* 开发工具信息 */}
-                {(import.meta as any).env.DEV && (
-                    <div style={{
-                        position: 'fixed',
-                        bottom: '8px',
-                        left: '8px',
-                        fontSize: '12px',
-                        color: 'hsl(var(--color-muted-foreground))',
-                        backgroundColor: 'hsl(var(--color-muted) / 0.8)',
-                        padding: '4px 8px',
-                        borderRadius: '4px',
-                        backdropFilter: 'blur(4px)',
-                    }}>
-                        <div>模式: {appState.windowMode}</div>
-                        <div>主题: {theme}</div>
-                        {isTauriEnv && <div>Tauri: {tauriVersion}</div>}
-                    </div>
-                )}
             </div>
         </ErrorBoundary>
     )

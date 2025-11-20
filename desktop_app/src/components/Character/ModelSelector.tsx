@@ -3,44 +3,32 @@
  * 允许用户在多个 Live2D 模型之间切换
  */
 
-import React, { useEffect, useState, useCallback } from 'react'
+import React, { useState, useCallback } from 'react'
 import { motion, AnimatePresence } from 'framer-motion'
-import { modelManager, ModelInfo } from '@/utils/modelManager'
+
+export interface ModelInfo {
+  id: string
+  name: string
+  description?: string
+  preview_image?: string
+}
 
 interface ModelSelectorProps {
   currentModelId: string
   onModelSelect: (modelId: string) => void
+  models: ModelInfo[]
+  isLoading?: boolean
   className?: string
 }
 
 export const ModelSelector: React.FC<ModelSelectorProps> = ({
   currentModelId,
   onModelSelect,
+  models = [],
+  isLoading = false,
   className = ''
 }) => {
-  const [models, setModels] = useState<ModelInfo[]>([])
   const [isOpen, setIsOpen] = useState(false)
-  const [isLoading, setIsLoading] = useState(true)
-  const [error, setError] = useState<string | null>(null)
-
-  // 加载模型列表
-  useEffect(() => {
-    const loadModels = async () => {
-      try {
-        setIsLoading(true)
-        setError(null)
-        const availableModels = await modelManager.getAvailableModels()
-        setModels(availableModels)
-      } catch (err) {
-        console.error('Failed to load models:', err)
-        setError('无法加载模型列表')
-      } finally {
-        setIsLoading(false)
-      }
-    }
-
-    loadModels()
-  }, [])
 
   // 处理模型选择
   const handleModelSelect = useCallback((modelId: string) => {
@@ -64,12 +52,12 @@ export const ModelSelector: React.FC<ModelSelectorProps> = ({
     )
   }
 
-  if (error) {
+  if (!models || models.length === 0) {
     return (
       <div className={`model-selector error ${className}`}>
         <div className="error-message">
           <span className="error-icon">⚠️</span>
-          <span>{error}</span>
+          <span>暂无可用模型</span>
         </div>
       </div>
     )
@@ -86,21 +74,21 @@ export const ModelSelector: React.FC<ModelSelectorProps> = ({
       >
         <div className="model-info">
           <div className="model-avatar">
-            {currentModel ? (
+            {currentModel?.preview_image ? (
               <img 
-                src={currentModel.previewImage} 
-                alt={currentModel.displayName}
+                src={currentModel.preview_image} 
+                alt={currentModel.name}
                 onError={(e) => {
                   (e.target as HTMLImageElement).src = '/placeholder-avatar.png'
                 }}
               />
             ) : (
-              <div className="avatar-placeholder">?</div>
+              <div className="avatar-placeholder">👤</div>
             )}
           </div>
           <div className="model-text">
             <span className="model-name">
-              {currentModel?.displayName || '未知模型'}
+              {currentModel?.name || '未知模型'}
             </span>
             <span className="model-subtitle">
               点击切换模型
@@ -136,30 +124,28 @@ export const ModelSelector: React.FC<ModelSelectorProps> = ({
                   whileTap={{ scale: 0.98 }}
                 >
                   <div className="model-item-avatar">
-                    <img 
-                      src={model.previewImage} 
-                      alt={model.displayName}
-                      onError={(e) => {
-                        (e.target as HTMLImageElement).src = '/placeholder-avatar.png'
-                      }}
-                    />
+                    {model.preview_image ? (
+                      <img 
+                        src={model.preview_image} 
+                        alt={model.name}
+                        onError={(e) => {
+                          (e.target as HTMLImageElement).src = '/placeholder-avatar.png'
+                        }}
+                      />
+                    ) : (
+                      <div className="avatar-placeholder">👤</div>
+                    )}
                     {model.id === currentModelId && (
                       <div className="active-badge">✓</div>
                     )}
                   </div>
                   <div className="model-item-info">
                     <div className="model-item-header">
-                      <span className="model-item-name">{model.displayName}</span>
-                      <span className="model-item-size">{model.size}</span>
+                      <span className="model-item-name">{model.name}</span>
                     </div>
-                    <p className="model-item-description">{model.description}</p>
-                    <div className="model-item-features">
-                      {model.features.slice(0, 3).map((feature) => (
-                        <span key={feature} className="feature-tag">
-                          {feature}
-                        </span>
-                      ))}
-                    </div>
+                    {model.description && (
+                      <p className="model-item-description">{model.description}</p>
+                    )}
                   </div>
                 </motion.button>
               ))}

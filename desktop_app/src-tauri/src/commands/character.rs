@@ -31,6 +31,8 @@ pub struct CharacterInfo {
     pub description: Option<String>,
     /// Preview image URL
     pub preview_image: Option<String>,
+    /// Model file path (model3.json)
+    pub model_path: String,
     /// Available motions
     pub motions: Vec<String>,
     /// Available expressions
@@ -112,13 +114,14 @@ pub async fn get_characters(
     let characters: Vec<CharacterInfo> = characters_data
         .into_iter()
         .map(|c| {
-            info!("  - 角色: {} ({}), motions: {}, expressions: {}", 
-                c.id, c.name, c.motions.len(), c.expressions.len());
+            info!("  - 角色: {} ({}), path: {}, motions: {}, expressions: {}", 
+                c.id, c.name, &c.path, c.motions.len(), c.expressions.len());
             CharacterInfo {
                 id: c.id,
                 name: c.name,
                 description: Some(c.description),
                 preview_image: c.preview_image,
+                model_path: c.path,
                 motions: c.motions,
                 expressions: c.expressions,
                 is_active: c.is_active,
@@ -153,6 +156,7 @@ pub async fn get_character_info(
                 name: c.name,
                 description: Some(c.description),
                 preview_image: c.preview_image,
+                model_path: c.path,
                 motions: c.motions,
                 expressions: c.expressions,
                 is_active: c.is_active,
@@ -216,6 +220,7 @@ pub async fn switch_character(
         name: character_data.name.clone(),
         description: Some(character_data.description),
         preview_image: character_data.preview_image,
+        model_path: character_data.path,
         motions: character_data.motions,
         expressions: character_data.expressions,
         is_active: true,
@@ -681,6 +686,7 @@ mod tests {
             name: "Hiyori".to_string(),
             description: Some("可爱的猫耳少女".to_string()),
             preview_image: Some("/images/hiyori_preview.png".to_string()),
+            model_path: "/live2d_models/hiyori/hiyori.model3.json".to_string(),
             motions: vec!["idle".to_string(), "wave".to_string(), "happy".to_string()],
             expressions: vec!["normal".to_string(), "smile".to_string(), "surprised".to_string()],
             is_active: true,
@@ -693,6 +699,7 @@ mod tests {
         assert_eq!(character_info.name, deserialized.name);
         assert_eq!(character_info.description, deserialized.description);
         assert_eq!(character_info.preview_image, deserialized.preview_image);
+        assert_eq!(character_info.model_path, deserialized.model_path);
         assert_eq!(character_info.motions, deserialized.motions);
         assert_eq!(character_info.expressions, deserialized.expressions);
         assert_eq!(character_info.is_active, deserialized.is_active);
@@ -775,6 +782,7 @@ mod tests {
             name: "".to_string(),
             description: None,
             preview_image: None,
+            model_path: "".to_string(),
             motions: vec![],
             expressions: vec![],
             is_active: false,
@@ -797,6 +805,7 @@ mod tests {
             name: "A".repeat(1000), // 1000 character name
             description: Some("B".repeat(10000)), // 10KB description
             preview_image: Some("https://example.com/very-long-url-path/".repeat(100)),
+            model_path: "D".repeat(500),
             motions: (0..500).map(|i| format!("motion_{}", i)).collect(), // 500 motions
             expressions: (0..200).map(|i| format!("expression_{}", i)).collect(), // 200 expressions
             is_active: false,
@@ -818,7 +827,8 @@ mod tests {
             id: "unicode_character".to_string(),
             name: "测试角色 🎭".to_string(),
             description: Some("这是一个支持Unicode的角色 🌟".to_string()),
-            preview_image: Some("/images/角色预览.png".to_string()),
+            preview_image: Some("/images/测试角色.png".to_string()),
+            model_path: "/live2d_models/测试角色/模型.model3.json".to_string(),
             motions: vec!["待机".to_string(), "挥手👋".to_string(), "微笑😊".to_string()],
             expressions: vec!["普通".to_string(), "开心😄".to_string(), "惊讶😲".to_string()],
             is_active: false,
@@ -998,8 +1008,9 @@ mod tests {
             name: "Test Character".to_string(),
             description: Some("Test description".to_string()),
             preview_image: None,
-            motions: vec!["idle".to_string()],
-            expressions: vec!["normal".to_string()],
+            model_path: "/live2d_models/test/test.model3.json".to_string(),
+            motions: vec![],
+            expressions: vec![],
             is_active: true,
         };
 
@@ -1197,6 +1208,7 @@ mod tests {
                 name: c.name,
                 description: Some(c.description),
                 preview_image: c.preview_image,
+                model_path: c.path,
                 motions: c.motions,
                 expressions: c.expressions,
                 is_active: c.is_active,
@@ -1455,7 +1467,8 @@ mod tests {
                 name: "Hiyori".to_string(),
                 description: Some("可爱的猫耳少女".to_string()),
                 preview_image: Some("/images/hiyori.png".to_string()),
-                motions: vec!["idle".to_string(), "wave".to_string()],
+                model_path: "/live2d_models/hiyori/hiyori.model3.json".to_string(),
+                motions: vec!["idle".to_string(), "tap".to_string()],
                 expressions: vec!["normal".to_string(), "smile".to_string()],
                 is_active: true,
             },
@@ -1464,6 +1477,7 @@ mod tests {
                 name: "Shizuku".to_string(),
                 description: Some("温柔的治愈系少女".to_string()),
                 preview_image: Some("/images/shizuku.png".to_string()),
+                model_path: "/live2d_models/shizuku/shizuku.model3.json".to_string(),
                 motions: vec!["idle".to_string(), "nod".to_string()],
                 expressions: vec!["normal".to_string(), "gentle".to_string()],
                 is_active: false,
