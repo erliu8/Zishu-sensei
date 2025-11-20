@@ -62,6 +62,13 @@ def get_available_routes(app: FastAPI) -> List[APIRouter]:
     except (ImportError, AttributeError):
         pass
 
+    try:
+        from .voice import router as voice_router
+
+        routers.append(voice_router)
+    except (ImportError, AttributeError):
+        pass
+
     return routers
 
 

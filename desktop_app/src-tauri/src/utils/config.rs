@@ -134,7 +134,7 @@ pub async fn save_config(_app_handle: &AppHandle, config: &AppConfig) -> Result<
     fs::write(&config_path, json).await
         .map_err(|e| format!("写入配置文件失败: {}", e))?;
     
-    debug!("配置已保存到: {:?}", config_path);
+    // 配置保存成功，静默处理（避免频繁日志）
     Ok(())
 }
 

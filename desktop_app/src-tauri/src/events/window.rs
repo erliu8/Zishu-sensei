@@ -32,7 +32,7 @@ impl WindowEventHandler {
         Self {
             app_handle,
             last_save_time: Arc::new(Mutex::new(None)),
-            save_debounce_ms: 1000, // 1秒防抖
+            save_debounce_ms: 3000, // 3秒防抖
         }
     }
 
@@ -81,7 +81,7 @@ impl WindowEventHandler {
         let window_label = window.label();
         
         if focused {
-            debug!("窗口 '{}' 获得焦点", window_label);
+            trace!("窗口 '{}' 获得焦点", window_label);
             
             // 发送焦点获得事件到前端
             if let Err(e) = window.emit("window-focused", true) {
@@ -96,7 +96,7 @@ impl WindowEventHandler {
                 }
             }
         } else {
-            debug!("窗口 '{}' 失去焦点", window_label);
+            trace!("窗口 '{}' 失去焦点", window_label);
             
             // 发送焦点失去事件到前端
             if let Err(e) = window.emit("window-focused", false) {
@@ -249,7 +249,7 @@ impl WindowEventHandler {
         if let Some(last_time) = *last_save {
             let duration = now.signed_duration_since(last_time);
             if duration.num_milliseconds() < self.save_debounce_ms as i64 {
-                debug!("配置保存被防抖，距离上次保存 {}ms", duration.num_milliseconds());
+                // 配置保存被防抖，静默跳过
                 return;
             }
         }
@@ -271,9 +271,8 @@ impl WindowEventHandler {
             tokio::spawn(async move {
                 if let Err(e) = save_config(&app_handle, &config).await {
                     error!("异步保存配置失败: {}", e);
-                } else {
-                    debug!("配置已异步保存");
                 }
+                // 配置保存成功，静默处理（不输出日志）
             });
         }
     }

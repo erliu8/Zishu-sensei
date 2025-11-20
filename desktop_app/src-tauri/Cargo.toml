@@ -108,6 +108,9 @@ window-vibrancy = "0.4"
 # 图像处理 (用于图标和资源)
 image = "0.24"
 
+# 屏幕截图 (用于屏幕捕获功能)
+screenshots = "0.8"
+
 # 网络和 WebSocket
 tungstenite = "0.20"
 tokio-tungstenite = "0.20"
@@ -140,6 +143,11 @@ base64 = "0.21"
 
 # URL 处理
 url = "2.4"
+
+# 音频录制和处理
+cpal = "0.15"                           # 跨平台音频I/O
+hound = "3.5"                           # WAV 文件编解码
+byteorder = "1.5"                       # 字节序处理
 
 # 模板引擎 (用于配置文件生成)
 handlebars = "4.4"

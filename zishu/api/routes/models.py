@@ -265,7 +265,7 @@ async def list_adapters(
 async def load_adapter(
     request: ModelManagementRequest,
     background_tasks: BackgroundTasks,
-    model_manager=Depends(get_model_manager),
+    adapter_manager=Depends(get_adapter_manager),
     logger=Depends(get_logger),
 ):
     """加载指定适配器"""
@@ -283,59 +283,55 @@ async def load_adapter(
         logger.info(f"Loading adapter: {request.adapter_name}")
         start_time = time.time()
 
-        # 检查适配器是否已加载
-        if hasattr(model_manager, "is_adapter_loaded"):
-            if (
-                model_manager.is_adapter_loaded(request.adapter_name)
-                and not request.force_reload
-            ):
-                return ModelListResponse(
-                    success=True,
-                    operation=ModelOperationType.LOAD,
-                    adapter_name=request.adapter_name,
-                    message=f"Adapter {request.adapter_name} is already loaded",
-                    execution_time=time.time() - start_time,
-                )
+        # 确保适配器管理器已初始化
+        from zishu.adapters.core.services.base import ServiceStatus
+        if not adapter_manager._initialized:
+            await adapter_manager.initialize()
+            logger.info("AdapterManager initialized")
+        if adapter_manager._status != ServiceStatus.RUNNING:
+            await adapter_manager.start()
+            logger.info("AdapterManager started")
 
-        # 执行加载操作
-        if hasattr(model_manager, "load_adapter"):
-            # 异步加载适配器
-            load_config = {
-                "device": request.device,
-                "torch_dtype": request.torch_dtype,
-                "low_memory": request.low_memory,
-                **(request.load_config or {}),
-            }
-
-            result = await model_manager.load_adapter(
-                adapter_path=request.adapter_path,
+        # 检查适配器是否已加载（正在运行）
+        if request.adapter_name in adapter_manager._adapters and not request.force_reload:
+            logger.info(f"Adapter {request.adapter_name} is already running")
+            return ModelListResponse(
+                success=True,
+                operation=ModelOperationType.LOAD.value,
                 adapter_name=request.adapter_name,
-                config=load_config,
+                message=f"Adapter {request.adapter_name} is already loaded",
+                execution_time=time.time() - start_time,
             )
 
-            execution_time = time.time() - start_time
-
-            if result.get("success", True):
-                return ModelListResponse(
-                    success=True,
-                    operation=ModelOperationType.LOAD,
-                    adapter_name=request.adapter_name,
-                    message=f"Adapter {request.adapter_name} loaded successfully",
-                    execution_time=execution_time,
-                    memory_usage=result.get("memory_usage"),
-                )
-            else:
-                raise Exception(result.get("error", "Unknown loading error"))
-
-        else:
+        # 检查适配器是否已注册
+        registration = await adapter_manager.registry_service.get_adapter_registration(request.adapter_name)
+        if not registration:
             raise HTTPException(
-                status_code=status.HTTP_501_NOT_IMPLEMENTED,
+                status_code=status.HTTP_404_NOT_FOUND,
                 detail=create_error_response(
-                    error_type="NOT_IMPLEMENTED",
-                    error_code="E003",  # NOT_IMPLEMENTED
-                    message=f"Model manager does not support load_adapter method",
+                    error_type="NOT_FOUND",
+                    error_code="E014",
+                    message=f"Adapter '{request.adapter_name}' not found in registry",
                 ),
             )
+
+        # 启动适配器
+        success = await adapter_manager.start_adapter(request.adapter_name)
+
+        execution_time = time.time() - start_time
+
+        if success:
+            logger.info(f"Adapter {request.adapter_name} loaded successfully in {execution_time:.2f}s")
+            return ModelListResponse(
+                success=True,
+                operation=ModelOperationType.LOAD.value,
+                adapter_name=request.adapter_name,
+                message=f"Adapter {request.adapter_name} loaded successfully",
+                execution_time=execution_time,
+            )
+        else:
+            raise Exception(f"Failed to start adapter {request.adapter_name}")
+
     except HTTPException:
         raise
     except Exception as e:
@@ -344,7 +340,7 @@ async def load_adapter(
 
         return ModelListResponse(
             success=False,
-            operation=ModelOperationType.LOAD,
+            operation=ModelOperationType.LOAD.value,
             adapter_name=request.adapter_name,
             message=f"Failed to load adapter: {request.adapter_name} - {str(e)}",
             execution_time=execution_time,
@@ -357,7 +353,7 @@ async def load_adapter(
 async def unload_adapter(
     request: ModelUnloadRequest,
     background_tasks: BackgroundTasks,
-    model_manager=Depends(get_model_manager),
+    adapter_manager=Depends(get_adapter_manager),
     logger=Depends(get_logger),
 ):
     """卸载指定适配器"""
@@ -375,52 +371,47 @@ async def unload_adapter(
         logger.info(f"Unloading adapter: {request.adapter_name}")
         start_time = time.time()
 
-        # 检查适配器是否已加载
-        if hasattr(model_manager, "is_adapter_loaded"):
-            if not model_manager.is_adapter_loaded(request.adapter_name):
-                return ModelListResponse(
-                    success=True,
-                    operation=ModelOperationType.UNLOAD,
-                    adapter_name=request.adapter_name,
-                    message=f"Adapter {request.adapter_name} is not loaded",
-                    execution_time=time.time() - start_time,
-                )
+        # 确保适配器管理器已初始化
+        from zishu.adapters.core.services.base import ServiceStatus
+        if not adapter_manager._initialized:
+            await adapter_manager.initialize()
+        if adapter_manager._status != ServiceStatus.RUNNING:
+            await adapter_manager.start()
 
-        # 执行卸载操作
-        if hasattr(model_manager, "unload_adapter"):
-            result = await model_manager.unload_adapter(
-                adapter_name=request.adapter_name, force=request.force_unload
+        # 检查适配器是否正在运行
+        if request.adapter_name not in adapter_manager._adapters:
+            logger.info(f"Adapter {request.adapter_name} is not running")
+            return ModelListResponse(
+                success=True,
+                operation=ModelOperationType.UNLOAD.value,
+                adapter_name=request.adapter_name,
+                message=f"Adapter {request.adapter_name} is not loaded",
+                execution_time=time.time() - start_time,
             )
 
-            execution_time = time.time() - start_time
+        # 执行卸载操作（停止适配器）
+        success = await adapter_manager.stop_adapter(request.adapter_name)
 
-            if result.get("success", True):
-                logger.info(
-                    f"Successfully unloaded adapter: {request.adapter_name} in {execution_time:.2f} seconds"
-                )
+        execution_time = time.time() - start_time
 
-                # 后台任务：清理内存
-                background_tasks.add_task(cleanup_memory_task, logger)
+        if success:
+            logger.info(
+                f"Successfully unloaded adapter: {request.adapter_name} in {execution_time:.2f} seconds"
+            )
 
-                return ModelListResponse(
-                    success=True,
-                    operation=ModelOperationType.UNLOAD,
-                    adapter_name=request.adapter_name,
-                    message=f"Adapter {request.adapter_name} unloaded successfully",
-                    execution_time=execution_time,
-                )
-            else:
-                raise Exception(result.get("error", "Unknown unloading error"))
+            # 后台任务：清理内存
+            background_tasks.add_task(cleanup_memory_task, logger)
 
+            return ModelListResponse(
+                success=True,
+                operation=ModelOperationType.UNLOAD.value,
+                adapter_name=request.adapter_name,
+                message=f"Adapter {request.adapter_name} unloaded successfully",
+                execution_time=execution_time,
+            )
         else:
-            raise HTTPException(
-                status_code=status.HTTP_501_NOT_IMPLEMENTED,
-                detail=create_error_response(
-                    error_type="NOT_IMPLEMENTED",
-                    error_code="E006",  # NOT_IMPLEMENTED
-                    message=f"Model manager does not support unload_adapter method",
-                ),
-            )
+            raise Exception(f"Failed to stop adapter {request.adapter_name}")
+
     except HTTPException:
         raise
     except Exception as e:
@@ -429,7 +420,7 @@ async def unload_adapter(
 
         return ModelListResponse(
             success=False,
-            operation=ModelOperationType.UNLOAD,
+            operation=ModelOperationType.UNLOAD.value,
             adapter_name=request.adapter_name,
             message=f"Failed to unload adapter: {request.adapter_name} - {str(e)}",
             execution_time=execution_time,
@@ -468,7 +459,7 @@ async def switch_adapter(
 
                 return ModelListResponse(
                     success=True,
-                    operation=ModelOperationType.SWITCH,
+                    operation=ModelOperationType.SWITCH.value,
                     adapter_name=request.to_adapter,
                     message=f"Adapter {request.to_adapter} switched successfully",
                     execution_time=execution_time,
@@ -495,7 +486,7 @@ async def switch_adapter(
 
         return ModelListResponse(
             success=False,
-            operation=ModelOperationType.SWITCH,
+            operation=ModelOperationType.SWITCH.value,
             adapter_name=request.to_adapter or "unknown",
             message=f"Failed to switch adapter: {request.from_adapter} -> {request.to_adapter} - {str(e)}",
             execution_time=execution_time,
@@ -508,7 +499,7 @@ async def switch_adapter(
 async def get_model_status(
     adapter_name: Optional[str] = None,
     include_system_info: bool = True,
-    model_manager=Depends(get_model_manager),
+    adapter_manager=Depends(get_adapter_manager),
     logger=Depends(get_logger),
 ):
     """获取指定模型状态"""
@@ -516,22 +507,42 @@ async def get_model_status(
         logger.info(f"Getting model status for: {adapter_name or 'all adapters'}")
         start_time = time.time()
 
-        status_info = {"timestamp": datetime.now(timezone.utc), "adapters": []}
+        # 确保适配器管理器已初始化
+        from zishu.adapters.core.services.base import ServiceStatus
+        if not adapter_manager._initialized:
+            await adapter_manager.initialize()
+        if adapter_manager._status != ServiceStatus.RUNNING:
+            await adapter_manager.start()
 
-        if hasattr(model_manager, "get_status"):
-            if adapter_name:
-                # 获取特定适配器状态
-                adapter_status = model_manager.get_status(adapter_name)
-                status_info["adapters"] = {adapter_name: adapter_status}
+        status_info = {"timestamp": datetime.now(timezone.utc).isoformat(), "adapters": {}}
 
-            else:
-                # 获取所有适配器状态
-                all_status = model_manager.get_status()
-                status_info["adapters"] = all_status
+        if adapter_name:
+            # 获取特定适配器状态
+            is_running = adapter_name in adapter_manager._adapters
+            registration = await adapter_manager.registry_service.get_adapter_registration(adapter_name)
+            
+            status_info["adapters"][adapter_name] = {
+                "status": "running" if is_running else "stopped",
+                "registered": registration is not None,
+            }
+        else:
+            # 获取所有适配器状态
+            all_registrations = await adapter_manager.registry_service.list_adapters()
+            for reg in all_registrations:
+                adapter_id = reg.config.identity
+                is_running = adapter_id in adapter_manager._adapters
+                status_info["adapters"][adapter_id] = {
+                    "status": "running" if is_running else "stopped",
+                    "name": reg.config.name,
+                    "version": reg.config.version,
+                    "type": reg.config.adapter_type.value if hasattr(reg.config.adapter_type, 'value') else str(reg.config.adapter_type),
+                }
 
         # 添加系统信息
-        system_info = await get_system_info()
-        status_info["system"] = system_info
+        if include_system_info:
+            system_info = await get_system_info()
+            status_info["system"] = system_info
+            
         return status_info
     except Exception as e:
         logger.error(f"Failed to get model status: {str(e)}")

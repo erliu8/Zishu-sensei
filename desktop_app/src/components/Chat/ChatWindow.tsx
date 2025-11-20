@@ -1,8 +1,10 @@
 import { motion } from 'framer-motion'
-import React, { useState, useRef, useEffect } from 'react'
+import React, { useState, useRef, useEffect, useCallback } from 'react'
 import { ChatService } from '@/services/chat'
 import { CharacterSelector } from './CharacterSelector'
 import { CharacterTemplateService } from '@/services/characterTemplate'
+import VoiceChatNativeService, { VoiceChatNativeConfig, VoiceChatNativeEvents } from '@/services/voiceChatNative'
+import toast from 'react-hot-toast'
 
 interface ChatWindowProps {
     onClose: () => void
@@ -34,6 +36,194 @@ export const ChatWindow: React.FC<ChatWindowProps> = ({
         }
     ])
     const messagesEndRef = useRef<HTMLDivElement>(null)
+    const [isSpeaking, setIsSpeaking] = useState(false)
+    
+    // 语音对话状态
+    const [isVoiceChatActive, setIsVoiceChatActive] = useState(false)
+    const [isVoiceConnected, setIsVoiceConnected] = useState(false)
+    const [currentTranscript, setCurrentTranscript] = useState('')
+    const voiceServiceRef = useRef<VoiceChatNativeService | null>(null)
+
+    // 初始化持续语音对话服务
+    const initializeVoiceService = useCallback(async () => {
+        const events: VoiceChatNativeEvents = {
+            onReady: () => {
+                console.log('✅ 语音对话已就绪')
+                setIsVoiceConnected(true)
+                toast.success('语音对话已连接')
+            },
+
+            onTranscription: (text, isFinal) => {
+                setCurrentTranscript(text)
+
+                if (isFinal && text.trim()) {
+                    // 添加用户消息到对话
+                    const userMessage = {
+                        id: `voice-user-${Date.now()}`,
+                        content: text,
+                        sender: 'user' as const,
+                        timestamp: Date.now(),
+                    }
+                    setMessages(prev => [...prev, userMessage])
+                    setCurrentTranscript('')
+                }
+            },
+
+            onResponse: (text) => {
+                // 添加 AI 消息到对话
+                const aiMessage = {
+                    id: `voice-ai-${Date.now()}`,
+                    content: text,
+                    sender: 'assistant' as const,
+                    timestamp: Date.now(),
+                }
+                setMessages(prev => [...prev, aiMessage])
+                setIsSpeaking(true)
+            },
+
+            onSpeechEnd: () => {
+                setIsSpeaking(false)
+            },
+
+            onInterrupted: () => {
+                setIsSpeaking(false)
+                toast('语音已打断', { icon: '⏸️' })
+            },
+
+            onError: (error) => {
+                console.error('语音对话错误:', error)
+                toast.error(error)
+            },
+
+            onDisconnect: () => {
+                setIsVoiceConnected(false)
+                setIsVoiceChatActive(false)
+                toast('语音对话已断开', { icon: '🔌' })
+            },
+        }
+
+        // 获取角色模板信息
+        let characterConfig = {}
+        if (selectedCharacterId) {
+            try {
+                const template = await CharacterTemplateService.getTemplateById(selectedCharacterId)
+                if (template) {
+                    let adapterId = template.metadata?.adapterId
+                    
+                    // 如果是 API 类型，准备适配器配置
+                    if (template.llmConfig.type === 'api') {
+                        const apiConfig = template.llmConfig as any
+                        characterConfig = {
+                            characterId: selectedCharacterId,
+                            adapterId: adapterId,
+                            systemPrompt: template.prompt.systemPrompt,
+                            model: apiConfig.modelName || 'default',
+                        }
+                    } else {
+                        characterConfig = {
+                            characterId: selectedCharacterId,
+                            systemPrompt: template.prompt.systemPrompt,
+                            model: 'local-model',
+                        }
+                    }
+                }
+            } catch (error) {
+                console.error('获取角色模板失败:', error)
+            }
+        }
+
+        const config: VoiceChatNativeConfig = {
+            wsUrl: 'ws://localhost:8000/api/voice',
+            stt: {
+                model: 'base',
+                language: 'zh',
+            },
+            tts: {
+                voice: 'zh-CN-XiaoxiaoNeural',
+                rate: '+0%',
+                volume: '+0%',
+                pitch: '+0Hz',
+            },
+            audio: {
+                sample_rate: 16000,
+                channels: 1,
+                bits_per_sample: 16,
+            },
+            character: characterConfig,
+        }
+
+        voiceServiceRef.current = new VoiceChatNativeService(config, events)
+    }, [selectedCharacterId])
+
+    // 切换持续语音对话
+    const toggleVoiceChat = useCallback(async () => {
+        if (!selectedCharacterId) {
+            toast.error('请先选择一个角色模板')
+            return
+        }
+
+        if (!isVoiceChatActive) {
+            // 启动语音功能
+            try {
+                if (!voiceServiceRef.current) {
+                    await initializeVoiceService()
+                }
+
+                if (!isVoiceConnected) {
+                    await voiceServiceRef.current!.connect()
+                }
+
+                await voiceServiceRef.current!.startRecording()
+                setIsVoiceChatActive(true)
+                toast.success('语音对话已启动')
+            } catch (error) {
+                console.error('启动语音功能失败:', error)
+                toast.error('启动语音功能失败')
+            }
+        } else {
+            // 关闭语音功能
+            voiceServiceRef.current?.stopRecording()
+            voiceServiceRef.current?.disconnect()
+            voiceServiceRef.current = null
+            
+            setIsVoiceChatActive(false)
+            setIsVoiceConnected(false)
+            toast('语音对话已关闭', { icon: '🔇' })
+        }
+    }, [isVoiceChatActive, isVoiceConnected, selectedCharacterId, initializeVoiceService])
+
+    // 打断 AI 语音
+    const interruptVoice = useCallback(() => {
+        if (isSpeaking && voiceServiceRef.current) {
+            voiceServiceRef.current.interrupt()
+        }
+    }, [isSpeaking])
+
+    // 组件挂载时从 localStorage 加载之前选择的角色
+    useEffect(() => {
+        try {
+            const savedConfig = localStorage.getItem('current_chat_config')
+            if (savedConfig) {
+                const config = JSON.parse(savedConfig)
+                if (config.templateId) {
+                    console.log('📖 从 localStorage 加载角色配置:', config)
+                    setSelectedCharacterId(config.templateId)
+                }
+            }
+        } catch (error) {
+            console.error('加载保存的角色配置失败:', error)
+        }
+    }, [])
+
+    // 组件卸载时清理
+    useEffect(() => {
+        return () => {
+            if (voiceServiceRef.current) {
+                voiceServiceRef.current.disconnect()
+            }
+        }
+    }, [])
+
 
     // 自动滚动到底部
     const scrollToBottom = () => {
@@ -202,24 +392,50 @@ export const ChatWindow: React.FC<ChatWindowProps> = ({
             }}
         >
             {/* 标题栏 */}
-            <div 
-                data-tauri-drag-region
-                style={{
-                    display: 'flex',
-                    alignItems: 'center',
-                    justifyContent: 'space-between',
-                    padding: '16px',
-                    borderBottom: '1px solid hsl(var(--color-border))',
-                    cursor: 'move',
-                }}
-            >
-                <h1 style={{
-                    fontSize: '18px',
-                    fontWeight: 600,
-                    color: 'hsl(var(--color-foreground))',
-                }}>
-                    对话
-                </h1>
+            <div data-tauri-drag-region style={{
+                display: 'flex',
+                alignItems: 'center',
+                justifyContent: 'space-between',
+                padding: '12px 16px',
+                borderBottom: '1px solid hsl(var(--color-border))',
+                backgroundColor: 'hsl(var(--color-muted) / 0.3)',
+                backdropFilter: 'blur(10px)',
+                cursor: 'move',
+                flexShrink: 0,
+            }}>
+                <div style={{ display: 'flex', alignItems: 'center', gap: '12px' }}>
+                    <h2 style={{
+                        fontSize: '16px',
+                        fontWeight: 600,
+                        margin: 0,
+                        color: 'hsl(var(--color-foreground))',
+                    }}>
+                        聊天助手
+                    </h2>
+                    {/* 语音对话状态指示 */}
+                    {isVoiceChatActive && (
+                        <div style={{
+                            display: 'flex',
+                            alignItems: 'center',
+                            gap: '6px',
+                            padding: '4px 10px',
+                            backgroundColor: 'hsl(var(--color-primary) / 0.1)',
+                            borderRadius: '12px',
+                            fontSize: '12px',
+                        }}>
+                            <div style={{
+                                width: '8px',
+                                height: '8px',
+                                borderRadius: '50%',
+                                backgroundColor: 'hsl(var(--color-primary))',
+                                animation: 'pulse 2s cubic-bezier(0.4, 0, 0.6, 1) infinite',
+                            }} />
+                            <span style={{ color: 'hsl(var(--color-primary))' }}>
+                                {isSpeaking ? 'AI 正在说话' : '语音对话中'}
+                            </span>
+                        </div>
+                    )}
+                </div>
                 <div style={{ display: 'flex', gap: '8px' }} data-tauri-drag-region={false}>
                     <button
                         onClick={onMinimize}
@@ -264,14 +480,16 @@ export const ChatWindow: React.FC<ChatWindowProps> = ({
                 </div>
             </div>
 
-            {/* 消息列表 */}
-            <div style={{
-                flex: 1,
-                overflowY: 'scroll',
-                padding: '16px',
-                minHeight: 0, // 重要：确保 flex 子元素可以正确收缩
-                WebkitOverflowScrolling: 'touch', // iOS 平滑滚动
-            }}>
+            {/* 主内容区 */}
+            <>
+                    {/* 消息列表 */}
+                    <div style={{
+                        flex: 1,
+                        overflowY: 'scroll',
+                        padding: '16px',
+                        minHeight: 0, // 重要：确保 flex 子元素可以正确收缩
+                        WebkitOverflowScrolling: 'touch', // iOS 平滑滚动
+                    }}>
                 {messages.map((msg) => (
                     <div
                         key={msg.id}
@@ -326,18 +544,99 @@ export const ChatWindow: React.FC<ChatWindowProps> = ({
                     onSelectCharacter={setSelectedCharacterId}
                 />
 
-                {/* 输入框 */}
-                <div style={{ display: 'flex', gap: '8px' }}>
+                {/* 语音相关指示器 */}
+                {currentTranscript && (
+                    <div style={{
+                        padding: '8px 12px',
+                        backgroundColor: 'hsl(var(--color-primary) / 0.1)',
+                        borderRadius: '6px',
+                        fontSize: '14px',
+                        color: 'hsl(var(--color-primary))',
+                    }}>
+                        🎤 正在识别: {currentTranscript}...
+                    </div>
+                )}
+                
+                {isSpeaking && isVoiceChatActive && (
+                    <div style={{
+                        display: 'flex',
+                        alignItems: 'center',
+                        gap: '8px',
+                        padding: '8px 12px',
+                        backgroundColor: 'hsl(var(--color-muted))',
+                        borderRadius: '6px',
+                        fontSize: '14px',
+                    }}>
+                        <span style={{ color: 'hsl(var(--color-primary))' }}>🔊 AI 正在语音回复...</span>
+                        <button
+                            onClick={interruptVoice}
+                            style={{
+                                marginLeft: 'auto',
+                                padding: '4px 12px',
+                                fontSize: '12px',
+                                backgroundColor: 'hsl(var(--color-destructive))',
+                                color: 'white',
+                                border: 'none',
+                                borderRadius: '4px',
+                                cursor: 'pointer',
+                            }}
+                        >
+                            打断
+                        </button>
+                    </div>
+                )}
+
+                {/* 输入区域 - 文字输入和持续语音对话按钮 */}
+                <div style={{ display: 'flex', gap: '8px', alignItems: 'flex-end' }}>
+                    {/* 持续语音对话按钮 */}
+                    <button
+                        onClick={toggleVoiceChat}
+                        disabled={isLoading || !selectedCharacterId}
+                        style={{
+                            padding: '10px',
+                            backgroundColor: isVoiceChatActive ? '#ef4444' : 'hsl(var(--color-primary))',
+                            color: 'white',
+                            border: 'none',
+                            borderRadius: '6px',
+                            cursor: (isLoading || !selectedCharacterId) ? 'not-allowed' : 'pointer',
+                            opacity: (isLoading || !selectedCharacterId) ? 0.5 : 1,
+                            minWidth: '44px',
+                            minHeight: '44px',
+                            display: 'flex',
+                            alignItems: 'center',
+                            justifyContent: 'center',
+                            fontSize: '20px',
+                            transition: 'all 0.2s',
+                            position: 'relative',
+                        }}
+                        title={isVoiceChatActive ? '关闭语音对话' : '开始语音对话'}
+                    >
+                        {isVoiceChatActive ? '🔴' : '🎤'}
+                        {isVoiceChatActive && (
+                            <span style={{
+                                position: 'absolute',
+                                top: '-2px',
+                                right: '-2px',
+                                width: '10px',
+                                height: '10px',
+                                borderRadius: '50%',
+                                backgroundColor: '#22c55e',
+                                animation: 'pulse 2s cubic-bezier(0.4, 0, 0.6, 1) infinite',
+                            }} />
+                        )}
+                    </button>
+
+                    {/* 输入框 */}
                     <input
                         type="text"
                         value={message}
                         onChange={(e) => setMessage(e.target.value)}
                         onKeyPress={(e) => e.key === 'Enter' && !isLoading && handleSendMessage()}
-                        placeholder={selectedCharacterId ? "输入消息..." : "请先选择角色..."}
+                        placeholder={selectedCharacterId ? "输入消息或点击麦克风..." : "请先选择角色..."}
                         disabled={isLoading}
                         style={{
                             flex: 1,
-                            padding: '8px 12px',
+                            padding: '10px 12px',
                             border: '1px solid hsl(var(--color-border))',
                             borderRadius: '6px',
                             backgroundColor: 'hsl(var(--color-background))',
@@ -345,6 +644,7 @@ export const ChatWindow: React.FC<ChatWindowProps> = ({
                             outline: 'none',
                             opacity: isLoading ? 0.6 : 1,
                             cursor: isLoading ? 'not-allowed' : 'text',
+                            fontSize: '14px',
                         }}
                         onFocus={(e) => {
                             if (!isLoading) {
@@ -355,11 +655,13 @@ export const ChatWindow: React.FC<ChatWindowProps> = ({
                             e.currentTarget.style.borderColor = 'hsl(var(--color-border))'
                         }}
                     />
+
+                    {/* 发送按钮 */}
                     <button
                         onClick={handleSendMessage}
                         disabled={!message.trim() || isLoading}
                         style={{
-                            padding: '8px 16px',
+                            padding: '10px 20px',
                             backgroundColor: 'hsl(var(--color-primary))',
                             color: 'hsl(var(--color-primary-foreground))',
                             borderRadius: '6px',
@@ -367,6 +669,9 @@ export const ChatWindow: React.FC<ChatWindowProps> = ({
                             cursor: message.trim() && !isLoading ? 'pointer' : 'not-allowed',
                             opacity: message.trim() && !isLoading ? 1 : 0.5,
                             minWidth: '60px',
+                            minHeight: '44px',
+                            fontSize: '14px',
+                            fontWeight: 500,
                         }}
                         onMouseEnter={(e) => {
                             if (message.trim() && !isLoading) {
@@ -383,6 +688,7 @@ export const ChatWindow: React.FC<ChatWindowProps> = ({
                     </button>
                 </div>
             </div>
+            </>
         </motion.div>
     )
 }

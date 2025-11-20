@@ -852,10 +852,21 @@ async fn main() {
             commands::character_template::register_character_adapter,
             commands::character_template::get_character_templates,
             commands::character_template::save_character_template,
+            commands::character_template::update_character_template,
             commands::character_template::delete_character_template,
+            
+            // 音频录制和播放命令
+            commands::audio::list_audio_devices,
+            commands::audio::start_recording,
+            commands::audio::stop_recording,
+            commands::audio::get_recording_data,
+            commands::audio::is_recording,
+            commands::audio::save_audio_to_file,
+            commands::audio::cancel_recording,
         ])
         .manage(commands::shortcuts::ShortcutRegistry::new())
         .manage(commands::memory::MemoryManagerState::new())
+        .manage(commands::audio::AudioState::default())
         .manage(std::sync::Arc::new(std::sync::Mutex::new(commands::rendering::RenderingState::default())))
         .manage(commands::region::RegionState::default())
         .manage(commands::update::UpdateManagerState::new())
