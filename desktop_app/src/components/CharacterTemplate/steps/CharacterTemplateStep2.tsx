@@ -21,20 +21,34 @@ interface CharacterTemplateStep2Props {
   onComplete: (llmConfig: LLMConfig) => void
   onBack: () => void
   isCreating: boolean
+  initialLlmConfig?: LLMConfig | null
 }
 
 export const CharacterTemplateStep2: React.FC<CharacterTemplateStep2Props> = ({
   onComplete,
   onBack,
   isCreating,
+  initialLlmConfig,
 }) => {
-  const [configType, setConfigType] = useState<'local' | 'api'>('local')
+  const [configType, setConfigType] = useState<'local' | 'api'>(
+    initialLlmConfig?.type || 'local'
+  )
   const [localModels, setLocalModels] = useState<LocalLLMModel[]>([])
-  const [selectedModelId, setSelectedModelId] = useState<string>('')
-  const [apiProvider, setApiProvider] = useState<string>('openai')
-  const [apiEndpoint, setApiEndpoint] = useState<string>('')
-  const [apiKey, setApiKey] = useState<string>('')
-  const [apiModelName, setApiModelName] = useState<string>('')
+  const [selectedModelId, setSelectedModelId] = useState<string>(
+    initialLlmConfig?.type === 'local' ? (initialLlmConfig as LocalLLMConfig).modelId : ''
+  )
+  const [apiProvider, setApiProvider] = useState<string>(
+    initialLlmConfig?.type === 'api' ? (initialLlmConfig as APILLMConfig).provider : 'openai'
+  )
+  const [apiEndpoint, setApiEndpoint] = useState<string>(
+    initialLlmConfig?.type === 'api' ? (initialLlmConfig as APILLMConfig).apiEndpoint : ''
+  )
+  const [apiKey, setApiKey] = useState<string>(
+    initialLlmConfig?.type === 'api' ? (initialLlmConfig as APILLMConfig).apiKey || '' : ''
+  )
+  const [apiModelName, setApiModelName] = useState<string>(
+    initialLlmConfig?.type === 'api' ? (initialLlmConfig as APILLMConfig).modelName : ''
+  )
   const [isLoadingModels, setIsLoadingModels] = useState(false)
 
   // 加载本地LLM模型列表
@@ -467,7 +481,7 @@ export const CharacterTemplateStep2: React.FC<CharacterTemplateStep2Props> = ({
             cursor: isValid() && !isCreating ? 'pointer' : 'not-allowed',
           }}
         >
-          {isCreating ? '创建中...' : '完成创建'}
+          {isCreating ? (initialLlmConfig ? '更新中...' : '创建中...') : (initialLlmConfig ? '完成更新' : '完成创建')}
         </button>
       </div>
     </motion.div>

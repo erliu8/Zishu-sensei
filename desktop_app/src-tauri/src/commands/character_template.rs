@@ -31,9 +31,9 @@ pub struct CharacterTemplateRegisterRequest {
 
 /// LLM配置数据
 #[derive(Debug, Clone, Serialize, Deserialize)]
-#[serde(tag = "type")]
+#[serde(tag = "type", rename_all = "camelCase")]
 pub enum LLMConfigData {
-    #[serde(rename = "local")]
+    #[serde(rename = "local", rename_all = "camelCase")]
     Local {
         model_id: String,
         model_name: String,
@@ -41,7 +41,7 @@ pub enum LLMConfigData {
         #[serde(default)]
         params: HashMap<String, serde_json::Value>,
     },
-    #[serde(rename = "api")]
+    #[serde(rename = "api", rename_all = "camelCase")]
     Api {
         provider: String,
         api_endpoint: String,
@@ -66,6 +66,7 @@ pub struct AdapterRegistrationResponse {
 
 /// 角色模板数据（用于存储）
 #[derive(Debug, Clone, Serialize, Deserialize)]
+#[serde(rename_all = "camelCase")]
 pub struct CharacterTemplateData {
     pub id: String,
     pub name: String,
@@ -73,14 +74,25 @@ pub struct CharacterTemplateData {
     pub live2d_model_id: String,
     pub prompt: PromptData,
     pub llm_config: LLMConfigData,
-    pub adapter_id: Option<String>,
-    pub adapter_type: Option<String>,
+    #[serde(flatten)]
+    pub metadata: Option<TemplateMetadata>,
     pub created_at: i64,
     pub updated_at: i64,
 }
 
+/// 模板元数据
+#[derive(Debug, Clone, Serialize, Deserialize)]
+#[serde(rename_all = "camelCase")]
+pub struct TemplateMetadata {
+    pub adapter_id: Option<String>,
+    pub adapter_type: Option<String>,
+    pub is_adapter_registered: Option<bool>,
+    pub adapter_error: Option<String>,
+}
+
 /// Prompt数据
 #[derive(Debug, Clone, Serialize, Deserialize)]
+#[serde(rename_all = "camelCase")]
 pub struct PromptData {
     pub id: String,
     pub name: String,
@@ -128,39 +140,51 @@ pub async fn get_character_templates(
     
     match db.character_template_registry.get_all_templates().await {
         Ok(db_templates) => {
-            let templates: Vec<CharacterTemplateData> = db_templates.into_iter().map(|t| CharacterTemplateData {
-                id: t.id,
-                name: t.name,
-                description: t.description,
-                live2d_model_id: t.live2d_model_id,
-                prompt: PromptData {
-                    id: t.prompt_id.clone(),
-                    name: t.prompt_name,
-                    system_prompt: t.prompt_content,
-                    description: None,
-                },
-                llm_config: serde_json::from_str(&t.llm_config_data).unwrap_or_else(|_| {
-                    if t.llm_config_type == "local" {
-                        LLMConfigData::Local {
-                            model_id: String::new(),
-                            model_name: String::new(),
-                            model_path: String::new(),
-                            params: HashMap::new(),
+            let templates: Vec<CharacterTemplateData> = db_templates.into_iter().map(|t| {
+                let metadata = if t.adapter_id.is_some() || t.adapter_type.is_some() {
+                    Some(TemplateMetadata {
+                        adapter_id: t.adapter_id.clone(),
+                        adapter_type: t.adapter_type.clone(),
+                        is_adapter_registered: Some(t.adapter_id.is_some()),
+                        adapter_error: None,
+                    })
+                } else {
+                    None
+                };
+                
+                CharacterTemplateData {
+                    id: t.id,
+                    name: t.name,
+                    description: t.description,
+                    live2d_model_id: t.live2d_model_id,
+                    prompt: PromptData {
+                        id: t.prompt_id.clone(),
+                        name: t.prompt_name,
+                        system_prompt: t.prompt_content,
+                        description: None,
+                    },
+                    llm_config: serde_json::from_str(&t.llm_config_data).unwrap_or_else(|_| {
+                        if t.llm_config_type == "local" {
+                            LLMConfigData::Local {
+                                model_id: String::new(),
+                                model_name: String::new(),
+                                model_path: String::new(),
+                                params: HashMap::new(),
+                            }
+                        } else {
+                            LLMConfigData::Api {
+                                provider: String::new(),
+                                api_endpoint: String::new(),
+                                api_key: None,
+                                model_name: String::new(),
+                                params: HashMap::new(),
+                            }
                         }
-                    } else {
-                        LLMConfigData::Api {
-                            provider: String::new(),
-                            api_endpoint: String::new(),
-                            api_key: None,
-                            model_name: String::new(),
-                            params: HashMap::new(),
-                        }
-                    }
-                }),
-                adapter_id: t.adapter_id,
-                adapter_type: t.adapter_type,
-                created_at: t.created_at,
-                updated_at: t.updated_at,
+                    }),
+                    metadata,
+                    created_at: t.created_at,
+                    updated_at: t.updated_at,
+                }
             }).collect();
             
             info!("成功获取 {} 个角色模板", templates.len());
@@ -192,6 +216,12 @@ pub async fn save_character_template(
     let llm_config_data = serde_json::to_string(&template.llm_config)
         .map_err(|e| format!("序列化LLM配置失败: {}", e))?;
     
+    let (adapter_id, adapter_type) = if let Some(ref metadata) = template.metadata {
+        (metadata.adapter_id.clone(), metadata.adapter_type.clone())
+    } else {
+        (None, None)
+    };
+    
     let db_template = crate::database::character_template_registry::CharacterTemplateData {
         id: template.id.clone(),
         name: template.name.clone(),
@@ -202,8 +232,8 @@ pub async fn save_character_template(
         prompt_content: template.prompt.system_prompt.clone(),
         llm_config_type: llm_config_type.to_string(),
         llm_config_data,
-        adapter_id: template.adapter_id.clone(),
-        adapter_type: template.adapter_type.clone(),
+        adapter_id,
+        adapter_type,
         created_at: template.created_at,
         updated_at: template.updated_at,
     };
@@ -219,6 +249,63 @@ pub async fn save_character_template(
         Err(e) => {
             error!("保存模板失败: {}", e);
             Ok(CommandResponse::error(format!("保存模板失败: {}", e)))
+        }
+    }
+}
+
+/// 更新角色模板
+#[tauri::command]
+pub async fn update_character_template(
+    template_id: String,
+    template: CharacterTemplateData,
+    app_handle: AppHandle,
+) -> Result<CommandResponse<bool>, String> {
+    info!("更新角色模板: {} -> {}", template_id, template.name);
+    
+    let db = crate::database::get_database()
+        .ok_or_else(|| "数据库未初始化".to_string())?;
+    
+    let llm_config_type = match &template.llm_config {
+        LLMConfigData::Local { .. } => "local",
+        LLMConfigData::Api { .. } => "api",
+    };
+    
+    let llm_config_data = serde_json::to_string(&template.llm_config)
+        .map_err(|e| format!("序列化LLM配置失败: {}", e))?;
+    
+    let (adapter_id, adapter_type) = if let Some(ref metadata) = template.metadata {
+        (metadata.adapter_id.clone(), metadata.adapter_type.clone())
+    } else {
+        (None, None)
+    };
+    
+    let db_template = crate::database::character_template_registry::CharacterTemplateData {
+        id: template_id.clone(),
+        name: template.name.clone(),
+        description: template.description.clone(),
+        live2d_model_id: template.live2d_model_id.clone(),
+        prompt_id: template.prompt.id.clone(),
+        prompt_name: template.prompt.name.clone(),
+        prompt_content: template.prompt.system_prompt.clone(),
+        llm_config_type: llm_config_type.to_string(),
+        llm_config_data,
+        adapter_id,
+        adapter_type,
+        created_at: template.created_at,
+        updated_at: chrono::Utc::now().timestamp(),
+    };
+    
+    match db.character_template_registry.update_template(&template_id, db_template).await {
+        Ok(_) => {
+            info!("模板更新成功: {}", template_id);
+            Ok(CommandResponse::success_with_message(
+                true,
+                "模板更新成功".to_string(),
+            ))
+        }
+        Err(e) => {
+            error!("更新模板失败: {}", e);
+            Ok(CommandResponse::error(format!("更新模板失败: {}", e)))
         }
     }
 }
@@ -470,6 +557,16 @@ pub fn get_command_metadata() -> HashMap<String, CommandMetadata> {
     metadata.insert("save_character_template".to_string(), CommandMetadata {
         name: "save_character_template".to_string(),
         description: "保存角色模板".to_string(),
+        input_type: Some("CharacterTemplateData".to_string()),
+        output_type: Some("bool".to_string()),
+        required_permission: PermissionLevel::User,
+        is_async: true,
+        category: "character_template".to_string(),
+    });
+    
+    metadata.insert("update_character_template".to_string(), CommandMetadata {
+        name: "update_character_template".to_string(),
+        description: "更新角色模板".to_string(),
         input_type: Some("CharacterTemplateData".to_string()),
         output_type: Some("bool".to_string()),
         required_permission: PermissionLevel::User,

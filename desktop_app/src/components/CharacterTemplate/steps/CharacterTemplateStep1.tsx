@@ -9,6 +9,7 @@ import { CharacterTemplateService } from '@/services/characterTemplate'
 import type {
   CreateCharacterTemplateStep1,
   CharacterPrompt,
+  CreateCharacterPromptInput,
 } from '@/types/characterTemplate'
 
 interface CharacterInfo {
@@ -34,7 +35,7 @@ export const CharacterTemplateStep1: React.FC<CharacterTemplateStep1Props> = ({
   const [live2dModelId, setLive2dModelId] = useState(initialData?.live2dModelId || 'hiyori')
   const [promptMode, setPromptMode] = useState<'select' | 'create'>('select')
   const [selectedPromptId, setSelectedPromptId] = useState<string>('')
-  const [newPrompt, setNewPrompt] = useState({
+  const [newPrompt, setNewPrompt] = useState<CreateCharacterPromptInput>({
     name: '',
     systemPrompt: '',
     description: '',
@@ -42,6 +43,35 @@ export const CharacterTemplateStep1: React.FC<CharacterTemplateStep1Props> = ({
   const [availablePrompts, setAvailablePrompts] = useState<CharacterPrompt[]>([])
   const [availableModels, setAvailableModels] = useState<CharacterInfo[]>([])
   const [loadingModels, setLoadingModels] = useState(true)
+
+  // 初始化编辑模式的基本字段数据
+  useEffect(() => {
+    if (initialData) {
+      setName(initialData.name || '')
+      setDescription(initialData.description || '')
+      setLive2dModelId(initialData.live2dModelId || 'hiyori')
+    }
+  }, [initialData])
+
+  // 初始化编辑模式的 Prompt 数据
+  useEffect(() => {
+    if (initialData?.prompt) {
+      const prompt = initialData.prompt
+      if (typeof prompt === 'string') {
+        // 如果是字符串（prompt ID）
+        setPromptMode('select')
+        setSelectedPromptId(prompt)
+      } else {
+        // 如果是 CreateCharacterPromptInput 对象（创建新的 prompt）
+        setPromptMode('create')
+        setNewPrompt({
+          name: prompt.name,
+          systemPrompt: prompt.systemPrompt,
+          description: prompt.description || '',
+        })
+      }
+    }
+  }, [initialData, availablePrompts])
 
   // 加载可用的Prompt列表
   useEffect(() => {

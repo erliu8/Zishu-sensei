@@ -65,6 +65,20 @@ export interface CharacterPrompt {
 }
 
 /**
+ * 创建新Prompt时的输入数据（不包含ID和时间戳）
+ */
+export interface CreateCharacterPromptInput {
+  /** Prompt名称 */
+  name: string
+  /** 系统提示词 */
+  systemPrompt: string
+  /** 用户提示词模板（可选） */
+  userPromptTemplate?: string
+  /** 描述 */
+  description?: string
+}
+
+/**
  * 角色模板
  */
 export interface CharacterTemplate {
@@ -109,8 +123,10 @@ export interface CreateCharacterTemplateStep1 {
   description?: string
   /** Live2D模型ID */
   live2dModelId: string
-  /** Prompt配置（可以选择已有的或创建新的） */
-  prompt: CharacterPrompt | string // string表示已有prompt的ID
+  /** Prompt配置（可以选择已有的prompt ID或创建新的prompt） */
+  prompt: string | CreateCharacterPromptInput 
+  // string: 已有prompt的ID
+  // CreateCharacterPromptInput: 创建新prompt的数据
 }
 
 /**

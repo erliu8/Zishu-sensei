@@ -174,14 +174,26 @@ export class CharacterTemplateService {
 
       // 如果LLM配置改变，需要重新注册适配器
       if (updates.llmConfig) {
-        await this.registerAdapter(updatedTemplate)
+        try {
+          await this.registerAdapter(updatedTemplate)
+        } catch (error) {
+          console.warn('重新注册适配器失败:', error)
+        }
       }
 
-      // 尝试同步到后端
+      // 同步到后端数据库
       try {
-        await invoke('update_character_template', { templateId, updates })
+        const response = await invoke<CommandResponse<boolean>>(
+          'update_character_template', 
+          { templateId, template: updatedTemplate }
+        )
+        if (response.success) {
+          console.log('✅ 模板已同步到数据库')
+        } else {
+          console.warn('⚠️ 同步模板到数据库失败:', response.message)
+        }
       } catch (error) {
-        console.warn('同步更新到后端失败:', error)
+        console.warn('⚠️ 同步更新到后端失败:', error)
       }
 
       return updatedTemplate
@@ -326,18 +338,62 @@ export class CharacterTemplateService {
         throw new Error('模板不存在')
       }
 
-      // 加载适配器
+      console.log('🔄 开始切换角色模板:', template.name, 'ID:', templateId)
+
+      // 1. 加载适配器
       if (template.metadata?.adapterId) {
-        await invoke('load_adapter', { adapterId: template.metadata.adapterId })
+        console.log('📦 加载适配器:', template.metadata.adapterId)
+        const loadResponse = await invoke<CommandResponse<boolean>>('load_adapter', { 
+          adapterId: template.metadata.adapterId 
+        })
+        
+        if (!loadResponse.success) {
+          console.error('加载适配器失败:', loadResponse.message)
+          throw new Error(`加载适配器失败: ${loadResponse.message}`)
+        }
+        console.log('✅ 适配器加载成功')
+      } else {
+        console.warn('⚠️ 模板没有关联的适配器ID')
       }
 
-      // 切换Live2D模型
-      // 这里应该调用角色管理服务来切换模型
-      // await CharacterService.switchCharacter(template.live2dModelId)
+      // 2. 切换Live2D模型
+      if (template.live2dModelId) {
+        console.log('🎭 切换Live2D模型:', template.live2dModelId)
+        try {
+          const switchResponse = await invoke<CommandResponse<boolean>>('switch_character', {
+            characterId: template.live2dModelId
+          })
+          
+          if (switchResponse.success) {
+            console.log('✅ Live2D模型切换成功')
+          } else {
+            console.warn('⚠️ Live2D模型切换失败:', switchResponse.message)
+          }
+        } catch (error) {
+          console.error('切换Live2D模型出错:', error)
+          // 不阻塞整个流程
+        }
+      }
 
+      // 3. 保存当前激活的模板ID到localStorage
+      localStorage.setItem('current_character_template_id', templateId)
+      console.log('💾 已保存当前模板ID:', templateId)
+
+      // 4. 保存当前使用的适配器ID和角色信息到全局状态（供聊天界面使用）
+      const chatConfig = {
+        templateId: templateId,
+        templateName: template.name,
+        adapterId: template.metadata?.adapterId,
+        live2dModelId: template.live2dModelId,
+        systemPrompt: template.prompt.systemPrompt,
+      }
+      localStorage.setItem('current_chat_config', JSON.stringify(chatConfig))
+      console.log('💾 已保存聊天配置:', chatConfig)
+
+      console.log('✅ 角色模板切换完成!')
       return true
     } catch (error) {
-      console.error('切换角色模板失败:', error)
+      console.error('❌ 切换角色模板失败:', error)
       throw error
     }
   }

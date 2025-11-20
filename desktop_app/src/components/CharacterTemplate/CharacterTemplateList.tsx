@@ -10,6 +10,7 @@ interface CharacterTemplateListProps {
   templates: CharacterTemplate[]
   isLoading: boolean
   onSelect: (template: CharacterTemplate) => void
+  onEdit: (template: CharacterTemplate) => void
   onDelete: (templateId: string) => void
   onCreateNew: () => void
 }
@@ -18,6 +19,7 @@ export const CharacterTemplateList: React.FC<CharacterTemplateListProps> = ({
   templates,
   isLoading,
   onSelect,
+  onEdit,
   onDelete,
   onCreateNew,
 }) => {
@@ -100,6 +102,7 @@ export const CharacterTemplateList: React.FC<CharacterTemplateListProps> = ({
               key={template.id}
               template={template}
               onSelect={() => onSelect(template)}
+              onEdit={() => onEdit(template)}
               onDelete={() => onDelete(template.id)}
             />
           ))}
@@ -115,8 +118,9 @@ export const CharacterTemplateList: React.FC<CharacterTemplateListProps> = ({
 const TemplateCard: React.FC<{
   template: CharacterTemplate
   onSelect: () => void
+  onEdit: () => void
   onDelete: () => void
-}> = ({ template, onSelect, onDelete }) => {
+}> = ({ template, onSelect, onEdit, onDelete }) => {
   const [showActions, setShowActions] = React.useState(false)
 
   return (
@@ -199,34 +203,64 @@ const TemplateCard: React.FC<{
 
       {/* 操作按钮 */}
       {showActions && (
-        <motion.button
+        <motion.div
           initial={{ opacity: 0 }}
           animate={{ opacity: 1 }}
-          onClick={(e) => {
-            e.stopPropagation()
-            onDelete()
-          }}
           style={{
             position: 'absolute',
             top: '8px',
             right: '8px',
-            padding: '6px',
-            borderRadius: '4px',
-            border: 'none',
-            background: 'hsl(var(--color-destructive))',
-            color: 'white',
-            cursor: 'pointer',
-            fontSize: '12px',
-          }}
-          onMouseEnter={(e) => {
-            e.currentTarget.style.opacity = '0.8'
-          }}
-          onMouseLeave={(e) => {
-            e.currentTarget.style.opacity = '1'
+            display: 'flex',
+            gap: '8px',
           }}
         >
-          删除
-        </motion.button>
+          <button
+            onClick={(e) => {
+              e.stopPropagation()
+              onEdit()
+            }}
+            style={{
+              padding: '6px 12px',
+              borderRadius: '4px',
+              border: 'none',
+              background: 'hsl(var(--color-primary))',
+              color: 'white',
+              cursor: 'pointer',
+              fontSize: '12px',
+            }}
+            onMouseEnter={(e) => {
+              e.currentTarget.style.opacity = '0.8'
+            }}
+            onMouseLeave={(e) => {
+              e.currentTarget.style.opacity = '1'
+            }}
+          >
+            编辑
+          </button>
+          <button
+            onClick={(e) => {
+              e.stopPropagation()
+              onDelete()
+            }}
+            style={{
+              padding: '6px 12px',
+              borderRadius: '4px',
+              border: 'none',
+              background: 'hsl(var(--color-destructive))',
+              color: 'white',
+              cursor: 'pointer',
+              fontSize: '12px',
+            }}
+            onMouseEnter={(e) => {
+              e.currentTarget.style.opacity = '0.8'
+            }}
+            onMouseLeave={(e) => {
+              e.currentTarget.style.opacity = '1'
+            }}
+          >
+            删除
+          </button>
+        </motion.div>
       )}
     </motion.div>
   )

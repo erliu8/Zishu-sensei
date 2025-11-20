@@ -26,6 +26,7 @@ export const CharacterTemplateManager: React.FC<CharacterTemplateManagerProps> =
   const [templates, setTemplates] = useState<CharacterTemplate[]>([])
   const [isLoading, setIsLoading] = useState(true)
   const [isCreating, setIsCreating] = useState(false)
+  const [editingTemplate, setEditingTemplate] = useState<CharacterTemplate | null>(null)
   const [error, setError] = useState<string | null>(null)
 
   // 加载模板列表
@@ -59,6 +60,12 @@ export const CharacterTemplateManager: React.FC<CharacterTemplateManagerProps> =
     }
   }
 
+  // 处理编辑模板
+  const handleEditTemplate = (template: CharacterTemplate) => {
+    setEditingTemplate(template)
+    setIsCreating(true)
+  }
+
   // 处理模板删除
   const handleDeleteTemplate = async (templateId: string) => {
     if (!confirm('确定要删除这个角色模板吗？')) {
@@ -74,10 +81,17 @@ export const CharacterTemplateManager: React.FC<CharacterTemplateManagerProps> =
     }
   }
 
-  // 处理创建完成
+  // 处理创建/编辑完成
   const handleCreateComplete = () => {
     setIsCreating(false)
+    setEditingTemplate(null)
     loadTemplates()
+  }
+
+  // 处理取消
+  const handleCancel = () => {
+    setIsCreating(false)
+    setEditingTemplate(null)
   }
 
   return (
@@ -184,14 +198,17 @@ export const CharacterTemplateManager: React.FC<CharacterTemplateManagerProps> =
           <AnimatePresence mode="wait">
             {isCreating ? (
               <CharacterTemplateCreator
+                key={editingTemplate?.id || 'new'}
+                initialTemplate={editingTemplate || undefined}
                 onComplete={handleCreateComplete}
-                onCancel={() => setIsCreating(false)}
+                onCancel={handleCancel}
               />
             ) : (
               <CharacterTemplateList
                 templates={templates}
                 isLoading={isLoading}
                 onSelect={handleSelectTemplate}
+                onEdit={handleEditTemplate}
                 onDelete={handleDeleteTemplate}
                 onCreateNew={() => setIsCreating(true)}
               />
