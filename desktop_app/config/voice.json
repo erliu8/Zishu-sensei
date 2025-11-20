@@ -1,0 +1,59 @@
+{
+  "voice": {
+    "enabled": true,
+    "mode": "continuous",
+    "description": "语音对话配置"
+  },
+  
+  "speech_recognition": {
+    "provider": "web_speech_api",
+    "language": "zh-CN",
+    "continuous": true,
+    "interimResults": true,
+    "maxAlternatives": 1,
+    "autoStart": false,
+    "autoRestart": true
+  },
+  
+  "speech_synthesis": {
+    "provider": "web_speech_api",
+    "language": "zh-CN",
+    "voice": "Microsoft Xiaoxiao Online (Natural) - Chinese (Mainland)",
+    "rate": 1.0,
+    "pitch": 1.0,
+    "volume": 1.0,
+    "autoPlay": true
+  },
+  
+  "wake_word": {
+    "enabled": false,
+    "word": "紫舒",
+    "sensitivity": 0.7,
+    "note": "Wake word detection requires additional setup"
+  },
+  
+  "conversation": {
+    "mode": "full_duplex",
+    "hands_free": true,
+    "show_transcription": true,
+    "visual_feedback": true,
+    "allow_interruption": true
+  },
+  
+  "ui": {
+    "show_voice_button": true,
+    "show_waveform": true,
+    "show_language_selector": true,
+    "compact_mode": false
+  },
+  
+  "advanced": {
+    "silence_timeout": 2000,
+    "max_duration": 60000,
+    "audio_constraints": {
+      "echoCancellation": true,
+      "noiseSuppression": true,
+      "autoGainControl": true
+    }
+  }
+}

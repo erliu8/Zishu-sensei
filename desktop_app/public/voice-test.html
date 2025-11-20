@@ -1,0 +1,443 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>🎙️ 语音功能测试</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+        
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            min-height: 100vh;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            padding: 20px;
+        }
+        
+        .container {
+            background: white;
+            border-radius: 20px;
+            padding: 40px;
+            max-width: 600px;
+            width: 100%;
+            box-shadow: 0 20px 60px rgba(0,0,0,0.3);
+        }
+        
+        h1 {
+            text-align: center;
+            color: #333;
+            margin-bottom: 30px;
+        }
+        
+        .section {
+            margin-bottom: 30px;
+            padding: 20px;
+            background: #f8f9fa;
+            border-radius: 10px;
+        }
+        
+        .section h2 {
+            font-size: 18px;
+            color: #667eea;
+            margin-bottom: 15px;
+        }
+        
+        .button-group {
+            display: flex;
+            gap: 10px;
+            margin-bottom: 15px;
+        }
+        
+        button {
+            flex: 1;
+            padding: 15px 30px;
+            font-size: 16px;
+            border: none;
+            border-radius: 10px;
+            cursor: pointer;
+            transition: all 0.3s;
+            font-weight: 600;
+        }
+        
+        button:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 5px 15px rgba(0,0,0,0.2);
+        }
+        
+        .btn-primary {
+            background: #667eea;
+            color: white;
+        }
+        
+        .btn-danger {
+            background: #e74c3c;
+            color: white;
+        }
+        
+        .btn-success {
+            background: #27ae60;
+            color: white;
+        }
+        
+        .status {
+            padding: 15px;
+            border-radius: 8px;
+            margin-bottom: 15px;
+            font-weight: 500;
+        }
+        
+        .status.idle {
+            background: #e8f4f8;
+            color: #2980b9;
+        }
+        
+        .status.listening {
+            background: #ffeaa7;
+            color: #d63031;
+            animation: pulse 1.5s infinite;
+        }
+        
+        .status.speaking {
+            background: #dfe6e9;
+            color: #2d3436;
+        }
+        
+        @keyframes pulse {
+            0%, 100% { opacity: 1; }
+            50% { opacity: 0.6; }
+        }
+        
+        .result-box {
+            background: white;
+            border: 2px solid #ddd;
+            border-radius: 8px;
+            padding: 15px;
+            min-height: 60px;
+            max-height: 150px;
+            overflow-y: auto;
+            font-size: 16px;
+            line-height: 1.6;
+        }
+        
+        .result-box.interim {
+            color: #999;
+            font-style: italic;
+        }
+        
+        .result-box.final {
+            color: #333;
+        }
+        
+        .info {
+            background: #e8f5e9;
+            padding: 15px;
+            border-radius: 8px;
+            color: #27ae60;
+            font-size: 14px;
+            line-height: 1.6;
+        }
+        
+        .warning {
+            background: #fff3cd;
+            padding: 15px;
+            border-radius: 8px;
+            color: #856404;
+            font-size: 14px;
+            margin-top: 15px;
+        }
+        
+        .voices-list {
+            max-height: 200px;
+            overflow-y: auto;
+            font-size: 14px;
+        }
+        
+        .voice-item {
+            padding: 8px;
+            border-bottom: 1px solid #eee;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>🎙️ 语音功能测试</h1>
+        
+        <!-- 浏览器支持检测 -->
+        <div class="section">
+            <h2>📱 浏览器支持</h2>
+            <div id="support-info" class="info">检测中...</div>
+        </div>
+        
+        <!-- 语音识别测试 -->
+        <div class="section">
+            <h2>🎤 语音识别 (STT)</h2>
+            <div id="stt-status" class="status idle">准备就绪</div>
+            
+            <div class="button-group">
+                <button id="start-stt" class="btn-primary">开始识别</button>
+                <button id="stop-stt" class="btn-danger">停止识别</button>
+            </div>
+            
+            <div>
+                <strong>识别结果：</strong>
+                <div id="transcript" class="result-box">等待识别...</div>
+            </div>
+        </div>
+        
+        <!-- 语音合成测试 -->
+        <div class="section">
+            <h2>🔊 语音合成 (TTS)</h2>
+            <div id="tts-status" class="status idle">准备就绪</div>
+            
+            <div>
+                <textarea 
+                    id="tts-text" 
+                    placeholder="输入要朗读的文字..." 
+                    style="width: 100%; padding: 10px; border-radius: 8px; border: 2px solid #ddd; margin-bottom: 10px; font-size: 14px;"
+                    rows="3"
+                >你好，我是紫舒老师。这是语音合成测试。</textarea>
+            </div>
+            
+            <div class="button-group">
+                <button id="speak-btn" class="btn-success">朗读</button>
+                <button id="stop-tts" class="btn-danger">停止</button>
+            </div>
+        </div>
+        
+        <!-- 可用语音列表 -->
+        <div class="section">
+            <h2>🎵 可用语音</h2>
+            <div id="voices-list" class="voices-list">加载中...</div>
+        </div>
+        
+        <div class="warning">
+            💡 提示：首次使用需要允许浏览器访问麦克风。推荐使用 Chrome 或 Edge 浏览器。
+        </div>
+    </div>
+
+    <script>
+        // 全局变量
+        let recognition = null;
+        let isListening = false;
+        let voices = [];
+        
+        // 检测浏览器支持
+        function checkSupport() {
+            const SpeechRecognition = window.SpeechRecognition || window.webkitSpeechRecognition;
+            const supportSTT = !!SpeechRecognition;
+            const supportTTS = 'speechSynthesis' in window;
+            
+            const info = document.getElementById('support-info');
+            info.innerHTML = `
+                <div>✅ 语音识别 (STT): ${supportSTT ? '支持' : '❌ 不支持'}</div>
+                <div>✅ 语音合成 (TTS): ${supportTTS ? '支持' : '❌ 不支持'}</div>
+                <div>🌐 浏览器: ${navigator.userAgent.includes('Chrome') ? 'Chrome' : navigator.userAgent.includes('Edge') ? 'Edge' : '其他'}</div>
+            `;
+            
+            return { supportSTT, supportTTS };
+        }
+        
+        // 初始化语音识别
+        function initSpeechRecognition() {
+            const SpeechRecognition = window.SpeechRecognition || window.webkitSpeechRecognition;
+            
+            if (!SpeechRecognition) {
+                alert('您的浏览器不支持语音识别！请使用 Chrome 或 Edge。');
+                return;
+            }
+            
+            recognition = new SpeechRecognition();
+            recognition.lang = 'zh-CN';
+            recognition.continuous = true;
+            recognition.interimResults = true;
+            
+            recognition.onstart = () => {
+                isListening = true;
+                document.getElementById('stt-status').textContent = '🔴 正在监听...';
+                document.getElementById('stt-status').className = 'status listening';
+            };
+            
+            recognition.onend = () => {
+                isListening = false;
+                document.getElementById('stt-status').textContent = '准备就绪';
+                document.getElementById('stt-status').className = 'status idle';
+            };
+            
+            recognition.onresult = (event) => {
+                let interimTranscript = '';
+                let finalTranscript = '';
+                
+                for (let i = event.resultIndex; i < event.results.length; i++) {
+                    const transcript = event.results[i][0].transcript;
+                    if (event.results[i].isFinal) {
+                        finalTranscript += transcript;
+                    } else {
+                        interimTranscript += transcript;
+                    }
+                }
+                
+                const transcriptDiv = document.getElementById('transcript');
+                if (finalTranscript) {
+                    transcriptDiv.textContent = finalTranscript;
+                    transcriptDiv.className = 'result-box final';
+                    
+                    // 自动朗读识别结果（可选）
+                    // speakText('我听到你说：' + finalTranscript);
+                } else if (interimTranscript) {
+                    transcriptDiv.textContent = interimTranscript + '...';
+                    transcriptDiv.className = 'result-box interim';
+                }
+            };
+            
+            recognition.onerror = (event) => {
+                console.error('识别错误:', event.error, event);
+                const errorMessages = {
+                    'no-speech': '未检测到语音，请靠近麦克风说话',
+                    'network': '网络错误，Chrome语音识别需要联网',
+                    'not-allowed': '麦克风权限被拒绝',
+                    'audio-capture': '无法访问麦克风',
+                    'aborted': '识别被中止'
+                };
+                const errorMsg = errorMessages[event.error] || event.error;
+                document.getElementById('stt-status').textContent = `❌ ${errorMsg}`;
+                document.getElementById('stt-status').className = 'status idle';
+                
+                // 显示详细提示
+                const transcriptDiv = document.getElementById('transcript');
+                if (event.error === 'no-speech') {
+                    transcriptDiv.innerHTML = `
+                        <div style="color: #e74c3c;">
+                            <strong>未检测到语音</strong><br/>
+                            <small>
+                            • 请靠近麦克风（15-30cm）<br/>
+                            • 说话要清晰<br/>
+                            • 确保麦克风音量足够<br/>
+                            • 减少背景噪音
+                            </small>
+                        </div>
+                    `;
+                } else if (event.error === 'network') {
+                    transcriptDiv.innerHTML = `
+                        <div style="color: #e74c3c;">
+                            <strong>网络错误</strong><br/>
+                            <small>
+                            Chrome 的语音识别需要联网访问 Google 服务器。<br/>
+                            请检查：<br/>
+                            • 网络连接是否正常<br/>
+                            • 是否能访问 Google 服务
+                            </small>
+                        </div>
+                    `;
+                }
+            };
+        }
+        
+        // 加载可用语音
+        function loadVoices() {
+            voices = speechSynthesis.getVoices();
+            const voicesList = document.getElementById('voices-list');
+            
+            if (voices.length === 0) {
+                voicesList.innerHTML = '<div style="color: #999;">正在加载语音列表...</div>';
+                return;
+            }
+            
+            const chineseVoices = voices.filter(v => v.lang.startsWith('zh'));
+            
+            voicesList.innerHTML = chineseVoices.length > 0 
+                ? chineseVoices.map(v => `
+                    <div class="voice-item">
+                        ${v.name} (${v.lang}) ${v.default ? '⭐' : ''}
+                    </div>
+                `).join('')
+                : '<div style="color: #999;">未找到中文语音</div>';
+        }
+        
+        // 语音合成
+        function speakText(text) {
+            if (!text.trim()) {
+                alert('请输入要朗读的文字');
+                return;
+            }
+            
+            // 停止当前播放
+            speechSynthesis.cancel();
+            
+            const utterance = new SpeechSynthesisUtterance(text);
+            utterance.lang = 'zh-CN';
+            utterance.rate = 1.0;
+            utterance.pitch = 1.0;
+            utterance.volume = 1.0;
+            
+            // 选择中文语音
+            const chineseVoice = voices.find(v => v.lang.startsWith('zh'));
+            if (chineseVoice) {
+                utterance.voice = chineseVoice;
+            }
+            
+            utterance.onstart = () => {
+                document.getElementById('tts-status').textContent = '🔊 正在朗读...';
+                document.getElementById('tts-status').className = 'status speaking';
+            };
+            
+            utterance.onend = () => {
+                document.getElementById('tts-status').textContent = '准备就绪';
+                document.getElementById('tts-status').className = 'status idle';
+            };
+            
+            utterance.onerror = (event) => {
+                console.error('朗读错误:', event);
+                document.getElementById('tts-status').textContent = '❌ 朗读失败';
+                document.getElementById('tts-status').className = 'status idle';
+            };
+            
+            speechSynthesis.speak(utterance);
+        }
+        
+        // 事件绑定
+        document.getElementById('start-stt').addEventListener('click', () => {
+            if (!recognition) {
+                initSpeechRecognition();
+            }
+            if (!isListening) {
+                recognition.start();
+            }
+        });
+        
+        document.getElementById('stop-stt').addEventListener('click', () => {
+            if (recognition && isListening) {
+                recognition.stop();
+            }
+        });
+        
+        document.getElementById('speak-btn').addEventListener('click', () => {
+            const text = document.getElementById('tts-text').value;
+            speakText(text);
+        });
+        
+        document.getElementById('stop-tts').addEventListener('click', () => {
+            speechSynthesis.cancel();
+            document.getElementById('tts-status').textContent = '准备就绪';
+            document.getElementById('tts-status').className = 'status idle';
+        });
+        
+        // 初始化
+        window.addEventListener('load', () => {
+            checkSupport();
+            
+            // 加载语音列表
+            if ('speechSynthesis' in window) {
+                loadVoices();
+                speechSynthesis.onvoiceschanged = loadVoices;
+            }
+        });
+    </script>
+</body>
+</html>
