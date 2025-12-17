@@ -1,0 +1,50 @@
+.container {
+    display: flex;
+    flex-direction: column;
+    height: 100vh;
+    background: #fafafa;
+}
+
+.header {
+    background: white;
+    border-bottom: 1px solid #e0e0e0;
+    padding: 20px 32px;
+}
+
+.header h1 {
+    margin: 0 0 12px 0;
+    font-size: 28px;
+    font-weight: 600;
+    color: #333;
+}
+
+.breadcrumb {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    font-size: 14px;
+}
+
+.breadcrumb .link {
+    color: #2196F3;
+    cursor: pointer;
+    transition: color 0.3s;
+}
+
+.breadcrumb .link:hover {
+    color: #1976d2;
+    text-decoration: underline;
+}
+
+.breadcrumb .active {
+    color: #666;
+}
+
+.breadcrumb .separator {
+    color: #999;
+}
+
+.content {
+    flex: 1;
+    overflow: hidden;
+}

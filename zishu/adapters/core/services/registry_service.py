@@ -539,7 +539,7 @@ class AdapterRegistryService(AsyncService):
                 break
             except Exception as e:
                 logger.error(f"Cleanup loop error: {e}")
-                await asyncio.sleep(self._cleanup_interval)
+                await asyncio.sleep(self._cleanup_interval, 1)
 
         logger.info("Registry cleanup loop stopped")
 
@@ -558,10 +558,9 @@ class AdapterRegistryService(AsyncService):
 
             # 检查是否长时间未活动
             max_inactive_time = self.config.get("max_inactive_time", 3600)  # 1小时
-            if registration.last_updated:
-                inactive_time = (
-                    current_time - registration.last_updated
-                ).total_seconds()
+            last_updated = getattr(registration, "last_updated", None)
+            if last_updated:
+                inactive_time = (current_time - last_updated).total_seconds()
                 if (
                     inactive_time > max_inactive_time
                     and registration.status == AdapterStatus.INACTIVE

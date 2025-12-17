@@ -699,10 +699,16 @@ async fn get_categories_from_market(product_type: Option<MarketProductType>) -> 
 // 辅助函数
 // ================================
 
-/// 获取后端URL
+/// 获取后端URL - 市场功能使用社区平台
 fn get_backend_url() -> String {
-    std::env::var("ZISHU_BACKEND_URL")
-        .unwrap_or_else(|_| "http://localhost:8000".to_string())
+    // 优先使用环境变量
+    if let Ok(url) = std::env::var("ZISHU_BACKEND_URL") {
+        return url;
+    }
+    
+    // 使用路由器获取社区平台 URL（市场功能在社区平台）
+    let router = crate::config::ApiRouter::new();
+    router.community_url()
 }
 
 /// 比较版本号（简单实现）

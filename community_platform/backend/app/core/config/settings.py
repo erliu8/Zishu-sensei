@@ -21,7 +21,7 @@ class Settings(BaseSettings):
     
     # CORS 配置
     CORS_ORIGINS: str = Field(
-        default="http://localhost:3000,http://localhost:3001",
+        default="http://localhost:3000,http://localhost:3001,tauri://localhost,http://localhost:1420,https://tauri.localhost",
         env="CORS_ORIGINS"
     )
     
@@ -29,7 +29,13 @@ class Settings(BaseSettings):
     def cors_origins_list(self) -> List[str]:
         """将 CORS_ORIGINS 字符串转换为列表"""
         if not self.CORS_ORIGINS:
-            return ["http://localhost:3000", "http://localhost:3001"]
+            return [
+                "http://localhost:3000",
+                "http://localhost:3001",
+                "tauri://localhost",
+                "http://localhost:1420",
+                "https://tauri.localhost"
+            ]
         return [origin.strip() for origin in self.CORS_ORIGINS.split(",") if origin.strip()]
     
     # PostgreSQL 配置

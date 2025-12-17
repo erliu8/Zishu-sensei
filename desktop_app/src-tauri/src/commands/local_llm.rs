@@ -348,13 +348,14 @@ async fn get_models_from_storage(app_handle: &AppHandle) -> Result<Vec<LocalLLMM
 
 /// 获取后端 URL
 fn get_backend_url() -> String {
-    let url = std::env::var("ZISHU_BACKEND_URL")
-        .unwrap_or_else(|_| "http://127.0.0.1:8000".to_string());
+    // 本地 LLM API（Ollama），保持独立配置
+    let api_base = std::env::var("LLM_API_BASE")
+        .unwrap_or_else(|_| "http://localhost:11434".to_string());
     
     // 如果使用localhost，替换为127.0.0.1以避免IPv6解析问题
-    let normalized_url = url.replace("localhost", "127.0.0.1");
+    let normalized_url = api_base.replace("localhost", "127.0.0.1");
     
-    info!("后端 URL 配置: 原始={}, 规范化={}", url, normalized_url);
+    info!("后端 URL 配置: 原始={}, 规范化={}", api_base, normalized_url);
     normalized_url
 }
 

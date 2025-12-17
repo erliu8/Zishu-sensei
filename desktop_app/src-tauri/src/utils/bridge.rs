@@ -92,10 +92,17 @@ impl PythonApiBridge {
         *self.request_count.write() += 1;
     }
 
-    /// 构建完整 URL
+    /// 构建完整 URL（使用路由器）
     fn build_url(&self, path: &str) -> String {
+        // 优先使用配置的 base_url
         let base_url = self.config.read().base_url.clone();
-        format!("{}{}", base_url.trim_end_matches('/'), path)
+        if !base_url.is_empty() && base_url != "http://127.0.0.1:8000" {
+            return format!("{}{}", base_url.trim_end_matches('/'), path);
+        }
+        
+        // 使用路由器根据路径选择后端
+        let router = crate::config::ApiRouter::new();
+        router.build_url(path)
     }
 
     /// 发送 GET 请求

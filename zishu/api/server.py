@@ -144,6 +144,17 @@ async def lifespan(app: FastAPI):
 
         logger.info("Zishu Server dependencies initialized successfully")
 
+        # 初始化数据库连接
+        try:
+            from zishu.database.connection import init_database, DatabaseConfig
+            logger.info("Initializing database connection...")
+            db_config = DatabaseConfig.from_env()
+            await init_database(db_config)
+            logger.info("Database connection initialized successfully")
+        except Exception as e:
+            logger.error(f"Failed to initialize database: {e}")
+            # 数据库初始化失败不阻塞应用启动（某些功能可能需要数据库）
+
         # 初始化 AdapterManager（提前初始化避免请求时超时）
         try:
             from zishu.api.dependencies import get_adapter_manager
@@ -242,6 +253,14 @@ async def lifespan(app: FastAPI):
                 logger.info("AdapterManager stopped")
         except Exception as e:
             logger.warning(f"Error stopping AdapterManager: {e}")
+
+        # 清理数据库连接
+        try:
+            from zishu.database.connection import cleanup_database
+            await cleanup_database()
+            logger.info("Database connection cleaned up")
+        except Exception as e:
+            logger.warning(f"Error cleaning up database: {e}")
 
         try:
             if server_state.dependencies:

@@ -1248,10 +1248,16 @@ async fn get_adapter_status_from_backend(adapter_id: Option<&str>) -> Result<ser
     }
 }
 
-/// Get backend URL from environment or default
+/// Get backend URL from environment or use router
 fn get_backend_url() -> String {
-    std::env::var("ZISHU_BACKEND_URL")
-        .unwrap_or_else(|_| "http://localhost:8000".to_string())
+    // 优先使用环境变量
+    if let Ok(url) = std::env::var("ZISHU_BACKEND_URL") {
+        return url;
+    }
+    
+    // 使用路由器获取核心服务 URL（适配器功能在核心服务）
+    let router = crate::config::ApiRouter::new();
+    router.core_url()
 }
 
 // ================================

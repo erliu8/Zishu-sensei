@@ -267,6 +267,7 @@ class AdapterRegistration:
     instance: Optional[Any] = None
 
     # 时间戳
+    last_updated: datetime = field(default_factory=lambda: datetime.now(timezone.utc))
     registered_at: datetime = field(default_factory=lambda: datetime.now(timezone.utc))
     started_at: Optional[datetime] = None
     stopped_at: Optional[datetime] = None

@@ -69,6 +69,13 @@ def get_available_routes(app: FastAPI) -> List[APIRouter]:
     except (ImportError, AttributeError):
         pass
 
+    try:
+        from .workflow import router as workflow_router
+
+        routers.append(workflow_router)
+    except (ImportError, AttributeError):
+        pass
+
     return routers
 
 

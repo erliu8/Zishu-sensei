@@ -75,6 +75,9 @@ pub mod database;
 /// 工作流管理命令
 pub mod workflow;
 
+/// 工作流 API 命令（与 Python 服务通信）
+pub mod workflow_api;
+
 /// 市场相关命令
 pub mod market;
 
@@ -140,6 +143,9 @@ pub mod character_template;
 
 /// 音频录制和播放命令
 pub mod audio;
+
+/// 认证相关命令
+pub mod auth;
 
 // ================================
 // 公共命令类型定义
@@ -562,6 +568,9 @@ pub fn get_command_metadata() -> HashMap<String, CommandMetadata> {
     // Prompt命令
     metadata.extend(prompt::get_command_metadata());
     
+    // 认证命令
+    metadata.extend(auth::get_command_metadata());
+    
     metadata
 }
 
@@ -706,6 +715,9 @@ pub use permission::*;
 // 日志命令
 
 // Deep Link 命令
+
+// 认证命令
+pub use auth::*;
 
 // ================================
 // 测试模块

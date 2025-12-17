@@ -607,3 +607,25 @@ def get_adapter_manager():
             # 如果管理器未初始化，API 端点会处理这个情况
         
         return _adapter_manager
+
+
+# FastAPI 依赖函数
+def get_current_user() -> dict:
+    """
+    获取当前用户信息（临时实现）
+    
+    TODO: 实现真正的 JWT 认证
+    目前返回一个模拟用户用于开发
+    """
+    # 在实际应用中，这里应该：
+    # 1. 从请求头获取 JWT token
+    # 2. 验证 token 有效性
+    # 3. 从 token 解析用户信息
+    # 4. 从数据库查询完整用户信息
+    
+    return {
+        "id": "00000000-0000-0000-0000-000000000000",  # 系统默认用户
+        "username": "system",
+        "email": "system@zishu.local",
+        "role": "admin",
+    }

@@ -14,6 +14,8 @@ mod adapter;
 mod system_monitor;
 mod database;
 mod workflow;
+mod http;
+mod config;
 
 use commands::*;
 use state::*;
@@ -664,6 +666,24 @@ async fn main() {
             commands::workflow::remove_webhook_trigger,
             commands::workflow::trigger_webhook,
             
+            // 工作流 API 命令（与 Python 服务通信）
+            commands::workflow_api::api_create_workflow,
+            commands::workflow_api::api_list_workflows,
+            commands::workflow_api::api_get_workflow,
+            commands::workflow_api::api_update_workflow,
+            commands::workflow_api::api_delete_workflow,
+            commands::workflow_api::api_execute_workflow,
+            commands::workflow_api::api_list_executions,
+            commands::workflow_api::api_get_execution,
+            commands::workflow_api::api_cancel_execution,
+            commands::workflow_api::api_publish_workflow,
+            commands::workflow_api::api_archive_workflow,
+            commands::workflow_api::api_clone_workflow,
+            commands::workflow_api::api_search_workflows,
+            commands::workflow_api::api_list_templates,
+            commands::workflow_api::api_create_from_template,
+            commands::workflow_api::api_health_check,
+            
             // 文件管理命令
             commands::file::upload_file,
             commands::file::get_file,
@@ -863,6 +883,17 @@ async fn main() {
             commands::audio::is_recording,
             commands::audio::save_audio_to_file,
             commands::audio::cancel_recording,
+            
+            // 认证命令
+            commands::auth::save_auth_token,
+            commands::auth::get_auth_token,
+            commands::auth::clear_auth_token,
+            commands::auth::save_refresh_token,
+            commands::auth::get_refresh_token,
+            commands::auth::clear_refresh_token,
+            commands::auth::get_device_name,
+            commands::auth::get_device_id,
+            commands::auth::get_user_agent,
         ])
         .manage(commands::shortcuts::ShortcutRegistry::new())
         .manage(commands::memory::MemoryManagerState::new())

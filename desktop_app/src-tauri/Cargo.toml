@@ -97,6 +97,7 @@ thiserror = "1.0"
 
 # 系统信息
 sysinfo = "0.29"
+whoami = "1.4"
 
 # 开机自启
 auto-launch = "0.5"

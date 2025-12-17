@@ -11,6 +11,8 @@ pub mod adapter;
 pub mod system_monitor;
 pub mod database;
 pub mod workflow;
+pub mod http;
+pub mod config;
 
 // 重新导出常用类型供测试使用
 pub use state::{
@@ -31,6 +33,7 @@ pub use commands::ZishuResult;
 
 // 重新导出配置类型
 pub use app_config::{AppConfig, WindowConfig, CharacterConfig, ThemeConfig, SystemConfig};
+pub use config::{ApiRouter, ApiBackend};
 
 // 导入和重新导出AppConfig等配置类型
 mod app_config {

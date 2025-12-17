@@ -124,7 +124,11 @@
                     "https://market.zishu.dev/**",
                     "https://update.zishu.dev/**",
                     "https://cdn.zishu.dev/**",
-                    "https://live2d.zishu.dev/**"
+                    "https://live2d.zishu.dev/**",
+                    "http://localhost:8000/**",
+                    "http://localhost:8001/**",
+                    "http://127.0.0.1:8000/**",
+                    "http://127.0.0.1:8001/**"
                 ]
             },
             "process": {

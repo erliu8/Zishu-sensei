@@ -414,9 +414,12 @@ async fn register_adapter_internal(
 
 /// 获取后端URL
 fn get_backend_url() -> String {
-    std::env::var("ZISHU_BACKEND_URL")
-        .unwrap_or_else(|_| "http://127.0.0.1:8000".to_string())
-        .replace("localhost", "127.0.0.1")
+    let api_url = std::env::var("ZISHU_API_URL")
+        .unwrap_or_else(|_| {
+            let router = crate::config::ApiRouter::new();
+            router.core_url()  // 角色模板使用核心服务
+        });
+    api_url.replace("localhost", "127.0.0.1")
 }
 
 /// 从存储中获取所有模板

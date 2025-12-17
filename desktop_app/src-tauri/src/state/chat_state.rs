@@ -147,9 +147,17 @@ impl ChatState {
         *self.model_config.write() = config;
     }
 
-    /// 获取 API 基础 URL
+    /// 获取 API 基础 URL（聊天功能使用核心服务）
     pub fn get_api_base_url(&self) -> String {
-        self.api_base_url.read().clone()
+        // 优先使用已设置的 URL
+        let current_url = self.api_base_url.read().clone();
+        if !current_url.is_empty() && current_url != "http://127.0.0.1:8000" {
+            return current_url;
+        }
+        
+        // 使用路由器获取核心服务 URL
+        let router = crate::config::ApiRouter::new();
+        router.core_url()
     }
 
     /// 设置 API 基础 URL

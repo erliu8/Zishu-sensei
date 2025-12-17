@@ -80,6 +80,7 @@ register_exception_handlers(app)
 app.add_middleware(
     CORSMiddleware,
     allow_origins=settings.cors_origins_list,
+    allow_origin_regex=r"^(tauri://localhost|https?://localhost:\d+)$",  # 支持 Tauri 和本地开发
     allow_credentials=True,
     allow_methods=["*"],
     allow_headers=["*"],

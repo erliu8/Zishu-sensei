@@ -176,9 +176,9 @@ class Workflow(DatabaseBaseModel, MetadataMixin):
         JSONB, nullable=False, comment="工作流定义JSON"
     )
 
-    # 版本信息
-    version: Mapped[str] = mapped_column(
-        String(20), default="1.0.0", nullable=False, comment="版本号"
+    # 工作流版本信息（与AuditMixin的version字段区分）
+    workflow_version: Mapped[str] = mapped_column(
+        String(20), default="1.0.0", nullable=False, comment="工作流版本号"
     )
 
     # 触发器配置
