@@ -65,6 +65,9 @@ from zishu.models.workflow import (
     WorkflowExecution,
     WorkflowTemplate,
 )
+from zishu.models.skill_installation import (
+    SkillInstallation,
+)
 
 # Alembic配置对象
 config = context.config

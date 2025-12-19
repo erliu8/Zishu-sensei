@@ -5,10 +5,75 @@
 
 import asyncio
 from abc import ABC, abstractmethod
-from typing import Dict, Any, Optional
+from typing import Dict, Any, Optional, Union
 import logging
+import re
+
+from zishu.adapters.base.adapter import ExecutionContext
 
 logger = logging.getLogger(__name__)
+
+
+def resolve_placeholders(value: str, context: Dict[str, Any], mode: str = "strict") -> Union[str, Any]:
+    """解析字符串中的 ${...} 占位符"""
+    if not isinstance(value, str):
+        return value
+
+    def replace_var(match):
+        var_path = match.group(1)
+        # 支持的格式：${input.xxx}, ${var}, ${variables.var}, ${a.b.c}
+        if var_path.startswith("input."):
+            # ${input.xxx} → context["input"]["xxx"]
+            path = var_path[6:].split(".")
+            source = context.get("input", {})
+        elif var_path.startswith("variables."):
+            # ${variables.var} → context["variables"]["var"]
+            path = var_path[10:].split(".")
+            source = context.get("variables", {})
+        else:
+            # ${var} 或 ${a.b.c} → context["variables"] 中的路径
+            path = var_path.split(".")
+            source = context.get("variables", {})
+
+        # 遍历路径获取值
+        current = source
+        for key in path:
+            if isinstance(current, dict) and key in current:
+                current = current[key]
+            else:
+                if mode == "strict":
+                    raise ValueError(f"Cannot resolve placeholder: ${{{var_path}}}")
+                return match.group(0)  # 返回原始占位符
+        return current  # 返回原值，由外层决定是否转字符串
+
+    # 使用正则表达式匹配 ${...} 格式
+    pattern = r'\$\{([^}]+)\}'
+    # 验证 token 格式，禁止 .. 和以 . 开头/结尾
+    for match in re.finditer(pattern, value):
+        token = match.group(1)
+        if not re.match(r'^[a-zA-Z0-9_]+(\.[a-zA-Z0-9_]+)*$', token) or '..' in token:
+            raise ValueError(f"Invalid token in placeholder: ${{{token}}}")
+
+    # 检查是否是单个占位符
+    if re.fullmatch(pattern, value):
+        # 整个字符串就是一个占位符，返回原值类型
+        return replace_var(re.match(pattern, value))
+    else:
+        # 包含其他文本，所有替换值都转为字符串
+        def replace_var_str(match):
+            return str(replace_var(match))
+        return re.sub(pattern, replace_var_str, value)
+
+def resolve_parameters(obj: Any, context: Dict[str, Any], mode: str = "strict") -> Any:
+    """递归处理参数中的占位符"""
+    if isinstance(obj, str):
+        return resolve_placeholders(obj, context, mode)
+    elif isinstance(obj, dict):
+        return {k: resolve_parameters(v, context, mode) for k, v in obj.items()}
+    elif isinstance(obj, list):
+        return [resolve_parameters(item, context, mode) for item in obj]
+    else:
+        return obj
 
 
 class NodeExecutor(ABC):
@@ -93,35 +158,91 @@ class AdapterNodeExecutor(NodeExecutor):
     ) -> Any:
         """
         执行适配器节点
-        
+
         调用指定的适配器并传递参数
         """
         config = node.get("config", {})
         adapter_id = config.get("adapter_id")
-        adapter_params = config.get("parameters", {})
+        raw_params = config.get("parameters", {})
+        output_variable = config.get("output_variable")
+
+        if not adapter_id:
+            raise ValueError("adapter_id is required in adapter node config")
 
         logger.info(f"执行适配器: {adapter_id}")
 
-        # TODO: 实际调用适配器服务
-        # 这里需要集成适配器系统
-        # result = await adapter_service.execute(adapter_id, adapter_params)
+        # 获取 AdapterManager - 必须通过 context 注入
+        adapter_manager = context.get("adapter_manager")
+        if not adapter_manager:
+            raise ValueError("adapter_manager is required in context for adapter execution")
 
-        # 模拟适配器执行
-        await asyncio.sleep(0.1)
+        user_id = context.get("user_id")
+        if not user_id:
+            raise ValueError("user_id is required in context for adapter execution")
 
-        # 模拟返回结果
-        result = {
-            "adapter_id": adapter_id,
-            "status": "success",
-            "output": {"message": f"适配器 {adapter_id} 执行成功"},
-        }
+        # 获取插值和启动策略
+        interpolation_mode = context.get("interpolation_mode", "strict")
+        adapter_start_policy = context.get("adapter_start_policy", "auto")
+
+        # 解析参数中的占位符
+        try:
+            adapter_params = resolve_parameters(raw_params, context, interpolation_mode)
+        except ValueError as e:
+            logger.error(f"Parameter interpolation failed: {e}")
+            raise
+
+        # 检查适配器是否已注册（使用公开 API）
+        if not adapter_manager.is_running:
+            raise RuntimeError("adapter_manager must be running before executing adapter nodes")
+
+        registration = await adapter_manager.get_adapter(adapter_id)
+        if not registration:
+            raise ValueError(f"Adapter {adapter_id} is not registered")
+
+        # 检查适配器是否运行，根据策略决定是否启动
+        # 注意：adapter_manager._adapters 是内部字段，属于实现细节
+        if adapter_id not in adapter_manager._adapters:
+            if adapter_start_policy == "auto":
+                logger.info(f"Starting adapter {adapter_id} (auto policy)")
+                success = await adapter_manager.start_adapter(adapter_id)
+                if not success:
+                    raise RuntimeError(f"Failed to start adapter: {adapter_id}")
+            elif adapter_start_policy == "strict_running":
+                raise RuntimeError(f"Adapter {adapter_id} is not running and policy is strict_running")
+            else:
+                raise RuntimeError(f"Unknown adapter start policy: {adapter_start_policy}")
+
+        # 创建 ExecutionContext
+        # request_id 使用 workflow execution_id，execution_id 使用组合确保唯一性
+        execution_context = ExecutionContext(
+            request_id=context.get("execution_id"),  # workflow execution_id 作为 request_id
+            user_id=user_id,
+            session_id=context.get("session_id"),
+            execution_id=f"{context.get('execution_id', 'unknown')}:{node.get('id', 'unknown')}",  # 组合保证唯一性
+            metadata={
+                "workflow_id": context.get("workflow_id"),
+                "execution_id": context.get("execution_id"),
+                "node_id": node.get("id"),
+                "adapter_id": adapter_id,
+            }
+        )
+
+        # 调用适配器 - 直接传递 ExecutionContext 对象
+        try:
+            result = await adapter_manager.process_with_adapter(
+                adapter_id,
+                adapter_params,
+                execution_context  # 直接传递对象，不是 __dict__
+            )
+        except Exception as e:
+            logger.error(f"Adapter {adapter_id} execution failed: {e}")
+            raise
 
         # 将结果保存到上下文变量
-        output_variable = config.get("output_variable")
         if output_variable:
             if "variables" not in context:
                 context["variables"] = {}
-            context["variables"][output_variable] = result["output"]
+            context["variables"][output_variable] = result
 
         return result
 

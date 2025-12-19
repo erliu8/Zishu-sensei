@@ -394,9 +394,9 @@ class AdapterMetadata(BaseModel):
         # 适配器ID只能包含字母、数字、下划线和连字符
         import re
 
-        if not re.match(r"^[a-zA-Z0-9_-]+$", v):
+        if not re.match(r"^[a-zA-Z0-9_.-]+$", v):
             raise ValueError(
-                "adapter_id can only contain letters, numbers, underscores and hyphens"
+                "adapter_id can only contain letters, numbers, underscores, hyphens and dots"
             )
         return v.strip()
 

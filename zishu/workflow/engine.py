@@ -89,6 +89,7 @@ class WorkflowEngine:
                 "variables": context.get("variables", {}),
                 "workflow_id": workflow.id,
                 "execution_id": execution.id,
+                "all_nodes": nodes,  # 添加所有节点引用
             }
 
             # 从开始节点执行

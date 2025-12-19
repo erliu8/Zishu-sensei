@@ -269,6 +269,12 @@ class Workflow(DatabaseBaseModel, MetadataMixin):
         cascade="all, delete-orphan",
     )
 
+    skill_installations: Mapped[List["SkillInstallation"]] = relationship(
+        "SkillInstallation",
+        back_populates="workflow",
+        cascade="all, delete-orphan",
+    )
+
     # 索引和约束
     __table_args__ = (
         Index("idx_workflows_user_id", "user_id"),
