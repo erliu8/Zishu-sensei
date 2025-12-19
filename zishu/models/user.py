@@ -224,6 +224,12 @@ class User(DatabaseBaseModel):
         cascade="all, delete-orphan",
     )
 
+    skill_installations: Mapped[List["SkillInstallation"]] = relationship(
+        "SkillInstallation",
+        back_populates="user",
+        cascade="all, delete-orphan",
+    )
+
     # 索引和约束
     __table_args__ = (
         Index("idx_users_username", "username"),

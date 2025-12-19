@@ -374,7 +374,7 @@ class AdapterManager:
                     logger.warning("Service orchestrator stop timed out")
 
                 # 关闭安全管理器
-                if self._security_manager:
+                if self._security_manager and hasattr(self._security_manager, "shutdown"):
                     try:
                         await asyncio.wait_for(
                             self._security_manager.shutdown(),
@@ -383,6 +383,10 @@ class AdapterManager:
                         logger.info("Security manager shutdown")
                     except asyncio.TimeoutError:
                         logger.warning("Security manager shutdown timed out")
+                    except Exception as e:
+                        logger.warning(f"Security manager shutdown failed: {e}")
+                elif self._security_manager:
+                    logger.debug("Security manager has no shutdown() method; skipping shutdown")
 
                 # 清理所有状态
                 self._adapters.clear()
@@ -649,7 +653,8 @@ class AdapterManager:
 
     async def stop_adapter(self, adapter_id: str) -> bool:
         """停止适配器"""
-        if not self.is_running:
+        # stop() 阶段会把状态切到 STOPPING，此时依然需要允许 stop_adapter() 做资源回收
+        if not self.is_running and self._status != ServiceStatus.STOPPING:
             raise RuntimeError("AdapterManager must be running to stop adapters")
 
         adapter_lock = await self._get_adapter_lock(adapter_id)

@@ -128,6 +128,15 @@ from .workflow import (
     WorkflowExecutionResponse,
 )
 
+from .skill_installation import (
+    SkillInstallation,
+    # Pydantic schemas
+    SkillInstallationCreate,
+    SkillInstallationUpdate,
+    SkillInstallationResponse,
+    SkillInstallationListResponse,
+)
+
 __all__ = [
     # 用户模型
     "User",
@@ -224,4 +233,11 @@ __all__ = [
     "WorkflowResponse",
     "WorkflowExecutionCreate",
     "WorkflowExecutionResponse",
+
+    # 技能安装模型
+    "SkillInstallation",
+    "SkillInstallationCreate",
+    "SkillInstallationUpdate",
+    "SkillInstallationResponse",
+    "SkillInstallationListResponse",
 ]

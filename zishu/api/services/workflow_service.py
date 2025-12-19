@@ -8,6 +8,7 @@ from datetime import datetime, timezone
 from uuid import uuid4
 import asyncio
 from enum import Enum
+import logging
 
 from sqlalchemy.ext.asyncio import AsyncSession
 from sqlalchemy import select, and_, or_
@@ -32,6 +33,8 @@ from ...database.repositories.workflow_repository import (
     WorkflowRepository,
     WorkflowExecutionRepository,
 )
+
+logger = logging.getLogger(__name__)
 
 
 class WorkflowService:
@@ -302,12 +305,47 @@ class WorkflowService:
         workflow.last_executed_at = execution.started_at
 
         # 异步执行工作流（在后台任务中）
-        asyncio.create_task(
-            self._execute_workflow_async(session, workflow, execution)
+        task = asyncio.create_task(
+            self._execute_workflow_async_task(workflow_id=workflow.id, execution_id=execution.id)
         )
 
-        await session.commit()
+        def _log_task_exception(t: asyncio.Task) -> None:
+            try:
+                exc = t.exception()
+            except asyncio.CancelledError:
+                return
+            except Exception:
+                return
+            if exc:
+                logger.error(
+                    f"Workflow async execution task failed for execution_id={execution.id}: {exc}",
+                    exc_info=(type(exc), exc, exc.__traceback__),
+                )
+
+        task.add_done_callback(_log_task_exception)
         return execution
+
+    async def _execute_workflow_async_task(self, workflow_id: str, execution_id: str) -> None:
+        """
+        异步执行工作流的任务入口。
+
+        关键点：后台 task 必须使用独立的 AsyncSession，不能复用调用方 session，
+        否则会出现并发 commit 导致 IllegalStateChangeError/transaction closed。
+        """
+        from ...database.connection import get_database_manager
+
+        db_manager = await get_database_manager()
+        async with db_manager.get_async_session() as session:
+            workflow = await session.get(Workflow, workflow_id)
+            execution = await session.get(WorkflowExecution, execution_id)
+
+            if not workflow or not execution:
+                logger.error(
+                    f"Workflow async execution missing records: workflow_id={workflow_id}, execution_id={execution_id}"
+                )
+                return
+
+            await self._execute_workflow_async(session, workflow, execution)
 
     async def _execute_workflow_async(
         self,
@@ -322,9 +360,21 @@ class WorkflowService:
 
             # 使用工作流引擎执行
             from ...workflow.engine import workflow_engine
+            from ...api.dependencies import get_adapter_manager
+
+            # 获取 adapter_manager 实例
+            adapter_manager = get_adapter_manager()
+            # 确保适配器管理器已初始化和启动
+            if not adapter_manager.is_running:
+                await adapter_manager.initialize()
+                await adapter_manager.start()
 
             context = {
                 "variables": workflow.environment_variables or {},
+                "adapter_manager": adapter_manager,
+                "user_id": execution.user_id,
+                "adapter_start_policy": "auto",
+                "interpolation_mode": "strict",
             }
 
             result = await workflow_engine.execute(workflow, execution, context)

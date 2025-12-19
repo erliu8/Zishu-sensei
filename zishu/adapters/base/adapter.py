@@ -458,6 +458,39 @@ class BaseAdapter(ABC):
     # 公共接口方法
     # ================================
 
+    async def start(self) -> bool:
+        """
+        启动适配器（与 AdapterManager 生命周期兼容）。
+
+        默认行为：
+        - 未初始化则先执行 `initialize()`
+        - 标记 `is_running=True` 且 `status=AdapterStatus.RUNNING`
+        """
+        if getattr(self, "is_running", False):
+            self.logger.debug(f"Adapter {self.adapter_id} is already running")
+            return True
+
+        if not getattr(self, "is_initialized", False):
+            await self.initialize()
+
+        self.is_running = True
+        self.status = AdapterStatus.RUNNING
+        return True
+
+    async def stop(self) -> bool:
+        """
+        停止适配器（与 AdapterManager 生命周期兼容）。
+
+        默认行为：执行 `cleanup()` 释放资源并重置状态。
+        """
+        if not getattr(self, "is_running", False) and not getattr(
+            self, "is_initialized", False
+        ):
+            return True
+
+        await self.cleanup()
+        return True
+
     async def initialize(self) -> bool:
         """
         初始化适配器
