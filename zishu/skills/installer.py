@@ -10,7 +10,11 @@
 """
 
 import logging
+import os
 import re
+import secrets
+import uuid
+from pathlib import Path
 from datetime import datetime, timezone
 from typing import Optional, List, Dict, Any, Literal
 from enum import Enum
@@ -29,7 +33,78 @@ from ..models.workflow import WorkflowCreate
 from ..adapters.core.persistence import AdapterPersistenceService
 from ..adapters.hard.workflow_adapter import WorkflowAdapter
 from ..adapters.hard.logger_adapter import LoggerAdapter
+from ..adapters.hard.mood_diary_store_adapter import MoodDiaryStoreAdapter
 from ..adapters.core.types import AdapterConfiguration, AdapterType
+
+
+# ========================
+# User bootstrap (dev/test)
+# ========================
+
+SYSTEM_USER_ID = "00000000-0000-0000-0000-000000000000"
+
+
+def _is_uuid(value: str) -> bool:
+    try:
+        uuid.UUID(str(value))
+        return True
+    except Exception:
+        return False
+
+
+async def ensure_user_exists(session, user_id: str) -> None:
+    """
+    Ensure a referenced user exists to satisfy DB foreign keys.
+
+    - Always ensures the built-in SYSTEM_USER_ID exists (if DB is enabled).
+    - Optionally auto-creates arbitrary users for local testing when
+      AUTO_CREATE_LOCAL_USERS=1 (used by test_mood_diary.py + X-User-ID override).
+    """
+    if not user_id or not _is_uuid(user_id):
+        raise ValueError(f"Invalid user_id (expected UUID): {user_id!r}")
+
+    from ..database.repositories.user_repository import UserRepository
+    from ..models.user import User, UserRole, UserStatus
+
+    repo = UserRepository()
+    existing = await repo.get_by_id(session, user_id, include_deleted=True)
+    if existing:
+        return
+
+    allow_auto_create = (os.getenv("AUTO_CREATE_LOCAL_USERS", "0") == "1") or (
+        user_id == SYSTEM_USER_ID
+    )
+    if not allow_auto_create:
+        raise RuntimeError(
+            f"User {user_id} does not exist; create it first or set AUTO_CREATE_LOCAL_USERS=1 for local testing."
+        )
+
+    if user_id == SYSTEM_USER_ID:
+        username = "system"
+        email = "system@zishu.local"
+        role = UserRole.ADMIN
+    else:
+        username = f"local_{user_id.replace('-', '')[:12]}"
+        email = f"{username}@zishu.local"
+        role = UserRole.USER
+
+    salt = secrets.token_hex(16)[:32]
+    # Password is irrelevant for local smoke tests; still store a non-empty hash.
+    password_hash = secrets.token_hex(32)
+
+    session.add(
+        User(
+            id=user_id,
+            username=username,
+            email=email,
+            password_hash=password_hash,
+            salt=salt,
+            user_status=UserStatus.ACTIVE,
+            user_role=role,
+            is_verified=True,
+        )
+    )
+    await session.flush()
 
 
 # 结果数据结构
@@ -198,6 +273,121 @@ async def cleanup_workflow(session, workflow_id: str, user_id: str) -> None:
         # 吞掉异常，不让回滚流程中断
 
 
+async def ensure_mood_diary_store(adapter_manager) -> None:
+    """
+    确保 tool.mood_diary.store 适配器已注册且可启动。
+    """
+    logger = logging.getLogger(__name__)
+    adapter_id = "tool.mood_diary.store"
+    
+    def _preferred_mood_diary_base_path() -> str:
+        """
+        返回更稳妥的 base_path（尽量是绝对路径），避免依赖服务进程的 CWD。
+        """
+        base_path_value = "data/mood_diary"
+        try:
+            repo_root = next(
+                (
+                    p
+                    for p in [Path(__file__).resolve().parent, *Path(__file__).resolve().parents]
+                    if (p / "pyproject.toml").exists()
+                ),
+                None,
+            )
+            if repo_root is None:
+                return base_path_value
+
+            data_entry = repo_root / "data"
+            if data_entry.is_file():
+                text = data_entry.read_text(encoding="utf-8").strip()
+                if text:
+                    return str(Path(text) / "mood_diary")
+            if data_entry.exists():
+                return str(data_entry.resolve(strict=False) / "mood_diary")
+        except Exception:
+            return base_path_value
+
+        return base_path_value
+
+    try:
+        registration = await adapter_manager.get_adapter(adapter_id)
+    except Exception as e:
+        logger.warning(f"{log_context(adapter_id=adapter_id)} Cannot check registry: {e}")
+        return
+
+    desired_base_path = _preferred_mood_diary_base_path()
+
+    if registration and getattr(registration, "adapter_class", None) is not MoodDiaryStoreAdapter:
+        logger.warning(
+            f"{log_context(adapter_id=adapter_id)} Found mismatched adapter_class; re-registering built-in adapter"
+        )
+        try:
+            await adapter_manager.stop_adapter(adapter_id)
+        except Exception:
+            pass
+        try:
+            await adapter_manager.unregister_adapter(adapter_id)
+        except Exception:
+            pass
+        registration = None
+    elif registration:
+        try:
+            current_base_path = None
+            if getattr(registration, "configuration", None) is not None:
+                current_base_path = (registration.configuration.config or {}).get("base_path")
+            if current_base_path in (None, "", "data/mood_diary", "/data/mood_diary"):
+                logger.warning(
+                    f"{log_context(adapter_id=adapter_id)} base_path={current_base_path!r} is not portable; re-registering with base_path={desired_base_path!r}"
+                )
+                try:
+                    await adapter_manager.stop_adapter(adapter_id)
+                except Exception:
+                    pass
+                try:
+                    await adapter_manager.unregister_adapter(adapter_id)
+                except Exception:
+                    pass
+                registration = None
+        except Exception:
+            pass
+
+    if not registration:
+        config = AdapterConfiguration(
+            identity=adapter_id,
+            name="Mood Diary Store",
+            version="1.0.0",
+            adapter_type=AdapterType.HARD,
+            adapter_class=MoodDiaryStoreAdapter,
+            description="Built-in mood diary storage adapter (tool.mood_diary.store)",
+            tags=["mood", "diary", "store"],
+            config={
+                "adapter_id": adapter_id,
+                "name": "Mood Diary Store",
+                "version": "1.0.0",
+                "adapter_type": "hard",
+                "base_path": desired_base_path,
+                "kind": "store",
+            },
+        )
+        try:
+            await adapter_manager.register_adapter(config)
+            logger.info(f"{log_context(adapter_id=adapter_id)} Registered built-in adapter")
+        except Exception as e:
+            logger.warning(f"{log_context(adapter_id=adapter_id)} Failed to register: {e}")
+
+        # best-effort 持久化，便于后续可见/可管理
+        try:
+            await AdapterPersistenceService().save_adapter_config(config)
+        except Exception as e:
+            logger.warning(f"{log_context(adapter_id=adapter_id)} Failed to persist config: {e}")
+
+    # best-effort 启动（如果已在运行则 start_adapter 会返回 True）
+    try:
+        await adapter_manager.start_adapter(adapter_id)
+    except Exception as e:
+        logger.warning(f"{log_context(adapter_id=adapter_id)} Failed to start: {e}")
+
+
 async def ensure_system_logger(adapter_manager) -> None:
     """
     确保 system.logger 适配器已注册且可启动。
@@ -320,8 +510,9 @@ class SkillInstaller:
             await adapter_manager.initialize()
             await adapter_manager.start()
 
-        # 确保内置依赖已注册（例如 system.logger）
+        # 确保内置依赖已注册（例如 system.logger, tool.mood_diary.store）
         await ensure_system_logger(adapter_manager)
+        await ensure_mood_diary_store(adapter_manager)
 
         db_manager = await get_database_manager()
         repo = SkillInstallationRepository()
@@ -332,6 +523,9 @@ class SkillInstaller:
         try:
             # 步骤1-2：资源准备和幂等性检查
             async with db_manager.get_async_session() as session:
+                # Ensure user exists for FK constraints (dev/test bootstrap).
+                await ensure_user_exists(session, user_id)
+
                 # 检查现有安装
                 existing = await repo.get_by_user_and_package(
                     session, user_id, manifest.package_id
@@ -340,7 +534,7 @@ class SkillInstaller:
                 if existing:
                     if existing.installation_status == SkillInstallationStatus.INSTALLING:
                         return InstallResult(
-                            status=InstallStatus.FAILED,
+                            status="failed",
                             package_id=manifest.package_id,
                             error_message="Installation already in progress"
                         )
@@ -353,7 +547,7 @@ class SkillInstaller:
                             except Exception:
                                 pass
                             return InstallResult(
-                                status=InstallStatus.INSTALLED,
+                                status="installed",
                                 package_id=manifest.package_id,
                                 installation_id=str(existing.id),
                                 workflow_id=existing.workflow_id,
@@ -369,7 +563,7 @@ class SkillInstaller:
                     )
                 except ValueError as e:
                     return InstallResult(
-                        status=InstallStatus.FAILED,
+                        status="failed",
                         package_id=manifest.package_id,
                         error_message=f"Failed to generate adapter_id: {str(e)}",
                     )
@@ -424,7 +618,7 @@ class SkillInstaller:
                     )
                     await session.commit()
                     return InstallResult(
-                        status=InstallStatus.FAILED,
+                        status="failed",
                         package_id=manifest.package_id,
                         installation_id=str(installation.id),
                         missing_dependencies=missing_deps,
@@ -441,7 +635,7 @@ class SkillInstaller:
                         )
                         await session.commit()
                         return InstallResult(
-                            status=InstallStatus.FAILED,
+                            status="failed",
                             package_id=manifest.package_id,
                             installation_id=str(installation.id),
                             error_message="Network access not allowed in strict mode"
@@ -449,18 +643,27 @@ class SkillInstaller:
 
                     # 检查文件系统访问
                     for path in manifest.permissions.file_system_access:
-                        if not path.startswith("/tmp"):
-                            await repo.mark_failed(
-                                session, str(installation.id), user_id,
-                                f"File system access to {path} not allowed in strict mode"
-                            )
-                            await session.commit()
-                            return InstallResult(
-                                status=InstallStatus.FAILED,
-                                package_id=manifest.package_id,
-                                installation_id=str(installation.id),
-                                error_message=f"File system access to {path} not allowed in strict mode"
-                            )
+                        # strict mode v0 policy:
+                        # - allow "/tmp" (linux)
+                        # - allow relative paths under "data/" (project-scoped persistence)
+                        normalized = str(path).replace("\\", "/").lstrip("./")
+                        if normalized.startswith("/tmp") or (
+                            not normalized.startswith("/")
+                            and (normalized == "data" or normalized.startswith("data/"))
+                        ):
+                            continue
+
+                        await repo.mark_failed(
+                            session, str(installation.id), user_id,
+                            f"File system access to {path} not allowed in strict mode"
+                        )
+                        await session.commit()
+                        return InstallResult(
+                            status="failed",
+                            package_id=manifest.package_id,
+                            installation_id=str(installation.id),
+                            error_message=f"File system access to {path} not allowed in strict mode"
+                        )
 
                     # 检查数据库访问（仅允许白名单）
                     allowed_tables = {"workflows", "workflow_executions", "users", "skill_installations"}
@@ -472,7 +675,7 @@ class SkillInstaller:
                             )
                             await session.commit()
                             return InstallResult(
-                                status=InstallStatus.FAILED,
+                                status="failed",
                                 package_id=manifest.package_id,
                                 installation_id=str(installation.id),
                                 error_message=f"Database access to {table} not allowed in strict mode"
@@ -560,7 +763,7 @@ class SkillInstaller:
                     )
                     await session.commit()
                     return InstallResult(
-                        status=InstallStatus.FAILED,
+                        status="failed",
                         package_id=manifest.package_id,
                         installation_id=str(installation.id),
                         adapter_id=adapter_id,
@@ -582,7 +785,9 @@ class SkillInstaller:
                     description=f"Workflow adapter for skill {manifest.package_id}",
                     author=manifest.author,
                     tags=list(set(manifest.tags) | {"skill", "workflow"}),
-                    dependencies=set(dep.adapter_id for dep in manifest.dependencies),
+                    # v0: do not rely on AdapterManager dependency start chain for workflow adapters;
+                    # dependencies are ensured/started explicitly (e.g. system.logger, tool.mood_diary.store).
+                    dependencies=set(),
                     config={
                         **manifest.workflow_adapter.config,
                         "workflow_id": str(workflow.id),
@@ -627,7 +832,7 @@ class SkillInstaller:
                     )
                     await session.commit()
                     return InstallResult(
-                        status=InstallStatus.FAILED,
+                        status="failed",
                         package_id=manifest.package_id,
                         installation_id=str(installation.id),
                         workflow_id=str(workflow.id),
@@ -657,7 +862,7 @@ class SkillInstaller:
                     )
 
                     return InstallResult(
-                        status=InstallStatus.INSTALLED,
+                        status="installed",
                         package_id=manifest.package_id,
                         installation_id=str(installation.id),
                         workflow_id=str(workflow.id),
@@ -671,7 +876,7 @@ class SkillInstaller:
                     )
                     await session.commit()
                     return InstallResult(
-                        status=InstallStatus.FAILED,
+                        status="failed",
                         package_id=manifest.package_id,
                         installation_id=str(installation.id),
                         workflow_id=str(workflow.id),
@@ -705,7 +910,7 @@ class SkillInstaller:
                 pass
 
             return InstallResult(
-                status=InstallStatus.FAILED,
+                status="failed",
                 package_id=manifest.package_id,
                 error_message=f"Installation failed: {str(e)}"
             )

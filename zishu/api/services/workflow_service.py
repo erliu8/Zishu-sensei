@@ -369,6 +369,17 @@ class WorkflowService:
                 await adapter_manager.initialize()
                 await adapter_manager.start()
 
+            # Ensure built-in dependency adapters exist and are started (best-effort).
+            # Workflow execution runs in a background task and may not pass through API routes
+            # that also perform adapter bootstrapping.
+            try:
+                from ...skills.installer import ensure_system_logger, ensure_mood_diary_store
+
+                await ensure_system_logger(adapter_manager)
+                await ensure_mood_diary_store(adapter_manager)
+            except Exception as e:
+                logger.warning(f"Failed to ensure builtin adapters before workflow execution: {e}")
+
             context = {
                 "variables": workflow.environment_variables or {},
                 "adapter_manager": adapter_manager,
@@ -380,7 +391,6 @@ class WorkflowService:
             result = await workflow_engine.execute(workflow, execution, context)
 
             # 更新执行结果
-            execution.execution_status = ExecutionStatus.COMPLETED
             execution.completed_at = datetime.now(timezone.utc)
             execution.duration_ms = int(
                 (execution.completed_at - execution.started_at).total_seconds()
@@ -388,9 +398,15 @@ class WorkflowService:
             )
             execution.output_data = result.get("output", {})
             execution.node_results = result.get("node_results", {})
-
-            workflow.success_count += 1
-            workflow.last_execution_status = "completed"
+            if result.get("status") == "success":
+                execution.execution_status = ExecutionStatus.COMPLETED
+                workflow.success_count += 1
+                workflow.last_execution_status = "completed"
+            else:
+                execution.execution_status = ExecutionStatus.FAILED
+                execution.error_message = result.get("error") or "Workflow execution failed"
+                workflow.failure_count += 1
+                workflow.last_execution_status = "failed"
 
         except Exception as e:
             # 执行失败

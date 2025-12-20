@@ -1,0 +1,78 @@
+{
+  "manifest_version": "0.1",
+  "package_id": "skill.builtin.mood.review",
+  "name": "情绪日记·回顾",
+  "version": "1.0.0",
+  "description": "回顾和搜索历史情绪日记",
+  "author": "System",
+  "tags": ["mood", "diary", "review"],
+  "workflow": {
+    "slug": "mood-review",
+    "name": "情绪日记回顾",
+    "description": "搜索和回顾历史情绪日记",
+    "trigger_type": "manual",
+    "trigger_config": {},
+    "definition": {
+      "nodes": [
+        {
+          "id": "start",
+          "type": "start",
+          "name": "开始"
+        },
+        {
+          "id": "list_entries",
+          "type": "adapter",
+          "name": "获取日记",
+          "config": {
+            "adapter_id": "tool.mood_diary.store",
+            "parameters": {
+              "action": "list_entries",
+              "filters": "${input}"
+            },
+            "output_variable": "entries"
+          }
+        },
+        {
+          "id": "end",
+          "type": "end",
+          "name": "结束",
+          "config": {
+            "output": {
+              "result": "${entries}"
+            }
+          }
+        }
+      ],
+      "edges": [
+        {
+          "source": "start",
+          "target": "list_entries"
+        },
+        {
+          "source": "list_entries",
+          "target": "end"
+        }
+      ]
+    }
+  },
+  "workflow_adapter": {
+    "name": "情绪日记入口-回顾",
+    "adapter_type": "hard",
+    "adapter_class": "zishu.adapters.hard.workflow_adapter.WorkflowAdapter",
+    "config": {
+      "run_mode": "async"
+    }
+  },
+  "dependencies": [
+    {
+      "adapter_id": "tool.mood_diary.store",
+      "required": true,
+      "auto_start": true
+    }
+  ],
+  "permissions": {
+    "database_access": [],
+    "file_system_access": ["data/mood_diary"],
+    "network_access": []
+  }
+}

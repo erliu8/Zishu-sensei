@@ -2,7 +2,7 @@
 路由模块初始化文件
 负责导入并管理所有路由模块，提供统一的路由注册接口
 """
-from typing import List
+from typing import List, Optional
 from fastapi import APIRouter, FastAPI
 from pathlib import Path
 
@@ -76,12 +76,19 @@ def get_available_routes(app: FastAPI) -> List[APIRouter]:
     except (ImportError, AttributeError):
         pass
 
+    try:
+        from .skills import router as skills_router
+
+        routers.append(skills_router)
+    except (ImportError, AttributeError):
+        pass
+
     return routers
 
 
 def register_routes(
     app: FastAPI,
-    prefixes: List[str] | None = None,
+    prefixes: Optional[List[str]] = None,
 ) -> None:
     """注册路由
 

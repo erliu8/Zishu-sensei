@@ -87,6 +87,11 @@ class WorkflowEngine:
             execution_context = {
                 "input": execution.input_data or {},
                 "variables": context.get("variables", {}),
+                "adapter_manager": context.get("adapter_manager"),
+                "user_id": context.get("user_id") or getattr(execution, "user_id", None),
+                "adapter_start_policy": context.get("adapter_start_policy", "auto"),
+                "interpolation_mode": context.get("interpolation_mode", "strict"),
+                "session_id": context.get("session_id"),
                 "workflow_id": workflow.id,
                 "execution_id": execution.id,
                 "all_nodes": nodes,  # 添加所有节点引用

@@ -7,8 +7,12 @@ import asyncio
 from typing import Dict, Any, Optional, List
 from datetime import datetime, timezone
 import logging
-from apscheduler.schedulers.asyncio import AsyncIOScheduler
-from apscheduler.triggers.cron import CronTrigger
+try:
+    from apscheduler.schedulers.asyncio import AsyncIOScheduler
+    from apscheduler.triggers.cron import CronTrigger
+except ModuleNotFoundError:  # pragma: no cover
+    AsyncIOScheduler = None  # type: ignore[assignment]
+    CronTrigger = None  # type: ignore[assignment]
 
 logger = logging.getLogger(__name__)
 
@@ -24,24 +28,28 @@ class WorkflowScheduler:
     """
 
     def __init__(self):
-        self.scheduler = AsyncIOScheduler()
+        self.scheduler = AsyncIOScheduler() if AsyncIOScheduler is not None else None
         self.scheduled_jobs = {}  # workflow_id -> job_id 映射
 
     async def start(self):
         """启动调度器"""
+        if self.scheduler is None:
+            raise RuntimeError("apscheduler is not installed; scheduling is unavailable")
         if not self.scheduler.running:
             self.scheduler.start()
             logger.info("工作流调度器已启动")
 
     async def stop(self):
         """停止调度器"""
+        if self.scheduler is None:
+            return
         if self.scheduler.running:
             self.scheduler.shutdown()
             logger.info("工作流调度器已停止")
 
     def is_running(self) -> bool:
         """检查调度器是否运行中"""
-        return self.scheduler.running
+        return bool(self.scheduler and self.scheduler.running)
 
     async def schedule_workflow(
         self,
@@ -60,6 +68,8 @@ class WorkflowScheduler:
         Returns:
             任务ID
         """
+        if self.scheduler is None or CronTrigger is None:
+            raise RuntimeError("apscheduler is not installed; scheduling is unavailable")
         try:
             # 解析 Cron 表达式
             trigger = CronTrigger.from_crontab(cron_expression)
@@ -92,6 +102,9 @@ class WorkflowScheduler:
         Returns:
             是否成功取消
         """
+        if self.scheduler is None:
+            return False
+
         job_id = self.scheduled_jobs.get(workflow_id)
         if not job_id:
             logger.warning(f"工作流 {workflow_id} 未被调度")
@@ -115,6 +128,8 @@ class WorkflowScheduler:
             调度信息列表
         """
         scheduled = []
+        if self.scheduler is None:
+            return scheduled
         for workflow_id, job_id in self.scheduled_jobs.items():
             job = self.scheduler.get_job(job_id)
             if job:
@@ -143,6 +158,8 @@ class WorkflowScheduler:
         Returns:
             任务ID
         """
+        if self.scheduler is None:
+            raise RuntimeError("apscheduler is not installed; scheduling is unavailable")
         job = self.scheduler.add_job(
             callback,
             'date',
