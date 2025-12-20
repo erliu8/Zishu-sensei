@@ -4,11 +4,13 @@
 """
 
 import threading
+import os
 from typing import Any, Callable, Dict, Optional, TypeVar, Type, Union
 from pathlib import Path
 import logging
 from functools import lru_cache
 from abc import ABC, abstractmethod
+from fastapi import Request
 
 # 导入项目组件
 from zishu.utils.logger import setup_logger
@@ -610,7 +612,7 @@ def get_adapter_manager():
 
 
 # FastAPI 依赖函数
-def get_current_user() -> dict:
+def get_current_user(request: Request) -> dict:
     """
     获取当前用户信息（临时实现）
     
@@ -623,6 +625,18 @@ def get_current_user() -> dict:
     # 3. 从 token 解析用户信息
     # 4. 从数据库查询完整用户信息
     
+    # v0: allow overriding user_id via header for local smoke tests (e.g. test_mood_diary.py).
+    # Disabled by default; enable via env var: ALLOW_HEADER_USER_ID=1
+    allow_header_user_id = os.getenv("ALLOW_HEADER_USER_ID", "0") == "1"
+    header_user_id = request.headers.get("X-User-ID") if (allow_header_user_id and request) else None
+    if header_user_id:
+        return {
+            "id": header_user_id,
+            "username": header_user_id,
+            "email": f"{header_user_id}@zishu.local",
+            "role": "user",
+        }
+
     return {
         "id": "00000000-0000-0000-0000-000000000000",  # 系统默认用户
         "username": "system",

@@ -1,0 +1,83 @@
+{
+  "manifest_version": "0.1",
+  "package_id": "skill.builtin.mood.record",
+  "name": "情绪日记·记录",
+  "version": "1.0.0",
+  "description": "隐式记录用户对话中的情绪日记",
+  "author": "System",
+  "tags": ["mood", "diary", "record"],
+  "workflow": {
+    "slug": "mood-record",
+    "name": "情绪日记记录",
+    "description": "后台记录用户情绪日记",
+    "trigger_type": "manual",
+    "trigger_config": {},
+    "definition": {
+      "nodes": [
+        {
+          "id": "start",
+          "type": "start",
+          "name": "开始"
+        },
+        {
+          "id": "store_entry",
+          "type": "adapter",
+          "name": "记录日记",
+          "config": {
+            "adapter_id": "tool.mood_diary.store",
+            "parameters": {
+              "action": "append_entry",
+              "entry": {
+                "raw": {
+                  "user_text": "${input.turn.user_text}",
+                  "assistant_text": "${input.turn.assistant_text}"
+                },
+                "source": {
+                  "conversation_id": "${input.context.conversation_id}",
+                  "character_id": "${input.context.character_id}",
+                  "type": "${input.context.source}"
+                },
+                "ts": "${input.turn.ts}"
+              }
+            }
+          }
+        },
+        {
+          "id": "end",
+          "type": "end",
+          "name": "结束"
+        }
+      ],
+      "edges": [
+        {
+          "source": "start",
+          "target": "store_entry"
+        },
+        {
+          "source": "store_entry",
+          "target": "end"
+        }
+      ]
+    }
+  },
+  "workflow_adapter": {
+    "name": "情绪日记入口-记录",
+    "adapter_type": "hard",
+    "adapter_class": "zishu.adapters.hard.workflow_adapter.WorkflowAdapter",
+    "config": {
+      "run_mode": "async"
+    }
+  },
+  "dependencies": [
+    {
+      "adapter_id": "tool.mood_diary.store",
+      "required": true,
+      "auto_start": true
+    }
+  ],
+  "permissions": {
+    "database_access": [],
+    "file_system_access": ["data/mood_diary"],
+    "network_access": []
+  }
+}

@@ -22,6 +22,12 @@ def resolve_placeholders(value: str, context: Dict[str, Any], mode: str = "stric
     def replace_var(match):
         var_path = match.group(1)
         # 支持的格式：${input.xxx}, ${var}, ${variables.var}, ${a.b.c}
+        if var_path == "input":
+            # ${input} → context["input"]
+            return context.get("input", {})
+        if var_path == "variables":
+            # ${variables} → context["variables"]
+            return context.get("variables", {})
         if var_path.startswith("input."):
             # ${input.xxx} → context["input"]["xxx"]
             path = var_path[6:].split(".")
@@ -206,7 +212,40 @@ class AdapterNodeExecutor(NodeExecutor):
                 logger.info(f"Starting adapter {adapter_id} (auto policy)")
                 success = await adapter_manager.start_adapter(adapter_id)
                 if not success:
-                    raise RuntimeError(f"Failed to start adapter: {adapter_id}")
+                    diag = None
+                    adapter_instance = None
+                    try:
+                        adapter_config = getattr(registration, "configuration", None)
+                        adapter_class = getattr(adapter_config, "adapter_class", None) if adapter_config else None
+                        adapter_cfg = getattr(adapter_config, "config", None) if adapter_config else None
+
+                        if not adapter_config:
+                            diag = "missing registration.configuration"
+                        elif not adapter_class:
+                            diag = "missing adapter_class in configuration"
+                        else:
+                            adapter_instance = adapter_class(adapter_cfg or {})
+                            if hasattr(adapter_instance, "initialize"):
+                                await adapter_instance.initialize()
+                            if hasattr(adapter_instance, "start"):
+                                await adapter_instance.start()
+                            diag = "manual start succeeded (AdapterManager returned False)"
+                    except Exception as e:
+                        diag = f"{type(e).__name__}: {e}"
+                    finally:
+                        if adapter_instance is not None:
+                            try:
+                                if hasattr(adapter_instance, "stop"):
+                                    await adapter_instance.stop()
+                                if hasattr(adapter_instance, "cleanup"):
+                                    await adapter_instance.cleanup()
+                            except Exception:
+                                pass
+
+                    raise RuntimeError(
+                        f"Failed to start adapter: {adapter_id}"
+                        + (f" ({diag})" if diag else "")
+                    )
             elif adapter_start_policy == "strict_running":
                 raise RuntimeError(f"Adapter {adapter_id} is not running and policy is strict_running")
             else:
@@ -238,13 +277,18 @@ class AdapterNodeExecutor(NodeExecutor):
             logger.error(f"Adapter {adapter_id} execution failed: {e}")
             raise
 
+        # workflow_executions.output_data/node_results 存在于 JSONB 字段，必须可 JSON 序列化。
+        # adapter_manager.process_with_adapter 通常返回 ExecutionResult（包含 output + 元信息），
+        # 这里默认只把 output 写入 workflow 变量与后续节点。
+        adapter_output = getattr(result, "output", result)
+
         # 将结果保存到上下文变量
         if output_variable:
             if "variables" not in context:
                 context["variables"] = {}
-            context["variables"][output_variable] = result
+            context["variables"][output_variable] = adapter_output
 
-        return result
+        return adapter_output
 
 
 class ConditionNodeExecutor(NodeExecutor):

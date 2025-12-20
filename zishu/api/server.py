@@ -173,6 +173,73 @@ async def lifespan(app: FastAPI):
                 from zishu.adapters.core.persistence import AdapterPersistenceService
                 from zishu.adapters.core.types import AdapterConfiguration, AdapterType
                 from zishu.adapters.soft.third_party_api_adapter import ThirdPartyAPIAdapter
+                from zishu.adapters.hard.workflow_adapter import WorkflowAdapter
+                from zishu.adapters.hard.logger_adapter import LoggerAdapter
+                from zishu.adapters.hard.mood_diary_store_adapter import MoodDiaryStoreAdapter
+
+                def _preferred_mood_diary_base_path() -> str:
+                    """
+                    返回更稳妥的 base_path（尽量是绝对路径），避免依赖服务进程的 CWD。
+                    """
+                    base_path_value = "data/mood_diary"
+                    try:
+                        repo_root = next(
+                            (
+                                p
+                                for p in [
+                                    Path(__file__).resolve().parent,
+                                    *Path(__file__).resolve().parents,
+                                ]
+                                if (p / "pyproject.toml").exists()
+                            ),
+                            None,
+                        )
+                        if repo_root is None:
+                            return base_path_value
+
+                        data_entry = repo_root / "data"
+                        if data_entry.is_file():
+                            text = data_entry.read_text(encoding="utf-8").strip()
+                            if text:
+                                return str(Path(text) / "mood_diary")
+                        if data_entry.exists():
+                            return str(data_entry.resolve(strict=False) / "mood_diary")
+                    except Exception:
+                        return base_path_value
+
+                    return base_path_value
+
+                def _resolve_adapter_class(config_dict: Dict[str, Any]):
+                    adapter_id = config_dict.get("adapter_id")
+                    adapter_class_path = config_dict.get("adapter_class")
+                    config = config_dict.get("config") or {}
+                    kind = config.get("kind") if isinstance(config, dict) else None
+
+                    # Built-ins: be resilient to historical/incorrect persisted adapter_class.
+                    if adapter_id == "tool.mood_diary.store" or kind == "store":
+                        return MoodDiaryStoreAdapter
+
+                    if (
+                        adapter_class_path
+                        == "zishu.adapters.hard.workflow_adapter.WorkflowAdapter"
+                        or kind == "workflow"
+                    ):
+                        return WorkflowAdapter
+                    if adapter_class_path == "zishu.adapters.hard.logger_adapter.LoggerAdapter":
+                        return LoggerAdapter
+                    if (
+                        adapter_class_path
+                        == "zishu.adapters.hard.mood_diary_store_adapter.MoodDiaryStoreAdapter"
+                    ):
+                        return MoodDiaryStoreAdapter
+                    if (
+                        adapter_class_path
+                        == "zishu.adapters.soft.third_party_api_adapter.ThirdPartyAPIAdapter"
+                    ):
+                        return ThirdPartyAPIAdapter
+
+                    # v0 fallback: keep historical behavior
+                    return ThirdPartyAPIAdapter
                 
                 persistence_service = AdapterPersistenceService()
                 saved_configs = await persistence_service.load_all_adapter_configs()
@@ -182,16 +249,25 @@ async def lifespan(app: FastAPI):
                 for config_dict in saved_configs:
                     try:
                         adapter_id = config_dict['adapter_id']
-                        
+ 
+                        # 修正内置 store 的 base_path：避免旧配置/相对路径在服务运行环境中不可用。
+                        if adapter_id == "tool.mood_diary.store":
+                            cfg = config_dict.get("config") or {}
+                            if isinstance(cfg, dict):
+                                cfg = {**cfg}
+                                cfg.setdefault("kind", "store")
+                                cfg["base_path"] = _preferred_mood_diary_base_path()
+                                config_dict["config"] = cfg
+
                         # 重建配置对象
                         adapter_config = AdapterConfiguration(
-                            identity=adapter_id,
+                             identity=adapter_id,
                             name=config_dict['name'],
                             version=config_dict['version'],
                             adapter_type=AdapterType(config_dict['adapter_type']) if isinstance(config_dict['adapter_type'], str) else config_dict['adapter_type'],
-                            adapter_class=ThirdPartyAPIAdapter,  # 目前只支持第三方API适配器
+                            adapter_class=_resolve_adapter_class(config_dict),
                             config=config_dict['config'],
-                            dependencies=config_dict.get('dependencies', []),
+                            dependencies=set(config_dict.get('dependencies', []) or []),
                             description=config_dict.get('description'),
                             author=config_dict.get('author'),
                             tags=config_dict.get('tags', []),
