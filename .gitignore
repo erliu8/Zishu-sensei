@@ -30,6 +30,7 @@ htmlcov/
 .coverage
 .coverage.*
 .cache
+
 nosetests.xml
 coverage.xml
 *.cover
@@ -210,3 +211,5 @@ playwright-report/
 # Misc
 .turbo
 .vercel
+
+!zishu/cache

@@ -77,7 +77,9 @@
   ],
   "permissions": {
     "database_access": [],
-    "file_system_access": ["data/mood_diary"],
+
+    "file_system_access": ["cache/mood_diary"],
+
     "network_access": []
   }
 }

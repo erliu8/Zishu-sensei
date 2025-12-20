@@ -181,7 +181,9 @@ async def lifespan(app: FastAPI):
                     """
                     返回更稳妥的 base_path（尽量是绝对路径），避免依赖服务进程的 CWD。
                     """
-                    base_path_value = "data/mood_diary"
+
+                    base_path_value = "cache/mood_diary"
+
                     try:
                         repo_root = next(
                             (
