@@ -13,7 +13,6 @@ mod utils;
 mod adapter;
 mod system_monitor;
 mod database;
-mod workflow;
 mod http;
 mod config;
 
@@ -635,37 +634,6 @@ async fn main() {
             commands::shortcuts::check_shortcut_conflict,
             commands::shortcuts::validate_shortcut_config,
             
-            // 工作流命令
-            commands::workflow::create_workflow,
-            commands::workflow::update_workflow,
-            commands::workflow::delete_workflow,
-            commands::workflow::get_workflow,
-            commands::workflow::list_workflows,
-            commands::workflow::execute_workflow,
-            commands::workflow::cancel_workflow_execution,
-            commands::workflow::pause_workflow_execution,
-            commands::workflow::resume_workflow_execution,
-            commands::workflow::get_workflow_execution_status,
-            commands::workflow::list_workflow_executions,
-            commands::workflow::schedule_workflow,
-            commands::workflow::unschedule_workflow,
-            commands::workflow::list_scheduled_workflows,
-            commands::workflow::start_workflow_scheduler,
-            commands::workflow::stop_workflow_scheduler,
-            commands::workflow::get_workflow_scheduler_status,
-            commands::workflow::get_builtin_templates,
-            commands::workflow::get_builtin_template,
-            
-            // 触发器命令
-            commands::workflow::create_event_trigger,
-            commands::workflow::list_event_triggers,
-            commands::workflow::remove_event_trigger,
-            commands::workflow::trigger_event,
-            commands::workflow::create_webhook_trigger,
-            commands::workflow::list_webhook_triggers,
-            commands::workflow::remove_webhook_trigger,
-            commands::workflow::trigger_webhook,
-            
             // 工作流 API 命令（与 Python 服务通信）
             commands::workflow_api::api_create_workflow,
             commands::workflow_api::api_list_workflows,
@@ -683,7 +651,11 @@ async fn main() {
             commands::workflow_api::api_list_templates,
             commands::workflow_api::api_create_from_template,
             commands::workflow_api::api_health_check,
-            
+
+            // Skills API 命令（与 Python 服务通信）
+            commands::skills_api::api_execute_skill,
+            commands::skills_api::api_skills_health_check,
+
             // 文件管理命令
             commands::file::upload_file,
             commands::file::get_file,

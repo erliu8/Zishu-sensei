@@ -3,8 +3,10 @@
 
 pub mod client;
 pub mod error;
+pub mod skills_client;
 pub mod workflow_client;
 
 pub use client::ApiClient;
 pub use error::{ApiError, ApiResult};
+pub use skills_client::SkillsApiClient;
 pub use workflow_client::WorkflowApiClient;
