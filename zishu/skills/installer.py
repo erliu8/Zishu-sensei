@@ -284,7 +284,9 @@ async def ensure_mood_diary_store(adapter_manager) -> None:
         """
         返回更稳妥的 base_path（尽量是绝对路径），避免依赖服务进程的 CWD。
         """
+
         base_path_value = "cache/mood_diary"
+
         try:
             repo_root = next(
                 (
@@ -302,6 +304,7 @@ async def ensure_mood_diary_store(adapter_manager) -> None:
         
         except Exception:
             return base_path_value
+
 
     try:
         registration = await adapter_manager.get_adapter(adapter_id)
@@ -329,7 +332,9 @@ async def ensure_mood_diary_store(adapter_manager) -> None:
             current_base_path = None
             if getattr(registration, "configuration", None) is not None:
                 current_base_path = (registration.configuration.config or {}).get("base_path")
+
             if current_base_path in (None, "", "cache/mood_diary", "/cache/mood_diary"):
+
                 logger.warning(
                     f"{log_context(adapter_id=adapter_id)} base_path={current_base_path!r} is not portable; re-registering with base_path={desired_base_path!r}"
                 )
@@ -643,7 +648,9 @@ class SkillInstaller:
                         normalized = str(path).replace("\\", "/").lstrip("./")
                         if normalized.startswith("/tmp") or (
                             not normalized.startswith("/")
+
                             and (normalized == "cache" or normalized.startswith("cache/"))
+
                         ):
                             continue
 
