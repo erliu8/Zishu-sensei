@@ -305,7 +305,6 @@ async def ensure_mood_diary_store(adapter_manager) -> None:
         except Exception:
             return base_path_value
 
-
     try:
         registration = await adapter_manager.get_adapter(adapter_id)
     except Exception as e:

@@ -72,11 +72,11 @@ pub mod window;
 /// 数据库操作命令
 pub mod database;
 
-/// 工作流管理命令
-pub mod workflow;
-
 /// 工作流 API 命令（与 Python 服务通信）
 pub mod workflow_api;
+
+/// Skills API 命令（与 Python 服务通信）
+pub mod skills_api;
 
 /// 市场相关命令
 pub mod market;
@@ -546,10 +546,10 @@ pub fn get_command_metadata() -> HashMap<String, CommandMetadata> {
     
     // 数据库命令
     metadata.extend(database::get_command_metadata());
-    
-    // 工作流命令
-    metadata.extend(workflow::get_command_metadata());
-    
+
+    // Skills API 命令
+    metadata.extend(skills_api::get_command_metadata());
+
     // 市场命令
     metadata.extend(market::get_command_metadata());
     
@@ -684,6 +684,9 @@ pub use window::*;
 // 数据库命令
 
 // 工作流命令
+
+// Skills API 命令
+pub use skills_api::*;
 
 // 市场命令
 pub use market::*;

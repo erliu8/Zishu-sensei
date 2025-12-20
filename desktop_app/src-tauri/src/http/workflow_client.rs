@@ -2,7 +2,6 @@
 
 use super::client::ApiClient;
 use super::error::ApiResult;
-use crate::workflow::{Workflow, WorkflowExecution};
 use serde::{Deserialize, Serialize};
 use std::collections::HashMap;
 

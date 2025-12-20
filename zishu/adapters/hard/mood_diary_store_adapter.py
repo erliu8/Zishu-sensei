@@ -104,7 +104,7 @@ class MoodDiaryStoreAdapter(BaseAdapter):
 
     def __init__(self, config: Dict[str, Any]):
         super().__init__(config)
-
+        
         base_path = config.get("base_path", "cache/mood_diary")
 
         if not isinstance(base_path, (str, Path)) or not str(base_path).strip():

@@ -10,7 +10,6 @@ pub mod utils;
 pub mod adapter;
 pub mod system_monitor;
 pub mod database;
-pub mod workflow;
 pub mod http;
 pub mod config;
 
