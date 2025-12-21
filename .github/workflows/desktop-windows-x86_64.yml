@@ -32,7 +32,7 @@ jobs:
         run: npm ci
 
       - name: Test
-        npm run test:run
+        run: "npm run test:run"
 
   build:
     if: github.event_name != 'pull_request'
@@ -58,7 +58,7 @@ jobs:
         run: npm ci
 
       - name: Build Tauri (Windows x86_64)
-        run: npm run tauri:build:windows
+        run: "npm run tauri:build:windows"
 
       - name: Upload artifacts
         uses: actions/upload-artifact@v4
