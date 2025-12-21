@@ -60,9 +60,8 @@ export async function recordMoodDiary(params: {
         character_id?: string
         source?: string
     }
-}): Promise<any> {
-    const response = await executeSkill('mood_diary', params)
-    return extractResult(response)
+}): Promise<ApiResponse> {
+    return executeSkill('skill.builtin.mood.record', params)
 }
 
 /**
@@ -82,9 +81,28 @@ export async function reviewMoodDiary(params: {
         end: string
     }
     tags?: string[]
-}): Promise<any> {
-    const response = await executeSkill('mood_diary', params)
-    return extractResult(response)
+    range?: {
+        from: string
+        to: string
+    }
+    keyword?: string
+    mood?: string[]
+    topics?: string[]
+}): Promise<ApiResponse> {
+    const payload: any = { ...params }
+
+    if (!payload.range && payload.date_range?.start && payload.date_range?.end) {
+        payload.range = {
+            from: payload.date_range.start,
+            to: payload.date_range.end,
+        }
+    }
+
+    if (!payload.topics && Array.isArray(payload.tags) && payload.tags.length > 0) {
+        payload.topics = payload.tags
+    }
+
+    return executeSkill('skill.builtin.mood.review', payload)
 }
 
 // ================================
@@ -104,3 +122,13 @@ export async function skillsHealthCheck(): Promise<boolean> {
         return false
     }
 }
+
+export const skillsApi = {
+    executeSkill,
+    extractResult,
+    recordMoodDiary,
+    reviewMoodDiary,
+    skillsHealthCheck,
+}
+
+export default skillsApi

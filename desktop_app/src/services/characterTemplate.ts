@@ -11,6 +11,7 @@ import type {
   CreateCharacterTemplateStep2,
 } from '@/types/characterTemplate'
 import { CommandResponse } from './types'
+import { DEFAULT_ENABLED_SKILLS } from '@/constants/skills'
 
 /**
  * 角色模板存储键
@@ -52,7 +53,19 @@ export class CharacterTemplateService {
   private static getTemplatesFromLocalStorage(): CharacterTemplate[] {
     try {
       const stored = localStorage.getItem(STORAGE_KEY)
-      return stored ? JSON.parse(stored) : []
+      const templates = stored ? JSON.parse(stored) : []
+
+      // 迁移逻辑：为没有 enabledSkills 的旧模板添加默认技能
+      return templates.map((template: CharacterTemplate) => {
+        if (!template.enabledSkills) {
+          return {
+            ...template,
+            enabledSkills: DEFAULT_ENABLED_SKILLS,
+            updatedAt: Date.now(),
+          }
+        }
+        return template
+      })
     } catch (error) {
       console.error('从本地存储读取模板失败:', error)
       return []
@@ -75,7 +88,8 @@ export class CharacterTemplateService {
    */
   static async createTemplate(
     step1Data: CreateCharacterTemplateStep1,
-    llmConfig: LLMConfig
+    llmConfig: LLMConfig,
+    enabledSkills?: string[]
   ): Promise<CharacterTemplate> {
     try {
       // 处理prompt
@@ -100,6 +114,7 @@ export class CharacterTemplateService {
         live2dModelId: step1Data.live2dModelId,
         prompt,
         llmConfig,
+        enabledSkills: enabledSkills || DEFAULT_ENABLED_SKILLS,
         createdAt: Date.now(),
         updatedAt: Date.now(),
         metadata: {
@@ -386,6 +401,7 @@ export class CharacterTemplateService {
         adapterId: template.metadata?.adapterId,
         live2dModelId: template.live2dModelId,
         systemPrompt: template.prompt.systemPrompt,
+        enabledSkills: template.enabledSkills || DEFAULT_ENABLED_SKILLS,
       }
       localStorage.setItem('current_chat_config', JSON.stringify(chatConfig))
       console.log('💾 已保存聊天配置:', chatConfig)
@@ -412,12 +428,21 @@ export class CharacterTemplateService {
    * 获取所有Prompt列表（从数据库）
    */
   static async getPrompts(): Promise<CharacterPrompt[]> {
+    let localPrompts: CharacterPrompt[] = []
+    try {
+      const stored = localStorage.getItem(PROMPTS_STORAGE_KEY)
+      const parsed = stored ? JSON.parse(stored) : []
+      localPrompts = Array.isArray(parsed) ? parsed : []
+    } catch {
+      localPrompts = []
+    }
+
     try {
       const response = await invoke<CommandResponse<any[]>>('get_prompts')
       
       if (response.success && response.data) {
         // 转换数据库格式到前端格式
-        return response.data.map(p => ({
+        const backendPrompts: CharacterPrompt[] = response.data.map(p => ({
           id: p.id,
           name: p.name,
           systemPrompt: p.content,
@@ -425,12 +450,20 @@ export class CharacterTemplateService {
           createdAt: p.created_at * 1000, // 转换为毫秒
           updatedAt: p.updated_at * 1000,
         }))
+
+        const merged = new Map<string, CharacterPrompt>()
+        for (const p of backendPrompts) merged.set(p.id, p)
+        for (const p of localPrompts) {
+          if (p && typeof (p as any).id === 'string') merged.set((p as any).id, p)
+        }
+
+        return Array.from(merged.values()).sort((a, b) => b.updatedAt - a.updatedAt)
       }
       
-      return []
+      return localPrompts
     } catch (error) {
       console.error('获取Prompt列表失败:', error)
-      return []
+      return localPrompts
     }
   }
 

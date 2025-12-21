@@ -1,6 +1,6 @@
 /**
  * 角色模板创建器组件
- * 分为两步：1. 基本信息设置 2. LLM配置
+ * 分为三步：1. 基本信息设置 2. LLM配置 3. 技能选择
  * 支持创建和编辑两种模式
  */
 
@@ -9,9 +9,13 @@ import { AnimatePresence } from 'framer-motion'
 import { CharacterTemplateService } from '@/services/characterTemplate'
 import { CharacterTemplateStep1 } from './steps/CharacterTemplateStep1'
 import { CharacterTemplateStep2 } from './steps/CharacterTemplateStep2'
+import { CharacterTemplateStep3 } from './steps/CharacterTemplateStep3'
+import { DEFAULT_ENABLED_SKILLS } from '@/constants/skills'
 import type {
   CharacterTemplate,
+  CharacterPrompt,
   CreateCharacterTemplateStep1,
+  CreateCharacterTemplateStep3,
   LLMConfig,
 } from '@/types/characterTemplate'
 
@@ -30,9 +34,10 @@ export const CharacterTemplateCreator: React.FC<CharacterTemplateCreatorProps> =
   onCancel,
 }) => {
   const isEditMode = !!initialTemplate
-  const [currentStep, setCurrentStep] = useState<1 | 2>(1)
+  const [currentStep, setCurrentStep] = useState<1 | 2 | 3>(1)
   const [step1Data, setStep1Data] = useState<CreateCharacterTemplateStep1 | null>(null)
   const [llmConfig, setLlmConfig] = useState<LLMConfig | null>(null)
+  const [enabledSkills, setEnabledSkills] = useState<string[]>(DEFAULT_ENABLED_SKILLS)
   const [isCreating, setIsCreating] = useState(false)
   const [error, setError] = useState<string | null>(null)
 
@@ -43,9 +48,11 @@ export const CharacterTemplateCreator: React.FC<CharacterTemplateCreatorProps> =
         name: initialTemplate.name,
         description: initialTemplate.description,
         live2dModelId: initialTemplate.live2dModelId,
-        prompt: initialTemplate.prompt,
+        // Step1 期望的是 promptId 或 CreateCharacterPromptInput
+        prompt: initialTemplate.prompt.id,
       })
       setLlmConfig(initialTemplate.llmConfig)
+      setEnabledSkills(initialTemplate.enabledSkills || DEFAULT_ENABLED_SKILLS)
     }
   }, [initialTemplate])
 
@@ -57,30 +64,55 @@ export const CharacterTemplateCreator: React.FC<CharacterTemplateCreatorProps> =
   }
 
   // 处理第二步完成
-  const handleStep2Complete = async (newLlmConfig: LLMConfig) => {
-    if (!step1Data) {
-      setError('缺少第一步数据')
+  const handleStep2Complete = (newLlmConfig: LLMConfig) => {
+    setLlmConfig(newLlmConfig)
+    setCurrentStep(3)
+    setError(null)
+  }
+
+  // 处理第三步完成
+  const handleStep3Complete = async (step3Data: CreateCharacterTemplateStep3) => {
+    if (!step1Data || !llmConfig) {
+      setError('缺少前面的步骤数据')
       return
     }
 
     try {
       setIsCreating(true)
       setError(null)
-      
+
       if (isEditMode && initialTemplate) {
+        const resolvePrompt = async (): Promise<CharacterPrompt> => {
+          const promptValue: any = step1Data.prompt
+
+          if (typeof promptValue === 'string') {
+            const existing = await CharacterTemplateService.getPromptById(promptValue)
+            return existing || initialTemplate.prompt
+          }
+
+          if (promptValue && typeof promptValue === 'object' && typeof promptValue.id === 'string') {
+            return promptValue as CharacterPrompt
+          }
+
+          return await CharacterTemplateService.createPrompt(promptValue)
+        }
+
         // 编辑模式:更新模板
         await CharacterTemplateService.updateTemplate(initialTemplate.id, {
           name: step1Data.name,
           description: step1Data.description,
           live2dModelId: step1Data.live2dModelId,
-          prompt: typeof step1Data.prompt === 'string' 
-            ? initialTemplate.prompt 
-            : step1Data.prompt,
-          llmConfig: newLlmConfig,
+          prompt: await resolvePrompt(),
+          llmConfig: llmConfig,
+          enabledSkills: step3Data.enabledSkills,
         })
       } else {
         // 创建模式:创建新模板
-        await CharacterTemplateService.createTemplate(step1Data, newLlmConfig)
+        await CharacterTemplateService.createTemplate(
+          step1Data,
+          llmConfig,
+          step3Data.enabledSkills
+        )
       }
       onComplete()
     } catch (err) {
@@ -93,7 +125,11 @@ export const CharacterTemplateCreator: React.FC<CharacterTemplateCreatorProps> =
 
   // 返回上一步
   const handleBack = () => {
-    setCurrentStep(1)
+    if (currentStep === 3) {
+      setCurrentStep(2)
+    } else {
+      setCurrentStep(1)
+    }
     setError(null)
   }
 
@@ -135,6 +171,21 @@ export const CharacterTemplateCreator: React.FC<CharacterTemplateCreatorProps> =
           number={2}
           title="LLM配置"
           isActive={currentStep === 2}
+          isCompleted={currentStep > 2}
+        />
+        <div
+          style={{
+            flex: 1,
+            height: '2px',
+            backgroundColor: currentStep > 2
+              ? 'hsl(var(--color-primary))'
+              : 'hsl(var(--color-border))',
+          }}
+        />
+        <StepIndicator
+          number={3}
+          title="技能选择"
+          isActive={currentStep === 3}
           isCompleted={false}
         />
       </div>
@@ -162,12 +213,19 @@ export const CharacterTemplateCreator: React.FC<CharacterTemplateCreatorProps> =
             onCancel={onCancel}
             initialData={step1Data}
           />
-        ) : (
+        ) : currentStep === 2 ? (
           <CharacterTemplateStep2
             onComplete={handleStep2Complete}
             onBack={handleBack}
             isCreating={isCreating}
             initialLlmConfig={llmConfig}
+          />
+        ) : (
+          <CharacterTemplateStep3
+            onComplete={handleStep3Complete}
+            onBack={handleBack}
+            isCreating={isCreating}
+            initialEnabledSkills={enabledSkills}
           />
         )}
       </AnimatePresence>
