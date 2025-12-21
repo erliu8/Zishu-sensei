@@ -97,7 +97,7 @@ const App: React.FC = () => {
     const { theme, setTheme } = useTheme()
     const { settings, updateSettings, resetSettings } = useSettings()
     const { currentCharacter, characterList, switchCharacter, loadCharacters } = useModelLoader()
-    const { isTauriEnv, tauriVersion } = useTauri()
+    const { isTauriEnv } = useTauri()
     const { minimizeWindow, closeWindow } = useWindowManager()
     const shortcuts = useKeyboardShortcuts()
     

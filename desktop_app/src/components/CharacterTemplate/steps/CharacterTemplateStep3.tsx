@@ -2,9 +2,9 @@
  * 角色模板创建 - 第三步：技能选择
  */
 
-import React, { useState, useEffect } from 'react'
+import React, { useState } from 'react'
 import { motion } from 'framer-motion'
-import { AVAILABLE_SKILLS, DEFAULT_ENABLED_SKILLS, SKILLS_BY_CATEGORY } from '@/constants/skills'
+import { DEFAULT_ENABLED_SKILLS, SKILLS_BY_CATEGORY } from '@/constants/skills'
 import type { CreateCharacterTemplateStep3 } from '@/types/characterTemplate'
 
 interface CharacterTemplateStep3Props {

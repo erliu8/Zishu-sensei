@@ -8,7 +8,6 @@ import type {
   CharacterPrompt,
   LLMConfig,
   CreateCharacterTemplateStep1,
-  CreateCharacterTemplateStep2,
 } from '@/types/characterTemplate'
 import { CommandResponse } from './types'
 import { DEFAULT_ENABLED_SKILLS } from '@/constants/skills'

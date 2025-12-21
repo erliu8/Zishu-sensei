@@ -148,7 +148,7 @@ export const WorkflowList: React.FC<WorkflowListProps> = ({ onSelectWorkflow }) 
 
                             {workflow.tags && workflow.tags.length > 0 && (
                                 <div className={styles.tags}>
-                                    {workflow.tags.map((tag, index) => (
+                                    {workflow.tags.map((tag: string, index: number) => (
                                         <span key={index} className={styles.tag}>
                                             {tag}
                                         </span>
