@@ -6,19 +6,20 @@ on:
     paths:
       - "desktop_app/**"
       - ".github/workflows/**"
+      - "package-lock.json"
+      - "package.json"
   push:
     branches: [main]
     paths:
       - "desktop_app/**"
       - ".github/workflows/**"
+      - "package-lock.json"
+      - "package.json"
 
 jobs:
   check:
     if: github.event_name == 'pull_request'
     runs-on: windows-latest
-    defaults:
-      run:
-        working-directory: desktop_app
     steps:
       - uses: actions/checkout@v4
 
@@ -26,20 +27,17 @@ jobs:
         with:
           node-version: "20"
           cache: "npm"
-          cache-dependency-path: desktop_app/package-lock.json
+          cache-dependency-path: package-lock.json
 
-      - name: Install deps
-        run: npm ci
+      - name: Install deps (workspaces)
+        run: "npm ci --workspaces --include=dev --legacy-peer-deps"
 
-      - name: Test
-        run: "npm run test:run"
+      - name: Test (desktop_app)
+        run: "npm run test:run --workspace=desktop_app"
 
   build:
     if: github.event_name != 'pull_request'
     runs-on: windows-latest
-    defaults:
-      run:
-        working-directory: desktop_app
     steps:
       - uses: actions/checkout@v4
 
@@ -47,17 +45,18 @@ jobs:
         with:
           node-version: "20"
           cache: "npm"
-          cache-dependency-path: desktop_app/package-lock.json
+          cache-dependency-path: package-lock.json
 
       - name: Install Rust (stable + target)
         uses: dtolnay/rust-toolchain@stable
         with:
           targets: x86_64-pc-windows-msvc
 
-      - name: Install deps
-        run: npm ci
+      - name: Install deps (workspaces)
+        run: "npm ci --workspaces --include=dev --legacy-peer-deps"
 
       - name: Build Tauri (Windows x86_64)
+        working-directory: desktop_app
         run: "npm run tauri:build:windows"
 
       - name: Upload artifacts
