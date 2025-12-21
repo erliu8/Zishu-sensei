@@ -51,10 +51,6 @@ jobs:
       - name: Install deps
         run: npm ci --workspaces --include=dev
 
-      - name: Generate Tauri icons
-        run: npm exec -w desktop_app -- tauri icon desktop_app/src-tauri/icons/icon.png
-
-
       - name: Build Tauri (Windows x86_64)
         run: npm run -w desktop_app tauri:build:windows
 

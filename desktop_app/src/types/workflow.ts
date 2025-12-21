@@ -402,9 +402,6 @@ export interface WorkflowExecutionResponse {
   created_at?: string;
   execution_mode?: string;
 
-  created_at?: string;
-  execution_mode?: string;
-
   started_at?: string;
   completed_at?: string;
   input_data?: any;
