@@ -398,8 +398,13 @@ export interface WorkflowExecutionResponse {
   workflow_id?: string;
   workflow_name?: string;
   execution_status: string;
+
   created_at?: string;
   execution_mode?: string;
+
+  created_at?: string;
+  execution_mode?: string;
+
   started_at?: string;
   completed_at?: string;
   input_data?: any;
