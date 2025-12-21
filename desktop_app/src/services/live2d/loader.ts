@@ -2025,7 +2025,7 @@ export class Live2DModelLoader {
               const PIXI = await import('pixi.js')
               if (PIXI && PIXI.Renderer) {
                 console.log('🔧 [DEBUG] 尝试手动创建WebGL渲染器...')
-                renderer = new PIXI.Renderer({
+                const rendererOptions: any = {
                   view: appConfig.view,
                   width: appConfig.width,
                   height: appConfig.height,
@@ -2036,9 +2036,10 @@ export class Live2DModelLoader {
                   premultipliedAlpha: appConfig.premultipliedAlpha,
                   preserveDrawingBuffer: appConfig.preserveDrawingBuffer,
                   clearBeforeRender: appConfig.clearBeforeRender,
-                  powerPreference: appConfig.powerPreference || 'default'
+                  powerPreference: appConfig.powerPreference || 'default',
                   // 🔧 [CRITICAL FIX] 不传入context，让PixiJS自己创建
-                })
+                }
+                renderer = new PIXI.Renderer(rendererOptions)
                 console.log('✅ [DEBUG] 手动创建WebGL渲染器成功')
               }
             } catch (webglError) {
@@ -2155,7 +2156,7 @@ export class Live2DModelLoader {
               stageAlpha: this.app.stage?.alpha,
               stageScale: this.app.stage?.scale ? { x: this.app.stage.scale.x, y: this.app.stage.scale.y } : null,
               stagePosition: this.app.stage ? { x: this.app.stage.x, y: this.app.stage.y } : null,
-              backgroundColor: this.app.renderer?.background?.color,
+              backgroundColor: (this.app.renderer as any)?.background?.color,
               lastRenderTime: Date.now()
             })
             

@@ -115,7 +115,7 @@ export async function reviewMoodDiary(params: {
  */
 export async function skillsHealthCheck(): Promise<boolean> {
     try {
-        const response = await invoke('api_skills_health_check')
+        const response = await invoke<any>('api_skills_health_check')
         return response === true || response?.success === true
     } catch (error) {
         console.error('Skills health check failed:', error)

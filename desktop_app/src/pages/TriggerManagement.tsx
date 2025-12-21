@@ -2,8 +2,8 @@ import React, { useState, useEffect } from 'react';
 import { useNavigate, useParams } from 'react-router-dom';
 import { Home, Calendar, Webhook, Clock, Plus } from 'lucide-react';
 import clsx from 'clsx';
-import WorkflowTriggers from '../components/workflow/WorkflowTriggers';
-import TriggerHistory from '../components/workflow/TriggerHistory';
+import WorkflowTriggers from '../components/Workflow/WorkflowTriggers';
+import TriggerHistory from '../components/Workflow/TriggerHistory';
 import workflowService from '../services/workflowService';
 
 interface WorkflowInfo {

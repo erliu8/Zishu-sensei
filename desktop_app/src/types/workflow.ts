@@ -332,3 +332,76 @@ export interface ParallelTask {
   steps: WorkflowStep[];
 }
 
+// ================================
+// API DTOs (core workflow service)
+// ================================
+
+/**
+ * 创建工作流请求
+ * 注：字段保持与后端 API snake_case 对齐
+ */
+export interface CreateWorkflowRequest {
+  name: string;
+  slug?: string;
+  description?: string;
+  category?: string;
+  tags?: string[];
+  definition: any;
+  trigger_type?: string;
+  trigger_config?: any;
+}
+
+/**
+ * 更新工作流请求
+ */
+export interface UpdateWorkflowRequest {
+  name?: string;
+  description?: string;
+  category?: string;
+  tags?: string[];
+  definition?: any;
+  trigger_type?: string;
+  trigger_config?: any;
+}
+
+/**
+ * 执行工作流请求
+ */
+export interface ExecuteWorkflowRequest {
+  input_data?: any;
+  execution_mode?: string;
+}
+
+/**
+ * 工作流 API 返回（列表/详情）
+ */
+export interface WorkflowResponse {
+  id: string;
+  name: string;
+  slug?: string;
+  description?: string;
+  category?: string;
+  tags?: string[];
+  workflow_status: string;
+  trigger_type?: string;
+  trigger_config?: any;
+  definition?: any;
+  created_at?: string | number;
+  updated_at?: string | number;
+}
+
+/**
+ * 工作流执行 API 返回（列表/详情）
+ */
+export interface WorkflowExecutionResponse {
+  id: string;
+  workflow_id?: string;
+  workflow_name?: string;
+  execution_status: string;
+  started_at?: string;
+  completed_at?: string;
+  input_data?: any;
+  output_data?: any;
+  error_message?: string | null;
+}
+

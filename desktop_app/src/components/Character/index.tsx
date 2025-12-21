@@ -34,7 +34,7 @@ export const Character: React.FC<CharacterProps> = ({
     const [transitionType, setTransitionType] = useState<TransitionType>('fade')
 
     // 使用模型加载器 Hook
-    const { currentCharacter, loadCharacters, switchCharacter } = useModelLoader()
+    const { currentCharacter, characterList, loadCharacters, switchCharacter } = useModelLoader()
 
     // 初始化：加载当前激活的角色
     useEffect(() => {
@@ -188,6 +188,7 @@ export const Character: React.FC<CharacterProps> = ({
                             <ModelSelector
                                 currentModelId={currentModelId}
                                 onModelSelect={handleModelSelect}
+                                models={characterList}
                             />
                         </div>
                     )}

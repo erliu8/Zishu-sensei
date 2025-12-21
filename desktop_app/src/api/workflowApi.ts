@@ -3,8 +3,8 @@
  * 通过 Tauri 命令与后端 Python 服务通信
  */
 
-import React from 'react'
 import { invoke } from '@tauri-apps/api/tauri'
+import * as React from 'react'
 import type {
     CreateWorkflowRequest,
     UpdateWorkflowRequest,

@@ -25,7 +25,7 @@ export const AISettings: React.FC<AISettingsProps> = ({ className }) => {
     const [activeTab, setActiveTab] = useState<'llm' | 'api' | 'prompt'>('llm')
 
     return (
-        <div style={{
+        <div className={className} style={{
             display: 'flex',
             flexDirection: 'column',
             width: '100%',
