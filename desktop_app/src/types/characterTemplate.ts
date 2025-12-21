@@ -79,6 +79,22 @@ export interface CreateCharacterPromptInput {
 }
 
 /**
+ * 技能接口
+ */
+export interface Skill {
+  /** 技能包ID（与后端保持一致） */
+  package_id: string
+  /** 技能名称 */
+  name: string
+  /** 技能描述 */
+  description: string
+  /** 技能分类 */
+  category: 'official' | 'community' | 'custom'
+  /** 是否为内置技能 */
+  builtin?: boolean
+}
+
+/**
  * 角色模板
  */
 export interface CharacterTemplate {
@@ -94,6 +110,8 @@ export interface CharacterTemplate {
   prompt: CharacterPrompt
   /** LLM配置 */
   llmConfig: LLMConfig
+  /** 启用的技能列表 */
+  enabledSkills?: string[]
   /** 模板元数据 */
   metadata?: {
     /** 适配器ID（后端自动生成） */
@@ -137,6 +155,14 @@ export interface CreateCharacterTemplateStep2 {
   step1Data: CreateCharacterTemplateStep1
   /** LLM配置 */
   llmConfig: LLMConfig
+}
+
+/**
+ * 创建角色模板请求（第三步）
+ */
+export interface CreateCharacterTemplateStep3 {
+  /** 启用的技能列表 */
+  enabledSkills: string[]
 }
 
 /**

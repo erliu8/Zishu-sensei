@@ -3,6 +3,8 @@ import React, { useState, useRef, useEffect, useCallback } from 'react'
 import { ChatService } from '@/services/chat'
 import { CharacterSelector } from './CharacterSelector'
 import { CharacterTemplateService } from '@/services/characterTemplate'
+import { MoodDiaryReviewModal } from './MoodDiaryReviewModal'
+import { skillsApi } from '@/api/skillsApi'
 import VoiceChatNativeService, { VoiceChatNativeConfig, VoiceChatNativeEvents } from '@/services/voiceChatNative'
 import toast from 'react-hot-toast'
 
@@ -37,7 +39,8 @@ export const ChatWindow: React.FC<ChatWindowProps> = ({
     ])
     const messagesEndRef = useRef<HTMLDivElement>(null)
     const [isSpeaking, setIsSpeaking] = useState(false)
-    
+    const [isMoodDiaryModalOpen, setIsMoodDiaryModalOpen] = useState(false)
+
     // 语音对话状态
     const [isVoiceChatActive, setIsVoiceChatActive] = useState(false)
     const [isVoiceConnected, setIsVoiceConnected] = useState(false)
@@ -362,6 +365,28 @@ export const ChatWindow: React.FC<ChatWindowProps> = ({
                 timestamp: Date.now(),
             }
             setMessages(prev => [...prev, reply])
+
+            // 记录情绪日记（如果启用了相应技能）
+            try {
+                const chatConfig = JSON.parse(localStorage.getItem('current_chat_config') || '{}')
+                if (chatConfig.enabledSkills?.includes('skill.builtin.mood.record')) {
+                    await skillsApi.recordMoodDiary({
+                        turn: {
+                            user_text: messageContent,
+                            assistant_text: assistantMessage,
+                            ts: new Date().toISOString()
+                        },
+                        context: {
+                            conversation_id: sessionId,
+                            character_id: selectedCharacterId,
+                            source: 'desktop_chat'
+                        }
+                    })
+                    console.log('✅ 情绪日记记录成功')
+                }
+            } catch (moodError) {
+                console.warn('⚠️ 记录情绪日记失败（不影响聊天）:', moodError)
+            }
         } catch (error) {
             console.error('发送消息失败:', error)
             const errorMessage = error instanceof Error ? error.message : '未知错误'
@@ -544,6 +569,34 @@ export const ChatWindow: React.FC<ChatWindowProps> = ({
                     onSelectCharacter={setSelectedCharacterId}
                 />
 
+                {/* 情绪日记回顾按钮 */}
+                <button
+                    onClick={() => setIsMoodDiaryModalOpen(true)}
+                    style={{
+                        padding: '8px 12px',
+                        fontSize: '13px',
+                        fontWeight: 500,
+                        border: '1px solid hsl(var(--color-border))',
+                        borderRadius: '6px',
+                        backgroundColor: 'transparent',
+                        color: 'hsl(var(--color-foreground))',
+                        cursor: 'pointer',
+                        display: 'flex',
+                        alignItems: 'center',
+                        gap: '6px',
+                        width: '100%',
+                        justifyContent: 'center',
+                    }}
+                    onMouseEnter={(e) => {
+                        e.currentTarget.style.backgroundColor = 'hsl(var(--color-muted) / 0.5)'
+                    }}
+                    onMouseLeave={(e) => {
+                        e.currentTarget.style.backgroundColor = 'transparent'
+                    }}
+                >
+                    📚 查看情绪日记
+                </button>
+
                 {/* 语音相关指示器 */}
                 {currentTranscript && (
                     <div style={{
@@ -689,6 +742,12 @@ export const ChatWindow: React.FC<ChatWindowProps> = ({
                 </div>
             </div>
             </>
+
+            {/* 情绪日记回顾模态框 */}
+            <MoodDiaryReviewModal
+                isOpen={isMoodDiaryModalOpen}
+                onClose={() => setIsMoodDiaryModalOpen(false)}
+            />
         </motion.div>
     )
 }
