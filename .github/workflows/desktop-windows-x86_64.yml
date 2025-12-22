@@ -53,11 +53,18 @@ jobs:
 
       - name: Build Tauri (Windows x86_64)
         run: npm run -w desktop_app tauri:build:windows
+      
+      - name: List outputs
+        shell: pwsh
+        run: |
+          Get-ChildItem -Recurse -Force desktop_app/src-tauri/target | Select-Object FullName
 
       - name: Upload artifacts
         uses: actions/upload-artifact@v4
         with:
           name: zishu-desktop-windows-x86_64
           path: |
-            desktop_app/src-tauri/target/x86_64-pc-windows-msvc/release/bundle/**
-            desktop_app/src-tauri/target/release/bundle/**
+            desktop_app/src-tauri/target/**/release/bundle/**/*
+            desktop_app/src-tauri/target/**/release/*.exe
+            desktop_app/src-tauri/target/**/release/*.msi
+          if-no-files-found: error
