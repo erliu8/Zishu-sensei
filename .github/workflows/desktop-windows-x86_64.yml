@@ -56,16 +56,18 @@ jobs:
         run: |
           choco install nsis -y
           choco install wixtoolset -y
+          makensis /VERSION
+          candle -?
           
       - name: Build Tauri (Windows x86_64)
-        run: npm run -w desktop_app tauri:build:windows
+        run: npm run -w desktop_app tauri:build:windows -- --bundles nsis,msi --verbose
       
       - name: List outputs
         shell: pwsh
         run: |
           Get-ChildItem -Recurse -Force desktop_app/src-tauri/target | Select-Object FullName
 
-      - name: Upload artifacts
+      - name: Upload artifacts (installers only)
         uses: actions/upload-artifact@v4
         with:
           name: zishu-desktop-windows-x86_64
@@ -73,3 +75,13 @@ jobs:
             desktop_app/src-tauri/target/**/release/bundle/nsis/*.exe
             desktop_app/src-tauri/target/**/release/bundle/msi/*.msi
           if-no-files-found: error
+
+      - name: Upload tauri logs (always)
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: tauri-build-logs
+          path: |
+            desktop_app/src-tauri/target/**/release/bundle/**/*
+            desktop_app/src-tauri/target/**/release/build/**/*
+            desktop_app/src-tauri/target/**/release/*.log
