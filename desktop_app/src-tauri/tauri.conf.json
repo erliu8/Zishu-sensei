@@ -146,7 +146,7 @@
             "active": true,
             "targets": "all",
             "identifier": "dev.zishu.sensei",
-            "icon": [],
+            "icon": ["icons/icon.ico"],
             "resources": [
                 "assets/**/*",
                 "live2d/**/*"
