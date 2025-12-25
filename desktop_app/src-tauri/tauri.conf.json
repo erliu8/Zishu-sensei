@@ -184,42 +184,16 @@
                         "zh-CN",
                         "en-US"
                     ],
-                    "template": "wix/main.wxs",
-                    "fragmentPaths": [
-                        "wix/fragment.wxs"
-                    ],
-                    "componentGroupRefs": [
-                        "Live2DModels",
-                        "Assets"
-                    ],
-                    "componentRefs": [
-                        "myapp.exe"
-                    ],
-                    "featureGroupRefs": [],
-                    "featureRefs": [],
-                    "mergeRefs": [],
-                    "skipWebviewInstall": false,
-                    "license": "LICENSE",
-                    "enableElevatedUpdateTask": false,
-                    "bannerPath": "wix/banner.bmp",
-                    "dialogImagePath": "wix/dialog.bmp"
+                    "skipWebviewInstall": false
                 },
                 "nsis": {
-                    "template": "nsis/installer.nsi",
-                    "license": "LICENSE",
-                    "headerImage": "nsis/header.bmp",
-                    "sidebarImage": "nsis/sidebar.bmp",
                     "installerIcon": "icons/icon.ico",
                     "installMode": "currentUser",
                     "languages": [
                         "SimpChinese",
                         "English"
                     ],
-                    "displayLanguageSelector": true,
-                    "customLanguageFiles": {
-                        "SimpChinese": "nsis/languages/SimpChinese.nsh",
-                        "English": "nsis/languages/English.nsh"
-                    }
+                    "displayLanguageSelector": true
                 }
             }
         },

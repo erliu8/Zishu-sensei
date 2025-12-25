@@ -56,15 +56,21 @@ jobs:
         run: |
           choco install nsis -y
           choco install wixtoolset -y
-          $nsisDir = Join-Path ${env:ProgramFiles(x86)} "NSIS"
-          if (-not (Test-Path $nsisDir)) { throw "NSIS not found at $nsisDir" }
-          $nsisDir | Out-File -FilePath $env:GITHUB_PATH -Append
-          & (Join-Path $nsisDir "makensis.exe") /VERSION
 
+          $nsisBin = Join-Path ${env:ProgramFiles(x86)} "NSIS"
+          $wixBin = Join-Path ${env:ProgramFiles(x86)} "WiX Toolset v3.11\\bin"
+
+          $env:Path += ";$nsisBin;$wixBin"
+          $nsisBin | Out-File -FilePath $env:GITHUB_PATH -Append
+          $wixBin | Out-File -FilePath $env:GITHUB_PATH -Append
+
+          & (Join-Path $nsisBin "makensis.exe") /VERSION
+          candle -?
+        
       - name: Build Tauri (Windows x86_64)
         run: npm run -w desktop_app tauri:build:windows -- --bundles nsis,msi --verbose
 
-      - name: Upload artifacts (installers)
+      - name: Upload artifacts
         uses: actions/upload-artifact@v4
         with:
           name: zishu-desktop-windows-x86_64
