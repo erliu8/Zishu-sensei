@@ -329,13 +329,6 @@ static mut DATABASE_MANAGER: Option<Arc<DatabaseManager>> = None;
 pub async fn init_database(app: AppHandle) -> Result<(), Box<dyn std::error::Error + Send + Sync>> {
     info!("初始化数据库系统");
     
-    // Desktop builds should not assume a local PostgreSQL instance exists.
-    // Cloud/server deployments must provide DATABASE_URL.
-    if std::env::var("DATABASE_URL").is_err() {
-        warn!("DATABASE_URL æœªè®¾ç½®ï¼Œè·³è¿‡ PostgreSQL åˆå§‹åŒ–");
-        return Ok(());
-    }
-
     // Get PostgreSQL connection URL from environment or use default
     let database_url = std::env::var("DATABASE_URL")
         .unwrap_or_else(|_| {
