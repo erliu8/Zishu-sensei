@@ -24,7 +24,7 @@ pub struct AppState {
 
 impl AppState {
     /// Create a new application state. Loads default config for now.
-    pub async fn new(app_handle: AppHandle) -> Result<Self, Box<dyn std::error::Error + Send + Sync>> {
+    pub fn new(_app_handle: AppHandle) -> Result<Self, Box<dyn std::error::Error + Send + Sync>> {
         let config = AppConfig::default();
         let chat = ChatState::new();
         let tray = Arc::new(TrayState::new());

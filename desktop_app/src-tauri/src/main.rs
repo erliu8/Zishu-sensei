@@ -273,7 +273,7 @@ async fn start_background_tasks(app_handle: AppHandle) -> Result<(), Box<dyn std
     
     // 启动自动保存任务
     let app_handle_clone = app_handle.clone();
-    tokio::spawn(async move {
+    tauri::async_runtime::spawn(async move {
         let mut interval = tokio::time::interval(tokio::time::Duration::from_secs(300)); // 5分钟
         loop {
             interval.tick().await;
@@ -290,8 +290,7 @@ async fn start_background_tasks(app_handle: AppHandle) -> Result<(), Box<dyn std
     Ok(())
 }
 
-#[tokio::main]
-async fn main() {
+fn main() {
     // 初始化日志系统
     if let Err(e) = init_logging() {
         eprintln!("初始化日志系统失败: {}", e);
@@ -311,8 +310,7 @@ async fn main() {
         .setup(|app| {
             let app_handle = app.handle();
 
-            let app_state = tauri::async_runtime::block_on(AppState::new(app_handle.clone()))
-                .map_err(|e| e.to_string())?;
+            let app_state = AppState::new(app_handle.clone()).map_err(|e| e.to_string())?;
             app.manage(app_state);
             
             // 关键：使用同步通道等待异步初始化完成
@@ -373,7 +371,7 @@ async fn main() {
                 }
                 
 /*                 // 初始化应用状态 - 这是最关键的，必须在这里完成
-                match AppState::new(app_handle_init.clone()).await {
+                 match AppState::new(app_handle_init.clone()) {
                     Ok(app_state) => {
                         app_handle_init.manage(app_state);
                         info!("✅ AppState 已成功注册到 Tauri 状态管理");
