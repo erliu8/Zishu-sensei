@@ -364,7 +364,8 @@ async fn main() {
                 // 初始化主数据库
                 if let Err(e) = database::init_database(app_handle_init.clone()).await {
                     error!("数据库初始化失败: {}", e);
-                    std::process::exit(1);
+                    let _ = init_tx.send(Err(format!("database init failed: {e}")));
+                    return;
                 }
                 
                 // 初始化应用状态 - 这是最关键的，必须在这里完成
@@ -375,7 +376,8 @@ async fn main() {
                     }
                     Err(e) => {
                         error!("❌ 初始化 AppState 失败: {}", e);
-                        std::process::exit(1);
+                        let _ = init_tx.send(Err(format!("AppState init failed: {e}")));
+                        return;
                     }
                 }
                 
@@ -421,7 +423,7 @@ async fn main() {
                 let _ = init_tx.send(Ok(()));
             });
             
-            // 同步等待初始化完成（使用超时避免死锁）
+/*             // 同步等待初始化完成（使用超时避免死锁）
             match init_rx.recv_timeout(std::time::Duration::from_secs(30)) {
                 Ok(Ok(())) => {
                     info!("✅ 关键组件初始化完成，应用状态已就绪");
@@ -434,7 +436,7 @@ async fn main() {
                     error!("❌ 初始化超时");
                     std::process::exit(1);
                 }
-            }
+            } */
             
             // 非关键的初始化任务可以异步执行
             let app_handle_clone = app_handle.clone();
