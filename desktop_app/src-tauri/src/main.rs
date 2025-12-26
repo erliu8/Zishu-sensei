@@ -310,6 +310,10 @@ async fn main() {
         .on_window_event(events::window::handle_window_event)
         .setup(|app| {
             let app_handle = app.handle();
+
+            let app_state = tauri::async_runtime::block_on(AppState::new(app_handle.clone()))
+                .map_err(|e| e.to_string())?;
+            app.manage(app_state);
             
             // 关键：使用同步通道等待异步初始化完成
             // 这样可以确保在前端调用命令前，AppState 已经被正确管理
@@ -368,7 +372,7 @@ async fn main() {
                     return;
                 }
                 
-                // 初始化应用状态 - 这是最关键的，必须在这里完成
+/*                 // 初始化应用状态 - 这是最关键的，必须在这里完成
                 match AppState::new(app_handle_init.clone()).await {
                     Ok(app_state) => {
                         app_handle_init.manage(app_state);
@@ -379,7 +383,7 @@ async fn main() {
                         let _ = init_tx.send(Err(format!("AppState init failed: {e}")));
                         return;
                     }
-                }
+                } */
                 
                 // 加载配置
                 let config = load_config(&app_handle_init).await.unwrap_or_default();
