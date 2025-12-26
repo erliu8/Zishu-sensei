@@ -66,6 +66,13 @@ jobs:
 
           & (Join-Path $nsisBin "makensis.exe") /VERSION
           candle -?
+
+      - name: Bundle WebView2 bootstrapper
+        shell: pwsh
+        run: |
+          $dstDir = "desktop_app/src-tauri/assets/webview2"
+          New-Item -ItemType Directory -Force -Path $dstDir | Out-Null
+          Invoke-WebRequest -Uri "https://go.microsoft.com/fwlink/?linkid=2124703" -OutFile "$dstDir/MicrosoftEdgeWebview2Setup.exe"
         
       - name: Build Tauri (Windows x86_64)
         run: npm run -w desktop_app tauri:build:windows -- --bundles nsis,msi --verbose

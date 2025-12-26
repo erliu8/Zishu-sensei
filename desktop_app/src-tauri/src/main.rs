@@ -4,6 +4,12 @@
 use tauri::{api::shell, AppHandle, Manager, WindowBuilder, WindowUrl};
 use tracing::{error, info};
 use serde::{Deserialize, Serialize};
+use std::{io::Write, path::{Path, PathBuf}, sync::OnceLock};
+#[cfg(target_os = "windows")]
+use std::process::Command;
+
+static LOG_GUARD: OnceLock<tracing_appender::non_blocking::WorkerGuard> = OnceLock::new();
+static STARTUP_LOG_DIR: OnceLock<PathBuf> = OnceLock::new();
 
 // 导入模块
 mod commands;
@@ -13,6 +19,7 @@ mod utils;
 mod adapter;
 mod system_monitor;
 mod database;
+mod workflow;
 mod http;
 mod config;
 
@@ -227,16 +234,101 @@ fn show_about_dialog(app: &AppHandle) {
 
 // 窗口事件处理已移至 events::window 模块
 
+fn resolve_log_dir() -> PathBuf {
+    if let Ok(dir) = utils::get_app_log_dir() {
+        return dir;
+    }
+
+    std::env::temp_dir().join("zishu-sensei").join("logs")
+}
+
+fn write_startup_file(name: &str, contents: &str) {
+    let Some(dir) = STARTUP_LOG_DIR.get() else {
+        return;
+    };
+
+    let _ = std::fs::create_dir_all(dir);
+    let path = dir.join(name);
+    let _ = std::fs::File::create(path).and_then(|mut f| f.write_all(contents.as_bytes()));
+}
+
+#[cfg(target_os = "windows")]
+fn is_webview2_installed() -> bool {
+    let keys = [
+        r"HKLM\SOFTWARE\Microsoft\EdgeUpdate\Clients\{F3017226-FE2A-4295-8BDF-00C3A9A7E4C5}",
+        r"HKLM\SOFTWARE\WOW6432Node\Microsoft\EdgeUpdate\Clients\{F3017226-FE2A-4295-8BDF-00C3A9A7E4C5}",
+        r"HKCU\SOFTWARE\Microsoft\EdgeUpdate\Clients\{F3017226-FE2A-4295-8BDF-00C3A9A7E4C5}",
+    ];
+
+    keys.into_iter().any(|key| {
+        Command::new("reg")
+            .args(["query", key, "/v", "pv"])
+            .output()
+            .map(|o| o.status.success())
+            .unwrap_or(false)
+    })
+}
+
+#[cfg(target_os = "windows")]
+fn try_use_fixed_webview2(app: &tauri::App) -> bool {
+    let Some(resource_dir) = app.path_resolver().resource_dir() else {
+        return false;
+    };
+
+    let fixed_dir = resource_dir.join("assets").join("webview2").join("fixed");
+    if !fixed_dir.join("msedgewebview2.exe").exists() {
+        return false;
+    }
+
+    std::env::set_var("WEBVIEW2_BROWSER_EXECUTABLE_FOLDER", &fixed_dir);
+    write_startup_file(
+        "startup-webview2.txt",
+        &format!("webview2 missing; using fixed runtime at {:?}\n", fixed_dir),
+    );
+    true
+}
+
+#[cfg(target_os = "windows")]
+fn try_install_webview2(app: &tauri::App) -> Result<(), String> {
+    // Prevent infinite install loops.
+    if std::env::var("ZISHU_WEBVIEW2_INSTALL_ATTEMPTED").is_ok() {
+        return Err("webview2 install already attempted".to_string());
+    }
+
+    let Some(installer) = app
+        .path_resolver()
+        .resolve_resource("assets/webview2/MicrosoftEdgeWebview2Setup.exe")
+    else {
+        return Err("missing bundled WebView2 installer: assets/webview2/MicrosoftEdgeWebview2Setup.exe".to_string());
+    };
+
+    write_startup_file(
+        "startup-webview2.txt",
+        &format!("webview2 missing; running installer at {:?}\n", installer),
+    );
+
+    let status = Command::new(&installer)
+        .args(["/silent", "/install"])
+        .status()
+        .map_err(|e| format!("failed to spawn webview2 installer: {e}"))?;
+
+    if !status.success() {
+        return Err(format!("webview2 installer exit code: {:?}", status.code()));
+    }
+
+    Ok(())
+}
+
 /// 初始化日志系统
-fn init_logging() -> Result<(), Box<dyn std::error::Error>> {
+fn init_logging(log_dir: &Path) -> Result<(), Box<dyn std::error::Error>> {
     use tracing_subscriber::{layer::SubscriberExt, util::SubscriberInitExt};
-    
-    let log_dir = utils::get_app_log_dir()?;
-    std::fs::create_dir_all(&log_dir)?;
-    
+
+    std::fs::create_dir_all(log_dir)?;
+
     let file_appender = tracing_appender::rolling::daily(log_dir, "zishu-sensei.log");
-    let (non_blocking, _guard) = tracing_appender::non_blocking(file_appender);
-    
+    let (non_blocking, guard) = tracing_appender::non_blocking(file_appender);
+    let _ = LOG_GUARD.set(guard);
+
     tracing_subscriber::registry()
         .with(
             tracing_subscriber::EnvFilter::try_from_default_env()
@@ -245,15 +337,11 @@ fn init_logging() -> Result<(), Box<dyn std::error::Error>> {
         .with(
             tracing_subscriber::fmt::layer()
                 .with_writer(std::io::stdout)
-                .with_ansi(true)
+                .with_ansi(true),
         )
-        .with(
-            tracing_subscriber::fmt::layer()
-                .with_writer(non_blocking)
-                .with_ansi(false)
-        )
+        .with(tracing_subscriber::fmt::layer().with_writer(non_blocking).with_ansi(false))
         .init();
-    
+
     info!("日志系统初始化完成");
     Ok(())
 }
@@ -292,12 +380,40 @@ async fn start_background_tasks(app_handle: AppHandle) -> Result<(), Box<dyn std
 
 #[tokio::main]
 async fn main() {
-    // 初始化日志系统
-    if let Err(e) = init_logging() {
-        eprintln!("初始化日志系统失败: {}", e);
-        std::process::exit(1);
+    let log_dir = resolve_log_dir();
+    let _ = std::fs::create_dir_all(&log_dir);
+    let _ = STARTUP_LOG_DIR.set(log_dir.clone());
+    write_startup_file(
+        "startup.txt",
+        &format!(
+            "started\npid={}\nargs={:?}\n",
+            std::process::id(),
+            std::env::args().collect::<Vec<_>>()
+        ),
+    );
+
+    std::panic::set_hook({
+        let log_dir = log_dir.clone();
+        Box::new(move |panic_info| {
+            let _ = std::fs::create_dir_all(&log_dir);
+            let _ = std::fs::OpenOptions::new()
+                .create(true)
+                .append(true)
+                .open(log_dir.join("panic.log"))
+                .and_then(|mut f| {
+                    let _ = writeln!(f, "panic: {panic_info}");
+                    let bt = std::backtrace::Backtrace::force_capture();
+                    let _ = writeln!(f, "{bt:?}");
+                    Ok(())
+                });
+        })
+    });
+
+    if let Err(e) = init_logging(&log_dir) {
+        write_startup_file("startup-error.txt", &format!("init_logging failed: {e}\n"));
+        eprintln!("init_logging failed: {}", e);
     }
-    
+
     info!("🐾 Zishu Sensei 桌面宠物应用启动");
     
     // 创建系统托盘
@@ -310,6 +426,36 @@ async fn main() {
         .on_window_event(events::window::handle_window_event)
         .setup(|app| {
             let app_handle = app.handle();
+
+            #[cfg(target_os = "windows")]
+            {
+                if !is_webview2_installed() {
+                    if !try_use_fixed_webview2(app) {
+                        match try_install_webview2(app) {
+                            Ok(()) => {
+                                let exe = match std::env::current_exe() {
+                                    Ok(exe) => exe,
+                                    Err(e) => {
+                                        write_startup_file(
+                                            "startup-error.txt",
+                                            &format!("current_exe failed after webview2 install: {e}\n"),
+                                        );
+                                        return Ok(());
+                                    }
+                                };
+                                let mut cmd = Command::new(exe);
+                                cmd.env("ZISHU_WEBVIEW2_INSTALL_ATTEMPTED", "1");
+                                cmd.args(std::env::args().skip(1));
+                                let _ = cmd.spawn();
+                                std::process::exit(0);
+                            }
+                            Err(e) => {
+                                write_startup_file("startup-error.txt", &format!("webview2 install failed: {e}\n"));
+                            }
+                        }
+                    }
+                }
+            }
             
             // 关键：使用同步通道等待异步初始化完成
             // 这样可以确保在前端调用命令前，AppState 已经被正确管理
@@ -322,9 +468,16 @@ async fn main() {
             let app_handle_init = app_handle.clone();
             tauri::async_runtime::spawn(async move {
                 // 初始化安全审计日志
-                let app_data_dir = app_handle_init.path_resolver()
-                    .app_data_dir()
-                    .expect("无法获取应用数据目录");
+                let app_data_dir = match app_handle_init.path_resolver().app_data_dir() {
+                    Some(dir) => dir,
+                    None => {
+                        let msg = "无法获取应用数据目录";
+                        error!("{}", msg);
+                        write_startup_file("startup-error.txt", msg);
+                        let _ = init_tx.send(Err(msg.to_string()));
+                        return;
+                    }
+                };
                 let audit_db_path = app_data_dir.join("security_audit.db");
                 if let Err(e) = utils::security_audit::init_global_audit_logger(&audit_db_path) {
                     error!("初始化审计日志失败: {}", e);
@@ -333,7 +486,9 @@ async fn main() {
                 }
                 
                 // 初始化日志数据库（PostgreSQL）
-                {
+                // NOTE: Desktop builds should not try to connect to a local PostgreSQL by default.
+                // This block is kept for developer reference only.
+                if false {
                     use deadpool_postgres::{Config, Runtime};
                     use tokio_postgres::NoTls;
                     
@@ -363,8 +518,7 @@ async fn main() {
                 
                 // 初始化主数据库
                 if let Err(e) = database::init_database(app_handle_init.clone()).await {
-                    error!("数据库初始化失败: {}", e);
-                    std::process::exit(1);
+                    tracing::warn!("数据库初始化失败（将以无数据库模式继续启动）: {}", e);
                 }
                 
                 // 初始化应用状态 - 这是最关键的，必须在这里完成
@@ -374,8 +528,8 @@ async fn main() {
                         info!("✅ AppState 已成功注册到 Tauri 状态管理");
                     }
                     Err(e) => {
-                        error!("❌ 初始化 AppState 失败: {}", e);
-                        std::process::exit(1);
+                        let _ = init_tx.send(Err(format!("初始化 AppState 失败: {e}")));
+                        return;
                     }
                 }
                 
@@ -427,12 +581,10 @@ async fn main() {
                     info!("✅ 关键组件初始化完成，应用状态已就绪");
                 }
                 Ok(Err(e)) => {
-                    error!("❌ 初始化失败: {}", e);
-                    std::process::exit(1);
+                    tracing::warn!("初始化失败（将继续启动）: {}", e);
                 }
                 Err(_) => {
-                    error!("❌ 初始化超时");
-                    std::process::exit(1);
+                    tracing::warn!("初始化超时（将继续启动）");
                 }
             }
             
@@ -634,6 +786,37 @@ async fn main() {
             commands::shortcuts::check_shortcut_conflict,
             commands::shortcuts::validate_shortcut_config,
             
+            // 工作流命令
+            commands::workflow::create_workflow,
+            commands::workflow::update_workflow,
+            commands::workflow::delete_workflow,
+            commands::workflow::get_workflow,
+            commands::workflow::list_workflows,
+            commands::workflow::execute_workflow,
+            commands::workflow::cancel_workflow_execution,
+            commands::workflow::pause_workflow_execution,
+            commands::workflow::resume_workflow_execution,
+            commands::workflow::get_workflow_execution_status,
+            commands::workflow::list_workflow_executions,
+            commands::workflow::schedule_workflow,
+            commands::workflow::unschedule_workflow,
+            commands::workflow::list_scheduled_workflows,
+            commands::workflow::start_workflow_scheduler,
+            commands::workflow::stop_workflow_scheduler,
+            commands::workflow::get_workflow_scheduler_status,
+            commands::workflow::get_builtin_templates,
+            commands::workflow::get_builtin_template,
+            
+            // 触发器命令
+            commands::workflow::create_event_trigger,
+            commands::workflow::list_event_triggers,
+            commands::workflow::remove_event_trigger,
+            commands::workflow::trigger_event,
+            commands::workflow::create_webhook_trigger,
+            commands::workflow::list_webhook_triggers,
+            commands::workflow::remove_webhook_trigger,
+            commands::workflow::trigger_webhook,
+            
             // 工作流 API 命令（与 Python 服务通信）
             commands::workflow_api::api_create_workflow,
             commands::workflow_api::api_list_workflows,
@@ -651,11 +834,7 @@ async fn main() {
             commands::workflow_api::api_list_templates,
             commands::workflow_api::api_create_from_template,
             commands::workflow_api::api_health_check,
-
-            // Skills API 命令（与 Python 服务通信）
-            commands::skills_api::api_execute_skill,
-            commands::skills_api::api_skills_health_check,
-
+            
             // 文件管理命令
             commands::file::upload_file,
             commands::file::get_file,
@@ -900,6 +1079,7 @@ async fn main() {
         }
         Err(e) => {
             error!("构建 Tauri 应用失败: {}", e);
+            write_startup_file("startup-error.txt", &format!("tauri build failed: {e}\n"));
             std::process::exit(1);
         }
     }
