@@ -227,7 +227,7 @@
                 "hiddenTitle": true,
                 "acceptFirstMouse": true,
                 "tabbingIdentifier": null,
-                "additionalBrowserArgs": "--disable-features=msWebOOUI,msPdfOOUI,msSmartScreenProtection --disable-web-security --allow-running-insecure-content --enable-webgl --enable-webgl2 --enable-accelerated-2d-canvas --enable-gpu-rasterization --ignore-gpu-blacklist --disable-gpu-sandbox --enable-unsafe-webgpu --use-gl=desktop --enable-features=VaapiVideoDecoder --use-fake-ui-for-media-stream --enable-usermedia-screen-capturing --auto-accept-camera-and-microphone-capture",
+                "additionalBrowserArgs": "",
                 "label": "main",
                 "url": "index.html",
                 "fileDropEnabled": true,
