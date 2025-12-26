@@ -268,7 +268,7 @@ impl WindowEventHandler {
             let config = app_state.config.lock().clone();
             let app_handle = self.app_handle.clone();
             
-            tokio::spawn(async move {
+            tauri::async_runtime::spawn(async move {
                 if let Err(e) = save_config(&app_handle, &config).await {
                     error!("异步保存配置失败: {}", e);
                 }
