@@ -5,9 +5,8 @@
 //! - Switching characters
 //! - Playing motions and expressions
 //! - Character configuration
-加
 use tauri::{AppHandle, State, Manager};
-use serde::{Deserialize, Serialize};加
+use serde::{Deserialize, Serialize};
 use tracing::{info, error, warn};
 
 use crate::{
