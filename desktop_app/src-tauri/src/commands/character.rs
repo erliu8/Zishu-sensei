@@ -5,9 +5,9 @@
 //! - Switching characters
 //! - Playing motions and expressions
 //! - Character configuration
-
+加
 use tauri::{AppHandle, State, Manager};
-use serde::{Deserialize, Serialize};
+use serde::{Deserialize, Serialize};加
 use tracing::{info, error, warn};
 
 use crate::{
@@ -15,6 +15,19 @@ use crate::{
     state::AppState,
     utils::*,
 };
+
+fn fallback_characters() -> Vec<CharacterInfo> {
+    vec![CharacterInfo {
+        id: "hiyori".to_string(),
+        name: "Hiyori".to_string(),
+        description: Some("默认内置角色（数据库未就绪时兜底）".to_string()),
+        preview_image: Some("/live2d_models/hiyori/icon.jpg".to_string()),
+        model_path: "/live2d_models/hiyori/hiyori.model3.json".to_string(),
+        motions: vec![],
+        expressions: vec![],
+        is_active: true,
+    }]
+}
 
 // ================================
 // Data Types
@@ -93,11 +106,16 @@ pub async fn get_characters(
     info!("🔍 [get_characters] 开始获取可用角色列表");
     
     // Get database instance
-    let db = crate::database::get_database()
-        .ok_or_else(|| {
-            error!("❌ [get_characters] 数据库未初始化");
-            "数据库未初始化".to_string()
-        })?;
+    let db = match crate::database::get_database() {
+        Some(db) => db,
+        None => {
+            warn!("⚠️ [get_characters] 数据库未初始化，返回默认角色列表兜底");
+            return Ok(CommandResponse::success_with_message(
+                fallback_characters(),
+                "数据库未就绪，已返回默认角色".to_string(),
+            ));
+        }
+    };
     
     info!("✅ [get_characters] 数据库实例获取成功");
     
@@ -109,6 +127,14 @@ pub async fn get_characters(
         })?;
     
     info!("📊 [get_characters] 从数据库获取到 {} 个角色", characters_data.len());
+
+    if characters_data.is_empty() {
+        warn!("⚠️ [get_characters] 数据库角色列表为空，返回默认角色列表兜底");
+        return Ok(CommandResponse::success_with_message(
+            fallback_characters(),
+            "未找到角色数据，已返回默认角色".to_string(),
+        ));
+    }
     
     // Convert to CharacterInfo
     let characters: Vec<CharacterInfo> = characters_data

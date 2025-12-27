@@ -2,6 +2,11 @@ use std::path::PathBuf;
 use tauri::AppHandle;
 use tokio::fs;
 use tracing::{debug, error, info, trace, warn};
+use tokio::time::{sleep, Duration};
+
+lazy_static::lazy_static! {
+    static ref CONFIG_WRITE_LOCK: tokio::sync::Mutex<()> = tokio::sync::Mutex::new(());
+}
 
 use crate::AppConfig;
 
@@ -107,6 +112,8 @@ async fn load_config_from_backup() -> Result<AppConfig, Box<dyn std::error::Erro
 
 /// Save application config to disk
 pub async fn save_config(_app_handle: &AppHandle, config: &AppConfig) -> Result<(), Box<dyn std::error::Error + Send + Sync>> {
+    let _guard = CONFIG_WRITE_LOCK.lock().await;
+
     let config_path = get_config_file_path()?;
     let backup_path = get_config_backup_path()?;
     
@@ -131,9 +138,33 @@ pub async fn save_config(_app_handle: &AppHandle, config: &AppConfig) -> Result<
     }
     
     // Write config to file
-    fs::write(&config_path, json).await
-        .map_err(|e| format!("写入配置文件失败: {}", e))?;
-    
+    let mut last_error: Option<std::io::Error> = None;
+    for attempt in 0..5u32 {
+        match fs::write(&config_path, &json).await {
+            Ok(()) => {
+                // 配置保存成功，静默处理（避免频繁日志）
+                return Ok(());
+            }
+            Err(e) => {
+                // Windows 上常见：另一个程序正在使用此文件 (os error 32)
+                let is_file_lock = e.raw_os_error() == Some(32);
+                last_error = Some(e);
+
+                if !is_file_lock {
+                    break;
+                }
+
+                // 轻量退避重试，避免窗口事件并发写入导致失败
+                let backoff_ms = 50u64.saturating_mul((attempt + 1) as u64);
+                sleep(Duration::from_millis(backoff_ms)).await;
+            }
+        }
+    }
+
+    if let Some(e) = last_error {
+        return Err(format!("写入配置文件失败: {}", e).into());
+    }
+
     // 配置保存成功，静默处理（避免频繁日志）
     Ok(())
 }
