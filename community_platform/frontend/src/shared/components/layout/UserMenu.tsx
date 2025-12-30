@@ -102,7 +102,7 @@ export const UserMenu: FC<UserMenuProps> = () => {
         <DropdownMenuItem asChild>
           <Link href="/profile/adapters" className="cursor-pointer">
             <Package className="mr-2 h-4 w-4" />
-            <span>我的适配器</span>
+            <span>我的技能包</span>
           </Link>
         </DropdownMenuItem>
         

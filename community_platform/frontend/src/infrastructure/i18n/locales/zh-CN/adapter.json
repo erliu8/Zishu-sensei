@@ -1,9 +1,9 @@
 {
   "title": {
-    "market": "适配器市场",
-    "upload": "上传适配器",
-    "detail": "适配器详情",
-    "myAdapters": "我的适配器",
+    "market": "技能包市场",
+    "upload": "上传技能包",
+    "detail": "技能包详情",
+    "myAdapters": "我的技能包",
     "versions": "版本历史",
     "dependencies": "依赖关系"
   },
@@ -84,13 +84,13 @@
     "free": "免费"
   },
   "upload": {
-    "title": "上传适配器",
+    "title": "上传技能包",
     "selectFile": "选择文件",
     "dragDrop": "拖拽文件到此处",
     "fileFormat": "支持的格式",
     "maxSize": "最大 {size} MB",
     "metadata": "元数据",
-    "fillInfo": "填写适配器信息",
+    "fillInfo": "填写技能包信息",
     "uploadFile": "上传文件",
     "publishing": "正在发布...",
     "success": "发布成功",
@@ -125,11 +125,11 @@
     "uploadFailed": "上传失败",
     "rateSuccess": "评分成功",
     "reviewSuccess": "评论已提交",
-    "notFound": "适配器不存在",
+    "notFound": "技能包不存在",
     "incompatible": "不兼容当前平台"
   },
   "validation": {
-    "nameRequired": "请输入适配器名称",
+    "nameRequired": "请输入技能包名称",
     "nameLength": "名称长度应为 3-50 个字符",
     "versionRequired": "请输入版本号",
     "versionFormat": "版本号格式不正确（如：1.0.0）",
@@ -140,9 +140,9 @@
     "fileFormat": "文件格式不支持"
   },
   "empty": {
-    "noAdapters": "还没有适配器",
-    "noResults": "没有找到相关适配器",
-    "uploadFirst": "上传第一个适配器"
+    "noAdapters": "还没有技能包",
+    "noResults": "没有找到相关技能包",
+    "uploadFirst": "上传第一个技能包"
   }
 }
 

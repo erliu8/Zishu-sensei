@@ -661,9 +661,9 @@ export const CharacterCreator: React.FC<CharacterCreatorProps> = ({
               onClick={() => handleModelConfigTypeChange(ModelConfigType.LORA_ADAPTER)}
             >
               <CardHeader>
-                <CardTitle className="text-lg">Lora适配器</CardTitle>
+                <CardTitle className="text-lg">Lora技能包</CardTitle>
                 <CardDescription>
-                  使用社区中的Lora适配器微调模型，适合特定风格和角色
+                  使用社区中的Lora技能包微调模型，适合特定风格和角色
                 </CardDescription>
               </CardHeader>
             </Card>
@@ -692,7 +692,7 @@ export const CharacterCreator: React.FC<CharacterCreatorProps> = ({
 
         {modelConfigType === ModelConfigType.LORA_ADAPTER && (
           <div className="space-y-4">
-            <Label>选择Lora适配器</Label>
+            <Label>选择Lora技能包</Label>
             <LoraAdapterSelector
               value={loraConfig}
               onChange={handleLoraConfigChange}
@@ -1111,7 +1111,7 @@ export const CharacterCreator: React.FC<CharacterCreatorProps> = ({
               <span className="text-muted-foreground">配置类型</span>
               <Badge variant="secondary">
                 {aiModelConfig.type === ModelConfigType.LORA_ADAPTER
-                  ? 'Lora适配器'
+                  ? 'Lora技能包'
                   : aiModelConfig.type === ModelConfigType.PROMPT_ENGINEERING
                   ? '提示词工程'
                   : '完整模型'}
@@ -1120,7 +1120,7 @@ export const CharacterCreator: React.FC<CharacterCreatorProps> = ({
             {aiModelConfig.type === ModelConfigType.LORA_ADAPTER && (
               <>
                 <div className="flex justify-between">
-                  <span className="text-muted-foreground">Lora适配器</span>
+                  <span className="text-muted-foreground">Lora技能包</span>
                   <span className="font-medium">
                     {loraConfig?.loraName || '未选择'}
                   </span>

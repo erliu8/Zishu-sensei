@@ -1,9 +1,9 @@
 {
   "title": {
-    "market": "Adapter Market",
-    "upload": "Upload Adapter",
-    "detail": "Adapter Details",
-    "myAdapters": "My Adapters",
+    "market": "Skill Pack Market",
+    "upload": "Upload Skill Pack",
+    "detail": "Skill Pack Details",
+    "myAdapters": "My Skill Packs",
     "versions": "Version History",
     "dependencies": "Dependencies"
   },
@@ -84,13 +84,13 @@
     "free": "Free"
   },
   "upload": {
-    "title": "Upload Adapter",
+    "title": "Upload Skill Pack",
     "selectFile": "Select File",
     "dragDrop": "Drag and drop file here",
     "fileFormat": "Supported formats",
     "maxSize": "Max {size} MB",
     "metadata": "Metadata",
-    "fillInfo": "Fill in adapter information",
+    "fillInfo": "Fill in skill pack information",
     "uploadFile": "Upload File",
     "publishing": "Publishing...",
     "success": "Published successfully",
@@ -125,11 +125,11 @@
     "uploadFailed": "Upload failed",
     "rateSuccess": "Rated successfully",
     "reviewSuccess": "Review submitted",
-    "notFound": "Adapter not found",
+    "notFound": "Skill pack not found",
     "incompatible": "Incompatible with current platform"
   },
   "validation": {
-    "nameRequired": "Adapter name is required",
+    "nameRequired": "Skill pack name is required",
     "nameLength": "Name must be 3-50 characters",
     "versionRequired": "Version is required",
     "versionFormat": "Invalid version format (e.g., 1.0.0)",
@@ -140,9 +140,9 @@
     "fileFormat": "Unsupported file format"
   },
   "empty": {
-    "noAdapters": "No adapters yet",
-    "noResults": "No adapters found",
-    "uploadFirst": "Upload your first adapter"
+    "noAdapters": "No skill packs yet",
+    "noResults": "No skill packs found",
+    "uploadFirst": "Upload your first skill pack"
   }
 }
 

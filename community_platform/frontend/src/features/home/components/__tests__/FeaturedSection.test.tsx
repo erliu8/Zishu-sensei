@@ -120,7 +120,7 @@ describe('FeaturedSection', () => {
     
     // 检查类型标签
     expect(screen.getByText('精选帖子')).toBeInTheDocument();
-    expect(screen.getByText('推荐适配器')).toBeInTheDocument();
+    expect(screen.getByText('推荐技能包')).toBeInTheDocument();
     expect(screen.getByText('热门角色')).toBeInTheDocument();
   });
 

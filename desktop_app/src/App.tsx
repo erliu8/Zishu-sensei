@@ -34,6 +34,7 @@ import type { ShortcutConfig } from '@/types/shortcuts'
 import { getAdjustedShortcuts } from '@/config/shortcutPresets'
 import { ShortcutStorageManager } from '@/utils/shortcutStorage'
 import { initializeGlobalErrorCatcher } from '@/utils/globalErrorCatcher'
+import { resolveLive2dUrl, setLive2dBaseUrl } from '@/utils/live2dUrl'
 
 // 常量定义
 const WINDOW_MODES = {
@@ -101,12 +102,33 @@ const App: React.FC = () => {
     const { minimizeWindow, closeWindow } = useWindowManager()
     const shortcuts = useKeyboardShortcuts()
     
-    // 初始化加载角色列表
+    // Live2D 资源：在线下载到本地缓存 + 离线可用，然后再加载角色列表
     React.useEffect(() => {
-        loadCharacters().catch(err => {
-            console.error('[App] ❌ 加载角色列表失败:', err)
-        })
-    }, [loadCharacters])
+        let cancelled = false
+        const run = async () => {
+            try {
+                if (isTauriEnv) {
+                    const result = await invoke<any>('prepare_live2d_assets')
+                    if (!cancelled && result?.success && result?.data?.base_url) {
+                        setLive2dBaseUrl(result.data.base_url)
+                    }
+                }
+            } catch (error) {
+                console.error('[App] Live2D 资源准备失败:', error)
+            }
+
+            try {
+                await loadCharacters()
+            } catch (err) {
+                console.error('[App] 加载角色列表失败:', err)
+            }
+        }
+
+        run()
+        return () => {
+            cancelled = true
+        }
+    }, [isTauriEnv, loadCharacters])
 
     // ==================== 事件处理器 ====================
     const handleWindowModeChange = useCallback((mode: WindowMode) => {
@@ -578,8 +600,8 @@ const App: React.FC = () => {
                             avatar: '🎭',
                             description: currentCharacter.description || '',
                             type: 'live2d',
-                            modelPath: `/live2d_models/${currentCharacter.id}/${currentCharacter.id}.model3.json`,
-                            previewImage: currentCharacter.preview_image || ''
+                            modelPath: resolveLive2dUrl(currentCharacter.model_path),
+                            previewImage: resolveLive2dUrl(currentCharacter.preview_image || '')
                         }}
                         onContextMenu={handleContextMenu}
                         onModeChange={handleWindowModeChange}

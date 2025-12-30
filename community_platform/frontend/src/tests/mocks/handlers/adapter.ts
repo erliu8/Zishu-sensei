@@ -56,7 +56,7 @@ export const adapterHandlers = [
       return HttpResponse.json(
         {
           success: false,
-          error: '适配器不存在',
+          error: '技能包不存在',
         },
         { status: 404 }
       );
@@ -121,7 +121,7 @@ export const adapterHandlers = [
       return HttpResponse.json(
         {
           success: false,
-          error: '适配器不存在',
+          error: '技能包不存在',
         },
         { status: 404 }
       );
@@ -152,7 +152,7 @@ export const adapterHandlers = [
 
     return HttpResponse.json({
       success: true,
-      message: '适配器已删除',
+      message: '技能包已删除',
     });
   }),
 ];

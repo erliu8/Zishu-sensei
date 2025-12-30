@@ -24,7 +24,7 @@ export function ProfileTabs({ activeTab, onTabChange, showActivity = true }: Pro
         </TabsTrigger>
         <TabsTrigger value="adapters" className="flex items-center gap-2">
           <Package className="h-4 w-4" />
-          <span className="hidden sm:inline">适配器</span>
+          <span className="hidden sm:inline">技能包</span>
         </TabsTrigger>
         <TabsTrigger value="characters" className="flex items-center gap-2">
           <Bot className="h-4 w-4" />

@@ -162,11 +162,11 @@ export const CharacterDetail: React.FC<CharacterDetailProps> = ({
   const getAdapterTypeBadge = (type: string) => {
     switch (type) {
       case 'soft':
-        return <Badge variant="secondary">软适配器</Badge>;
+        return <Badge variant="secondary">软技能包</Badge>;
       case 'hard':
-        return <Badge variant="secondary">硬适配器</Badge>;
+        return <Badge variant="secondary">硬技能包</Badge>;
       case 'intelligent':
-        return <Badge variant="default">智能硬适配器</Badge>;
+        return <Badge variant="default">智能硬技能包</Badge>;
       default:
         return <Badge variant="secondary">{type}</Badge>;
     }
@@ -328,7 +328,7 @@ export const CharacterDetail: React.FC<CharacterDetailProps> = ({
       <Tabs defaultValue="overview" className="w-full">
         <TabsList className="grid w-full grid-cols-5">
           <TabsTrigger value="overview">概览</TabsTrigger>
-          <TabsTrigger value="adapters">适配器</TabsTrigger>
+          <TabsTrigger value="adapters">技能包</TabsTrigger>
           <TabsTrigger value="personality">人格</TabsTrigger>
           <TabsTrigger value="media">多媒体</TabsTrigger>
           <TabsTrigger value="about">关于</TabsTrigger>
@@ -382,7 +382,7 @@ export const CharacterDetail: React.FC<CharacterDetailProps> = ({
             <Card>
               <CardContent className="py-8">
                 <div className="text-center text-muted-foreground">
-                  暂无适配器
+                  暂无技能包
                 </div>
               </CardContent>
             </Card>

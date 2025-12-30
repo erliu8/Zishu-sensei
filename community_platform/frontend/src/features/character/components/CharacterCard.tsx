@@ -309,7 +309,7 @@ export const CharacterCard: React.FC<CharacterCardProps> = ({
           {/* 适配器信息 */}
           {adapters.length > 0 && (
             <div className="flex items-center gap-2 text-xs text-muted-foreground">
-              <span className="font-medium">{adapters.length} 个适配器</span>
+              <span className="font-medium">{adapters.length} 个技能包</span>
               {adapters.some((a) => a.type === 'intelligent') && (
                 <Badge variant="default" className="text-xs h-5">
                   智能
@@ -499,7 +499,7 @@ export const CharacterCard: React.FC<CharacterCardProps> = ({
 
             {adapters.length > 0 && (
               <div className="flex items-center gap-1.5 text-xs text-muted-foreground">
-                <span className="font-medium">{adapters.length} 个适配器</span>
+                <span className="font-medium">{adapters.length} 个技能包</span>
                 {adapters.some((a) => a.type === 'intelligent') && (
                   <Badge variant="default" className="text-xs h-5">
                     智能

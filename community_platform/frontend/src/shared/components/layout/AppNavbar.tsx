@@ -47,7 +47,7 @@ const navItems: NavItem[] = [
     icon: <FileText className="h-4 w-4" />,
   },
   {
-    label: '适配器',
+    label: '技能包',
     href: '/adapters',
     icon: <Package className="h-4 w-4" />,
   },

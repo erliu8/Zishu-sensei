@@ -4,6 +4,7 @@
  */
 
 import { Live2DModelConfig, Live2DAnimationPriority } from '@/types/live2d'
+import { resolveLive2dUrl } from '@/utils/live2dUrl'
 
 export interface ModelInfo {
   id: string
@@ -52,7 +53,7 @@ export class ModelManager {
     }
 
     try {
-      const response = await fetch('/live2d_models/models.json')
+      const response = await fetch(resolveLive2dUrl('/live2d_models/models.json'))
       if (!response.ok) {
         throw new Error(`Failed to load model library: ${response.statusText}`)
       }

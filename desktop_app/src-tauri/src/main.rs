@@ -15,6 +15,7 @@ mod system_monitor;
 mod database;
 mod http;
 mod config;
+mod live2d_protocol;
 
 use commands::*;
 use state::*;
@@ -474,6 +475,9 @@ fn main() {
             
             Ok(())
         })
+        .register_uri_scheme_protocol("zishu", |app, request| {
+            live2d_protocol::handle_zishu_protocol(app, request)
+        })
         .invoke_handler(tauri::generate_handler![
             // 聊天命令
             commands::chat::send_message,
@@ -525,6 +529,9 @@ fn main() {
             commands::character::set_character_scale,
             commands::character::save_character_config,
             commands::character::get_character_config,
+
+            // Live2D 资源缓存
+            commands::live2d_assets::prepare_live2d_assets,
             
             // 窗口命令
             commands::window::minimize_to_tray,

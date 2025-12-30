@@ -126,7 +126,7 @@ export class LikeDomain {
     const names: Record<LikeTargetType, string> = {
       [LikeTargetType.POST]: '帖子',
       [LikeTargetType.COMMENT]: '评论',
-      [LikeTargetType.ADAPTER]: '适配器',
+      [LikeTargetType.ADAPTER]: '技能包',
       [LikeTargetType.CHARACTER]: '角色',
     };
     return names[type] || type;

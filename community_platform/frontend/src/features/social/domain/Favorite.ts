@@ -239,7 +239,7 @@ export class FavoriteDomain {
   static getTargetTypeName(type: FavoriteTargetType): string {
     const names: Record<FavoriteTargetType, string> = {
       [FavoriteTargetType.POST]: '帖子',
-      [FavoriteTargetType.ADAPTER]: '适配器',
+      [FavoriteTargetType.ADAPTER]: '技能包',
       [FavoriteTargetType.CHARACTER]: '角色',
     };
     return names[type] || type;

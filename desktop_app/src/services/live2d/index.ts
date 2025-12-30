@@ -36,6 +36,7 @@ import {
   InteractionResponse,
   createInteractionManager
 } from './interaction'
+import { resolveLive2dUrl } from '@/utils/live2dUrl'
 
 /**
  * Live2D服务配置
@@ -152,6 +153,15 @@ export class Live2DService {
 
   constructor(config: Live2DServiceConfig) {
     this.config = { ...this.defaultConfig, ...config }
+
+    // Normalize default model URLs to the current live2d base URL (cache/remote).
+    if (this.config.defaultModel) {
+      this.config.defaultModel = {
+        ...this.config.defaultModel,
+        modelPath: resolveLive2dUrl(this.config.defaultModel.modelPath),
+        previewImage: resolveLive2dUrl(this.config.defaultModel.previewImage),
+      }
+    }
     
     // 初始化状态
     this.state = {

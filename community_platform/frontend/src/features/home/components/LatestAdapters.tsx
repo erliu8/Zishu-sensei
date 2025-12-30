@@ -23,9 +23,9 @@ export interface LatestAdaptersProps {
 }
 
 const adapterTypeConfig = {
-  [AdapterType.SOFT]: { label: '软适配器', color: 'bg-blue-500' },
-  [AdapterType.HARD]: { label: '硬适配器', color: 'bg-green-500' },
-  [AdapterType.INTELLIGENT]: { label: '智能硬适配器', color: 'bg-purple-500' },
+  [AdapterType.SOFT]: { label: '软技能包', color: 'bg-blue-500' },
+  [AdapterType.HARD]: { label: '硬技能包', color: 'bg-green-500' },
+  [AdapterType.INTELLIGENT]: { label: '智能硬技能包', color: 'bg-purple-500' },
 };
 
 export const LatestAdapters: FC<LatestAdaptersProps> = ({ className }) => {
@@ -41,7 +41,7 @@ export const LatestAdapters: FC<LatestAdaptersProps> = ({ className }) => {
       <div className="flex items-center justify-between">
         <div className="flex items-center gap-2">
           <Package className="h-5 w-5 text-primary" />
-          <h2 className="text-2xl font-bold">最新适配器</h2>
+          <h2 className="text-2xl font-bold">最新技能包</h2>
         </div>
         <Button variant="ghost" asChild>
           <Link href="/adapters">浏览市场</Link>
@@ -55,7 +55,7 @@ export const LatestAdapters: FC<LatestAdaptersProps> = ({ className }) => {
       ) : isError ? (
         <EmptyState
           title="加载失败"
-          description={error?.message || '无法加载适配器列表，请稍后重试'}
+          description={error?.message || '无法加载技能包列表，请稍后重试'}
         />
       ) : data?.data && data.data.length > 0 ? (
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
@@ -119,10 +119,10 @@ export const LatestAdapters: FC<LatestAdaptersProps> = ({ className }) => {
         </div>
       ) : (
         <EmptyState
-          title="暂无适配器"
-          description="还没有适配器发布，快来上传第一个吧！"
+          title="暂无技能包"
+          description="还没有技能包发布，快来上传第一个吧！"
           action={{
-            label: '上传适配器',
+            label: '上传技能包',
             onClick: () => window.location.href = '/adapters/upload'
           }}
         />

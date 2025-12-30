@@ -55,7 +55,7 @@ function getModelConfigDisplay(config: CharacterFullConfig['aiModel']) {
         : config.loraAdapter.name;
       return {
         icon: Sparkles,
-        label: 'Lora适配器',
+        label: 'Lora技能包',
         description: `${loraName} (基于 ${config.baseModelName})`,
         color: 'text-pink-600',
         bgColor: 'bg-pink-100',

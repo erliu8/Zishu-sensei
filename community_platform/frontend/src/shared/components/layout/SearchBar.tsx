@@ -36,13 +36,13 @@ interface SearchResult {
 
 const typeConfig = {
   post: { label: '帖子', icon: FileText, color: 'text-blue-500' },
-  adapter: { label: '适配器', icon: Package, color: 'text-green-500' },
+  adapter: { label: '技能包', icon: Package, color: 'text-green-500' },
   character: { label: '角色', icon: Users, color: 'text-purple-500' },
 };
 
 // 模拟热门搜索
 const popularSearches = [
-  '智能对话适配器',
+  '智能对话技能包',
   'AI助手角色',
   '新手教程',
   '社区指南',
@@ -51,7 +51,7 @@ const popularSearches = [
 // 模拟最近搜索
 const recentSearches = [
   '如何创建角色',
-  '适配器开发',
+  '技能包开发',
 ];
 
 export const SearchBar: FC<SearchBarProps> = ({ open, onOpenChange }) => {
@@ -83,8 +83,8 @@ export const SearchBar: FC<SearchBarProps> = ({ open, onOpenChange }) => {
         {
           id: '2',
           type: 'adapter',
-          title: `${searchQuery} 适配器`,
-          description: '一个功能强大的适配器',
+          title: `${searchQuery} 技能包`,
+          description: '一个功能强大的技能包',
           url: '/adapters/2',
         },
         {
@@ -137,7 +137,7 @@ export const SearchBar: FC<SearchBarProps> = ({ open, onOpenChange }) => {
         <DialogHeader className="px-6 pt-6 pb-0">
           <DialogTitle className="sr-only">搜索</DialogTitle>
           <DialogDescription className="sr-only">
-            搜索帖子、适配器、角色等内容
+            搜索帖子、技能包、角色等内容
           </DialogDescription>
         </DialogHeader>
 
@@ -145,7 +145,7 @@ export const SearchBar: FC<SearchBarProps> = ({ open, onOpenChange }) => {
         <div className="flex items-center gap-3 px-6 py-4 border-b">
           <Search className="h-5 w-5 text-muted-foreground" />
           <Input
-            placeholder="搜索帖子、适配器、角色..."
+            placeholder="搜索帖子、技能包、角色..."
             value={query}
             onChange={(e) => setQuery(e.target.value)}
             className="border-0 focus-visible:ring-0 focus-visible:ring-offset-0 text-base"

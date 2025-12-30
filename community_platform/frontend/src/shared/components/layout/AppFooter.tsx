@@ -19,7 +19,7 @@ const footerLinks = {
   product: [
     { label: '首页', href: '/' },
     { label: '帖子', href: '/posts' },
-    { label: '适配器', href: '/adapters' },
+    { label: '技能包', href: '/adapters' },
     { label: '角色', href: '/characters' },
     { label: '功能特性', href: '/features' },
   ],

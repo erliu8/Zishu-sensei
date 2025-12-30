@@ -205,8 +205,8 @@ export const PackageConfigForm: React.FC<PackageConfigFormProps> = ({
         {/* 角色和适配器 */}
         <Card>
           <CardHeader>
-            <CardTitle>角色与适配器</CardTitle>
-            <CardDescription>选择要打包的角色和适配器</CardDescription>
+            <CardTitle>角色与技能包</CardTitle>
+            <CardDescription>选择要打包的角色和技能包</CardDescription>
           </CardHeader>
           <CardContent className="space-y-4">
             <FormField
@@ -236,7 +236,7 @@ export const PackageConfigForm: React.FC<PackageConfigFormProps> = ({
             />
 
             <div className="space-y-2">
-              <Label>适配器（可选）</Label>
+              <Label>技能包（可选）</Label>
               <div className="grid grid-cols-2 gap-2 max-h-[200px] overflow-y-auto border rounded-md p-3">
                 {adapters.map((adapter) => (
                   <div key={adapter.id} className="flex items-center space-x-2">
@@ -268,7 +268,7 @@ export const PackageConfigForm: React.FC<PackageConfigFormProps> = ({
                 ))}
               </div>
               <p className="text-sm text-muted-foreground">
-                已选择 {form.watch('adapterIds').length} 个适配器
+                已选择 {form.watch('adapterIds').length} 个技能包
               </p>
             </div>
           </CardContent>

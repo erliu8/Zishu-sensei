@@ -61,7 +61,7 @@ export function AppHeader({ className }: AppHeaderProps) {
             href="/adapters"
             className="text-sm font-medium transition-colors hover:text-primary"
           >
-            适配器
+            技能包
           </Link>
           <Link
             href="/packaging"

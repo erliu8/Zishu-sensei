@@ -213,9 +213,9 @@ export const LoraAdapterSelector: React.FC<LoraAdapterSelectorProps> = ({
       {!value && (
         <Card>
           <CardHeader>
-            <CardTitle>选择Lora适配器</CardTitle>
+            <CardTitle>选择Lora技能包</CardTitle>
             <CardDescription>
-              从云端选择或配置本地的Lora适配器
+              从云端选择或配置本地的Lora技能包
             </CardDescription>
           </CardHeader>
           <CardContent>
@@ -264,7 +264,7 @@ export const LoraAdapterSelector: React.FC<LoraAdapterSelectorProps> = ({
                 <div className="relative">
                   <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
                   <Input
-                    placeholder="搜索Lora适配器..."
+                    placeholder="搜索Lora技能包..."
                     value={searchQuery}
                     onChange={(e) => setSearchQuery(e.target.value)}
                     className="pl-10"
@@ -284,7 +284,7 @@ export const LoraAdapterSelector: React.FC<LoraAdapterSelectorProps> = ({
                     </div>
                   ) : filteredLoraAdapters.length === 0 ? (
                     <div className="flex flex-col items-center justify-center h-full text-muted-foreground">
-                      <p>没有找到Lora适配器</p>
+                      <p>没有找到Lora技能包</p>
                       {searchQuery && (
                         <p className="text-sm mt-2">
                           尝试使用不同的搜索词
@@ -360,7 +360,7 @@ export const LoraAdapterSelector: React.FC<LoraAdapterSelectorProps> = ({
                 {/* Lora名称 */}
                 <div className="space-y-2">
                   <Label>
-                    Lora适配器名称 <span className="text-destructive">*</span>
+                    Lora技能包名称 <span className="text-destructive">*</span>
                   </Label>
                   <Input
                     placeholder="例如：my-character-lora"
@@ -391,7 +391,7 @@ export const LoraAdapterSelector: React.FC<LoraAdapterSelectorProps> = ({
                   showValidation
                   pathType="file"
                   placeholder="/path/to/lora.safetensors"
-                  description="Lora适配器文件在桌面应用中的完整路径"
+                  description="Lora技能包文件在桌面应用中的完整路径"
                 />
 
                 {/* 提交按钮 */}
