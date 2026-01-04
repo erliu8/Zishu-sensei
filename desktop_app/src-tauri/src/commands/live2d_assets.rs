@@ -16,6 +16,70 @@ pub struct PrepareLive2DResult {
     pub used_remote: bool,
 }
 
+pub(crate) async fn ensure_live2d_model_cached_best_effort(model_id: &str) -> Result<(), String> {
+    let cache_root = get_live2d_cache_dir()?;
+    tokio::fs::create_dir_all(&cache_root)
+        .await
+        .map_err(|e| format!("Failed to create live2d cache dir: {}", e))?;
+
+    let client = reqwest::Client::builder()
+        .timeout(std::time::Duration::from_secs(30))
+        .build()
+        .map_err(|e| format!("Failed to create HTTP client: {}", e))?;
+
+    match determine_remote_base_url() {
+        Some(v) => {
+            let remote_base = normalize_remote_base_url(v);
+            // Ensure manifest exists (download if missing)
+            let manifest_path = safe_join_cache(&cache_root, "live2d_models/models.json")?;
+            if !manifest_path.exists() {
+                ensure_manifest(&client, &remote_base, &cache_root).await?;
+            }
+            ensure_default_model_cached(&client, &remote_base, &cache_root, model_id).await?;
+            Ok(())
+        }
+        None => {
+            // Offline mode: require manifest + model files already cached
+            let library = read_manifest(&cache_root).await?;
+            let model = library
+                .models
+                .iter()
+                .find(|m| m.id == model_id)
+                .ok_or_else(|| format!("Model '{}' not found in cached models.json", model_id))?;
+
+            let model_path_rel = model.path.trim_start_matches('/');
+            let model_cache_path = safe_join_cache(&cache_root, model_path_rel)?;
+            if !model_cache_path.exists() {
+                return Err(format!("Model '{}' not cached: {}", model_id, model.path));
+            }
+
+            let content = tokio::fs::read_to_string(&model_cache_path)
+                .await
+                .map_err(|e| format!("Failed to read cached model3.json: {}", e))?;
+            let model3: Model3Json =
+                serde_json::from_str(&content).map_err(|e| format!("Failed to parse model3.json: {}", e))?;
+            let required = list_model_required_files(&model3);
+
+            let model_dir_rel = std::path::Path::new(model_path_rel)
+                .parent()
+                .ok_or("Invalid model path".to_string())?
+                .to_string_lossy()
+                .replace('\\', "/");
+
+            for rel_file in required {
+                let rel_file = rel_file.trim_start_matches('/').replace('\\', "/");
+                let cache_rel = format!("{}/{}", model_dir_rel, rel_file);
+                let cache_path = safe_join_cache(&cache_root, &cache_rel)?;
+                if !cache_path.exists() {
+                    return Err(format!("Missing cached file for '{}': {}", model_id, cache_rel));
+                }
+            }
+
+            Ok(())
+        }
+    }
+}
+
 #[derive(Debug, Clone, Serialize, Deserialize)]
 struct ModelLibrary {
     models: Vec<ModelInfo>,

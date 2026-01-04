@@ -11,6 +11,7 @@ use tracing::{info, error, warn};
 
 use crate::{
     commands::*,
+    commands::live2d_assets,
     state::AppState,
     utils::*,
 };
@@ -154,6 +155,17 @@ pub async fn get_characters(
         })
         .collect();
     
+    // Best-effort: ensure the active character's Live2D assets exist in cache.
+    // This avoids a blank character when the active model isn't pre-downloaded at startup.
+    if let Some(active) = characters.iter().find(|c| c.is_active) {
+        if let Err(e) = live2d_assets::ensure_live2d_model_cached_best_effort(&active.id).await {
+            warn!(
+                "?? [get_characters] Live2D assets not ready for active model '{}': {}",
+                active.id, e
+            );
+        }
+    }
+    
     info!("✅ [get_characters] 成功返回 {} 个角色", characters.len());
     Ok(CommandResponse::success(characters))
 }
@@ -218,6 +230,13 @@ pub async fn switch_character(
             return Ok(CommandResponse::error(format!("角色不存在: {}", character_id)));
         }
     };
+
+    // Ensure Live2D assets for the target character exist before switching.
+    // If assets are missing and no remote base URL is configured, fail early.
+    if let Err(e) = live2d_assets::ensure_live2d_model_cached_best_effort(&character_id).await {
+        error!("切换角色前缓存 Live2D 资源失败: {}", e);
+        return Ok(CommandResponse::error(format!("Live2D 资源未就绪: {}", e)));
+    }
     
     // Get old active character
     let old_character = db.character_registry.get_active_character_async().await
