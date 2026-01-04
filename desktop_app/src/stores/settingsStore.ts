@@ -236,7 +236,7 @@ const DEFAULT_APP_SETTINGS: AppSettings = {
         maxTokens: 2000,
     },
     character: {
-        model: 'shizuku',
+        model: 'hiyori',
         voice: 'female',
         personality: 'friendly',
     },

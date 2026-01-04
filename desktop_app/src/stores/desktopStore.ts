@@ -357,7 +357,7 @@ const defaultSettings: AppSettings = {
         maxTokens: 2000,
     },
     character: {
-        model: 'shizuku',
+        model: 'hiyori',
         voice: 'default',
         personality: 'friendly',
     },
@@ -374,7 +374,7 @@ const defaultConfig: AppConfig = {
         position: null,
     },
     character: {
-        current_character: 'shizuku' as any,
+        current_character: 'hiyori' as any,
         scale: 1.0 as any,
         auto_idle: true,
         interaction_enabled: true,

@@ -195,7 +195,7 @@ export const DEFAULT_CONFIG: AppConfig = {
         position: null
     },
     character: {
-        current_character: 'shizuku' as CharacterId,
+        current_character: 'hiyori' as CharacterId,
         scale: 1.0 as ScaleValue,
         auto_idle: true,
         interaction_enabled: true
