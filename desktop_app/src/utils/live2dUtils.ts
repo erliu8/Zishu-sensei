@@ -5,6 +5,7 @@
  */
 
 import { Live2DModelConfig, Live2DAnimationType } from '../types/live2d'
+import { resolveLive2dUrl } from '@/utils/live2dUrl'
 
 /**
  * 模型资源管理器
@@ -56,13 +57,14 @@ export class Live2DModelManager {
    */
   private async doLoadModel(modelPath: string): Promise<Live2DModelConfig> {
     try {
-      const response = await fetch(modelPath)
+      const resolved = resolveLive2dUrl(modelPath) ?? modelPath
+      const response = await fetch(resolved)
       if (!response.ok) {
         throw new Error(`Failed to load model: ${response.statusText}`)
       }
 
       const modelData = await response.json()
-      return this.parseModelConfig(modelData, modelPath)
+      return this.parseModelConfig(modelData, resolved)
     } catch (error) {
       throw new Error(`Error loading model from ${modelPath}: ${error}`)
     }

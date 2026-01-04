@@ -101,12 +101,15 @@ export class ModelManager {
       throw new Error(`Model not found: ${modelId}`)
     }
 
+    const resolvedModelPath = resolveLive2dUrl(modelInfo.path) ?? modelInfo.path
+    const resolvedPreviewImage = resolveLive2dUrl(modelInfo.previewImage) ?? modelInfo.previewImage
+
     // 创建基础配置
     const config: Live2DModelConfig = {
       id: modelInfo.id,
       name: modelInfo.name,
-      modelPath: modelInfo.path,
-      previewImage: modelInfo.previewImage,
+      modelPath: resolvedModelPath,
+      previewImage: resolvedPreviewImage,
       description: modelInfo.description,
       author: 'Live2D Inc.',
       version: '1.0.0',
@@ -127,7 +130,7 @@ export class ModelManager {
 
     // 尝试加载模型的 JSON 配置以获取更多信息
     try {
-      const response = await fetch(modelInfo.path)
+      const response = await fetch(resolvedModelPath)
       if (response.ok) {
         const modelJson = await response.json()
         
@@ -169,7 +172,7 @@ export class ModelManager {
 
         // 物理效果
         if (modelJson.FileReferences?.Physics) {
-          const basePath = modelInfo.path.substring(0, modelInfo.path.lastIndexOf('/'))
+          const basePath = resolvedModelPath.substring(0, resolvedModelPath.lastIndexOf('/'))
           config.physics = `${basePath}/${modelJson.FileReferences.Physics}`
         }
       }
