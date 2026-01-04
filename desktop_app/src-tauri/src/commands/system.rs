@@ -61,6 +61,19 @@ pub struct VersionInfo {
     pub git_hash: Option<String>,
 }
 
+/// Frontend-facing environment info (matches `desktop_app/src/types/tauri.ts`)
+#[derive(Debug, Clone, Serialize, Deserialize)]
+pub struct TauriEnvironmentInfo {
+    pub platform: String,
+    pub arch: String,
+    pub os: String,
+    pub version: String,
+    #[serde(rename = "tauriVersion")]
+    pub tauri_version: String,
+    #[serde(rename = "webviewVersion")]
+    pub webview_version: String,
+}
+
 /// Update information
 #[derive(Debug, Clone, Serialize, Deserialize)]
 pub struct UpdateInfo {
@@ -174,6 +187,23 @@ pub async fn get_app_version(
     };
     
     Ok(CommandResponse::success(version_info))
+}
+
+/// Get environment info (used by frontend `useTauri` to decide if we are in Tauri)
+#[tauri::command]
+pub async fn get_environment_info(
+    app_handle: AppHandle,
+) -> Result<CommandResponse<TauriEnvironmentInfo>, String> {
+    let info = TauriEnvironmentInfo {
+        platform: "desktop".to_string(),
+        arch: std::env::consts::ARCH.to_string(),
+        os: std::env::consts::OS.to_string(),
+        version: app_handle.package_info().version.to_string(),
+        tauri_version: tauri::VERSION.to_string(),
+        webview_version: "unknown".to_string(),
+    };
+
+    Ok(CommandResponse::success(info))
 }
 
 /// Compare two version strings (simple implementation)

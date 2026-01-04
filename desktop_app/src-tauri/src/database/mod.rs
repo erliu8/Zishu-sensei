@@ -418,6 +418,81 @@ pub fn get_database() -> Option<Arc<Database>> {
 /// Load characters from models.json into database
 async fn load_characters_from_models(app: &AppHandle, db: &Database) -> Result<(), Box<dyn std::error::Error + Send + Sync>> {
     use std::fs;
+
+    // Runtime (installed app) path: prefer user cache prepared by `prepare_live2d_assets`.
+    // Must match `commands/live2d_assets.rs` and `live2d_protocol.rs`.
+    if let Some(base) = dirs::cache_dir() {
+        let cache_models_path = base
+            .join("zishu-sensei")
+            .join("cache")
+            .join("live2d")
+            .join("live2d_models")
+            .join("models.json");
+
+        if cache_models_path.exists() {
+            tracing::info!("Loading models.json from user cache: {:?}", cache_models_path);
+            let content = fs::read_to_string(&cache_models_path)
+                .map_err(|e| format!("Failed to read cached models.json: {}", e))?;
+
+            let models_data: serde_json::Value = serde_json::from_str(&content)
+                .map_err(|e| format!("Failed to parse cached models.json: {}", e))?;
+
+            let models = models_data["models"]
+                .as_array()
+                .ok_or("models.json format error")?;
+
+            for model in models {
+                let id = model["id"].as_str().unwrap_or("");
+                let name = model["name"].as_str().unwrap_or("");
+                let display_name = model["displayName"].as_str().unwrap_or(name);
+                let path = model["path"].as_str().unwrap_or("");
+                let preview_image = model["previewImage"].as_str();
+                let description = model["description"].as_str().unwrap_or("");
+                let gender = model["gender"].as_str().unwrap_or("neutral");
+                let size = model["size"].as_str().unwrap_or("0");
+
+                let features: Vec<String> = model["features"]
+                    .as_array()
+                    .map(|arr| {
+                        arr.iter()
+                            .filter_map(|v| v.as_str().map(|s| s.to_string()))
+                            .collect()
+                    })
+                    .unwrap_or_default();
+
+                if let Ok(Some(_)) = db.character_registry.get_character_async(id).await {
+                    continue;
+                }
+
+                let character = character_registry::CharacterData {
+                    id: id.to_string(),
+                    name: name.to_string(),
+                    display_name: display_name.to_string(),
+                    path: path.to_string(),
+                    preview_image: preview_image.map(|s| s.to_string()),
+                    description: description.to_string(),
+                    gender: gender.to_string(),
+                    size: size.to_string(),
+                    features,
+                    motions: vec![],
+                    expressions: vec![],
+                    is_active: false,
+                };
+
+                db.character_registry.register_character_async(character).await?;
+            }
+
+            let active_character = db.character_registry.get_active_character_async().await?;
+            if active_character.is_none() {
+                if let Ok(Some(_)) = db.character_registry.get_character_async("hiyori").await {
+                    db.character_registry.set_active_character_async("hiyori").await?;
+                }
+            }
+
+            tracing::info!("Loaded characters from cached models.json");
+            return Ok(());
+        }
+    }
     
     info!("从 models.json 加载角色数据");
     

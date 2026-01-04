@@ -141,7 +141,7 @@ export const useTauri = (): UseTauriReturn => {
     return {
         ...availability,
         isTauriEnv: availability.isAvailable,
-        tauriVersion: availability.environment?.version || '0.0.0',
+        tauriVersion: availability.environment?.tauriVersion || 'unknown',
         invoke,
         listen,
         emit,

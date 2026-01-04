@@ -549,6 +549,7 @@ fn main() {
             // 系统命令
             commands::system::get_system_info,
             commands::system::get_app_version,
+            commands::system::get_environment_info,
             commands::system::restart_app,
             commands::system::quit_app,
             commands::system::show_in_folder,
