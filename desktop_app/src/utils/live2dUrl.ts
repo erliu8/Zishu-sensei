@@ -12,7 +12,9 @@ function isAbsoluteUrl(url: string): boolean {
   return /^(https?:|zishu:|tauri:|asset:|blob:|data:)/i.test(url)
 }
 
-export function resolveLive2dUrl(pathOrUrl: string): string {
+export function resolveLive2dUrl(pathOrUrl: string): string
+export function resolveLive2dUrl(pathOrUrl: string | undefined): string | undefined
+export function resolveLive2dUrl(pathOrUrl?: string): string | undefined {
   if (!pathOrUrl) return pathOrUrl
   if (isAbsoluteUrl(pathOrUrl)) return pathOrUrl
 
@@ -24,4 +26,3 @@ export function resolveLive2dUrl(pathOrUrl: string): string {
 
   return pathOrUrl
 }
-
