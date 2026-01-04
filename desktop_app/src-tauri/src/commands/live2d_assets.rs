@@ -37,6 +37,8 @@ struct Model3Json {
 
 #[derive(Debug, Clone, Serialize, Deserialize)]
 struct FileReferences {
+    #[serde(rename = "Moc", alias = "Moc3")]
+    moc: Option<String>,
     #[serde(rename = "Textures")]
     textures: Option<Vec<String>>,
     #[serde(rename = "Motions")]
@@ -164,6 +166,10 @@ fn list_model_required_files(model3: &Model3Json) -> Vec<String> {
         return files;
     };
 
+    if let Some(moc) = refs.moc.as_ref() {
+        files.push(moc.clone());
+    }
+
     if let Some(textures) = refs.textures.as_ref() {
         files.extend(textures.iter().cloned());
     }
@@ -222,16 +228,17 @@ async fn ensure_default_model_cached(
     }
 
     let model_cache_path = safe_join_cache(cache_root, model_path_rel)?;
-    if model_cache_path.exists() {
-        return Ok(false);
+    let mut downloaded_any = false;
+
+    if !model_cache_path.exists() {
+        // Download model3.json first
+        let model_url = join_url(remote_base, model_path_rel.strip_prefix("live2d_models/").unwrap_or(model_path_rel));
+        info!("Downloading default model JSON: {}", model_url);
+        download_to_cache(client, &model_url, &model_cache_path).await?;
+        downloaded_any = true;
     }
 
-    // Download model3.json first
-    let model_url = join_url(remote_base, model_path_rel.strip_prefix("live2d_models/").unwrap_or(model_path_rel));
-    info!("Downloading default model JSON: {}", model_url);
-    download_to_cache(client, &model_url, &model_cache_path).await?;
-
-    // Parse model3.json to discover referenced files
+    // Parse model3.json to discover referenced files (always validate dependencies)
     let content = tokio::fs::read_to_string(&model_cache_path)
         .await
         .map_err(|e| format!("Failed to read cached model3.json: {}", e))?;
@@ -256,6 +263,7 @@ async fn ensure_default_model_cached(
         let remote_rel = format!("{}/{}", model_dir_rel.strip_prefix("live2d_models/").unwrap_or(&model_dir_rel), rel_file);
         let url = join_url(remote_base, &remote_rel);
         download_to_cache(client, &url, &cache_path).await?;
+        downloaded_any = true;
     }
 
     // Download preview image if present
@@ -267,11 +275,12 @@ async fn ensure_default_model_cached(
                 let remote_rel = preview_rel.strip_prefix("live2d_models/").unwrap_or(&preview_rel);
                 let url = join_url(remote_base, remote_rel);
                 download_to_cache(client, &url, &preview_cache_path).await?;
+                downloaded_any = true;
             }
         }
     }
 
-    Ok(true)
+    Ok(downloaded_any)
 }
 
 #[tauri::command]
@@ -345,4 +354,3 @@ pub async fn prepare_live2d_assets(_app: AppHandle) -> Result<CommandResponse<Pr
         "Live2D assets prepared".to_string(),
     ))
 }
-
